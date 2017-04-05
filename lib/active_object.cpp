@@ -3,13 +3,19 @@
 #include "active_object.h"
 #include "timer.h"
 
+using namespace	std;
+
 ActiveObject::ActiveObject()
-: loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
+: loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL), thread_(0)
 {
 }
 
 void	ActiveObject::Start()
 {
+	if (thread_ == 0)
+	{
+		thread_ = 
+	}
 }
 
 void	ActiveObject::Stop()

@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "defined.h"
 #include "value.h"
 
@@ -76,7 +77,7 @@ void	ValueFloat::Set(const string& _value)
 
 string	ValueFloat::ToString()
 {
-	to_string(value_);	
+	return	to_string(value_);	
 }
 ///////////////////////////////////////////////////////////////
 // Class ValueString

@@ -15,7 +15,7 @@ public:
 	bool	IsRunning();
 
 protected:
-	std::thread*	thread_id_;	
+	std::thread*	thread_;	
 	bool			running_;
 	bool			stop_;
 	Time			loop_interval_;
