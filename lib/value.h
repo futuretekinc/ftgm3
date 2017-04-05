@@ -4,76 +4,86 @@
 #include <string>
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class Value
 ///////////////////////////////////////////////////////////////
 class	Value
 {
 public:
 	virtual	~Value();
 
-	virtual	void	Set(const std::string& _value) = 0;
+	virtual	void		Set(const std::string& _value) = 0;
+	virtual	std::string	ToString();
 };
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class ValueNumber
 ///////////////////////////////////////////////////////////////
 class	ValueNumber : public Value
 {
 public:
+protected:
 };
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class ValueInt
 ///////////////////////////////////////////////////////////////
 class	ValueInt : public ValueNumber
 {
 public:
 	ValueInt& operator=(int _value);
-	virtual	void	Set(const std::string& _value);
+	virtual	void		Set(const std::string& _value);
+	virtual	std::string	ToString();
 protected:
 	int	value_;
 };
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class ValueBool
 ///////////////////////////////////////////////////////////////
 class	ValueBool : public ValueNumber
 {
 public:
 	ValueBool& operator=(bool _value);
-	void	Set(const std::string& _value);
+			void		Set(const std::string& _value);
+	virtual	std::string	ToString();
 protected:
 	bool	value_;
 };
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class ValueFloat
 ///////////////////////////////////////////////////////////////
 class	ValueFloat : public ValueNumber
 {
 public:
 	ValueFloat& operator=(float _value);
 
-	void	Set(const std::string& _value);
+			void		Set(const std::string& _value);
+	virtual	std::string	ToString();
 protected:
 	float	value_;
 };
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class ValueString
 ///////////////////////////////////////////////////////////////
 class	ValueString : public Value
 {
 public:
+	ValueString();
+	ValueString(const std::string& _value);
+
 	ValueString& operator=(const std::string& _value);
 
-	void	Set(const std::string& _value);
+			void		Set(const std::string& _value);
+	virtual	std::string	ToString();
+
 protected:
 	std::string	value_;	
 };
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class ValueStringLimit
 ///////////////////////////////////////////////////////////////
 class	ValueStringLimit: public ValueString
 {
@@ -89,25 +99,27 @@ protected:
 };
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class ValueID
 ///////////////////////////////////////////////////////////////
 class	ValueID : public ValueStringLimit
 {
 public:
 	ValueID();
+	ValueID(const std::string& _value);
 };
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class	ValueName
 ///////////////////////////////////////////////////////////////
 class	ValueName : public ValueStringLimit
 {
 public:
 	ValueName();
+	ValueName(const std::string& _value);
 };
 
 ///////////////////////////////////////////////////////////////
-// Class
+// Class ValueIP
 ///////////////////////////////////////////////////////////////
 class	ValueIP : public ValueString
 {

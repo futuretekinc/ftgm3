@@ -1,11 +1,14 @@
-#include <cstdlib>
-#include "limit.h"
+#include "defined.h"
 #include "value.h"
+
 
 using namespace std;
 ///////////////////////////////////////////////////////////////
 // Class Value
 ///////////////////////////////////////////////////////////////
+Value::~Value()
+{
+}
 
 ///////////////////////////////////////////////////////////////
 // Class ValueNumber
@@ -21,9 +24,14 @@ ValueInt& ValueInt::operator=(int _value)
 	return	*this;
 }
 
-void	ValueInt::Set(const std::string& _value)
+void	ValueInt::Set(const string& _value)
 {
 	value_ = strtol(_value.c_str(), 0, 10);
+} 
+
+string	ValueInt::ToString()
+{
+	return	to_string(value_);	
 }
 ///////////////////////////////////////////////////////////////
 // Class ValueBool
@@ -35,7 +43,7 @@ ValueBool& ValueBool::operator=(bool _value)
 	return	*this;
 }
 
-void	ValueBool::Set(const std::string& _value)
+void	ValueBool::Set(const string& _value)
 {
 	if (_value.compare("true") == 0)
 	{	
@@ -45,6 +53,11 @@ void	ValueBool::Set(const std::string& _value)
 	{
 		value_ = false;
 	}
+}
+
+string	ValueBool::ToString()
+{
+	return	to_string(value_);	
 }
 ///////////////////////////////////////////////////////////////
 // Class ValueFloat
@@ -56,18 +69,43 @@ ValueFloat& ValueFloat::operator=(float _value)
 	return	*this;
 }
 
-void	ValueFloat::Set(const std::string& _value)
+void	ValueFloat::Set(const string& _value)
 {
 	value_ = ::atof(_value.c_str());
+}
+
+string	ValueFloat::ToString()
+{
+	to_string(value_);	
 }
 ///////////////////////////////////////////////////////////////
 // Class ValueString
 ///////////////////////////////////////////////////////////////
-ValueString& ValueString::operator=(const std::string& _value)
+ValueString::ValueString()
+: value_("")
+{
+}
+
+ValueString::ValueString(const std::string& _value)
+: value_(_value)
+{
+}
+
+ValueString& ValueString::operator=(const string& _value)
 {
 	value_ = _value;
 
 	return	*this;
+}
+
+void	ValueString::Set(const string& _value)
+{
+	value_ = _value;
+}
+
+string	ValueString::ToString()
+{
+	return	value_;
 }
 ///////////////////////////////////////////////////////////////
 // Class ValueStringLimit
@@ -77,7 +115,7 @@ ValueStringLimit::ValueStringLimit(uint32_t _limit)
 {
 }
 
-ValueStringLimit& ValueStringLimit::operator=(std::string& _value)
+ValueStringLimit& ValueStringLimit::operator=(string& _value)
 {
 	value_ = _value.substr(0, limit_);
 
@@ -86,9 +124,10 @@ ValueStringLimit& ValueStringLimit::operator=(std::string& _value)
 
 ValueStringLimit& ValueStringLimit::operator=(char *_value)
 {
-	if (strlen(_value) > limit_)
+	string value = _value;
+
+	if (value.length() > limit_)
 	{
-		string value = _value;
 
 		value_ = value.substr(0, limit_);
 	}
@@ -100,7 +139,7 @@ ValueStringLimit& ValueStringLimit::operator=(char *_value)
 	return	*this;
 }
 
-void	ValueStringLimit::Set(const std::string& _value)
+void	ValueStringLimit::Set(const string& _value)
 {
 	value_ = _value.substr(0, limit_);
 }
@@ -113,6 +152,12 @@ ValueID::ValueID()
 {
 }
 
+ValueID::ValueID(const string& _value)
+: ValueStringLimit(ID_LENGTH_MAX)
+{
+	Set(_value);
+}
+
 ///////////////////////////////////////////////////////////////
 // Class ValueName
 ///////////////////////////////////////////////////////////////
@@ -121,16 +166,22 @@ ValueName::ValueName()
 {
 }
 
+ValueName::ValueName(const string& _value)
+: ValueStringLimit(NAME_LENGTH_MAX)
+{
+	Set(_value);
+}
+
 ///////////////////////////////////////////////////////////////
 // Class ValueIP
 ///////////////////////////////////////////////////////////////
-void	ValueStringLimit::Set(const std::string& _value)
+void	ValueIP::Set(const string& _value)
 {
 	size_t found = _value.find_first_not_of("0123456789.");
 	if (found == string::npos)
 	{
 		int	number_of_dot = 0;
-		int	postition = -1;	
+		int	position = -1;	
 
 		size_t found = _value.find_first_of(".");
 		while(found != string::npos)
@@ -140,6 +191,7 @@ void	ValueStringLimit::Set(const std::string& _value)
 				break;
 			}
 
+			position = found;
 			number_of_dot++;
 			found = _value.find_first_of(".", found+1);
 		}

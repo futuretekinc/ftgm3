@@ -1,0 +1,11 @@
+#ifndef	DEFINED_H_
+#define	DEFINED_H_
+
+#define	ID_LENGTH_MAX		32
+#define	NAME_LENGTH_MAX		32
+
+#define	ACTIVE_OBJECT_LOOP_INTERVAL	1000	// 1ms
+
+#define	OBJECT_LIVE_CHECK_INTERVAL	((uint64_t)60000000)
+#endif
+
