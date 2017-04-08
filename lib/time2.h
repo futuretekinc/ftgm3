@@ -18,7 +18,9 @@ public:
 			uint64_t	GetMilliseconds() const;
 			uint32_t	GetSeconds() const;
 	
-						operator uint64_t();
+	virtual	std::string	ToString() const;
+
+						operator uint64_t() const;
 			Time		operator+(const Time& _time);
 			Time		operator-(const Time& _time);
 	const 	Time&		operator+=(const Time& _time);
@@ -39,20 +41,26 @@ public:
 	Date(const Date& _date);
 	Date(uint32_t _seconds);
 
+			bool	IsValid();
 			void	Set(uint32_t _seconds);
 
-	virtual	const std::string&	ToString() const;
+	virtual	const std::string	ToString() const;
 
 			Date	operator+(const Time& _time);
 			Date	operator-(const Time& _time);
 			Time	operator-(const Date& _date);
 	const	Date&	operator-=(const Time& _time);
 	const	Date&	operator+=(const Time& _time);
+	const	Date&	operator=(Date const& _date);
+					operator time_t() const;
+	friend	std::ostream&	::operator<<(std::ostream& os, Date const& _date) ;
 
 	static	Date	GetCurrentDate();
+	
 
 protected:
 	uint64_t	value_;
-	std::string	string_value_;
 };
+
+bool	Compare(Date const & _date_a, Date const& _date_b);
 #endif

@@ -1,4 +1,6 @@
 #include <sys/time.h>
+#include <time.h>
+#include "defined.h"
 #include "time2.h"
 
 using namespace std;
@@ -37,7 +39,7 @@ uint32_t	Time::GetSeconds() const
 	return	value_ / 1000000;
 }
 
-Time::operator uint64_t()
+Time::operator uint64_t() const
 {	
 	return	value_; 
 }
@@ -85,20 +87,19 @@ const 	Time&	Time::operator-=(const Time& _time)
 	return	*this;
 }
 
+std::string	Time::ToString() const
+{
+	return	to_string(value_);
+}
 //////////////////////////////////////////////////////////////
 // Class Date
 //////////////////////////////////////////////////////////////
 
 Date::Date()
 {
- 	char    buffer[64];
 	struct timeval	value;
 
 	gettimeofday(&value, 0);
-
-   	strftime(buffer, sizeof(buffer), "%Y%m%d-%H:%M:%S", localtime(&value.tv_sec));
-    
-	string_value_ = buffer;
 
 	value_ = value.tv_sec * 1000000 + value.tv_usec;
 }
@@ -106,36 +107,21 @@ Date::Date()
 Date::Date(const Date& _date)
 :	value_(_date.value_)
 {
- 	char    buffer[64];
-	time_t	time = (time_t)value_ / 1000000;
-
-   	strftime(buffer, sizeof(buffer), "%Y%m%d-%H:%M:%S", localtime(&time));
-
-	string_value_ = buffer;
 }
 
 Date::Date(uint32_t _seconds)
 {
- 	char    buffer[64];
-	time_t	time = (time_t)_seconds;
-
 	value_ = _seconds * 1000000;
+}
 
-   	strftime(buffer, sizeof(buffer), "%Y%m%d-%H:%M:%S", localtime(&time));
-
-	string_value_ = buffer;
+bool	Date::IsValid()
+{
+	return	(value_ != 0);
 }
 
 void	Date::Set(uint32_t _seconds)
 {
- 	char    buffer[64];
-	time_t	time = (time_t)_seconds;
-
 	value_ = _seconds * 1000000;
-
-   	strftime(buffer, sizeof(buffer), "%Y%m%d-%H:%M:%S", localtime(&time));
-
-	string_value_ = buffer;
 }
 
 Date	Date::operator+(const Time& _time)
@@ -194,9 +180,26 @@ const	Date&	Date::operator+=(const Time& _time)
 	return	*this;
 }
 
-const string&	Date::ToString() const
+const	Date&	Date::operator=(Date const& _value)
 {
-	return	string_value_;	
+	value_ = _value.value_;
+
+	return	*this;
+}
+
+Date::operator time_t() const
+{
+	return	value_ / TIME_SECOND;
+}
+
+const string	Date::ToString() const
+{
+ 	char    buffer[64];
+	time_t	time = (time_t)value_ / TIME_SECOND;
+
+   	strftime(buffer, sizeof(buffer), "%Y%m%d-%H:%M:%S", localtime(&time));
+
+	return	string(buffer);
 }
 
 Date	Date::GetCurrentDate()
@@ -209,3 +212,12 @@ Date	Date::GetCurrentDate()
 	return	Date(time.tv_sec * (uint64_t)1000000 + time.tv_usec);
 }
 
+bool	Compare(Date const &_date_a, Date const &_date_b)
+{
+	return	(time_t(_date_a) < time_t(_date_b));
+}
+
+std::ostream&	operator<<(std::ostream& os, Date const& _date) 
+{
+	return	os << _date.ToString();
+}

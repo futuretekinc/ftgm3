@@ -2,6 +2,9 @@
 #define	VALUE_H_
 
 #include <string>
+#include <ostream>
+#include <list>
+#include "time2.h"
 
 ///////////////////////////////////////////////////////////////
 // Class Value
@@ -11,8 +14,13 @@ class	Value
 public:
 	virtual	~Value();
 
-	virtual	void		Set(const std::string& _value) = 0;
-	virtual	std::string	ToString();
+	virtual	bool		Set(const std::string& _value) = 0;
+	virtual	Value*		Duplicate() const = 0;
+	virtual	std::string	ToString() const = 0;
+
+	virtual	void		Print(std::ostream&	os) const = 0;
+	friend	Value*	::Duplicate(Value const *);
+	friend	std::ostream& ::operator<<(std::ostream& os, Value const& _value);
 };
 
 ///////////////////////////////////////////////////////////////
@@ -30,11 +38,61 @@ protected:
 class	ValueInt : public ValueNumber
 {
 public:
-	ValueInt& operator=(int _value);
-	virtual	void		Set(const std::string& _value);
-	virtual	std::string	ToString();
+	ValueInt(int _value = 0);
+
+			ValueInt& 	operator=(int _value);
+
+			int			Get() const;
+			void		Set(int _value);
+			bool		Set(const std::string& _value);
+			Value*		Duplicate() const;
+			std::string	ToString() const;
+
+			void		Print(std::ostream&	os) const;
 protected:
 	int	value_;
+};
+
+///////////////////////////////////////////////////////////////
+// Class ValueUInt32
+///////////////////////////////////////////////////////////////
+class	ValueUInt32 : public ValueNumber
+{
+public:
+	ValueUInt32(uint32_t _value = 0);
+
+			ValueUInt32& 	operator=(uint32_t _value);
+
+			uint32_t	Get() const;
+			void		Set(uint32_t _value);
+			bool		Set(const std::string& _value);
+			Value*		Duplicate() const;
+			std::string	ToString() const;
+
+			void		Print(std::ostream&	os) const;
+protected:
+	uint32_t	value_;
+};
+
+///////////////////////////////////////////////////////////////
+// Class ValueUInt64
+///////////////////////////////////////////////////////////////
+class	ValueUInt64 : public ValueNumber
+{
+public:
+	ValueUInt64(uint64_t _value = 0);
+
+			ValueUInt64& 	operator=(uint64_t _value);
+
+			uint64_t	Get() const;
+			void		Set(uint64_t _value);
+			bool		Set(const std::string& _value);
+			Value*		Duplicate() const;
+			std::string	ToString() const;
+
+			void		Print(std::ostream&	os) const;
+protected:
+	uint64_t	value_;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -43,9 +101,18 @@ protected:
 class	ValueBool : public ValueNumber
 {
 public:
-	ValueBool& operator=(bool _value);
-			void		Set(const std::string& _value);
-	virtual	std::string	ToString();
+	ValueBool(bool _value = false);
+
+			ValueBool& 	operator=(bool _value);
+						operator bool() const;
+
+			void		Set(bool _value);
+			bool		Set(const std::string& _value);
+			bool		Get() const;
+			Value*		Duplicate() const;
+			std::string	ToString() const;
+
+			void		Print(std::ostream&	os) const;
 protected:
 	bool	value_;
 };
@@ -56,10 +123,23 @@ protected:
 class	ValueFloat : public ValueNumber
 {
 public:
-	ValueFloat& operator=(float _value);
+	ValueFloat(float _value = 0);
 
-			void		Set(const std::string& _value);
-	virtual	std::string	ToString();
+			ValueFloat& operator=(float _value);
+						operator float() const;
+			bool		operator ==(const ValueFloat& _value);
+			bool		operator >(const ValueFloat& _value);
+			bool		operator >=(const ValueFloat& _value);
+			bool		operator <(const ValueFloat& _value);
+			bool		operator <=(const ValueFloat& _value);
+
+			void		Set(float _value);
+			bool		Set(const std::string& _value);
+			float		Get() const;
+			Value*		Duplicate() const;
+			std::string	ToString() const;
+
+			void		Print(std::ostream&	os) const;
 protected:
 	float	value_;
 };
@@ -71,13 +151,21 @@ class	ValueString : public Value
 {
 public:
 	ValueString();
-	ValueString(const std::string& _value);
+	ValueString(char * _value);
+	ValueString(std::string const& _value);
 
-	ValueString& operator=(const std::string& _value);
+			ValueString& 	operator=(const std::string& _value);
+						 	operator std::string();
+			bool			operator==(std::string const& _value) const;
+			bool			operator==(char *_value) const;
 
-			void		Set(const std::string& _value);
-	virtual	std::string	ToString();
+			bool			Set(const std::string& _value);
+	const	std::string&	Get() const; 
+			Value*			Duplicate() const;
+			std::string		ToString() const;
 
+
+			void		Print(std::ostream&	os) const;
 protected:
 	std::string	value_;	
 };
@@ -90,10 +178,10 @@ class	ValueStringLimit: public ValueString
 public:
 	ValueStringLimit(uint32_t limit);
 
-	ValueStringLimit& operator=(std::string& _value);
-	ValueStringLimit& operator=(char *_value);
+			ValueStringLimit& 	operator=(std::string& _value);
+			ValueStringLimit& 	operator=(char *_value);
 
-	void	Set(const std::string& _value);
+			bool				Set(const std::string& _value);
 protected:
 	uint32_t	limit_;	
 };
@@ -106,6 +194,8 @@ class	ValueID : public ValueStringLimit
 public:
 	ValueID();
 	ValueID(const std::string& _value);
+
+			Value*		Duplicate() const;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -116,6 +206,8 @@ class	ValueName : public ValueStringLimit
 public:
 	ValueName();
 	ValueName(const std::string& _value);
+
+			Value*		Duplicate() const;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -124,7 +216,122 @@ public:
 class	ValueIP : public ValueString
 {
 public:
-	void	Set(const std::string& _value);
+	ValueIP(const ValueIP& _ip);
+	ValueIP(const std::string& _ip);
+
+			bool		Set(const std::string& _value);
+			Value*		Duplicate() const;
+	const	ValueIP&	operator=(const std::string& _value);
+
+	static	bool	IsValidIP(const std::string& _ip);
 };
+
+///////////////////////////////////////////////////////////////
+// Class ValueUnit
+///////////////////////////////////////////////////////////////
+class	ValueUnit : public ValueString
+{
+public:
+	ValueUnit(const ValueUnit& _unit);
+	ValueUnit(const std::string& _unit);
+
+			bool		Set(const std::string& _value);
+			Value*		Duplicate() const;
+	const	ValueUnit&	operator=(const std::string& _value);
+};
+
+
+///////////////////////////////////////////////////////////////
+// Class ValueTime
+///////////////////////////////////////////////////////////////
+class	ValueTime : public Value
+{
+public:
+	ValueTime(const ValueTime& _date);
+	ValueTime(const Time& _date);
+
+			bool		Set(const std::string& _value);
+	const	Time&		Get() const;
+			Value*		Duplicate() const;
+	const	ValueTime&	operator=(Time const& _value);
+			std::string	ToString() const;
+
+
+			void		Print(std::ostream&	os) const;
+protected:
+	Time	value_;
+};
+
+
+///////////////////////////////////////////////////////////////
+// Class ValueDate
+///////////////////////////////////////////////////////////////
+class	ValueDate : public Value
+{
+public:
+	ValueDate(const ValueDate& _date);
+	ValueDate(const Date& _date);
+
+			bool		Set(const std::string& _value);
+	const	Date&		Get() const;
+			Value*		Duplicate() const;
+	const	ValueDate&	operator=(Date const& _value);
+			std::string	ToString() const;
+
+
+			void		Print(std::ostream&	os) const;
+protected:
+	Date	value_;
+};
+
+///////////////////////////////////////////////////////////////
+// Class ValueProperties
+///////////////////////////////////////////////////////////////
+
+class	Properties;
+class	ValueProperties : public Value
+{
+public:
+	ValueProperties(ValueProperties const& _value);
+	ValueProperties(Properties const& _value);
+	~ValueProperties();
+
+			bool			Set(const std::string& _value);
+	const	Properties&		Get() const;
+			Value*			Duplicate() const;
+	const	ValueProperties&	operator=(Properties const& _value);
+			std::string	ToString() const;
+
+
+			void		Print(std::ostream&	os) const;
+protected:
+	Properties*	value_;
+};
+
+
+///////////////////////////////////////////////////////////////
+// Class ValuePropertyList
+///////////////////////////////////////////////////////////////
+
+class	PropertyList;
+class	ValuePropertyList : public Value
+{
+public:
+	ValuePropertyList(ValuePropertyList const& _value);
+	ValuePropertyList(PropertyList const& _value);
+	~ValuePropertyList();
+
+			bool			Set(const std::string& _value);
+	const	PropertyList&	Get() const;
+			Value*			Duplicate() const;
+	const	ValuePropertyList&	operator=(PropertyList const& _value);
+			std::string	ToString() const;
+
+
+			void		Print(std::ostream&	os) const;
+protected:
+	PropertyList* 	value_;
+};
+
 
 #endif

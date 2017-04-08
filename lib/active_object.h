@@ -9,14 +9,21 @@ class	ActiveObject : public Object
 public:
 	ActiveObject();
 	
-	void	Start();
-	void	Stop();
+			void	Start();
+			void	Stop();
 
-	bool	IsRunning();
+			bool	IsRunning();
+
+	virtual	bool	GetProperties(Properties& _properties);
+	virtual	bool	SetProperty(Property const& _property, bool create = false);
+	virtual	void	Print(std::ostream& os) const;
 
 protected:
-	std::thread*	thread_;	
-	bool			running_;
+	virtual	void	Preprocess();
+	virtual	void	Process();
+	virtual	void	Postprocess();
+
+	std::thread		thread_;	
 	bool			stop_;
 	Time			loop_interval_;
 
