@@ -10,7 +10,7 @@
 #include "time2.h"
 
 class	Properties;
-class	PropertyList;
+class	PropertiesList;
 
 class	Property : public std::pair<std::string,Value*>
 {
@@ -27,17 +27,21 @@ public:
 	Property(std::string const& _name, Date const& _value);
 	Property(std::string const& _name, Time const& _value);
 	Property(std::string const& _name, Properties const& _vlaue);
-	Property(std::string const& _name, PropertyList const& _vlaue);
+	Property(std::string const& _name, PropertiesList const& _vlaue);
 	~Property();
 
 	const Property& operator=(Property const& _property);
+			bool		operator=(std::string const& _vlaue);
+			bool		Set(std::string const& _vlaue);
 
 	const std::string&	GetName() const;
 	const Value*		GetValue() const;
-	JSONNode			GetJSON() const;
-
+	//operator	JSONNode();
+	friend	JSONNode	ToJSON(Property const& _property);
 	friend	std::ostream&	::operator<<(std::ostream& os, Property const& _property);
 };
+
+JSONNode	ToJSON(Property const& _property);
 
 class	Properties : public std::list<Property>
 {
@@ -60,7 +64,12 @@ public:
 	bool	Append(std::string const& _name, Date const& _value);
 	bool	Append(std::string const& _name, Time const& _value);
 	bool	Append(std::string const& _name, Properties const& _vlaue);
-	bool	Append(std::string const& _name, PropertyList const& _vlaue);
+	bool	Append(std::string const& _name, PropertiesList const& _vlaue);
+
+	bool	AppendID(std::string const& _id);
+	bool	AppendName(std::string const& _name);
+	bool	AppendEnable(std::string const& _enable);
+	bool	AppendDeviceType(std::string const& _type);
 
 	bool	Delete(std::string const& _name);
 
@@ -68,36 +77,31 @@ public:
 	uint32_t	Count();
 
 	const Property*	Get(std::string const& _name) const;
-	JSONNode	GetJSON() const;
 
-
+	friend	JSONNode		ToJSON(Properties const& _properties);
 	friend	std::ostream&	::operator<<(std::ostream& os, Properties const& _properties);
 
 };
 
-class	PropertyList : public std::list<Value*>
+JSONNode		ToJSON(Properties const& _properties);
+
+class	PropertiesList : public std::list<Properties>
 {
 public:
-	PropertyList();
-	PropertyList(PropertyList const& _properties_list);
-	PropertyList(JSONNode const& _json);
-	~PropertyList();
+	PropertiesList();
+	PropertiesList(PropertiesList const& _properties_list);
+	PropertiesList(JSONNode const& _json);
+	~PropertiesList();
 
-	bool	Append(Property const& _property);
 	bool	Append(JSONNode const& _json);
-	bool	Append(int _value);
-	bool	Append(uint32_t _value);
-	bool	Append(uint64_t _value);
-	bool	Append(bool _value);
-	bool	Append(float _value);
-	bool	Append(double _value);
-	bool	Append(char const* _value);
-	bool	Append(std::string const& _value);
-	bool	Append(Date const& _value);
-	bool	Append(Time const& _value);
 	bool	Append(Properties const& _vlaue);
-	bool	Append(PropertyList const& _vlaue);
 
-	friend	std::ostream&	::operator<<(std::ostream& os, PropertyList const& _properties_list);
+	
+	friend	JSONNode		ToJSON(PropertiesList const& _properties_list);
+
+	friend	std::ostream&	::operator<<(std::ostream& os, PropertiesList const& _properties_list);
 };
+
+JSONNode		ToJSON(PropertiesList const& _properties_list);
+
 #endif

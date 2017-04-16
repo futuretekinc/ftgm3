@@ -1,6 +1,8 @@
 #include <iostream>
 #include <iomanip>
+#include <typeinfo>
 #include "property.h"
+#include "device.h"
  
 Property::Property(Property const& _property)
 {
@@ -74,6 +76,12 @@ Property::Property(std::string const& _name, Properties const& _value)
 	second = new ValueProperties(_value);
 }
 
+Property::Property(std::string const& _name, PropertiesList const& _value)
+{
+	first = _name;
+	second = new ValuePropertiesList(_value);
+}
+
 Property::~Property()
 {
 	delete second;
@@ -89,6 +97,17 @@ const Property& Property::operator=(Property const& _property)
 	first = _property.first;
 	second = _property.second->Duplicate();
 }
+
+bool	Property::operator=(std::string const& _value)
+{
+	return	second->Set(_value);
+}
+
+bool	Property::Set(std::string const& _value)
+{
+	return	second->Set(_value);
+}
+
 const std::string&	Property::GetName() const
 {
 	return	first;
@@ -101,52 +120,65 @@ const Value*		Property::GetValue() const
 
 std::ostream&	operator<<(std::ostream& os, Property const& _property)
 {
-	return	os << std::setw(16) << _property.GetName() << " : " << *_property.GetValue();
+
+	return	os << ToJSON(_property).write_formatted();
 }
 
-JSONNode	Property::GetJSON()  const
+JSONNode	ToJSON(Property const& _property)
 {
 	JSONNode	json;
 
-	if (dynamic_cast<ValueInt*>(second))
+	if (dynamic_cast<ValueInt*>(_property.second))
 	{
-		json = JSONNode(first,dynamic_cast<ValueInt*>(second)->Get()); 
+		json = JSONNode(_property.first,dynamic_cast<ValueInt*>(_property.second)->Get()); 
 	}
-	else if (dynamic_cast<ValueUInt32*>(second))
+	else if (dynamic_cast<ValueUInt32*>(_property.second))
 	{
-		json = JSONNode(first,dynamic_cast<ValueUInt32*>(second)->Get()); 
+		json = JSONNode(_property.first,dynamic_cast<ValueUInt32*>(_property.second)->Get()); 
 	}
-	else if (dynamic_cast<ValueUInt64*>(second))
+	else if (dynamic_cast<ValueUInt64*>(_property.second))
 	{
-		json = JSONNode(first,dynamic_cast<ValueUInt64*>(second)->Get()); 
+		json = JSONNode(_property.first,dynamic_cast<ValueUInt64*>(_property.second)->Get()); 
 	}
-	else if (dynamic_cast<ValueFloat*>(second))
+	else if (dynamic_cast<ValueFloat*>(_property.second))
 	{
-		json = JSONNode(first,dynamic_cast<ValueFloat*>(second)->Get()); 
+		json = JSONNode(_property.first,dynamic_cast<ValueFloat*>(_property.second)->Get()); 
 	}
-	else if (dynamic_cast<ValueBool*>(second))
+	else if (dynamic_cast<ValueBool*>(_property.second))
 	{
-		json = JSONNode(first,dynamic_cast<ValueBool*>(second)->Get()); 
+		json = JSONNode(_property.first,dynamic_cast<ValueBool*>(_property.second)->Get()); 
 	}
-	else if (dynamic_cast<ValueString*>(second))
+	else if (dynamic_cast<ValueString*>(_property.second))
 	{
-		json = JSONNode(first,dynamic_cast<ValueString*>(second)->Get()); 
+		json = JSONNode(_property.first,dynamic_cast<ValueString*>(_property.second)->Get()); 
 	}
-	else if (dynamic_cast<ValueDate*>(second))
+	else if (dynamic_cast<ValueDate*>(_property.second))
 	{
-		json = JSONNode(first,dynamic_cast<ValueDate*>(second)->ToString()); 
+		ValueDate *date = dynamic_cast<ValueDate*>(_property.second);
+		json = JSONNode(_property.first,std::string(*date));
 	}
-	else if (dynamic_cast<ValueTime*>(second))
+	else if (dynamic_cast<ValueTime*>(_property.second))
 	{
-		json = JSONNode(first,time_t(dynamic_cast<ValueTime*>(second)->Get())); 
+		ValueTime *time = dynamic_cast<ValueTime*>(_property.second);
+		json = JSONNode(_property.first,time_t(time->Get()));
 	}
-	else if (dynamic_cast<ValueProperties*>(second))
+	else if (dynamic_cast<ValueProperties*>(_property.second))
 	{	
-		ValueProperties *value = dynamic_cast<ValueProperties*>(second);
+		ValueProperties *value = dynamic_cast<ValueProperties*>(_property.second);
+		
+		json = ToJSON(value->Get());
 
-		json = value->Get().GetJSON();
-		json.set_name(first);
+		json.set_name(_property.first);
 	}
+	else if (dynamic_cast<ValuePropertiesList*>(_property.second))
+	{	
+		ValuePropertiesList *value = dynamic_cast<ValuePropertiesList*>(_property.second);
+
+		json = ToJSON(value->Get());
+
+		json.set_name(_property.first);
+	}
+
 
 	return	json;
 }
@@ -170,7 +202,10 @@ Properties::Properties(Properties const& _properties)
 
 Properties::Properties(JSONNode const& _json)
 {
-	Append(_json);
+	if (_json.type() == JSON_NODE)
+	{
+		Append(_json);
+	}
 }
 
 Properties::~Properties()
@@ -217,6 +252,11 @@ bool Properties::Append(JSONNode const& _json)
 			}
 		}
 		break;
+
+	case	JSON_ARRAY:
+		{
+			Append(_json.name(), PropertiesList(_json.as_array()));
+		}	
 	}
 
 	return	true;
@@ -277,6 +317,49 @@ bool	Properties::Append(std::string const& _name, Properties const& _value)
 	return	Append(Property(_name, _value));
 }
 
+bool	Properties::Append(std::string const& _name, PropertiesList const& _value)
+{
+	return	Append(Property(_name, _value));
+}
+
+bool	Properties::AppendID(std::string const& _id)
+{
+	if (!ValueID::IsValid(_id))
+	{
+		return	false;
+	}
+	return	Append(Property("id", _id));
+}
+
+bool	Properties::AppendName(std::string const& _name)
+{
+	if (!ValueName::IsValid(_name))
+	{
+		return	false;
+	}
+	return	Append(Property("name", _name));
+}
+
+bool	Properties::AppendEnable(std::string const& _enable)
+{
+	if ((_enable != "true") || (_enable != "false"))
+	{
+		return	false;	
+	}
+
+	return	Append(Property("enable", _enable));
+}
+
+bool	Properties::AppendDeviceType(std::string const& _type)
+{
+	if (!Device::IsValidType(_type))
+	{
+		return	false;	
+	}
+
+	return	Append(Property("type", _type));
+}
+
 bool	Properties::Delete(std::string const& _name)
 {
 	const Property*	property = NULL;
@@ -323,21 +406,18 @@ const Property*	Properties::Get(std::string const& _name) const
 
 std::ostream&	operator<<(std::ostream& os, Properties const& _properties)
 {
-	for(auto it = _properties.begin(); it != _properties.end(); it++)
-	{
-		os << (*it) << std::endl;
-	}
+	JSONNode	json = ToJSON(_properties);
 
-	return	os;
+	return	os << json.write_formatted();
 }
 
-JSONNode	Properties::GetJSON() const
+JSONNode	ToJSON(Properties const& _properties)
 {
 	JSONNode	json;
 
-	for(auto it = begin() ; it != end(); it++)
+	for(auto it = _properties.begin() ; it != _properties.end(); it++)
 	{
-		json.push_back(it->GetJSON());	
+		json.push_back(ToJSON(*it));	
 	}
 
 	return	json;
@@ -347,89 +427,73 @@ JSONNode	Properties::GetJSON() const
 // Class	PropertiesList
 ///////////////////////////////////////////////////////////////////////////
 
-PropertyList::PropertyList(PropertyList const& _properties_list)
+PropertiesList::PropertiesList()
+{
+}
+
+PropertiesList::PropertiesList(PropertiesList const& _properties_list)
 {
 	for(auto it = _properties_list.begin() ; it != _properties_list.end() ; it++)
 	{
-		push_back((*it)->Duplicate());	
+		push_back(*it);
 	}
 }
 
-PropertyList::PropertyList(JSONNode const& _json)
+PropertiesList::PropertiesList(JSONNode const& _json)
 {
 	if (_json.type() == JSON_ARRAY)
 	{
 		for(auto it = _json.begin() ; it != _json.end() ; it++)
 		{
+			push_back(Properties(*it));
 		}
 	}
 }
 
-PropertyList::~PropertyList()
+PropertiesList::~PropertiesList()
 {
 	for(auto it = begin() ; it != end() ; it++)
 	{
-		delete *it;
 	}
 }
 
-bool	PropertyList::Append(int _value)
+bool	PropertiesList::Append(JSONNode const& _json)
 {
-	return	Append(new ValueInt(_value));
+	if (_json.type() != JSON_ARRAY)
+	{
+		return	false;
+	}
+
+	for(auto it = _json.begin() ; it != _json.end() ; it++)
+	{
+		push_back(Properties(*it));
+	}
 }
 
-bool	PropertyList::Append(uint32_t _value)
+bool	PropertiesList::Append(Properties const& _value)
 {
-	return	Append(new ValueUInt32(_value));
+	push_back(_value);
+
+	return	true;
 }
 
-bool	PropertyList::Append(uint64_t _value)
+JSONNode	ToJSON(PropertiesList const& _properties_list)
 {
-	return	Append(new ValueUInt64(_value));
+	JSONNode	json(JSON_ARRAY);
+
+	for(auto it = _properties_list.begin() ; it != _properties_list.end() ; it++)
+	{
+		json.push_back(ToJSON(*it));
+	}
+
+	return	json;
 }
 
-bool	PropertyList::Append(bool _value)
+std::ostream&	operator<<(std::ostream& os, PropertiesList const& _properties_list)
 {
-	return	Append(new ValueBool(_value));
-}
-
-bool	PropertyList::Append(float _value)
-{
-	return	Append(new ValueFloat(_value));
-}
-
-bool	PropertyList::Append(double _value)
-{
-	return	Append(new ValueFloat(_value));
-}
-
-bool	PropertyList::Append(char const* _value)
-{
-	return	Append(new ValueString(_value));
-}
-
-bool	PropertyList::Append(std::string const& _value)
-{
-	return	Append(new ValueString(_value));
-}
-
-bool	PropertyList::Append(Date const& _value)
-{
-	return	Append(new ValueDate(_value));
-}
-
-bool	PropertyList::Append(Time const& _value)
-{
-	return	Append(new ValueTime(_value));
-}
-
-bool	PropertyList::Append(Properties const& _value)
-{
-	return	Append(new ValueProperties(_value));
-}
-
-bool	PropertyList::Append(PropertyList const& _value)
-{
-	return	Append(new ValuePropertyList(_value));
+	for(auto it = _properties_list.begin(); it != _properties_list.end(); it++)
+	{
+		os << (*it) << std::endl;
+	}
 }
 

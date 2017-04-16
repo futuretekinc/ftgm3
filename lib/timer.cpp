@@ -10,14 +10,14 @@ void	Timer::Set(const Date& _date)
 	reference_date_ = _date;
 }
 
-Time	Timer::RemainTime()
+Time	Timer::RemainTime() const
 {
 	Date	current;
 
 	return	reference_date_ - current;
 }
 
-Time	Timer::OverTime()
+Time	Timer::OverTime() const
 {
 	Date	current;
 
@@ -31,3 +31,9 @@ const Timer& Timer::operator+=(const Time& _time)
 	return *this;
 }
 
+const Timer& Timer::operator+=(uint64_t _microseconds)
+{
+	reference_date_ += Time(_microseconds);	
+
+	return *this;
+}

@@ -6,10 +6,10 @@
 class	DeviceIP : public Device
 {
 public:
-	DeviceIP();
-	DeviceIP(const ValueIP& _ip);
+	DeviceIP(Type _type);
+	DeviceIP(Type _type, const ValueIP& _ip);
 
-	virtual	bool		GetProperties(Properties& _properties);
+	virtual	bool		GetProperties(Properties& _properties) const;
 	virtual	bool		SetProperty(Property const& _property);
 
 	const 	ValueIP&	GetIP();

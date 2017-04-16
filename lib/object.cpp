@@ -9,8 +9,13 @@ Object::Object()
 Object::Object(const ValueID& _id)
 :	id_(_id), enable_(false)
 {
-	name_ = id_.ToString();
+	name_ = std::string(id_);
 	date_ = Date::GetCurrentDate();
+}
+
+Object::~Object()
+{
+	
 }
 
 const	ValueID&	Object::GetID() const
@@ -73,7 +78,7 @@ bool	Object::SetProperty(Property const& _property, bool create)
 	return	false;
 }
 
-bool	Object::GetProperties(Properties& _properties)
+bool	Object::GetProperties(Properties& _properties) const
 {
 	_properties.Append("id", id_);
 	_properties.Append("name", name_);
@@ -81,6 +86,18 @@ bool	Object::GetProperties(Properties& _properties)
 	_properties.Append("enable", enable_);
 
 	return	true;
+}
+
+Properties	Object::GetProperties() const
+{
+	Properties	properties;
+
+	properties.Append("id", std::string(id_));
+	properties.Append("name", name_);
+	properties.Append("date", date_);
+	properties.Append("enable", enable_);
+
+	return	properties;
 }
 
 bool	Object::SetProperties(Properties const& _properties, bool create)
@@ -93,6 +110,16 @@ bool	Object::SetProperties(Properties const& _properties, bool create)
 	return	true;
 }
 
+Object::operator JSONNode()
+{
+	Properties	properties;
+
+	GetProperties(properties);
+
+	return	ToJSON(properties);
+}
+
+
 void	Object::Print(std::ostream& os) const
 {
 	os << std::setw(16) << "ID : " << id_ << std::endl;
@@ -101,8 +128,26 @@ void	Object::Print(std::ostream& os) const
 	os << std::setw(16) << "Enable : " << enable_ << std::endl;
 }
 
-std::ostream&	operator<<(std::ostream& os, Object const& _object)
+std::ostream&	operator<<(std::ostream& os, Object& _object)
 {
-	_object.Print(os);
-	return	os;
+	JSONNode	json = JSONNode(_object);
+
+	return	os << json.write_formatted();
+}
+
+bool	Object::GetPropertyFieldList(std::list<std::string>& _field_list)
+{
+	_field_list.push_back("id");
+	_field_list.push_back("name");
+	_field_list.push_back("type");
+	_field_list.push_back("date");
+	_field_list.push_back("enable");
+	_field_list.push_back("live_check_interval");
+	_field_list.push_back("loop_interval");
+	_field_list.push_back("ip");
+	_field_list.push_back("module");
+	_field_list.push_back("community");
+	_field_list.push_back("timeout");
+
+	return	true;
 }

@@ -7,7 +7,7 @@ class	EndpointActuator : public Endpoint
 {
 public:
 	EndpointActuator();
-	
+
 };
 
 #endif

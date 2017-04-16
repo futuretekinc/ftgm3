@@ -9,12 +9,12 @@ class	ActiveObject : public Object
 public:
 	ActiveObject();
 	
-			void	Start();
-			void	Stop();
+	virtual	void	Start();
+	virtual	void	Stop();
 
 			bool	IsRunning();
 
-	virtual	bool	GetProperties(Properties& _properties);
+	virtual	bool	GetProperties(Properties& _properties) const;
 	virtual	bool	SetProperty(Property const& _property, bool create = false);
 	virtual	void	Print(std::ostream& os) const;
 

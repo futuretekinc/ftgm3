@@ -49,6 +49,11 @@ ValueInt& ValueInt::operator=(int _value)
 	return	*this;
 }
 
+ValueInt::operator std::string() const
+{
+	return	to_string(value_);	
+}
+
 int		ValueInt::Get() const
 {
 	return	value_;
@@ -69,11 +74,6 @@ void	ValueInt::Set(int _value)
 Value*	ValueInt::Duplicate() const
 {
 	return	new ValueInt(value_);
-}
-
-string	ValueInt::ToString() const
-{
-	return	to_string(value_);	
 }
 
 void	ValueInt::Print(ostream&	os) const
@@ -118,7 +118,7 @@ Value*	ValueUInt32::Duplicate() const
 	return	new ValueUInt32(value_);
 }
 
-string	ValueUInt32::ToString() const
+ValueUInt32::operator std::string() const
 {
 	return	to_string(value_);	
 }
@@ -165,7 +165,7 @@ Value*	ValueUInt64::Duplicate() const
 	return	new ValueUInt64(value_);
 }
 
-string	ValueUInt64::ToString() const
+ValueUInt64::operator std::string() const
 {
 	return	to_string(value_);	
 }
@@ -224,7 +224,7 @@ Value*	ValueBool::Duplicate() const
 	return	new ValueBool(value_);
 }
 
-string	ValueBool::ToString() const
+ValueBool::operator std::string() const
 {
 	return	to_string(value_);	
 }
@@ -300,7 +300,7 @@ Value*	ValueFloat::Duplicate() const
 	return	new ValueFloat(value_);
 }
 
-string	ValueFloat::ToString() const
+ValueFloat::operator std::string() const
 {
 	return	to_string(value_);	
 }
@@ -344,7 +344,7 @@ bool	ValueString::operator==(char *_value) const
 	return	value_.compare(_value);
 }
 
-ValueString::operator string()
+ValueString::operator string() const
 {
 	return	value_;
 }
@@ -364,11 +364,6 @@ bool	ValueString::Set(const string& _value)
 	value_ = _value;
 
 	return	true;
-}
-
-string	ValueString::ToString() const
-{
-	return	value_;
 }
 
 void	ValueString::Print(ostream&	os) const
@@ -439,6 +434,10 @@ Value*	ValueID::Duplicate() const
 	return	new ValueID(value_);
 }
 
+bool	ValueID::IsValid(std::string const& _id)
+{
+	return	(0 < _id.size() && _id.size() <= ID_LENGTH_MAX);
+}
 ///////////////////////////////////////////////////////////////
 // Class ValueName
 ///////////////////////////////////////////////////////////////
@@ -458,6 +457,10 @@ Value*	ValueName::Duplicate() const
 	return	new ValueName(value_);
 }
 
+bool	ValueName::IsValid(std::string const& _name)
+{
+	return	(0 < _name.size() && _name.size() <= NAME_LENGTH_MAX);
+}
 ///////////////////////////////////////////////////////////////
 // Class ValueIP
 ///////////////////////////////////////////////////////////////
@@ -595,7 +598,7 @@ const	ValueTime&	ValueTime::operator=(Time const& _value)
 	return	*this;
 }
 
-std::string	ValueTime::ToString() const
+ValueTime::operator std::string() const
 {
 	return	value_.ToString();
 }
@@ -641,7 +644,7 @@ const	ValueDate&	ValueDate::operator=(Date const& _value)
 	return	*this;
 }
 
-std::string	ValueDate::ToString() const
+ValueDate::operator std::string() const
 {
 	return	value_.ToString();
 }
@@ -691,7 +694,7 @@ const	ValueProperties&	ValueProperties::operator=(Properties const& _value)
 	return	*this;
 }
 
-std::string	ValueProperties::ToString() const
+ValueProperties::operator std::string() const
 {
 	std::ostringstream	oss;
 
@@ -706,46 +709,46 @@ void	ValueProperties::Print(ostream&	os) const
 }
 
 ///////////////////////////////////////////////////////////////
-// Class ValuePropertyList
+// Class ValuePropertiesList
 ///////////////////////////////////////////////////////////////
-ValuePropertyList::ValuePropertyList(const ValuePropertyList& _value)
+ValuePropertiesList::ValuePropertiesList(const ValuePropertiesList& _value)
 {
-	value_ = new PropertyList(*_value.value_);
+	value_ = new PropertiesList(*_value.value_);
 }
 
-ValuePropertyList::ValuePropertyList(const PropertyList& _properties)
+ValuePropertiesList::ValuePropertiesList(const PropertiesList& _properties)
 {
-	value_ = new PropertyList(_properties);
+	value_ = new PropertiesList(_properties);
 }
 
-ValuePropertyList::~ValuePropertyList()
+ValuePropertiesList::~ValuePropertiesList()
 {
 	delete value_;
 }
 
-const	PropertyList&	ValuePropertyList::Get() const
+const	PropertiesList&	ValuePropertiesList::Get() const
 {
 	return	*value_;
 }
 
-bool	ValuePropertyList::Set(const std::string& _value)
+bool	ValuePropertiesList::Set(const std::string& _value)
 {
 	return	false;
 }
 
-Value*	ValuePropertyList::Duplicate() const
+Value*	ValuePropertiesList::Duplicate() const
 {
-	return	new ValuePropertyList(*value_);
+	return	new ValuePropertiesList(*value_);
 }
 
-const	ValuePropertyList&	ValuePropertyList::operator=(PropertyList const& _value)
+const	ValuePropertiesList&	ValuePropertiesList::operator=(PropertiesList const& _value)
 {
 	*value_ = _value;
 
 	return	*this;
 }
 
-std::string	ValuePropertyList::ToString() const
+ValuePropertiesList::operator std::string() const
 {
 	std::ostringstream	oss;
 
@@ -754,7 +757,7 @@ std::string	ValuePropertyList::ToString() const
 	return	oss.str();
 }
 
-void	ValuePropertyList::Print(ostream&	os) const
+void	ValuePropertiesList::Print(ostream&	os) const
 {
 	os << *value_;
 }

@@ -26,12 +26,18 @@ public:
 	DeviceSNMP(std::string const& _module, ValueIP const& _ip);
 	~DeviceSNMP();
 
+	const	std::string&	GetModule();
+			bool			SetModule(std::string const& _module);
+	const	std::string&	GetCommunity();
+			bool			SetCommunity(std::string const& _community);
+
+	virtual	bool	GetProperties(Properties& _properties) const;
+	virtual	bool	SetProperty(Property const& _property);
+
 	virtual	OID		GetOID(std::string const& _id);
 	virtual	OID		GetOID(std::string const& _name, uint32_t index);
 
-	virtual	bool	GetProperties(Properties& _properties);
-	virtual	bool	SetProperty(Property const& _property);
-
+	virtual	bool	InsertToDB(Kompex::SQLiteStatement*	_statement);
 	virtual	void	Print(std::ostream& os) const;
 
 	static	bool	AddMIBPath(std::string const& _path);

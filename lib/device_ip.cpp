@@ -3,13 +3,13 @@
 #include "defined.h"
 #include "device_ip.h"
 
-DeviceIP::DeviceIP()
-: ip_(DEFAULT_LOCAL_IP)
+DeviceIP::DeviceIP(Type _type)
+: Device(_type), ip_(DEFAULT_LOCAL_IP)
 {
 }
 
-DeviceIP::DeviceIP(const ValueIP& _ip)
-: ip_(_ip)
+DeviceIP::DeviceIP(Type _type, const ValueIP& _ip)
+: Device(_type), ip_(_ip)
 {
 }
 
@@ -35,7 +35,7 @@ bool	DeviceIP::SetIP(const std::string& _ip)
 	return	false;
 }
 
-bool	DeviceIP::GetProperties(Properties& _properties)
+bool	DeviceIP::GetProperties(Properties& _properties) const
 {
 	if (Device::GetProperties(_properties))
 	{

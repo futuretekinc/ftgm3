@@ -9,10 +9,11 @@ public:
 	Timer();
 
 	void		Set(const Date& _date);
-	Time		RemainTime();
-	Time		OverTime();
+	Time		RemainTime() const;
+	Time		OverTime() const;
 
 	const Timer&	operator+=(const Time& _time);
+	const Timer&	operator+=(const uint64_t _microseconds);
 
 protected:
 	Date	reference_date_;

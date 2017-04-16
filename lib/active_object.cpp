@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <iomanip>
+#include "trace.h"
 #include "defined.h"
 #include "active_object.h"
 #include "timer.h"
@@ -7,15 +8,32 @@
 using namespace	std;
 
 ActiveObject::ActiveObject()
-: loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
+: stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
 {
 }
 
 void	ActiveObject::Start()
 {
+	Timer	timer;
+
+	timer += 1000 * TIME_MILLISECOND;
+
 	if (!thread_.joinable())
 	{
 		thread_ = thread(ThreadMain, this);
+		trace_info << "Thread started : " << thread_.get_id() << std::endl;
+		while(timer.RemainTime() != 0)
+		{
+			if (!stop_)
+			{
+				break;
+			}
+			usleep(1000);
+		}
+	}
+	else
+	{
+		trace_info << "Already started!" << std::endl;
 	}
 }
 
@@ -28,7 +46,7 @@ void	ActiveObject::Stop()
 	}
 }
 
-bool	ActiveObject::GetProperties(Properties& _properties)
+bool	ActiveObject::GetProperties(Properties& _properties) const
 {
 	if (Object::GetProperties(_properties))
 	{
@@ -68,6 +86,7 @@ void	ActiveObject::Print(std::ostream& os) const
 
 void	ActiveObject::Preprocess()
 {
+	trace_info << __func__ << " called" << std::endl;
 }
 
 void	ActiveObject::Process()

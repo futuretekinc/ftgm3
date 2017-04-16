@@ -8,6 +8,7 @@ class	EndpointSensorHumidity : public EndpointSensor
 public:
 	EndpointSensorHumidity();
 
+		bool	SetProperty(Property const& _property);
 };
 
 #endif

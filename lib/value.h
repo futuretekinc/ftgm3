@@ -16,7 +16,7 @@ public:
 
 	virtual	bool		Set(const std::string& _value) = 0;
 	virtual	Value*		Duplicate() const = 0;
-	virtual	std::string	ToString() const = 0;
+	virtual	operator	std::string() const = 0;
 
 	virtual	void		Print(std::ostream&	os) const = 0;
 	friend	Value*	::Duplicate(Value const *);
@@ -41,12 +41,12 @@ public:
 	ValueInt(int _value = 0);
 
 			ValueInt& 	operator=(int _value);
+						operator std::string() const;
 
 			int			Get() const;
 			void		Set(int _value);
 			bool		Set(const std::string& _value);
 			Value*		Duplicate() const;
-			std::string	ToString() const;
 
 			void		Print(std::ostream&	os) const;
 protected:
@@ -62,12 +62,12 @@ public:
 	ValueUInt32(uint32_t _value = 0);
 
 			ValueUInt32& 	operator=(uint32_t _value);
+							operator std::string() const;
 
 			uint32_t	Get() const;
 			void		Set(uint32_t _value);
 			bool		Set(const std::string& _value);
 			Value*		Duplicate() const;
-			std::string	ToString() const;
 
 			void		Print(std::ostream&	os) const;
 protected:
@@ -83,12 +83,12 @@ public:
 	ValueUInt64(uint64_t _value = 0);
 
 			ValueUInt64& 	operator=(uint64_t _value);
+							operator std::string() const;
 
 			uint64_t	Get() const;
 			void		Set(uint64_t _value);
 			bool		Set(const std::string& _value);
 			Value*		Duplicate() const;
-			std::string	ToString() const;
 
 			void		Print(std::ostream&	os) const;
 protected:
@@ -105,12 +105,12 @@ public:
 
 			ValueBool& 	operator=(bool _value);
 						operator bool() const;
+						operator std::string() const;
 
 			void		Set(bool _value);
 			bool		Set(const std::string& _value);
 			bool		Get() const;
 			Value*		Duplicate() const;
-			std::string	ToString() const;
 
 			void		Print(std::ostream&	os) const;
 protected:
@@ -127,6 +127,8 @@ public:
 
 			ValueFloat& operator=(float _value);
 						operator float() const;
+						operator std::string() const;
+
 			bool		operator ==(const ValueFloat& _value);
 			bool		operator >(const ValueFloat& _value);
 			bool		operator >=(const ValueFloat& _value);
@@ -137,7 +139,6 @@ public:
 			bool		Set(const std::string& _value);
 			float		Get() const;
 			Value*		Duplicate() const;
-			std::string	ToString() const;
 
 			void		Print(std::ostream&	os) const;
 protected:
@@ -155,16 +156,15 @@ public:
 	ValueString(std::string const& _value);
 
 			ValueString& 	operator=(const std::string& _value);
-						 	operator std::string();
+						 	operator std::string() const;
 			bool			operator==(std::string const& _value) const;
 			bool			operator==(char *_value) const;
 
 			bool			Set(const std::string& _value);
 	const	std::string&	Get() const; 
 			Value*			Duplicate() const;
-			std::string		ToString() const;
 
-
+						
 			void		Print(std::ostream&	os) const;
 protected:
 	std::string	value_;	
@@ -196,6 +196,8 @@ public:
 	ValueID(const std::string& _value);
 
 			Value*		Duplicate() const;
+	
+	static	bool		IsValid(std::string const& _id);
 };
 
 ///////////////////////////////////////////////////////////////
@@ -208,6 +210,8 @@ public:
 	ValueName(const std::string& _value);
 
 			Value*		Duplicate() const;
+
+	static	bool		IsValid(std::string const& _name);
 };
 
 ///////////////////////////////////////////////////////////////
@@ -250,11 +254,12 @@ public:
 	ValueTime(const ValueTime& _date);
 	ValueTime(const Time& _date);
 
+	const	ValueTime&	operator=(Time const& _value);
+						operator std::string() const;
+
 			bool		Set(const std::string& _value);
 	const	Time&		Get() const;
 			Value*		Duplicate() const;
-	const	ValueTime&	operator=(Time const& _value);
-			std::string	ToString() const;
 
 
 			void		Print(std::ostream&	os) const;
@@ -272,11 +277,12 @@ public:
 	ValueDate(const ValueDate& _date);
 	ValueDate(const Date& _date);
 
+	const	ValueDate&	operator=(Date const& _value);
+						operator std::string() const;
+
 			bool		Set(const std::string& _value);
 	const	Date&		Get() const;
 			Value*		Duplicate() const;
-	const	ValueDate&	operator=(Date const& _value);
-			std::string	ToString() const;
 
 
 			void		Print(std::ostream&	os) const;
@@ -296,11 +302,12 @@ public:
 	ValueProperties(Properties const& _value);
 	~ValueProperties();
 
+	const	ValueProperties&	operator=(Properties const& _value);
+						operator std::string() const;
+
 			bool			Set(const std::string& _value);
 	const	Properties&		Get() const;
 			Value*			Duplicate() const;
-	const	ValueProperties&	operator=(Properties const& _value);
-			std::string	ToString() const;
 
 
 			void		Print(std::ostream&	os) const;
@@ -310,27 +317,28 @@ protected:
 
 
 ///////////////////////////////////////////////////////////////
-// Class ValuePropertyList
+// Class ValuePropertiesList
 ///////////////////////////////////////////////////////////////
 
-class	PropertyList;
-class	ValuePropertyList : public Value
+class	PropertiesList;
+class	ValuePropertiesList : public Value
 {
 public:
-	ValuePropertyList(ValuePropertyList const& _value);
-	ValuePropertyList(PropertyList const& _value);
-	~ValuePropertyList();
+	ValuePropertiesList(ValuePropertiesList const& _value);
+	ValuePropertiesList(PropertiesList const& _value);
+	~ValuePropertiesList();
+
+	const	ValuePropertiesList&	operator=(PropertiesList const& _value);
+						operator std::string() const;
 
 			bool			Set(const std::string& _value);
-	const	PropertyList&	Get() const;
+	const	PropertiesList&	Get() const;
 			Value*			Duplicate() const;
-	const	ValuePropertyList&	operator=(PropertyList const& _value);
-			std::string	ToString() const;
 
 
 			void		Print(std::ostream&	os) const;
 protected:
-	PropertyList* 	value_;
+	PropertiesList* 	value_;
 };
 
 

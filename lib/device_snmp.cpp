@@ -4,7 +4,10 @@
 #include <iomanip>
 #include <sstream>
 #include "defined.h"
+#include "trace.h"
 #include "device_snmp.h"
+#include "KompexSQLiteStatement.h"
+#include "KompexSQLiteException.h"
 
 using namespace std;
 
@@ -31,18 +34,18 @@ DeviceSNMP::OID::operator string() const
 }
 
 DeviceSNMP::DeviceSNMP()
-: DeviceIP(), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+: DeviceIP(SNMP), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 }
 
 DeviceSNMP::DeviceSNMP(Properties const& _properties)
-: DeviceIP(), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+: DeviceIP(SNMP), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	SetProperties(_properties, true);
 }
 
 DeviceSNMP::DeviceSNMP(std::string const& _module)
-: DeviceIP(), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+: DeviceIP(SNMP), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	if (!snmp_initialized)
 	{
@@ -58,7 +61,7 @@ DeviceSNMP::DeviceSNMP(std::string const& _module)
 }
 
 DeviceSNMP::DeviceSNMP(std::string const& _module, ValueIP const& _ip)
-: DeviceIP(_ip), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+: DeviceIP(SNMP, _ip), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	if (!snmp_initialized)
 	{
@@ -102,7 +105,7 @@ bool	DeviceSNMP::Open()
 		session.version = SNMP_VERSION_2c;
 
 		session.peername = ip;
-		strncpy(session.peername, ip_.ToString().c_str(), IP_LENGTH_MAX);
+		strncpy(session.peername, std::string(ip_).c_str(), IP_LENGTH_MAX);
 
 		session.community = (uint8_t *)community;
 		strncpy((char *)session.community, community_.c_str(), SNMP_COMMUNITY_LENGTH_MAX);
@@ -130,6 +133,63 @@ bool	DeviceSNMP::Close()
 bool		DeviceSNMP::IsOpened()
 {
 	return	session_ != NULL;
+}
+
+const	std::string&	DeviceSNMP::GetModule()
+{
+	return	module_;
+}
+
+bool	DeviceSNMP::SetModule(std::string const& _module)
+{
+	module_ = _module;
+
+	return	true;
+}
+
+const	std::string&	DeviceSNMP::GetCommunity()
+{
+	return	community_;
+}
+
+bool	DeviceSNMP::SetCommunity(std::string const& _community)
+{
+	community_ = _community;
+
+	return	true;
+}
+
+bool	DeviceSNMP::GetProperties(Properties& _properties) const
+{
+	if (DeviceIP::GetProperties(_properties))
+	{
+		_properties.Append("module", module_);
+		_properties.Append("community", community_);
+		_properties.Append("timeout", timeout_);
+
+		return	true;	
+	}
+
+	return	false;
+}
+
+bool	DeviceSNMP::SetProperty(Property const& _property)
+{
+	if (strcasecmp(_property.GetName().c_str(), "community") == 0)
+	{
+		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+		if (value != NULL)
+		{
+			community_ = value->Get();
+			return	true;
+		}
+	}
+	else
+	{
+		return	DeviceIP::SetProperty(_property);
+	}
+
+	return	false;
 }
 
 DeviceSNMP::OID DeviceSNMP::GetOID(std::string const& _id)
@@ -179,39 +239,6 @@ DeviceSNMP::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 	}
 
 	return	oid;
-}
-
-bool	DeviceSNMP::GetProperties(Properties& _properties)
-{
-	if (DeviceIP::GetProperties(_properties))
-	{
-		_properties.Append("module", module_);
-		_properties.Append("community", community_);
-		_properties.Append("timeout", timeout_);
-
-		return	true;	
-	}
-
-	return	false;
-}
-
-bool	DeviceSNMP::SetProperty(Property const& _property)
-{
-	if (strcasecmp(_property.GetName().c_str(), "community") == 0)
-	{
-		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value != NULL)
-		{
-			community_ = value->Get();
-			return	true;
-		}
-	}
-	else
-	{
-		return	DeviceIP::SetProperty(_property);
-	}
-
-	return	false;
 }
 
 bool	DeviceSNMP::ReadValue(string const& _id, Value *_value)
@@ -361,4 +388,37 @@ bool	DeviceSNMP::ReadMIB(std::string const& _file_name)
 	}
 
 	return (read_mib(_file_name.c_str()) != 0);
+}
+
+bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
+{
+	try
+	{
+		ostringstream	query;
+		uint32_t		index = 0;
+
+		query << "INSERT INTO devices (_id, _type, _time, _enable, _name, _opt0, _opt1, _opt2, _opt3) VALUES (?,?,?,?,?,?,?,?);";
+		trace_info << "Query : " << query.str() << std::endl;
+
+		_statement->Sql(query.str());
+		_statement->BindString(++index, id_);
+		_statement->BindInt(++index, 	type_);
+		_statement->BindInt(++index, 	time_t(date_));
+		_statement->BindInt(++index, 	enable_);
+		_statement->BindString(++index, name_);
+		_statement->BindString(++index, ip_);
+		_statement->BindString(++index, module_);
+		_statement->BindString(++index, community_);
+		_statement->BindString(++index, to_string(timeout_));
+
+		_statement->ExecuteAndFree();
+
+	}
+	catch(Kompex::SQLiteException &exception)
+	{
+		trace_error << "Failed to insert device to DB." << std::endl;
+		return	false;
+	}
+
+	return	true;
 }
