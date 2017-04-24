@@ -6,6 +6,7 @@
 #include "defined.h"
 #include "trace.h"
 #include "device_snmp.h"
+#include "endpoint.h"
 #include "KompexSQLiteStatement.h"
 #include "KompexSQLiteException.h"
 
@@ -36,17 +37,21 @@ DeviceSNMP::OID::operator string() const
 DeviceSNMP::DeviceSNMP()
 : DeviceIP(SNMP), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
+	trace.SetClassName(GetClassName());
 }
 
 DeviceSNMP::DeviceSNMP(Properties const& _properties)
 : DeviceIP(SNMP), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
+	trace.SetClassName(GetClassName());
 	SetProperties(_properties, true);
 }
 
 DeviceSNMP::DeviceSNMP(std::string const& _module)
 : DeviceIP(SNMP), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
+	trace.SetClassName(GetClassName());
+
 	if (!snmp_initialized)
 	{
 		init_snmp("ftgm");
@@ -63,6 +68,8 @@ DeviceSNMP::DeviceSNMP(std::string const& _module)
 DeviceSNMP::DeviceSNMP(std::string const& _module, ValueIP const& _ip)
 : DeviceIP(SNMP, _ip), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
+	trace.SetClassName(GetClassName());
+
 	if (!snmp_initialized)
 	{
 		init_snmp("ftgm");
@@ -92,6 +99,12 @@ DeviceSNMP::~DeviceSNMP()
 	}
 }
 
+bool	DeviceSNMP::IsIncludedIn(Type _type)
+{
+	return	(_type == SNMP);
+}
+
+
 bool	DeviceSNMP::Open()
 {
 	if (session_ == NULL)
@@ -101,6 +114,12 @@ bool	DeviceSNMP::Open()
 		char			community[SNMP_COMMUNITY_LENGTH_MAX + 1];
 
 		snmp_sess_init(&session);
+
+		if (module_.size() != 0)
+		{
+			read_mib(module_.c_str());
+	//		read_all_mibs();
+		}
 
 		session.version = SNMP_VERSION_2c;
 
@@ -112,6 +131,14 @@ bool	DeviceSNMP::Open()
 		session.community_len = community_.size();
 
 		session_ = snmp_open(&session);
+		if (session_ == NULL)
+		{
+			TRACE_ERROR << "Failed to open session." << Trace::End;
+		}
+		else
+		{
+			TRACE_INFO << "SNMP session[" << ip << ":" << community_<<  "] opened." << Trace::End;	
+		}
 
 	}
 
@@ -173,23 +200,45 @@ bool	DeviceSNMP::GetProperties(Properties& _properties) const
 	return	false;
 }
 
-bool	DeviceSNMP::SetProperty(Property const& _property)
+bool	DeviceSNMP::SetProperty(Property const& _property, bool create)
 {
-	if (strcasecmp(_property.GetName().c_str(), "community") == 0)
+	if (_property.GetName() == "module")
+	{
+		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+		if (value != NULL)
+		{
+			module_ = value->Get();
+			TRACE_INFO << "The module of object[" << id_ <<"] was set to " << module_ << Trace::End;
+			return	true;
+		}
+	}
+	else if (_property.GetName() == "community")
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
 			community_ = value->Get();
+			TRACE_INFO << "The community of object[" << id_ <<"] was set to " << community_ << Trace::End;
 			return	true;
 		}
 	}
 	else
 	{
-		return	DeviceIP::SetProperty(_property);
+		return	DeviceIP::SetProperty(_property, create);
 	}
 
 	return	false;
+}
+
+Endpoint*	DeviceSNMP::CreateEndpoint(Properties const& _properties)
+{
+	Endpoint* endpoint = Endpoint::Create(_properties);
+	if (endpoint != NULL)
+	{
+		Attach(endpoint);	
+	}
+
+	return	endpoint;
 }
 
 DeviceSNMP::OID DeviceSNMP::GetOID(std::string const& _id)
@@ -243,14 +292,19 @@ DeviceSNMP::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 
 bool	DeviceSNMP::ReadValue(string const& _id, Value *_value)
 {
+	Open();
+
 	if (session_ == NULL)
 	{
+		TRACE_ERROR << "Session is not opened." << Trace::End;
 		return	false;
 	}
 
 	OID oid = GetOID(_id);
 	if (oid.length == 0)
 	{
+		TRACE_ERROR << "OID not found." << Trace::End;
+		Close();
 		return	false;
 	}
 
@@ -258,6 +312,7 @@ bool	DeviceSNMP::ReadValue(string const& _id, Value *_value)
 	netsnmp_pdu*	request_pdu = snmp_pdu_create(SNMP_MSG_GET);
 	if (request_pdu == NULL)
 	{
+		Close();
 		return	false;
 	}
 
@@ -276,11 +331,70 @@ bool	DeviceSNMP::ReadValue(string const& _id, Value *_value)
 			}
 		}
 	}
+	else
+	{
+		TRACE_ERROR << "Failed to get SNMP!" << Trace::End;
+	}
 
 	if (response_pdu != NULL)
 	{
 		snmp_free_pdu(response_pdu);	
 	}
+
+	Close();
+
+	return	ret;
+}
+
+bool	DeviceSNMP::ReadValue(OID const& _oid, Value *_value)
+{
+	Open();
+
+	if (session_ == NULL)
+	{
+		TRACE_ERROR << "Session is not opened." << Trace::End;
+		return	false;
+	}
+
+	netsnmp_pdu*	response_pdu = NULL;
+	netsnmp_pdu*	request_pdu = snmp_pdu_create(SNMP_MSG_GET);
+	if (request_pdu == NULL)
+	{ 
+		Close();
+		return	false;
+	}
+
+	bool	ret = false;
+	request_pdu->time = 5;
+	snmp_add_null_var(request_pdu, _oid.id, _oid.length);   
+
+	int snmp_ret = snmp_synch_response(session_, request_pdu, &response_pdu);
+	if ((snmp_ret != STAT_SUCCESS) || (response_pdu->errstat != SNMP_ERR_NOERROR))
+	{
+		TRACE_ERROR << "Failed to get SNMP[" << std::string(_oid) << "]!" << Trace::End;
+		if (response_pdu != NULL)
+		{	
+			TRACE_ERROR << "Error : " << snmp_errstring(response_pdu->errstat) << "]!" << Trace::End;
+		}
+	}
+	else
+	{ 
+		if (response_pdu != NULL)
+		{
+			if (response_pdu->errstat == SNMP_ERR_NOERROR)
+			{
+				Convert(response_pdu->variables, _value);
+				ret = true;
+			}
+		}
+	}
+
+	if (response_pdu != NULL)
+	{
+		snmp_free_pdu(response_pdu);	
+	}
+
+	Close();
 
 	return	ret;
 }
@@ -288,7 +402,7 @@ bool	DeviceSNMP::ReadValue(string const& _id, Value *_value)
 void	DeviceSNMP::Print(std::ostream& os) const
 {
 	DeviceIP::Print(os);
-	os << std::setw(16) << "Community : " << community_ << std::endl;
+	os << std::setw(16) << "Community : " << community_ << Trace::End;
 
 }
 
@@ -355,6 +469,16 @@ bool	DeviceSNMP::Convert
 	return  true;
 }
 
+void	DeviceSNMP::Preprocess()
+{
+	//Open();
+}
+
+void	DeviceSNMP::Postprocess()
+{
+	//Close();
+}
+
 bool	DeviceSNMP::AddMIBPath(std::string const& _path)
 {
 	if (!mib_initialized)
@@ -398,11 +522,11 @@ bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
 		uint32_t		index = 0;
 
 		query << "INSERT INTO devices (_id, _type, _time, _enable, _name, _opt0, _opt1, _opt2, _opt3) VALUES (?,?,?,?,?,?,?,?);";
-		trace_info << "Query : " << query.str() << std::endl;
+		TRACE_INFO << "Query : " << query.str() << Trace::End;
 
 		_statement->Sql(query.str());
 		_statement->BindString(++index, id_);
-		_statement->BindInt(++index, 	type_);
+		_statement->BindInt(++index, 	GetType());
 		_statement->BindInt(++index, 	time_t(date_));
 		_statement->BindInt(++index, 	enable_);
 		_statement->BindString(++index, name_);
@@ -416,7 +540,7 @@ bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
 	}
 	catch(Kompex::SQLiteException &exception)
 	{
-		trace_error << "Failed to insert device to DB." << std::endl;
+		TRACE_ERROR << "Failed to insert device to DB." << Trace::End;
 		return	false;
 	}
 

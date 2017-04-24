@@ -70,6 +70,7 @@ public:
 	bool	AppendName(std::string const& _name);
 	bool	AppendEnable(std::string const& _enable);
 	bool	AppendDeviceType(std::string const& _type);
+	bool	AppendEndpointType(std::string const& _type);
 
 	bool	Delete(std::string const& _name);
 

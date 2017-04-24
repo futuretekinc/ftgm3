@@ -9,9 +9,8 @@ SUB_DIRS = shell
 TARGET_NAME = ftgm
 TARGET_SRCS = $(wildcard *.cpp)
 
-DEPEND_LIBS = 
+DEPEND_LIBS =
 
 CFLAGS := $(CFLAGS) -I. -I./shell
-LIBS += -lshellftgm -lftgm -ljson -lnetsnmp -lpthread -ldl
-
+LIBS += -lshellftgm -lftgm -lhl++ /home/xtra/Workspace/KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
 include $(PROJ_ROOT)/IncludePost.mk

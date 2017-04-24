@@ -36,12 +36,14 @@ protected:
 
 class	Date
 {
+	friend	class	Timer;
+
 public:
 	Date();
-	Date(const Date& _date);
+	Date(Date const& _date);
 	Date(uint32_t _seconds);
 
-			bool	IsValid();
+			bool	IsValid() const;
 			void	Set(uint32_t _seconds);
 
 	virtual	const std::string	ToString() const;
@@ -52,7 +54,10 @@ public:
 	const	Date&	operator-=(const Time& _time);
 	const	Date&	operator+=(const Time& _time);
 	const	Date&	operator=(Date const& _date);
+	const	Date&	operator=(std::string const& _date);
 					operator time_t() const;
+			uint64_t	GetMicroSecond();
+
 	friend	std::ostream&	::operator<<(std::ostream& os, Date const& _date) ;
 
 	static	Date	GetCurrentDate();

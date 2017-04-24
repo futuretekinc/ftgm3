@@ -10,6 +10,8 @@ public:
 	EndpointSensorTemperature();
 	EndpointSensorTemperature(Properties const& _properties);
 
+			std::string		GetClassName();
+			Type			GetType()	const 		{	return	S_TEMPERATURE;	}
 };
 
 #endif

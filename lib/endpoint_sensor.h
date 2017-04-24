@@ -17,6 +17,7 @@ public:
 	virtual	bool	SetValueMin(ValueFloat const& _value_min);
 	virtual	bool	SetValueMax(ValueFloat const& _value_max);
 protected:
+
 	ValueFloat	value_max_;
 	ValueFloat	value_min_;
 };

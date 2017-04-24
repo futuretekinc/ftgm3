@@ -1,3 +1,4 @@
+#include <iostream>
 #include"timer.h"
 
 Timer::Timer()
@@ -13,15 +14,27 @@ void	Timer::Set(const Date& _date)
 Time	Timer::RemainTime() const
 {
 	Date	current;
+	uint64_t	remain = 0;
 
-	return	reference_date_ - current;
+	if (reference_date_.value_ > current.value_)
+	{
+		remain = reference_date_.value_ - current.value_;
+	}
+
+	return	Time(remain);
 }
 
 Time	Timer::OverTime() const
 {
 	Date	current;
+	uint64_t	over= 0;
 
-	return	current - reference_date_;
+	if (current.value_ > reference_date_.value_)
+	{
+		over = current.value_ - reference_date_.value_;
+	}
+
+	return	Time(over);
 }
 
 const Timer& Timer::operator+=(const Time& _time)

@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <typeinfo>
 #include "defined.h"
 #include "value.h"
 #include "property.h"
@@ -30,16 +31,30 @@ std::ostream& operator<<(std::ostream& os, Value const& _value)
 
 	return	os;
 }
+
+std::string	Value::GetTypeString() const
+{
+	return	typeid(this).name();
+}
 ///////////////////////////////////////////////////////////////
 // Class ValueNumber
 ///////////////////////////////////////////////////////////////
 
+std::string	ValueNumber::GetTypeString() const
+{
+	return	typeid(this).name();
+}
 ///////////////////////////////////////////////////////////////
 // Class ValueInt
 ///////////////////////////////////////////////////////////////
 ValueInt::ValueInt(int _value)
 : value_(_value)
 {
+}
+
+std::string	ValueInt::GetTypeString() const
+{
+	return	typeid(this).name();
 }
 
 ValueInt& ValueInt::operator=(int _value)
@@ -89,6 +104,11 @@ ValueUInt32::ValueUInt32(uint32_t _value)
 {
 }
 
+std::string	ValueUInt32::GetTypeString() const
+{
+	return	typeid(this).name();
+}
+
 ValueUInt32& ValueUInt32::operator=(uint32_t _value)
 {
 	value_ = _value;
@@ -136,6 +156,11 @@ ValueUInt64::ValueUInt64(uint64_t _value)
 {
 }
 
+std::string	ValueUInt64::GetTypeString() const
+{
+	return	typeid(this).name();
+}
+
 ValueUInt64& ValueUInt64::operator=(uint64_t _value)
 {
 	value_ = _value;
@@ -181,6 +206,11 @@ void	ValueUInt64::Print(ostream&	os) const
 ValueBool::ValueBool(bool _value)
 : value_(_value)
 {
+}
+
+std::string	ValueBool::GetTypeString() const
+{
+	return	typeid(this).name();
 }
 
 ValueBool& ValueBool::operator=(bool _value)
@@ -239,6 +269,11 @@ void	ValueBool::Print(ostream&	os) const
 ValueFloat::ValueFloat(float _value)
 : value_(_value)
 {
+}
+
+std::string	ValueFloat::GetTypeString() const
+{
+	return	typeid(this).name();
 }
 
 ValueFloat::operator float() const
@@ -327,6 +362,11 @@ ValueString::ValueString(const std::string& _value)
 {
 }
 
+std::string	ValueString::GetTypeString() const
+{
+	return	typeid(this).name();
+}
+
 ValueString& ValueString::operator=(const string& _value)
 {
 	value_ = _value;
@@ -379,14 +419,19 @@ ValueStringLimit::ValueStringLimit(uint32_t _limit)
 {
 }
 
-ValueStringLimit& ValueStringLimit::operator=(string& _value)
+std::string	ValueStringLimit::GetTypeString() const
+{
+	return	typeid(this).name();
+}
+
+ValueStringLimit& ValueStringLimit::operator=(string const& _value)
 {
 	value_ = _value.substr(0, limit_);
 
 	return	*this;
 }
 
-ValueStringLimit& ValueStringLimit::operator=(char *_value)
+ValueStringLimit& ValueStringLimit::operator=(char const* _value)
 {
 	string value = _value;
 
@@ -429,6 +474,11 @@ ValueID::ValueID(const string& _value)
 	Set(_value);
 }
 
+std::string	ValueID::GetTypeString() const
+{
+	return	typeid(this).name();
+}
+
 Value*	ValueID::Duplicate() const
 {
 	return	new ValueID(value_);
@@ -450,6 +500,18 @@ ValueName::ValueName(const string& _value)
 : ValueStringLimit(NAME_LENGTH_MAX)
 {
 	Set(_value);
+}
+
+std::string	ValueName::GetTypeString() const
+{
+	return	typeid(this).name();
+}
+
+ValueName& 	ValueName::operator=(const std::string& _value)
+{
+	Set(_value);
+
+	return	*this;
 }
 
 Value*	ValueName::Duplicate() const
@@ -475,6 +537,11 @@ ValueIP::ValueIP(const std::string& _ip)
 	{
 		value_ = _ip;	
 	}
+}
+
+std::string	ValueIP::GetTypeString() const
+{
+	return	typeid(this).name();
 }
 
 bool	ValueIP::Set(const string& _value)
@@ -544,6 +611,11 @@ ValueUnit::ValueUnit(const std::string& _unit)
 {
 }
 
+std::string	ValueUnit::GetTypeString() const
+{
+	return	typeid(this).name();
+}
+
 bool	ValueUnit::Set(const string& _value)
 {
 	value_ = _value;		
@@ -574,6 +646,11 @@ ValueTime::ValueTime(const ValueTime& _value)
 ValueTime::ValueTime(const Time& _date)
 {
 	value_ = _date;
+}
+
+std::string	ValueTime::GetTypeString() const
+{
+	return	typeid(this).name();
 }
 
 const	Time&	ValueTime::Get() const
@@ -620,6 +697,11 @@ ValueDate::ValueDate(const ValueDate& _value)
 ValueDate::ValueDate(const Date& _date)
 {
 	value_ = _date;
+}
+
+std::string	ValueDate::GetTypeString() const
+{
+	return	typeid(this).name();
 }
 
 const	Date&	ValueDate::Get() const
@@ -670,6 +752,11 @@ ValueProperties::ValueProperties(const Properties& _properties)
 ValueProperties::~ValueProperties()
 {
 	delete value_;
+}
+
+std::string	ValueProperties::GetTypeString() const
+{
+	return	typeid(this).name();
 }
 
 const	Properties&	ValueProperties::Get() const
@@ -724,6 +811,11 @@ ValuePropertiesList::ValuePropertiesList(const PropertiesList& _properties)
 ValuePropertiesList::~ValuePropertiesList()
 {
 	delete value_;
+}
+
+std::string	ValuePropertiesList::GetTypeString() const
+{
+	return	typeid(this).name();
 }
 
 const	PropertiesList&	ValuePropertiesList::Get() const

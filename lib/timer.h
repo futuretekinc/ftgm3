@@ -15,7 +15,7 @@ public:
 	const Timer&	operator+=(const Time& _time);
 	const Timer&	operator+=(const uint64_t _microseconds);
 
-protected:
+//protected:
 	Date	reference_date_;
 	Time	time_;	
 

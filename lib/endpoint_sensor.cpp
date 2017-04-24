@@ -1,3 +1,4 @@
+#include "device.h"
 #include "endpoint_sensor.h"
 
 EndpointSensor::EndpointSensor()
@@ -6,8 +7,9 @@ EndpointSensor::EndpointSensor()
 }
 
 EndpointSensor::EndpointSensor(std::string const& _unit, const ValueFloat& _value_min, const ValueFloat& _value_max)
-: Endpoint(_unit)
+: Endpoint()
 {
+	unit_ = _unit;
 	if (_value_min < _value_max)
 	{
 		value_min_ = _value_min;	
@@ -20,9 +22,10 @@ EndpointSensor::EndpointSensor(std::string const& _unit, const ValueFloat& _valu
 	}
 }
 
-EndpointSensor::EndpointSensor(std::string const& _uint, float _value_min, float _value_max)
-: Endpoint(_uint)
+EndpointSensor::EndpointSensor(std::string const& _unit, float _value_min, float _value_max)
+: Endpoint()
 {
+	unit_ = _unit;
 	if (_value_min < _value_max)
 	{
 		value_min_ = _value_min;	
@@ -38,7 +41,6 @@ EndpointSensor::EndpointSensor(std::string const& _uint, float _value_min, float
 bool	EndpointSensor::IsValid(const ValueFloat& _value)
 {
 	return	((value_min_ <= _value) && (_value <= value_max_));
-
 }
 
 bool	EndpointSensor::SetValueMin(ValueFloat const& _value_min)
@@ -92,3 +94,4 @@ bool	EndpointSensor::SetProperty(Property const& _property)
 
 	return	false;
 }
+

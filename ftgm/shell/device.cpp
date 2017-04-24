@@ -3,6 +3,7 @@
 #include "shell_ftgm.h"
 #include "device.h"
 #include "device_snmp.h"
+#include "object_manager.h"
 
 
 RetValue	ShellCommandDevice
@@ -13,55 +14,66 @@ RetValue	ShellCommandDevice
 )
 {
 	RetValue	ret_value = RET_VALUE_OK;
+	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
 
-	if (_count < 2)
+	if (object_manager == NULL)
 	{
-		std::cout << "Device count : " << Device::Count() << std::endl;
+		std::cout << "Object manager not attached!" << std::endl;	
+	}
+	else if (_count < 2)
+	{
+		uint32_t	id_len 	= 32;
+		uint32_t	name_len= 16;
+		uint32_t	type_len= 16;
+		uint32_t	stat_len= 16;
+		uint32_t	ip_len= 16;
+		uint32_t	module_len= 16;
+		uint32_t	community_len= 16;
+
+		std::cout << "Device count : " << object_manager->GetDeviceCount() << std::endl;
 		
 		std::list<Device*>	snmp_list;
-		if (Device::GetList(Device::SNMP, snmp_list) != 0)
+		if (object_manager->GetDeviceList(Device::SNMP, snmp_list) != 0)
 		{
 			std::cout << "* SNMP Device" << std::endl;
-			std::cout << std::setw(16) << "ID";
-			std::cout << std::setw(16) << "Name";
-			std::cout << std::setw(16) << "Type";
-			std::cout << std::setw(8) << "Enable";
-			std::cout << std::setw(8) << "Stat";
-			std::cout << std::setw(16) << "IP";
-			std::cout << std::setw(16) << "Module";
-			std::cout << std::setw(16) << "Community";
+			std::cout << std::setw(id_len) << "ID";
+			std::cout << std::setw(name_len) << "Name";
+			std::cout << std::setw(type_len) << "Type";
+			std::cout << std::setw(stat_len) << "Stat";
+			std::cout << std::setw(ip_len) << "IP";
+			std::cout << std::setw(module_len) << "Module";
+			std::cout << std::setw(community_len) << "Community";
 			std::cout << std::endl;
 
 			for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
 			{
 				DeviceSNMP *device = dynamic_cast<DeviceSNMP*>(*it);
 
-				std::cout << std::setw(16) << device->GetID();
-				std::cout << std::setw(16) << device->GetName();
-				std::cout << std::setw(16) << ToString(Device::SNMP);
-				std::cout << std::setw(8) << device->GetEnable();
-				std::cout << std::setw(8) << (device->IsRunning()?"run":"stop");
-				std::cout << std::setw(16) << device->GetIP();
-				std::cout << std::setw(16) << device->GetModule();
-				std::cout << std::setw(16) << device->GetCommunity();
+				std::cout << std::setw(id_len) << device->GetID();
+				std::cout << std::setw(name_len) << device->GetName();
+				std::cout << std::setw(type_len) << Device::ToString(Device::SNMP);
+				std::cout << std::setw(stat_len) << Object::ToString(device->GetStat());
+				std::cout << std::setw(ip_len) << device->GetIP();
+				std::cout << std::setw(module_len) << device->GetModule();
+				std::cout << std::setw(community_len) << device->GetCommunity();
 				std::cout << std::endl;	
 			}
 		}
 
 		std::list<Device*>	mbtcp_list;
-		if (Device::GetList(Device::MBTCP, mbtcp_list) != 0)
+		if (object_manager->GetDeviceList(Device::MBTCP, mbtcp_list) != 0)
 		{
 			std::cout << "* MBTCP Device" << std::endl;
-			std::cout << std::setw(16) << "ID";
-			std::cout << std::setw(16) << "Name";
-			std::cout << std::setw(16) << "Type";
+			std::cout << std::setw(id_len) << "ID";
+			std::cout << std::setw(name_len) << "Name";
+			std::cout << std::setw(type_len) << "Type";
 			std::cout << std::endl;
 
 			for(auto it = mbtcp_list.begin() ; it != mbtcp_list.end() ; it++)
 			{
-				std::cout << std::setw(16) << (*it)->GetID();
-				std::cout << std::setw(16) << (*it)->GetName();
-				std::cout << std::setw(16) << ToString(Device::MBTCP);
+				std::cout << std::setw(id_len) << (*it)->GetID();
+				std::cout << std::setw(name_len) << (*it)->GetName();
+				std::cout << std::setw(type_len) << Device::ToString(Device::MBTCP);
 				std::cout << std::endl;	
 			}
 		}
@@ -103,7 +115,7 @@ RetValue	ShellCommandDevice
 
 				if (ret_value == RET_VALUE_OK)
 				{
-					Device* device = Device::Create(properties);	
+					Device* device = object_manager->CreateDevice(properties);	
 					if (device == NULL)
 					{
 						ret_value = RET_VALUE_INVALID_ARGUMENTS;
@@ -111,7 +123,6 @@ RetValue	ShellCommandDevice
 					else
 					{
 						std::cout << "Device created." << std::endl;		
-						std::cout << *device << std::endl;
 					}
 				}
 			}
@@ -128,7 +139,7 @@ RetValue	ShellCommandDevice
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				Device *device = Device::Get(_arguments[i]);
+				Device *device = object_manager->GetDevice(_arguments[i]);
 				if (device == NULL)
 				{
 					std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
@@ -151,7 +162,7 @@ RetValue	ShellCommandDevice
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				Device *device = Device::Get(_arguments[i]);
+				Device *device = object_manager->GetDevice(_arguments[i]);
 				if (device == NULL)
 				{
 					std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
@@ -174,7 +185,7 @@ RetValue	ShellCommandDevice
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				Device *device = Device::Get(_arguments[i]);
+				Device *device = object_manager->GetDevice(_arguments[i]);
 				if (device == NULL)
 				{
 					std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
@@ -183,6 +194,52 @@ RetValue	ShellCommandDevice
 				{
 					device->Stop();
 					std::cout << "The device[" << _arguments[i] << "] has stopped!" << std::endl;
+				}
+			}
+		}
+	}
+	else if (_arguments[1] == "enable")
+	{
+		if (_count < 3)
+		{
+			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+		}
+		else
+		{
+			for(uint32_t i = 2 ; i < _count ; i++)
+			{
+				Device *device = object_manager->GetDevice(_arguments[i]);
+				if (device == NULL)
+				{
+					std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
+				}
+				else
+				{
+					device->SetEnable(true);
+					std::cout << "The device[" << _arguments[i] << "] is enabled!" << std::endl;
+				}
+			}
+		}
+	}
+	else if (_arguments[1] == "disable")
+	{
+		if (_count < 3)
+		{
+			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+		}
+		else
+		{
+			for(uint32_t i = 2 ; i < _count ; i++)
+			{
+				Device *device = object_manager->GetDevice(_arguments[i]);
+				if (device == NULL)
+				{
+					std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
+				}
+				else
+				{
+					device->SetEnable(false);
+					std::cout << "The device[" << _arguments[i] << "] is disabled!" << std::endl;
 				}
 			}
 		}
@@ -197,7 +254,7 @@ RetValue	ShellCommandDevice
 		}
 		else
 		{
-			Device*	device = Device::Get(_arguments[2]);
+			Device*	device = object_manager->GetDevice(_arguments[2]);
 			if (device == NULL)
 			{
 				std::cout << "Device[" << _arguments[2] << " not found!" << std::endl;
@@ -250,9 +307,19 @@ RetValue	ShellCommandDevice
 				if (libjson::is_valid(buffer))
 				{
 					json = libjson::parse(buffer);
-
-					uint32_t count = Device::Create(json);
-					std::cout << "Device created : " << count << std::endl;
+				
+					Properties	properties;
+					properties.Append(json);
+				
+					Device* device = object_manager->CreateDevice(properties);
+					if (device == NULL)
+					{
+						std::cout << "Failed to create device!" << std::endl;
+					}
+					else
+					{
+						std::cout << "The device is created!" << std::endl;
+					}
 				}
 				else
 				{
@@ -262,8 +329,10 @@ RetValue	ShellCommandDevice
 			}
 			
 		}
-
-
+	}
+	else
+	{
+		ret_value = RET_VALUE_INVALID_ARGUMENTS;
 	}
 
 	switch(ret_value)
@@ -278,7 +347,20 @@ RetValue	ShellCommandDevice
 Shell::Command	shell_ftgm_command_device = 
 {
 	.name		=	"device",
-	.help		=	"<command>\n",
+	.help		=	"<command> \n"
+					"  Management of device.\n"
+					"COMMANDS:\n"
+					"  create  <TYPE> [--id <ID>] [--name <NAME>]\n"
+					"    Create device\n"
+					"  destroy <ID> [<ID> ...]\n"
+					"    Destroy devices.\n"
+					"  start   <ID> [<ID> ...]\n"
+					"    Start devices.\n"
+					"  stop    <ID> [<ID> ...]\n"
+					"    Stop devices.\n"
+					"PARAMETERS:\n"
+					"  TYPE    Type of device\n"
+					"  ID      Device ID\n",
 	.short_help	=	"Management of device",
 	.function	=	ShellCommandDevice
 };

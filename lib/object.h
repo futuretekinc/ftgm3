@@ -6,40 +6,63 @@
 #include <libjson/libjson.h>
 #include <list>
 #include "value.h"
+#include "trace.h"
 #include "time2.h"
 #include "property.h"
+
+
+class	ObjectManager;
 
 class	Object
 {
 public:
+	friend class	ObjectManager;
+
+	enum	Stat
+	{
+		DISABLED,
+		ENABLED,
+		RUN,
+		STOP
+	};
+
 	Object();
 	Object(const ValueID& _id);
 	~Object();
+
+	virtual	std::string	GetClassName();
 
 	const	ValueID&	GetID() const;
 	const	ValueName&	GetName() const;
 	const	Date&		GetDate() const;
 			bool		GetEnable() const;
-
+	virtual	void		SetEnable(bool _enable);
+	virtual	Stat		GetState() const;
+		
 	virtual	bool		GetProperties(Properties& _properties) const;
 	virtual	Properties	GetProperties() const;
 	virtual	bool		SetProperty(Property const& _property, bool create = false);
 	virtual	bool		SetProperties(Properties const& _properties, bool create = false);
-
-	virtual	operator JSONNode();
-	//virtual	JSONNode	GetJSON() const;
+	
+	virtual				operator JSONNode();
 	virtual	void		Print(std::ostream& os) const;
 
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
+	static	std::string ToString(Stat _stat);
 
 	friend std::ostream&	operator<<(std::ostream& os, Object & _object);
 
 protected:
+	ObjectManager*	parent_;
+	std::string	class_name_;
 	ValueID		id_;
 	ValueName	name_;	
 	Date		date_;
 	bool		enable_;
 	std::mutex	mutex_;
+
+	Trace		trace;
 };
+
 
 #endif

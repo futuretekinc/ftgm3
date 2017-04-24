@@ -28,9 +28,26 @@
 #define	ENDPOINT_SENSOR_HUMIDITY_UNIT		("%RH")
 
 #define	DEFAULT_LOCAL_IP					"127.0.0.1"
+#define	DEFAULT_SERVER_IP					"127.0.0.1"
+#define	DEFAULT_SERVER_PORT					8888
 
 #define	SNMP_COMMUNITY_LENGTH_MAX			128
 
+#define	LOG_FILE_PATH						"/var/log/"
+#define	LOG_FILE_SIZE						(1024*1024)
+
+extern	const char *RMC_RESULT_OK;
+extern	const char *RMC_RESULT_FAILED;
+extern	const char *RMC_FIELD_SECTION;
+extern	const char *RMC_FIELD_COMMAND;
+extern	const char *RMC_FIELD_RESULT;
+extern	const char *RMC_FIELD_ERROR;
+extern	const char *RMC_FIELD_TYPE;
+extern	const char *RMC_FIELD_DEVICE;
+extern	const char *RMC_FIELD_DEVICE_ARRAY;
+extern	const char *RMC_FIELD_ID;
+extern	const char *RMC_FIELD_ID_ARRAY;
+extern	const char *RMC_FIELD_NAME;
 enum	RetValue
 {
 	RET_VALUE_OK,

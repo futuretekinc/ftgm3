@@ -1,6 +1,7 @@
 #include <cstring>
 #include <iomanip>
 #include "shell.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -47,13 +48,16 @@ Shell::Shell
 (
 	Command* _commands[], 
 	int 	_command_count, 
-	void* _data
+	Object* _object
 )
+: ActiveObject()
 {
+	trace.SetClassName(GetClassName());
+	name_ 	= "shell";
+	enable_ = true;
+
 	out_	= &std::cout;
-	data_ 	= _data;
-	thread_ = NULL;
-	stop_ 	= true;
+	object_	= _object;
 	sync_   = false;
 	prompt_	= "shell";
 	max_command_width_ = 8;
@@ -88,45 +92,9 @@ std::ostream&	Shell::Out()
 	return	*out_; 
 }
 
-void*	Shell::Data()
+Object*	Shell::GetObject()
 {	
-	return	data_;	
-}
-
-
-RetValue	Shell::Start
-(
-	bool _sync
-)
-{
-	if (thread_ != NULL)
-	{
-		return	RET_VALUE_OK;	
-	}
-
-	thread_ = new std::thread(Process, this);
-
-	while(stop_)
-	{
-		usleep(1000);		
-	}
-
-	sync_ = _sync;
-	if (sync_)
-	{
-		thread_->join();	
-
-		thread_ = NULL;
-	}
-
-	return	RET_VALUE_OK;
-}
-
-RetValue	Shell::Stop()
-{
-	stop_ = true;
-
-	return	RET_VALUE_OK;
+	return	object_;	
 }
 
 
@@ -136,9 +104,6 @@ void	Shell::Add
 	int 	_command_count
 )
 {
-	thread_ = NULL;
-	stop_ 	= true;
-
 	for(int i = 0 ; i < _command_count ; i++)
 	{
 		auto it = command_map_.find(_commands[i]->name);
@@ -194,6 +159,12 @@ uint32_t	Shell::GetCommandWidth()
 	return	max_command_width_;	
 }
 
+
+void	Shell::OnMessage(Message* _message)
+{
+	ActiveObject::OnMessage(_message);
+}
+
 int		Shell::Parser
 (
 	const 	std::string& 	_command_line, 
@@ -224,56 +195,73 @@ int		Shell::Parser
 	return	count;
 }
 
-void 	Shell::Process
-(
-	Shell *_shell
-)
+void 	Shell::Process()
 {
-	std::string	command_line;
 	std::string	arguments[16];
 	int		count;
 
-	_shell->stop_	= false;
+	std::cout << prompt_ << "> ";
+	std::getline(std::cin, command_line_);
 
-	while(!_shell->stop_)
+	count = Shell::Parser(command_line_, arguments, 16);
+	if (count != 0)
 	{
-		std::cout << _shell->prompt_ << "> ";
-		std::getline(std::cin, command_line);
-		count = 0;
-
-		count = Shell::Parser(command_line, arguments, 16);
-		if (count != 0)
+		typename std::map<const std::string, Command*>::iterator it = command_map_.find(arguments[0])	;
+		if (it != command_map_.end())
 		{
-			typename std::map<const std::string, Command*>::iterator it = _shell->command_map_.find(arguments[0])	;
-			if (it != _shell->command_map_.end())
-			{
-				RetValue	ret_value;
+			RetValue	ret_value;
 
-				ret_value = it->second->function(arguments, count, _shell);
-				if (ret_value == RET_VALUE_INVALID_ARGUMENTS)
-				{
-					std::cout << it->second->help << std::endl;
-				}
-			}
-			else
+			ret_value = it->second->function(arguments, count, this);
+			if (ret_value == RET_VALUE_INVALID_ARGUMENTS)
 			{
-				std::cout << "Command not found : " << arguments[0] << std::endl;	
+				std::cout << it->second->help << std::endl;
 			}
 		}
+		else
+		{
+			std::cout << "Command not found : " << arguments[0] << std::endl;	
+		}
 	}
-
-	std::cout << "finished." << std::endl;
-	
 }
 
-RetValue	CommandHelp(std::string [], uint32_t, Shell* _shell)
+void	Shell::Postprocess()
 {
-	uint32_t	count = _shell->GetCommandCount();
-	for(uint32_t i = 0 ; i < count ; i++)
-	{
-		Shell::Command* command = _shell->GetCommandAt(i);
+	std::cout << name_ << " terminated." << std::endl;
+}
 
-		std::cout << setw(16) << std::left << command->name << " " << command->short_help << std::endl;
+RetValue	CommandHelp(std::string _argv[], uint32_t _argc, Shell* _shell)
+{
+	if (_argc == 1)
+	{
+		uint32_t	count = _shell->GetCommandCount();
+		for(uint32_t i = 0 ; i < count ; i++)
+		{
+			Shell::Command* command = _shell->GetCommandAt(i);
+
+			std::cout << setw(16) << std::left << command->name << " " << command->short_help << std::endl;
+		}
+	}
+	else if (_argc == 2)
+	{
+		uint32_t	i, count = _shell->GetCommandCount();
+		for(i = 0 ; i < count ; i++)
+		{
+			Shell::Command* command = _shell->GetCommandAt(i);
+			if (_argv[1] == command->name)
+			{
+				std::cout << "Usage : " << command->name << " " << command->help << std::endl;
+				break;
+			}
+		}
+
+		if (i == count)
+		{
+			return	RET_VALUE_INVALID_ARGUMENTS;
+		}
+	}
+	else
+	{
+		return	RET_VALUE_INVALID_ARGUMENTS;
 	}
 
 	return	RET_VALUE_OK;

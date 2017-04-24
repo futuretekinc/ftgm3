@@ -46,19 +46,24 @@ bool	DeviceIP::GetProperties(Properties& _properties) const
 	return	false;
 }
 
-bool	DeviceIP::SetProperty(Property const& _property)
+bool	DeviceIP::SetProperty(Property const& _property, bool create)
 {
 	if (strcasecmp(_property.GetName().c_str(), "ip") == 0)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
+			TRACE_INFO << "The ip of object[" << id_ <<"] was set to " << value->Get() << Trace::End;
 			return	ip_.Set(value->Get());
+		}
+		else
+		{
+			TRACE_ERROR	<< "Failed to set property because value types is not string!" << Trace::End;
 		}
 	}
 	else
 	{
-		return	DeviceIP::SetProperty(_property);
+		return	Device::SetProperty(_property, create);
 	}
 
 	return	false;

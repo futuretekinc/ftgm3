@@ -1,7 +1,9 @@
+#include <iostream>
 #include <sys/time.h>
 #include <time.h>
 #include "defined.h"
 #include "time2.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -104,7 +106,7 @@ Date::Date()
 	value_ = value.tv_sec * 1000000 + value.tv_usec;
 }
 
-Date::Date(const Date& _date)
+Date::Date(Date const& _date)
 :	value_(_date.value_)
 {
 }
@@ -114,7 +116,7 @@ Date::Date(uint32_t _seconds)
 	value_ = _seconds * 1000000;
 }
 
-bool	Date::IsValid()
+bool	Date::IsValid() const
 {
 	return	(value_ != 0);
 }
@@ -137,7 +139,13 @@ Time	Date::operator-(const Date& _date)
 {
 	if(value_ >= _date.value_)
 	{
-		return	Time(value_ - _date.value_);	
+		uint64_t	diff;
+
+		diff = value_ - _date.value_;
+	std::cout << "REF2 : " << value_ << std::endl;
+	std::cout << "CUR2 : " << _date.value_ << std::endl;
+	std::cout << "REMAIN2 : " << diff << std::endl;
+		return	Time(diff);	
 	}
 
 	return	Time(0);
@@ -187,9 +195,27 @@ const	Date&	Date::operator=(Date const& _value)
 	return	*this;
 }
 
+const	Date&	Date::operator=(std::string const& _date)
+{
+	struct tm	tm;
+
+	strptime(_date.c_str(), "%Y-%m-%d %H:%M:%S", &tm);
+
+	time_t time = mktime(&tm); 
+
+	value_ = time * (uint64_t)1000000;
+
+	return	*this;
+}
+
 Date::operator time_t() const
 {
 	return	value_ / TIME_SECOND;
+}
+
+uint64_t	Date::GetMicroSecond()
+{
+	return	value_;
 }
 
 const string	Date::ToString() const
@@ -197,7 +223,7 @@ const string	Date::ToString() const
  	char    buffer[64];
 	time_t	time = (time_t)value_ / TIME_SECOND;
 
-   	strftime(buffer, sizeof(buffer), "%Y%m%d-%H:%M:%S", localtime(&time));
+   	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localtime(&time));
 
 	return	string(buffer);
 }
@@ -205,11 +231,8 @@ const string	Date::ToString() const
 Date	Date::GetCurrentDate()
 {
 	Date	date;
-	struct timeval	time;
 
-	gettimeofday(&time, 0);
-
-	return	Date(time.tv_sec * (uint64_t)1000000 + time.tv_usec);
+	return	date;
 }
 
 bool	Compare(Date const &_date_a, Date const &_date_b)

@@ -10,7 +10,7 @@ public:
 	DeviceIP(Type _type, const ValueIP& _ip);
 
 	virtual	bool		GetProperties(Properties& _properties) const;
-	virtual	bool		SetProperty(Property const& _property);
+	virtual	bool		SetProperty(Property const& _property, bool create = false);
 
 	const 	ValueIP&	GetIP();
 			void		SetIP(const ValueIP& _ip);

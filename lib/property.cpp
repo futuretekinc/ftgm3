@@ -3,6 +3,7 @@
 #include <typeinfo>
 #include "property.h"
 #include "device.h"
+#include "endpoint.h"
  
 Property::Property(Property const& _property)
 {
@@ -353,6 +354,16 @@ bool	Properties::AppendEnable(std::string const& _enable)
 bool	Properties::AppendDeviceType(std::string const& _type)
 {
 	if (!Device::IsValidType(_type))
+	{
+		return	false;	
+	}
+
+	return	Append(Property("type", _type));
+}
+
+bool	Properties::AppendEndpointType(std::string const& _type)
+{
+	if (!Endpoint::IsValidType(_type))
 	{
 		return	false;	
 	}

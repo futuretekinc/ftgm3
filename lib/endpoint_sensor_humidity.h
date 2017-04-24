@@ -7,8 +7,11 @@ class	EndpointSensorHumidity : public EndpointSensor
 {
 public:
 	EndpointSensorHumidity();
+	EndpointSensorHumidity(Properties const& _properties);
 
-		bool	SetProperty(Property const& _property);
+			std::string	GetClassName();
+			Type		GetType()		const {	return	S_HUMIDITY;	}
+			bool		SetProperty(Property const& _property);
 };
 
 #endif

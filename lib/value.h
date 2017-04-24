@@ -12,7 +12,30 @@
 class	Value
 {
 public:
+	enum Type
+	{
+		NUMBER,
+		BOOL,
+		INT,
+		UINT32,
+		UINT64,
+		FLOAT,
+		STRING,
+		LIMITED_STRING,
+		NAME,
+		IP,
+		ID,
+		UNIT,
+		TIME,
+		DATE,
+		PROPERTIES,
+		PROPERTIES_LIST
+	}; 
+	
 	virtual	~Value();
+
+	virtual	Type		GetType() const = 0;
+	virtual	std::string	GetTypeString() const;
 
 	virtual	bool		Set(const std::string& _value) = 0;
 	virtual	Value*		Duplicate() const = 0;
@@ -21,6 +44,7 @@ public:
 	virtual	void		Print(std::ostream&	os) const = 0;
 	friend	Value*	::Duplicate(Value const *);
 	friend	std::ostream& ::operator<<(std::ostream& os, Value const& _value);
+
 };
 
 ///////////////////////////////////////////////////////////////
@@ -29,6 +53,8 @@ public:
 class	ValueNumber : public Value
 {
 public:
+			Type		GetType() const	{	return	NUMBER;	};
+	virtual	std::string	GetTypeString() const;
 protected:
 };
 
@@ -39,6 +65,9 @@ class	ValueInt : public ValueNumber
 {
 public:
 	ValueInt(int _value = 0);
+
+			Type		GetType() const	{	return	INT;	};
+	virtual	std::string	GetTypeString() const;
 
 			ValueInt& 	operator=(int _value);
 						operator std::string() const;
@@ -61,6 +90,9 @@ class	ValueUInt32 : public ValueNumber
 public:
 	ValueUInt32(uint32_t _value = 0);
 
+			Type		GetType() const	{	return	UINT32;	};
+	virtual	std::string	GetTypeString() const;
+
 			ValueUInt32& 	operator=(uint32_t _value);
 							operator std::string() const;
 
@@ -81,6 +113,9 @@ class	ValueUInt64 : public ValueNumber
 {
 public:
 	ValueUInt64(uint64_t _value = 0);
+
+			Type		GetType() const	{	return	UINT64;	};
+	virtual	std::string	GetTypeString() const;
 
 			ValueUInt64& 	operator=(uint64_t _value);
 							operator std::string() const;
@@ -103,6 +138,9 @@ class	ValueBool : public ValueNumber
 public:
 	ValueBool(bool _value = false);
 
+			Type		GetType() const	{	return	BOOL;	};
+	virtual	std::string	GetTypeString() const;
+
 			ValueBool& 	operator=(bool _value);
 						operator bool() const;
 						operator std::string() const;
@@ -124,6 +162,9 @@ class	ValueFloat : public ValueNumber
 {
 public:
 	ValueFloat(float _value = 0);
+
+			Type		GetType() const	{	return	FLOAT;	};
+	virtual	std::string	GetTypeString() const;
 
 			ValueFloat& operator=(float _value);
 						operator float() const;
@@ -155,6 +196,9 @@ public:
 	ValueString(char * _value);
 	ValueString(std::string const& _value);
 
+			Type		GetType() const	{	return	STRING;	};
+	virtual	std::string	GetTypeString() const;
+
 			ValueString& 	operator=(const std::string& _value);
 						 	operator std::string() const;
 			bool			operator==(std::string const& _value) const;
@@ -178,8 +222,11 @@ class	ValueStringLimit: public ValueString
 public:
 	ValueStringLimit(uint32_t limit);
 
-			ValueStringLimit& 	operator=(std::string& _value);
-			ValueStringLimit& 	operator=(char *_value);
+			Type		GetType() const	{	return	LIMITED_STRING;	};
+	virtual	std::string	GetTypeString() const;
+
+			ValueStringLimit& 	operator=(std::string const& _value);
+			ValueStringLimit& 	operator=(char const* _value);
 
 			bool				Set(const std::string& _value);
 protected:
@@ -195,6 +242,9 @@ public:
 	ValueID();
 	ValueID(const std::string& _value);
 
+			Type		GetType() const	{	return	ID;	};
+	virtual	std::string	GetTypeString() const;
+
 			Value*		Duplicate() const;
 	
 	static	bool		IsValid(std::string const& _id);
@@ -209,6 +259,11 @@ public:
 	ValueName();
 	ValueName(const std::string& _value);
 
+			Type		GetType() const	{	return	NAME;	};
+	virtual	std::string	GetTypeString() const;
+
+			ValueName& 	operator=(const std::string& _value);
+
 			Value*		Duplicate() const;
 
 	static	bool		IsValid(std::string const& _name);
@@ -222,6 +277,9 @@ class	ValueIP : public ValueString
 public:
 	ValueIP(const ValueIP& _ip);
 	ValueIP(const std::string& _ip);
+
+			Type		GetType() const	{	return	IP;	};
+	virtual	std::string	GetTypeString() const;
 
 			bool		Set(const std::string& _value);
 			Value*		Duplicate() const;
@@ -239,6 +297,9 @@ public:
 	ValueUnit(const ValueUnit& _unit);
 	ValueUnit(const std::string& _unit);
 
+			Type		GetType() const	{	return	UNIT;	};
+	virtual	std::string	GetTypeString() const;
+
 			bool		Set(const std::string& _value);
 			Value*		Duplicate() const;
 	const	ValueUnit&	operator=(const std::string& _value);
@@ -253,6 +314,9 @@ class	ValueTime : public Value
 public:
 	ValueTime(const ValueTime& _date);
 	ValueTime(const Time& _date);
+
+			Type		GetType() const	{	return	TIME;	};
+	virtual	std::string	GetTypeString() const;
 
 	const	ValueTime&	operator=(Time const& _value);
 						operator std::string() const;
@@ -276,6 +340,9 @@ class	ValueDate : public Value
 public:
 	ValueDate(const ValueDate& _date);
 	ValueDate(const Date& _date);
+
+			Type		GetType() const	{	return	DATE;	};
+	virtual	std::string	GetTypeString() const;
 
 	const	ValueDate&	operator=(Date const& _value);
 						operator std::string() const;
@@ -302,12 +369,15 @@ public:
 	ValueProperties(Properties const& _value);
 	~ValueProperties();
 
+			Type		GetType() const	{	return	PROPERTIES;	};
+	virtual	std::string	GetTypeString() const;
+
 	const	ValueProperties&	operator=(Properties const& _value);
 						operator std::string() const;
 
-			bool			Set(const std::string& _value);
-	const	Properties&		Get() const;
-			Value*			Duplicate() const;
+			bool		Set(const std::string& _value);
+	const	Properties&	Get() const;
+			Value*		Duplicate() const;
 
 
 			void		Print(std::ostream&	os) const;
@@ -327,6 +397,9 @@ public:
 	ValuePropertiesList(ValuePropertiesList const& _value);
 	ValuePropertiesList(PropertiesList const& _value);
 	~ValuePropertiesList();
+
+			Type		GetType() const	{	return	PROPERTIES_LIST;	};
+	virtual	std::string	GetTypeString() const;
 
 	const	ValuePropertiesList&	operator=(PropertiesList const& _value);
 						operator std::string() const;

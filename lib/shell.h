@@ -8,8 +8,9 @@
 #include <thread>
 #include <unistd.h>
 #include <iostream>
+#include "active_object.h"
 
-class	Shell
+class	Shell : public ActiveObject
 {
 public:
 	struct Command
@@ -24,31 +25,28 @@ public:
 		Command(const std::string&  _name, const std::string&  _help, const std::string& _short_help, RetValue	(*_function)(std::string [], uint32_t, Shell*));
 	};
 
-	Shell(Command* _commands[], int 	_command_count, void* _data);
+	Shell(Command* _commands[], int 	_command_count, Object* _object);
 	~Shell();
 
 	std::ostream&	Out();
-	void*			Data();
+	Object*			GetObject();
 
-	RetValue		Start(bool _sync = false);
-	RetValue		Stop();
-	void			Add(Command* _commands[], int 	_count);
-	uint32_t		GetCommandCount();
-	Command*		GetCommandAt(uint32_t _index);
-	Command*		GetCommand(const std::string& _name);
-	uint32_t		GetCommandWidth();
+			void	Add(Command* _commands[], int 	_count);
+		uint32_t	GetCommandCount();
+		Command*	GetCommandAt(uint32_t _index);
+		Command*	GetCommand(const std::string& _name);
+		uint32_t	GetCommandWidth();
 
+			void	OnMessage(Message* _message);
 protected:
-	static 
-	int				Parser(const std::string& _command_line, std::string* _arguments, int _max_count);
-	static
-	void 			Process(Shell *_shell);
+	static int		Parser(const std::string& _command_line, std::string* _arguments, int _max_count);
+			void 	Process();
+			void	Postprocess();
 
-	void*			data_;
-	std::thread*	thread_;
-	bool			stop_;
+	Object*			object_;
 	bool			sync_;
 	std::string		prompt_;
+	std::string		command_line_;
 	std::map<const std::string, Command*>	command_map_;
 	std::ostream	*out_;
 	uint32_t		max_command_width_;
@@ -57,6 +55,6 @@ protected:
 
 inline bool	IsCorrectOption(const std::string& _argument, const char *_option)
 {
-	return	strcasecmp(_argument.c_str(), _option);
+	return	strcasecmp(_argument.c_str(), _option) == 0;
 }
 #endif

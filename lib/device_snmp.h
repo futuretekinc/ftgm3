@@ -26,13 +26,18 @@ public:
 	DeviceSNMP(std::string const& _module, ValueIP const& _ip);
 	~DeviceSNMP();
 
+			Type	GetType()	const {	return	SNMP;	}
+	virtual	bool	IsIncludedIn(Type _type);
+
 	const	std::string&	GetModule();
 			bool			SetModule(std::string const& _module);
 	const	std::string&	GetCommunity();
 			bool			SetCommunity(std::string const& _community);
 
 	virtual	bool	GetProperties(Properties& _properties) const;
-	virtual	bool	SetProperty(Property const& _property);
+	virtual	bool	SetProperty(Property const& _property, bool create = false);
+
+	virtual	Endpoint*	CreateEndpoint(Properties const& _properties);
 
 	virtual	OID		GetOID(std::string const& _id);
 	virtual	OID		GetOID(std::string const& _name, uint32_t index);
@@ -45,12 +50,16 @@ public:
 	static	bool	ReadMIB(std::string const& _file_name);
 
 protected:
+			void	Preprocess();
+			void	Postprocess();
+
 			bool	Open();
 			bool	Close();
 
 			bool	IsOpened();
 
 			bool	ReadValue(std::string const& _endpoint_id, Value* _value);
+			bool	ReadValue(OID const& _oid, Value* _value);
 	static	bool	Convert(struct variable_list *_variable, Value* _value);
 
 	std::string		module_;

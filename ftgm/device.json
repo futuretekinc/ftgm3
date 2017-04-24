@@ -1,12 +1,20 @@
-[
-	{
-		"type" : "snmp",
-		"id" : "sn-1111",
-		"name" : "sn-1111"
-	},
-	{
-		"type" : "snmp",
-		"id" : "sn-1112",
-		"name" : "sn-1112"
-	}
-]
+{
+	"type" : "fte",
+	"id" : "sn-1111",
+	"name" : "sn-1111",
+	"ip" : "10.0.1.26",
+	"module" : "FTE-E.txt",
+	"endpoints" : 
+	[
+		{
+			"type": "s_temperature",
+			"name" : "temperature01",
+			"sensor_id" : "01000001"
+		},
+		{
+			"type": "s_humidity",
+			"name" : "humidity01",
+			"sensor_id" : "02000001"
+		}
+	]
+}
