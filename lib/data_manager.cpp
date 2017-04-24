@@ -494,22 +494,34 @@ bool	DataManager::ValueTable::Add(Date const& _date, Value const* _value)
 {
 	if (parent_ == NULL)
 	{
+		TRACE_ERROR << "Value table parent is not assigned!" << Trace::End;
 		return	false;
 	}
 
 	if (!parent_->IsTableExist(table_name_))
 	{
+		TRACE_ERROR << "Value table[" << table_name_ << " not exist!" << Trace::End;
 		return	false;	
 	}
 
 	std::ostringstream	query;
 
-	query << "INSERT INFO " << table_name_ << "(_time, _value) values(" << _date << ", " << std::string(*_value) << ");";
-	
+	query << "INSERT INTO " << table_name_ << "(_time, _value) values(\"" << time_t(_date) << "\", \"" << std::string(*_value) << "\");";
+
+	TRACE_INFO << "Query : " << query.str() << Trace::End;
+
 	Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(parent_->database_);
-	statement->SqlStatement(query.str());
+	try
+	{
+		statement->SqlStatement(query.str());
+	}
+	catch(Kompex::SQLiteException& e)
+	{
+		TRACE_ERROR << "SQLite error! - " << e.GetString() <<  Trace::End;
+	}
 
 	delete statement;
+
 
 	return	true;
 }
@@ -524,7 +536,7 @@ DataManager::ValueTable*	DataManager::CreateValueTable(std::string const& _endpo
 		std::ostringstream	query;
 
 
-		query << "CREATE TABLE " << table_name_ << " (_time TEXT NOT NULL PRIMARY KEY, _value TEXT);";
+		query << "CREATE TABLE " << table_name_ << " (_time INT NOT NULL PRIMARY KEY, _value TEXT);";
 
 		TRACE_INFO << "Query : " << query.str() << Trace::End;
 
@@ -571,8 +583,9 @@ DataManager::ValueTable*	DataManager::GetValueTable(std::string const& _endpoint
 bool	DataManager::AddValue(std::string const& _endpoint_id, Date const& _date, Value const* _value)
 {
 	ValueTable*	_value_table = value_table_map_[_endpoint_id];
-	if (_value_table)
+	if (!_value_table)
 	{
+		TRACE_ERROR << "Endpoint[" << _endpoint_id << "] value table not exist!" << Trace::End;
 		return	false;
 	}
 
