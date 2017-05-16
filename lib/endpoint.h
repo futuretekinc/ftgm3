@@ -6,12 +6,12 @@
 #include "timer.h"
 #include "time2.h"
 
-class	Device;
 
 class	Endpoint : public ActiveObject
 {
+	friend 	class	Device;
+	friend	class	ObjectManager;
 public:
-	friend class	Device;
 
 	enum	Type
 	{
@@ -36,7 +36,7 @@ public:
 		uint32_t	limit_;
 	};
 
-						Endpoint();
+						Endpoint(ObjectManager& _manager);
 	virtual				~Endpoint();	
 
 	virtual	Type		GetType() const = 0;
@@ -51,13 +51,15 @@ public:
 			std::string	GetSensorID() const;
 			bool		SetSensorID(std::string const& _sensor_id);
 
+
 			uint64_t	GetUpdateInterval();
 			bool		SetUpdateInterval(Time const& _update_interval);
 			bool		SetUpdateInterval(uint64_t _update_interval);
 			bool		SetUpdateInterval(std::string const& _scale);
 
 	virtual	bool		GetProperties(Properties& _properties) const;
-	virtual	bool		SetProperty(Property const& _property, bool create = false);
+
+			bool		ApplyChanges();
 
 	virtual	bool		IsValid(const ValueFloat& _value);
 
@@ -68,25 +70,25 @@ public:
 			bool		GetDataForPeriod(Date const& _begin, Date const& _end, ValueMap& _value_map);
 			bool		DelDataForPeriod(Date const& _begin, Date const& _end);
 
-			Device*		GetDevice();
+	const	ValueID&	GetDeviceID() const;
+			bool		SetDeviceID(ValueID const& _device_id);
 
-			bool		Attach(Device* _device);
-			bool		Detach(Device* _device);
+			bool		Attach(ValueID const& _device_id);
+			bool		Detach(ValueID const& _device_id);
+			bool		Detach();
 
 			void		Start();
 			void		Stop();
 
 	static	bool		IsValidType(std::string const& _type);
 
-	static	Endpoint*	Create(Properties const& _properties);
-	static	Endpoint*	Get(std::string const& _id);
-	static	uint32_t	GetList(std::list<Endpoint*>& _device_list);
-	static	uint32_t	Count();
-	static	uint32_t	UnattachedCount();
+	static	Endpoint*	Create(ObjectManager& _manager, Properties const& _properties);
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 	static	std::string	ToString(Type _type);
 
 protected:
+	virtual	bool		SetPropertyInternal(Property const& _property, bool create = false);
+
 			void		Preprocess();
 			void		Process();
 			void		Postprocess();
@@ -94,16 +96,24 @@ protected:
 	virtual	void		UpdateProcess();
 	virtual	bool		Add(Date const& _date, Value const* _value);
 
-	Device*		device_;
-	bool		active_;
-	std::string	sensor_id_;
-	ValueUnit	unit_;
-	ValueFloat	scale_;
-	ValueFloat	value_;
-	Time		update_interval_;
-	Timer		update_timer_;
+			ObjectManager&	manager_;
+			ValueID		device_id_;
+			bool		active_;
+			std::string	sensor_id_;
+			ValueUnit	unit_;
+			ValueFloat	scale_;
+			ValueFloat	value_;
+			Time		update_interval_;
+			Timer		update_timer_;
 
-	ValueMap	value_map_;
+			ValueMap	value_map_;
 };
 
+extern	const	char*	ENDPOINT_TYPE_NAME_TEMPERATURE;
+extern	const	char*	ENDPOINT_TYPE_NAME_HUMIDITY;
+extern	const	char*	ENDPOINT_TYPE_NAME_VOLTAGE;
+extern	const	char*	ENDPOINT_TYPE_NAME_CURRENT;
+extern	const	char*	ENDPOINT_TYPE_NAME_DI;
+extern	const	char*	ENDPOINT_TYPE_NAME_PRESSURE;
+extern	const	char*	ENDPOINT_TYPE_NAME_DO;
 #endif

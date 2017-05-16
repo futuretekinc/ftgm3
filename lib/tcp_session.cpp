@@ -34,7 +34,7 @@ TCPSession::TCPSession
 	send_buffer_len_ = 4096;
 	send_buffer_ = new uint8_t[send_buffer_len_];
 
-	TRACE_INFO << "TCP Session[" << id_ << "] created." << Trace::End;
+	TRACE_INFO("TCP Session[" << id_ << "] created.");
 }
 
 TCPSession::~TCPSession()
@@ -72,7 +72,7 @@ void	TCPSession::OnMessage(Message* _base_message)
 				{
 					if (!isprint(message_packet->data[i]))
 					{
-						TRACE_INFO << "Not printable character : " << message_packet->data[i] << Trace::End;
+						TRACE_INFO("Not printable character : " << message_packet->data[i]);
 						printable = false;
 						break;
 					}
@@ -80,12 +80,12 @@ void	TCPSession::OnMessage(Message* _base_message)
 
 				if(printable)
 				{
-					TRACE_INFO << "Received Packet : " << message_packet->length << Trace::End;
-					TRACE_INFO << (char*)message_packet->data << Trace::End;
+					TRACE_INFO("Received Packet : " << message_packet->length);
+					TRACE_INFO((char*)message_packet->data);
 				}
 				else
 				{
-					TRACE_INFO << *message_packet << Trace::End;
+					TRACE_INFO(*message_packet);
 				}
 
 				if (socket_)
@@ -94,35 +94,35 @@ void	TCPSession::OnMessage(Message* _base_message)
 					if (send_len <= 0)
 					{
 						Disconnect();
-						TRACE_ERROR << "The socket has terminated." << Trace::End;
+						TRACE_ERROR("The socket has terminated.");
 					}
 					else if (send_len != message_packet->length)
 					{
-						TRACE_ERROR << "Failed to send packet.[ packet_size = " << message_packet->length << ", send_size = " << send_len << " ]" << Trace::End;
+						TRACE_ERROR("Failed to send packet.[ packet_size = " << message_packet->length << ", send_size = " << send_len << " ]");
 					}
 					else
 					{
-						TRACE_INFO << "The packet sent to client!" << Trace::End;
+						TRACE_INFO("The packet sent to client!");
 					}
 				}
 			}
 			else
 			{
-				TRACE_ERROR << "Invalid message!" << Trace::End;	
+				TRACE_ERROR("Invalid message!");	
 			}
 		}
 		break;
 
 	default:
 		{
-			TRACE_ERROR << "Not supported message received!" << Trace::End;	
+			TRACE_ERROR("Not supported message received!");	
 		}
 	}
 }
 
 void	TCPSession::Preprocess()
 {
-	TRACE_INFO << "TCP Session preprocess!" << Trace::End;
+	TRACE_INFO("TCP Session preprocess!");
 	ActiveObject::Preprocess();
 }
 
@@ -136,17 +136,17 @@ void	TCPSession::Process()
 			if (errno != EAGAIN)
 			{
 				Disconnect();
-				TRACE_ERROR << "The socket has terminated abnormally." << Trace::End;
+				TRACE_ERROR("The socket has terminated abnormally.");
 			}
 		}
 		else if (receive_len_ == 0)
 		{
 			Disconnect();
-			TRACE_ERROR << "The socket has terminated." << Trace::End;
+			TRACE_ERROR("The socket has terminated.");
 		}
 		else
 		{
-			TRACE_INFO << "Received packet send to [ " << id_ << " -> " << process_id_ << " ]" << Trace::End;
+			TRACE_INFO("Received packet send to [ " << id_ << " -> " << process_id_ << " ]");
 			Message::SendPacket(process_id_, id_, receive_buffer_, receive_len_);
 		}
 	}
@@ -167,7 +167,7 @@ bool	TCPSession::Send(std::string const& _message)
 	send_len = send(socket_, _message.c_str(), _message.size(), MSG_DONTWAIT);
 	if (_message.size() != send_len)
 	{
-		TRACE_ERROR << "The socket failed to send data." << Trace::End;
+		TRACE_ERROR("The socket failed to send data.");
 		return	false;
 	}
 
@@ -185,7 +185,7 @@ bool	TCPSession::Send
 	send_len = send(socket_, data, len, MSG_DONTWAIT);
 	if (len != send_len)
 	{
-		TRACE_ERROR << "The socket failed to send data." << Trace::End;
+		TRACE_ERROR("The socket failed to send data.");
 		return	false;
 	}
 

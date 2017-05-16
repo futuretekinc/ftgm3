@@ -2,16 +2,18 @@
 #include "device.h"
 #include "endpoint_sensor_humidity.h"
 
-EndpointSensorHumidity::EndpointSensorHumidity()
-: EndpointSensor(ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
+EndpointSensorHumidity::EndpointSensorHumidity(ObjectManager& _manager)
+: EndpointSensor(_manager, ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
 {
 	trace.SetClassName(GetClassName());
+	TRACE_CREATE;
 }
 
-EndpointSensorHumidity::EndpointSensorHumidity(Properties const& _properties)
-: EndpointSensor(ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
+EndpointSensorHumidity::EndpointSensorHumidity(ObjectManager& _manager, Properties const& _properties)
+: EndpointSensor(_manager, ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
 {
 	trace.SetClassName(GetClassName());
+	TRACE_CREATE;
 	SetProperties(_properties, true);
 }
 

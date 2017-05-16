@@ -6,8 +6,8 @@
 class	EndpointSensorHumidity : public EndpointSensor
 {
 public:
-	EndpointSensorHumidity();
-	EndpointSensorHumidity(Properties const& _properties);
+	EndpointSensorHumidity(ObjectManager& _manager);
+	EndpointSensorHumidity(ObjectManager& _manager, Properties const& _properties);
 
 			std::string	GetClassName();
 			Type		GetType()		const {	return	S_HUMIDITY;	}

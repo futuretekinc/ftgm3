@@ -1,13 +1,13 @@
 #include "device.h"
 #include "endpoint_sensor.h"
 
-EndpointSensor::EndpointSensor()
-:Endpoint()
+EndpointSensor::EndpointSensor(ObjectManager& _manager)
+:Endpoint(_manager)
 {
 }
 
-EndpointSensor::EndpointSensor(std::string const& _unit, const ValueFloat& _value_min, const ValueFloat& _value_max)
-: Endpoint()
+EndpointSensor::EndpointSensor(ObjectManager& _manager, std::string const& _unit, const ValueFloat& _value_min, const ValueFloat& _value_max)
+: Endpoint(_manager)
 {
 	unit_ = _unit;
 	if (_value_min < _value_max)
@@ -22,8 +22,8 @@ EndpointSensor::EndpointSensor(std::string const& _unit, const ValueFloat& _valu
 	}
 }
 
-EndpointSensor::EndpointSensor(std::string const& _unit, float _value_min, float _value_max)
-: Endpoint()
+EndpointSensor::EndpointSensor(ObjectManager& _manager, std::string const& _unit, float _value_min, float _value_max)
+: Endpoint(_manager)
 {
 	unit_ = _unit;
 	if (_value_min < _value_max)
@@ -57,7 +57,7 @@ bool	EndpointSensor::SetValueMax(ValueFloat const& _value_max)
 	return	true;
 }
 
-bool	EndpointSensor::SetProperty(Property const& _property)
+bool	EndpointSensor::SetPropertyInternal(Property const& _property, bool create)
 {
 	if (_property.GetName() == "min")
 	{
@@ -89,7 +89,7 @@ bool	EndpointSensor::SetProperty(Property const& _property)
 	}
 	else
 	{
-		return	Endpoint::SetProperty(_property);	
+		return	Endpoint::SetPropertyInternal(_property, create);	
 	}
 
 	return	false;

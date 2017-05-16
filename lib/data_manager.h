@@ -26,7 +26,6 @@ public:
 
 		protected:
 			DataManager*	parent_;
-			std::string			name_;
 	};
 
 	class	ValueTable : public Object
@@ -38,7 +37,6 @@ public:
 
 		protected:
 			DataManager*	parent_;
-			std::string		table_name_;
 	};
 
 	DataManager();

@@ -16,20 +16,20 @@ public:
 			Stat	GetStat() const;
 
 	virtual	void	Start();
-	virtual	void	Stop();
+	virtual	void	Stop(bool _wait = false);
 	virtual	void	Run();
 
 			bool	IsRunning();
 
 	virtual	bool	GetProperties(Properties& _properties) const;
-	virtual	bool	SetProperty(Property const& _property, bool create = false);
-	virtual	void	Print(std::ostream& os) const;
 
 	virtual	bool	Post(Message* _message);
 
 	virtual	void	OnMessage(Message* _message);
 
 protected:
+	virtual	bool	SetPropertyInternal(Property const& _property, bool create = false);
+
 	virtual	void	Preprocess();
 	virtual	void	Process();
 	virtual	void	Postprocess();

@@ -25,9 +25,8 @@ public:
 	TCPServer();
 	~TCPServer();
 
-	void		Attach(ObjectManager* _object_managerl);
+	void		Attach(ObjectManager* _object_manager);
 
-	bool		SetProperty(Property const& _property, bool create = false);
 
 	bool		SessionDisconnected(uint16_t _port);
 	bool		PacketReceived(uint16_t _port, void* _data, uint32_t _length);
@@ -37,6 +36,7 @@ public:
 
 	void		OnMessage(Message *_message);
 protected:
+	bool		SetPropertyInternal(Property const& _property, bool create = false);
 
 	void		Preprocess();
 	void		Process();

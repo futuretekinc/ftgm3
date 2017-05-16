@@ -36,17 +36,33 @@ bool	RemoteMessageServer::EndpointMessageService::Service(RemoteMessageServer& _
 		{	
 			result = Set(_rms, _request, _response, _error_message);
 		}
+		else if (command == "start")
+		{	
+			result = Start(_rms, _request, _response, _error_message);
+		}
+		else if (command == "stop")
+		{	
+			result = Stop(_rms, _request, _response, _error_message);
+		}
+		else if (command == "enable")
+		{	
+			result = Enable(_rms, _request, _response, _error_message);
+		}
+		else if (command == "disable")
+		{	
+			result = Disable(_rms, _request, _response, _error_message);
+		}
 		else
 		{
 			_error_message << "Failed to call service becuase command[" << command <<"] is unknown!";
-			TRACE_ERROR << _error_message.str() << Trace::End;
+			TRACE_ERROR(_error_message.str());
 			result = false;
 		}
 	}
 	catch(std::out_of_range)
 	{
 		_error_message << "Failed to call service becuase command is not exist!";
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 	
@@ -92,7 +108,7 @@ bool	RemoteMessageServer::EndpointMessageService::Add(RemoteMessageServer& _rms,
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -148,14 +164,14 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayAdd(RemoteMessageServer& 
 		catch(std::out_of_range)
 		{
 			_error_message << "Failed to add endpoint because endpoint porperties is invalid.";
-			TRACE_ERROR << _error_message.str() << Trace::End;
+			TRACE_ERROR(_error_message.str());
 			result = false;
 		}
 	}
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -182,7 +198,7 @@ bool	RemoteMessageServer::EndpointMessageService::Del(RemoteMessageServer& _rms,
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -226,20 +242,20 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayDel(RemoteMessageServer& 
 			if (result == false)
 			{
 				_error_message << "Failed to del endpoint[" << it->as_string() << "]";
-				TRACE_ERROR << _error_message.str() << Trace::End;
+				TRACE_ERROR(_error_message.str());
 			}
 		}
 	}
 	catch(std::out_of_range)
 	{
 		_error_message << "Failed to del endpoint because endpoint porperties is invalid.";
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -297,7 +313,7 @@ bool	RemoteMessageServer::EndpointMessageService::Get(RemoteMessageServer& _rms,
 			else
 			{
 				_error_message << "Failed to get endpoint information because endpoint[" << id << "] is not found!";	
-				TRACE_ERROR << _error_message.str() << Trace::End;
+				TRACE_ERROR(_error_message.str());
 				result = false;
 			}
 		}
@@ -309,7 +325,7 @@ bool	RemoteMessageServer::EndpointMessageService::Get(RemoteMessageServer& _rms,
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -354,21 +370,21 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayGet(RemoteMessageServer& 
 			else
 			{
 				_error_message << "Failed to get endpoint information because endpoint is not found!";	
-				TRACE_ERROR << _error_message.str() << Trace::End;
+				TRACE_ERROR(_error_message.str());
 				result = false;
 			}
 		}
 		catch(std::out_of_range)
 		{
 			_error_message << "Failed to get endpoint because id field is not found";
-			TRACE_ERROR << _error_message.str() << Trace::End;
+			TRACE_ERROR(_error_message.str());
 			result = false;
 		}
 	}
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -404,11 +420,366 @@ bool	RemoteMessageServer::EndpointMessageService::Set(RemoteMessageServer& _rms,
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
 	return	result;
 }
 
+bool	RemoteMessageServer::EndpointMessageService::Start(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		if (id_node.type() != JSON_STRING)
+		{
+			throw std::invalid_argument("id value is string.");
+		}
+
+		Endpoint*	endpoint = _rms.object_manager_->GetEndpoint(id_node.as_string());
+		if (endpoint != NULL)
+		{
+			endpoint->Start();
+		}
+		else
+		{
+			_error_message << "Endpoint[" << id_node.as_string() << "] not found!";
+		}
+	}
+	catch(std::out_of_range)
+	{
+		result = ArrayStart(_rms, _request, _response, _error_message);
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::EndpointMessageService::ArrayStart(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		if (ids_node.type() != JSON_ARRAY)
+		{
+			throw std::invalid_argument("ids value is array.");
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			if (it->type() != JSON_STRING)
+			{
+				throw std::invalid_argument("id value is string.");
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Endpoint* endpoint = _rms.object_manager_->GetEndpoint(it->as_string());
+			if (endpoint == NULL)
+			{
+				std::ostringstream	oss;
+
+				oss << "Failed to delete endpoint because endpoint[" << it->as_string() << "] is not found!";
+				throw std::invalid_argument(oss.str());
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Endpoint* endpoint = _rms.object_manager_->GetEndpoint(it->as_string());
+
+			endpoint->Start();
+		}
+	}
+	catch(std::out_of_range)
+	{
+		_error_message << "Failed to del endpoint because endpoint porperties is invalid.";
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::EndpointMessageService::Stop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		if (id_node.type() != JSON_STRING)
+		{
+			throw std::invalid_argument("id value is string.");
+		}
+
+		Endpoint*	endpoint = _rms.object_manager_->GetEndpoint(id_node.as_string());
+		if (endpoint != NULL)
+		{
+			endpoint->Stop();
+		}
+		else
+		{
+			_error_message << "Endpoint[" << id_node.as_string() << "] not found!";
+		}
+	}
+	catch(std::out_of_range)
+	{
+		result = ArrayStop(_rms, _request, _response, _error_message);
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::EndpointMessageService::ArrayStop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		if (ids_node.type() != JSON_ARRAY)
+		{
+			throw std::invalid_argument("ids value is array.");
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			if (it->type() != JSON_STRING)
+			{
+				throw std::invalid_argument("id value is string.");
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Endpoint* endpoint = _rms.object_manager_->GetEndpoint(it->as_string());
+			if (endpoint == NULL)
+			{
+				std::ostringstream	oss;
+
+				oss << "Failed to delete endpoint because endpoint[" << it->as_string() << "] is not found!";
+				throw std::invalid_argument(oss.str());
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Endpoint* endpoint = _rms.object_manager_->GetEndpoint(it->as_string());
+
+			endpoint->Stop();
+		}
+	}
+	catch(std::out_of_range)
+	{
+		_error_message << "Failed to del endpoint because endpoint porperties is invalid.";
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::EndpointMessageService::Enable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		if (id_node.type() != JSON_STRING)
+		{
+			throw std::invalid_argument("id value is string.");
+		}
+
+		Endpoint*	endpoint = _rms.object_manager_->GetEndpoint(id_node.as_string());
+		if (endpoint != NULL)
+		{
+			endpoint->SetEnable(true);
+		}
+		else
+		{
+			_error_message << "Endpoint[" << id_node.as_string() << "] not found!";
+		}
+	}
+	catch(std::out_of_range)
+	{
+		result = ArrayEnable(_rms, _request, _response, _error_message);
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::EndpointMessageService::ArrayEnable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		if (ids_node.type() != JSON_ARRAY)
+		{
+			throw std::invalid_argument("ids value is array.");
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			if (it->type() != JSON_STRING)
+			{
+				throw std::invalid_argument("id value is string.");
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Endpoint* endpoint = _rms.object_manager_->GetEndpoint(it->as_string());
+			if (endpoint == NULL)
+			{
+				std::ostringstream	oss;
+
+				oss << "Failed to delete endpoint because endpoint[" << it->as_string() << "] is not found!";
+				throw std::invalid_argument(oss.str());
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Endpoint* endpoint = _rms.object_manager_->GetEndpoint(it->as_string());
+
+			endpoint->SetEnable(true);
+		}
+	}
+	catch(std::out_of_range)
+	{
+		_error_message << "Failed to del endpoint because endpoint porperties is invalid.";
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::EndpointMessageService::Disable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		if (id_node.type() != JSON_STRING)
+		{
+			throw std::invalid_argument("id value is string.");
+		}
+
+		Endpoint*	endpoint = _rms.object_manager_->GetEndpoint(id_node.as_string());
+		if (endpoint != NULL)
+		{
+			endpoint->SetEnable(false);
+		}
+		else
+		{
+			_error_message << "Endpoint[" << id_node.as_string() << "] not found!";
+		}
+	}
+	catch(std::out_of_range)
+	{
+		result = ArrayDisable(_rms, _request, _response, _error_message);
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::EndpointMessageService::ArrayDisable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		if (ids_node.type() != JSON_ARRAY)
+		{
+			throw std::invalid_argument("ids value is array.");
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			if (it->type() != JSON_STRING)
+			{
+				throw std::invalid_argument("id value is string.");
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Endpoint* endpoint = _rms.object_manager_->GetEndpoint(it->as_string());
+			if (endpoint == NULL)
+			{
+				std::ostringstream	oss;
+
+				oss << "Failed to delete endpoint because endpoint[" << it->as_string() << "] is not found!";
+				throw std::invalid_argument(oss.str());
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Endpoint* endpoint = _rms.object_manager_->GetEndpoint(it->as_string());
+
+			endpoint->SetEnable(false);
+		}
+	}
+	catch(std::out_of_range)
+	{
+		_error_message << "Failed to del endpoint because endpoint porperties is invalid.";
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
 

@@ -3,13 +3,13 @@
 #include "defined.h"
 #include "device_serial.h"
 
-DeviceSerial::DeviceSerial(Type _type)
-: Device(_type), port_(DEFAULT_LOCAL_IP)
+DeviceSerial::DeviceSerial(ObjectManager& _manager, Type _type)
+: Device(_manager, _type), port_(DEFAULT_LOCAL_IP)
 {
 }
 
-DeviceSerial::DeviceSerial(Type _type, std::string const& _port)
-: Device(_type), port_(_port)
+DeviceSerial::DeviceSerial(ObjectManager& _manager, Type _type, std::string const& _port)
+: Device(_manager, _type), port_(_port)
 {
 }
 
@@ -37,7 +37,7 @@ bool	DeviceSerial::GetProperties(Properties& _properties) const
 	return	false;
 }
 
-bool	DeviceSerial::SetProperty(Property const& _property)
+bool	DeviceSerial::SetPropertyInternal(Property const& _property, bool create)
 {
 	if (strcasecmp(_property.GetName().c_str(), "port") == 0)
 	{
@@ -50,10 +50,10 @@ bool	DeviceSerial::SetProperty(Property const& _property)
 		}
 		else
 		{
-			TRACE_ERROR << "Failed to set " << _property.GetName() << " property because value type is invalid." << Trace::End;
+			TRACE_ERROR("Failed to set " << _property.GetName() << " property because value type is invalid.");
 			return	false;
 		}
 	}
 
-	return	DeviceSerial::SetProperty(_property);
+	return	DeviceSerial::SetPropertyInternal(_property, create);
 }

@@ -1,53 +1,79 @@
 #ifndef	DEFINED_H_
 #define	DEFINED_H_
 
+#include <cstdint>
+
 #define	ID_LENGTH_MAX		32
 #define	NAME_LENGTH_MAX		32
 #define	IP_LENGTH_MAX		16
 
-#define	TIME_MILLISECOND					((uint64_t)1000UL)
-#define	TIME_SECOND							((uint64_t)1000000UL)
-#define	TIME_MINUTE							(60 * TIME_SECOND)
+extern	uint64_t	TIME_MILLISECOND;
+extern	uint64_t	TIME_SECOND;
+extern	uint32_t	TIME_MINUTE;
 
-#define	ACTIVE_OBJECT_LOOP_INTERVAL			(1 * TIME_MILLISECOND)
+extern	uint32_t	ACTIVE_OBJECT_LOOP_INTERVAL;
 
-#define	OBJECT_LIVE_CHECK_INTERVAL_SEC		(60)
-#define	OBJECT_LIVE_CHECK_INTERVAL_SEC_MIN	(10)
-#define	OBJECT_LIVE_CHECK_INTERVAL_SEC_MAX	(60 * 60)
+extern	uint32_t	OBJECT_LIVE_CHECK_INTERVAL_SEC;
+extern	uint32_t	OBJECT_LIVE_CHECK_INTERVAL_SEC_MIN;
+extern	uint32_t	OBJECT_LIVE_CHECK_INTERVAL_SEC_MAX;
 
-#define	ENDPOINT_UPDATE_INTERVAL			(10 * TIME_SECOND)
-#define	ENDPOINT_VALUE_COUNT_MAX			(7*24*60)
-#define	ENDPOINT_VALUE_SCALE				(1)
+extern	uint32_t	ENDPOINT_UPDATE_INTERVAL;
+extern	uint32_t	ENDPOINT_VALUE_COUNT_MAX;
+extern	double		ENDPOINT_VALUE_SCALE;
 
-#define	ENDPOINT_SENSOR_TEMPERATURE_MAX		(100)
-#define	ENDPOINT_SENSOR_TEMPERATURE_MIN		(-20)
-#define	ENDPOINT_SENSOR_TEMPERATURE_UNIT	("C")
+extern	int			ENDPOINT_SENSOR_TEMPERATURE_MAX;
+extern	int			ENDPOINT_SENSOR_TEMPERATURE_MIN;	
+extern	const char*	ENDPOINT_SENSOR_TEMPERATURE_UNIT;
 
-#define	ENDPOINT_SENSOR_HUMIDITY_MAX		(100)
-#define	ENDPOINT_SENSOR_HUMIDITY_MIN		(0)
-#define	ENDPOINT_SENSOR_HUMIDITY_UNIT		("%RH")
+extern	uint32_t	ENDPOINT_SENSOR_HUMIDITY_MAX;
+extern	uint32_t	ENDPOINT_SENSOR_HUMIDITY_MIN;
+extern	const char*	ENDPOINT_SENSOR_HUMIDITY_UNIT;
 
-#define	DEFAULT_LOCAL_IP					"127.0.0.1"
-#define	DEFAULT_SERVER_IP					"127.0.0.1"
-#define	DEFAULT_SERVER_PORT					8888
+extern	const char*	DEFAULT_LOCAL_IP;
+extern	const char*	DEFAULT_SERVER_IP;	
+extern	uint16_t	DEFAULT_SERVER_PORT;
 
-#define	SNMP_COMMUNITY_LENGTH_MAX			128
+extern	int			SNMP_COMMUNITY_LENGTH_MAX;
 
-#define	LOG_FILE_PATH						"/var/log/"
-#define	LOG_FILE_SIZE						(1024*1024)
+extern	const char*	LOG_FILE_PATH;
+extern	uint32_t	LOG_FILE_SIZE;
 
-extern	const char *RMC_RESULT_OK;
-extern	const char *RMC_RESULT_FAILED;
-extern	const char *RMC_FIELD_SECTION;
-extern	const char *RMC_FIELD_COMMAND;
-extern	const char *RMC_FIELD_RESULT;
-extern	const char *RMC_FIELD_ERROR;
-extern	const char *RMC_FIELD_TYPE;
-extern	const char *RMC_FIELD_DEVICE;
-extern	const char *RMC_FIELD_DEVICE_ARRAY;
-extern	const char *RMC_FIELD_ID;
-extern	const char *RMC_FIELD_ID_ARRAY;
-extern	const char *RMC_FIELD_NAME;
+extern	const char* RMC_RESULT_OK;
+extern	const char* RMC_RESULT_FAILED;
+extern	const char* RMC_FIELD_SECTION;
+extern	const char* RMC_FIELD_COMMAND;
+extern	const char* RMC_FIELD_RESULT;
+extern	const char* RMC_FIELD_ERROR;
+extern	const char* RMC_FIELD_TYPE;
+extern	const char* RMC_FIELD_DEVICE;
+extern	const char* RMC_FIELD_DEVICE_ARRAY;
+extern	const char* RMC_FIELD_ENDPOINT;
+extern	const char* RMC_FIELD_ENDPOINT_ARRAY;
+extern	const char* RMC_FIELD_ID;
+extern	const char*	RMC_FIELD_ID_ARRAY;
+extern	const char*	RMC_FIELD_NAME;
+
+extern	const char* OBJECT_FIELD_TYPE;
+extern	const char* OBJECT_FIELD_DEVICE;
+extern	const char* OBJECT_FIELD_DEVICE_ARRAY;
+extern	const char* OBJECT_FIELD_ID;
+extern	const char* OBJECT_FIELD_ID_ARRAY;
+extern	const char* OBJECT_FIELD_NAME;
+extern	const char* OBJECT_FIELD_DATE;
+extern	const char* OBJECT_FIELD_ENABLE;
+extern	const char* OBJECT_FIELD_SENSOR_ID;
+extern	const char* OBJECT_FIELD_DEVICE_ID;
+extern	const char* OBJECT_FIELD_NAME;
+extern	const char* OBJECT_FIELD_UNIT;
+extern	const char* OBJECT_FIELD_SCALE;
+extern	const char* OBJECT_FIELD_UPDATE_INTERVAL;
+extern	const char* OBJECT_FIELD_LOOP_INTERVAL;
+extern	const char* OBJECT_FIELD_LIVE_CHECK_INTERVAL;
+extern	const char* OBJECT_FIELD_MODULE;
+extern	const char* OBJECT_FIELD_IP;
+extern	const char* OBJECT_FIELD_COMMUNITY;
+extern	const char* OBJECT_FIELD_TIMEOUT;
+
 enum	RetValue
 {
 	RET_VALUE_OK,

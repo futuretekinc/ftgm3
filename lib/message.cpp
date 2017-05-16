@@ -50,12 +50,12 @@ void	Message::Send(std::string const& _id, Message* _message)
 	auto object_it = active_object_map.find(_id);
 	if (object_it == active_object_map.end())
 	{
-		TRACE_ERROR2 << "Unknwon target[" << _id << "]" << Trace::End;
+		TRACE_ERROR2(NULL, "Unknwon target[" << _id << "]");
 		delete _message;
 	}
 	else
 	{
-		TRACE_INFO2 << "Packet send to target[" << _id << "]" << Trace::End;
+		TRACE_INFO2(NULL, "Packet send to target[" << _id << "]");
 		object_it->second->Post(_message);	
 	}
 	active_object_map_lock.unlock();
@@ -71,7 +71,7 @@ void	Message::SendPacket(ValueID const& _target, ValueID const& _sender, void* _
 	}
 	catch(std::bad_alloc &e)
 	{
-		TRACE_ERROR2 << "Failed to create message!" << Trace::End;
+		TRACE_ERROR2(NULL, "Failed to create message!");
 	}
 }
 
@@ -85,7 +85,7 @@ void	Message::SendPacket(ValueID const& _target, ValueID const& _sender, std::st
 	}
 	catch(std::bad_alloc &e)
 	{
-		TRACE_ERROR2 << "Failed to create message!" << Trace::End;
+		TRACE_ERROR2(NULL, "Failed to create message!");
 	}
 }
 

@@ -64,9 +64,10 @@ RetValue	ShellCommandEndpoint
 
 			std::cout << "* SNMP Endpoint" << std::endl;
 			std::cout << std::setw(id_len) << "ID";
-			std::cout << std::setw(name_len+1) << "Name";
-			std::cout << std::setw(type_len+1) << "Type";
-			std::cout << std::setw(stat_len+1) << "Stat";
+			std::cout << " " << std::setw(name_len+1) << "Name";
+			std::cout << " " << std::setw(type_len+1) << "Type";
+			std::cout << " " << std::setw(stat_len+1) << "Stat";
+			std::cout << " " << std::setw(id_len) << "Device ID";
 			std::cout << std::endl;
 
 			for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
@@ -74,9 +75,10 @@ RetValue	ShellCommandEndpoint
 				Endpoint *endpoint = dynamic_cast<Endpoint*>(*it);
 
 				std::cout << std::setw(id_len) << endpoint->GetID();
-				std::cout << std::setw(name_len+1) << endpoint->GetName();
-				std::cout << std::setw(type_len+1) << Endpoint::ToString(endpoint->GetType());
-				std::cout << std::setw(stat_len+1) << Object::ToString(endpoint->GetStat());
+				std::cout << " " << std::setw(name_len+1) << endpoint->GetName();
+				std::cout << " " << std::setw(type_len+1) << Endpoint::ToString(endpoint->GetType());
+				std::cout << " " << std::setw(stat_len+1) << Object::ToString(endpoint->GetStat());
+				std::cout << " " << std::setw(id_len) << endpoint->GetDeviceID();
 				std::cout << std::endl;	
 			}
 		}

@@ -34,7 +34,7 @@ RetValue	ShellCommandEndpoint
 		{
 			request_node.push_back(JSONNode(RMC_FIELD_COMMAND, _arguments[1]));
 		}
-		else if (_arguments[1] == "get")
+		else if ((_arguments[1] == "get") || (_arguments[1] == "start") || (_arguments[1] == "stop") || (_arguments[1] == "del") || (_arguments[1] == "enable") || (_arguments[1] == "disable"))
 		{
 			if (_count < 3)
 			{
@@ -77,26 +77,6 @@ RetValue	ShellCommandEndpoint
 
 			endpoint_node.set_name(RMC_FIELD_DEVICE);
 			request_node.push_back(endpoint_node);
-		}
-		else if ((_arguments[1] == "del") && (_count >= 3))
-		{
-			request_node.push_back(JSONNode(RMC_FIELD_COMMAND, _arguments[1]));
-
-			if (_count == 3)
-			{
-				request_node.push_back(JSONNode(RMC_FIELD_ID, _arguments[2]));
-			}
-			else
-			{
-				JSONNode	id_array(JSON_ARRAY);
-				for(uint32_t i = 2 ; i < _count ; i++)
-				{
-					id_array.push_back(JSONNode("", _arguments[i]));
-				}
-
-				id_array.set_name(RMC_FIELD_ID_ARRAY);
-				request_node.push_back(id_array);
-			}
 		}
 		else if (_count == 2)
 		{

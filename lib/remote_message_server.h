@@ -24,6 +24,14 @@ class	RemoteMessageServer : public TCPSession
 		bool	Get(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
 		bool	ArrayGet(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
 		bool	Set(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	Start(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	ArrayStart(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	Stop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	ArrayStop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	Enable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	ArrayEnable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	Disable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	ArrayDisable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
 	};
 
 	class	EndpointMessageService : public Object
@@ -38,12 +46,21 @@ class	RemoteMessageServer : public TCPSession
 		bool	Get(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
 		bool	ArrayGet(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
 		bool	Set(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	Start(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	ArrayStart(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	Stop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	ArrayStop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	Enable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	ArrayEnable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	Disable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
+		bool	ArrayDisable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message);
 	};
 public:
 	RemoteMessageServer(TCPServer *_server, int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout);
 	~RemoteMessageServer();
 
 			void		OnMessage(Message* _base_message);
+			void		SetObjectManager(ObjectManager*	_object_manager);
 
 protected:
 			bool		Call(JSONNode& _request, JSONNode& _response);

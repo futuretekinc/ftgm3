@@ -6,15 +6,16 @@
 class	DeviceSerial : public Device
 {
 public:
-	DeviceSerial(Type _type);
-	DeviceSerial(Type _type, std::string const& _port);
+	DeviceSerial(ObjectManager& _manager, Type _type);
+	DeviceSerial(ObjectManager& _manager, Type _type, std::string const& _port);
 
 	virtual	bool	GetProperties(Properties& _properties) const;
-	virtual	bool	SetProperty(Property const& _property);
 
 	const 	std::string&	GetPort();
 			bool		SetPort(const std::string& _port);
 protected:
+	virtual	bool	SetPropertyInternal(Property const& _property, bool create = false);
+
 	std::string	port_;
 };
 

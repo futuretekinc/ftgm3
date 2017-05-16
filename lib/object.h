@@ -17,6 +17,7 @@ class	Object
 {
 public:
 	friend class	ObjectManager;
+	friend class	Trace;
 
 	enum	Stat
 	{
@@ -28,31 +29,49 @@ public:
 
 	Object();
 	Object(const ValueID& _id);
-	~Object();
+	virtual	~Object();
 
 	virtual	std::string	GetClassName();
 
 	const	ValueID&	GetID() const;
-	const	ValueName&	GetName() const;
 	const	Date&		GetDate() const;
+
+	const	ValueName&	GetName() const;
+			bool		SetName(ValueName const& _name);
+
 			bool		GetEnable() const;
 	virtual	void		SetEnable(bool _enable);
+
 	virtual	Stat		GetState() const;
-		
+			bool		SetState(Stat _stat);
+
+
+			bool		HasChanged() const;
+	virtual	bool		ApplyChanges();
+			bool		GetUpdatedProperties(Properties& _properties) const;
+			bool		AddUpdatedProperties(Property const& _property);
+
 	virtual	bool		GetProperties(Properties& _properties) const;
 	virtual	Properties	GetProperties() const;
-	virtual	bool		SetProperty(Property const& _property, bool create = false);
+			bool		SetProperty(Property const& _property, bool create = false);
 	virtual	bool		SetProperties(Properties const& _properties, bool create = false);
 	
 	virtual				operator JSONNode();
-	virtual	void		Print(std::ostream& os) const;
 
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 	static	std::string ToString(Stat _stat);
+	static	int			GetCount();
+	static	Object*		Get(std::string const& _name);
+	static	Object*		GetAt(int index);
+
+	std::string			GetTraceName() const;
+			void		SetTrace(bool	_enable);
 
 	friend std::ostream&	operator<<(std::ostream& os, Object & _object);
 
 protected:
+	virtual	bool		SetPropertyInternal(Property const& _property, bool create = false);
+
 	ObjectManager*	parent_;
 	std::string	class_name_;
 	ValueID		id_;
@@ -61,6 +80,7 @@ protected:
 	bool		enable_;
 	std::mutex	mutex_;
 
+	Properties	updated_properties_;
 	Trace		trace;
 };
 

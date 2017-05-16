@@ -42,7 +42,7 @@ void	TCPServer::Attach(ObjectManager* _object_manager)
 	object_manager_ = _object_manager;
 }
 
-bool	TCPServer::SetProperty(Property const& _property, bool create)
+bool	TCPServer::SetPropertyInternal(Property const& _property, bool create)
 {
 
 	if (_property.GetName() == "port")
@@ -50,7 +50,7 @@ bool	TCPServer::SetProperty(Property const& _property, bool create)
 		const ValueUInt32* value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (value == NULL)
 		{
-			TRACE_ERROR << "Failed to set port property because value type is invalid." << Trace::End;
+			TRACE_ERROR("Failed to set port property because value type is invalid.");
 			return	false;
 		}	
 
@@ -61,7 +61,7 @@ bool	TCPServer::SetProperty(Property const& _property, bool create)
 		const ValueUInt32* value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (value == NULL)
 		{
-			TRACE_ERROR << "Failed to set max_session property because value type is invalid." << Trace::End;
+			TRACE_ERROR("Failed to set max_session property because value type is invalid.");
 			return	false;
 		}	
 
@@ -72,7 +72,7 @@ bool	TCPServer::SetProperty(Property const& _property, bool create)
 		const ValueUInt32* value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (value == NULL)
 		{
-			TRACE_ERROR << "Failed to set max_session property because value type is invalid." << Trace::End;
+			TRACE_ERROR("Failed to set max_session property because value type is invalid.");
 			return	false;
 		}	
 
@@ -80,7 +80,7 @@ bool	TCPServer::SetProperty(Property const& _property, bool create)
 	}
 	else 
 	{
-		return	ActiveObject::SetProperty(_property, create);
+		return	ActiveObject::SetPropertyInternal(_property, create);
 	}
 
 	return	true;
@@ -92,17 +92,16 @@ void	TCPServer::Preprocess()
 
 	struct sockaddr_in	server;
 
-	TRACE_INFO << "TCP Server Preprocess!!!" << Trace::End;
 	socket_ = socket(AF_INET, SOCK_STREAM, 0);
 	if (socket_ == -1)
 	{
-		TRACE_ERROR << "Failed to create socket." << Trace::End;
+		TRACE_ERROR("Failed to create socket.");
 		return;
 	}
 
  	if( fcntl(socket_, F_SETFL, O_NONBLOCK) == -1 )
 	{
-       	TRACE_ERROR << "Failed to set nonblocking socket.\n" << Trace::End;
+       	TRACE_ERROR("Failed to set nonblocking socket.");
        	return;
 	}
 
@@ -110,13 +109,13 @@ void	TCPServer::Preprocess()
 	server.sin_addr.s_addr	= INADDR_ANY;
 	server.sin_port 		= htons(port_);
 
-	TRACE_INFO << "TCP Server opened[" << port_ << "]" << Trace::End;
 	ret_value = bind( socket_, (struct sockaddr *)&server, sizeof(server));
 	if (ret_value < 0)
 	{
-		TRACE_ERROR << "Failed to socket binding" << Trace::End;
+		TRACE_ERROR("Failed to socket binding");
 		return;
 	}
+	TRACE_INFO("TCP Server opened[" << port_ << "]");
 
 	listen(socket_, 3);
 }
@@ -141,17 +140,18 @@ void	TCPServer::Process()
 				RemoteMessageServer*	rms = new RemoteMessageServer(this,client_socket, &client, timeout_);
 
 				object_manager_->Attach(rms);
+				rms->SetTrace(true);
 				rms->Start();
 
 				session_map_locker_.Lock();
 				session_map_[ntohs(client.sin_port)] = rms;
 				session_map_locker_.Unlock();
 
-				TRACE_INFO << "New session created[" << inet_ntoa(client.sin_addr) << ":" << ntohs(client.sin_port) << "]" << Trace::End;
+				TRACE_INFO("New session created[" << inet_ntoa(client.sin_addr) << ":" << ntohs(client.sin_port) << "]");
 			}
 			catch(std::bad_alloc &e)
 			{
-				TRACE_ERROR << "Failed to create message!" << Trace::End;
+				TRACE_ERROR("Failed to create message!");
 			}
 		}
 	}
@@ -182,7 +182,7 @@ bool	TCPServer::SessionDisconnected
 	}
 	catch(std::bad_alloc &e)
 	{
-		TRACE_ERROR << "Failed to create message!" << Trace::End;
+		TRACE_ERROR("Failed to create message!");
 		return	false;
 	}
 

@@ -275,6 +275,14 @@ Shell::Command	ShellCommandHelp =
 	.function	= CommandHelp
 };
 
+Shell::Command	ShellCommandHelp2 = 
+{
+	.name		= "?",
+	.help		= "<command>",
+	.short_help= "Command help",
+	.function	= CommandHelp
+};
+
 RetValue	CommandQuit(std::string [], uint32_t, Shell* _shell)
 {
 	_shell->Stop();
@@ -293,7 +301,8 @@ Shell::Command	ShellCommandQuit =
 Shell::Command*	ShellDefaultCommands[] =
 {
 	&ShellCommandQuit,
-	&ShellCommandHelp
+	&ShellCommandHelp,
+	&ShellCommandHelp2
 };
 
 uint32_t	ShellDefaultCommandCount = sizeof(ShellDefaultCommands) / sizeof(Shell::Command*);

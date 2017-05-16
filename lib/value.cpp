@@ -27,9 +27,7 @@ Value*	Duplicate(Value const *_value)
 
 std::ostream& operator<<(std::ostream& os, Value const& _value)
 {
-	_value.Print(os);
-
-	return	os;
+	return	os << std::string(_value);
 }
 
 std::string	Value::GetTypeString() const

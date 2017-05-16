@@ -30,8 +30,8 @@ int main
 	string	config_file_name = string(program_invocation_short_name) + string(".conf");
 	Date	date;
 
-	TRACE_INFO << setw(80) << std::setfill('#') << "" << Trace::End;
-	TRACE_INFO << "Start : " << program_invocation_short_name << " - " << date << Trace::End;
+	TRACE_INFO(setw(80) << std::setfill('#') << "");
+	TRACE_INFO("Start : " << program_invocation_short_name << " - " << date);
 	while((option = getopt(argc, argv, "i?")) != -1) 
 	{   
 		switch(option)

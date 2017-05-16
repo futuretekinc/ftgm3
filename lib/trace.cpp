@@ -3,6 +3,7 @@
 #include <fstream>
 #include <libjson/libjson.h>
 #include "defined.h"
+#include "object.h"
 #include "trace.h"
 #include "time2.h"
 
@@ -10,13 +11,14 @@ using namespace std;
 
 Trace	trace;
 
-Trace::Trace()
-: level_(INFO), continue_(false), mode_(TO_FILE)
+Trace::Trace(Object* _object)
+: object_(_object), level_(INFO), continue_(false), mode_(TO_FILE), enable_(false)
 {
 	out_ = &std::cout;
 	file_name_ = std::string(LOG_FILE_PATH) + std::string(program_invocation_short_name) + (".log");
 	file_size_ = LOG_FILE_SIZE;
 	function_name_len_ = 32;
+	object_name_len_ = 16;
 	function_line_len_ = 4;
 }
 
@@ -29,6 +31,11 @@ bool	Trace::SetClassName(std::string const& _class_name)
 	class_name_ = _class_name;
 
 	return	true;
+}
+
+void	Trace::Enable(bool _enable)
+{
+	enable_ = _enable;
 }
 
 bool   Trace::SetOut(std::ostream* _out)
@@ -52,23 +59,27 @@ Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t 
 	level_ = _level;
 	headline_ = "";
 
-   	size_t colons = _pretty_function.rfind("::");
+	size_t colons = _pretty_function.rfind("::");
 	size_t begin = _pretty_function.substr(0,colons).rfind(" ") + 1;
 	size_t end = _pretty_function.rfind("(") - begin;
 
 	std::string function = _pretty_function.substr(begin,end);
 	ostringstream	os;
-	
+
 	Date	date;
 	os << "[" << date << "]";
 	os << "[" << setw(function_name_len_) << function.substr(0, function_name_len_) << "]";
 	os << "[" << setw(function_line_len_) <<_line << "]";
+	if (object_ != NULL)
+	{
+		os << "[" << setw(object_name_len_) <<object_->GetName() << "]";
+	}
 	switch(level_)
 	{
-		case	INFO:	os << "[INFO]"; break;
-		case	WARNING:os << "[WARN]"; break;
-		case	ERROR:	os << "[\033[1;31mERRO\033[0m]"; break;
-		case	CRITICAL:os << "[CRIT]"; break;
+	case	INFO:	os << "[INFO]"; break;
+	case	WARNING:os << "[WARN]"; break;
+	case	ERROR:	os << "[\033[1;31mERRO\033[0m]"; break;
+	case	CRITICAL:os << "[CRIT]"; break;
 	}
 
 	os << " : ";
@@ -76,6 +87,16 @@ Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t 
 	headline_ = os.str();
 
 	return	*this;
+}
+
+Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t _line, Object *_object)
+{
+	if (_object != NULL)
+	{
+		return	_object->trace.Begin(_level, _pretty_function, _line);
+	}
+
+	return	Begin(_level, _pretty_function, _line);
 }
 
 Trace&	Trace::Dump(Trace::Level _level, std::string const& _pretty_function, uint32_t line, const char* _buffer, uint32_t _length)
@@ -112,7 +133,7 @@ Trace&	Trace::Dump(Trace::Level _level, std::string const& _pretty_function, uin
 			Begin(_level, _pretty_function, line) << std::hex << std::setw(2) << std::setfill('0') << (int)((uint8_t *)_buffer)[i] << " ";
 			if ((i + 1) % 16 == 0)
 			{
-				TRACE_INFO << std::endl;	
+				Begin(_level, _pretty_function, line) << std::oct << Trace::End;	
 			}
 		}
 		Begin(_level, _pretty_function, line) << std::oct << Trace::End;	
@@ -121,12 +142,22 @@ Trace&	Trace::Dump(Trace::Level _level, std::string const& _pretty_function, uin
 	return	*this;
 }
 
+Trace&	Trace::Dump(Trace::Level _level, std::string const& _pretty_function, uint32_t line, Object* _object, const char* _buffer, uint32_t _length)
+{
+	if (_object != NULL)
+	{
+		return	_object->trace.Dump(_level, _pretty_function, line, _buffer, _length);
+	}
+
+	return	Dump(_level, _pretty_function, line, _buffer, _length);
+}
+
 std::ostream& Trace::End(std::ostream& _trace)
 {
 	Trace* trace = dynamic_cast<Trace*>(&_trace);
 	if (trace != NULL)
 	{
-		if (trace->str().size() != 0)
+		if (trace->IsEnable() && (trace->str().size() != 0))
 		{
 			trace->Write(trace->headline_, trace->headline_.size(), trace->str());
 			trace->str("");
@@ -145,7 +176,7 @@ std::ostream& Trace::NL(std::ostream& _trace)
 	Trace* trace = dynamic_cast<Trace*>(&_trace);
 	if (trace != NULL)
 	{
-		if (trace->str().size() != 0)
+		if (trace->IsEnable() && (trace->str().size() != 0))
 		{
 			trace->Write("", trace->headline_.size(), trace->str());
 			trace->str("");

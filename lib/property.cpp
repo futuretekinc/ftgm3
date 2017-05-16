@@ -329,7 +329,9 @@ bool	Properties::AppendID(std::string const& _id)
 	{
 		return	false;
 	}
-	return	Append(Property("id", _id));
+
+
+	return	Append(Property("id", ValueID(_id)));
 }
 
 bool	Properties::AppendName(std::string const& _name)
@@ -338,7 +340,7 @@ bool	Properties::AppendName(std::string const& _name)
 	{
 		return	false;
 	}
-	return	Append(Property("name", _name));
+	return	Append(Property("name", ValueName(_name)));
 }
 
 bool	Properties::AppendEnable(std::string const& _enable)

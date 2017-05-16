@@ -1,6 +1,6 @@
 #include "endpoint_actuator.h"
 
-EndpointActuator::EndpointActuator()
-:Endpoint()
+EndpointActuator::EndpointActuator(ObjectManager& _manager)
+:Endpoint(_manager)
 {
 }

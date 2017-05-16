@@ -25,8 +25,9 @@ ActiveObject::~ActiveObject()
 void	ActiveObject::SetEnable(bool _enable)
 {
 	if (enable_ != _enable)
-	{
-		enable_ = _enable;
+	{	
+		Object::SetEnable(_enable);
+#if 0
 		if (enable_)
 		{
 			Start();	
@@ -35,7 +36,7 @@ void	ActiveObject::SetEnable(bool _enable)
 		{
 			Stop();	
 		}
-	
+#endif	
 	}
 }
 
@@ -69,7 +70,7 @@ void	ActiveObject::Start()
 		if (!thread_.joinable())
 		{
 			thread_ = thread(ThreadMain, this);
-			TRACE_INFO << "Object[" << id_ << "] has been started." << Trace::End;
+			TRACE_INFO("Object[" << GetTraceName() << "] has been started.");
 			while(timer.RemainTime() != 0)
 			{
 				if (!stop_)
@@ -81,21 +82,32 @@ void	ActiveObject::Start()
 		}
 		else
 		{
-			TRACE_INFO << "Already started!" << Trace::End;
+			TRACE_INFO("Already started!");
 		}
 	}
 	else
 	{
-		TRACE_ERROR << "The object[" << id_ << "] is disabled." << Trace::End;	
+		TRACE_ERROR("The object[" << GetTraceName() << "] is disabled.");	
 	}
 }
 
-void	ActiveObject::Stop()
+void	ActiveObject::Stop(bool _wait)
 {
-	if (thread_.joinable())
+	try
 	{
-		stop_ = true;
-		thread_.join();	
+		if (thread_.joinable())
+		{
+			stop_ = true;
+
+			if (_wait)
+			{
+				thread_.join();
+			}
+		}
+	}
+	catch(exception& e)
+	{
+		TRACE_ERROR("Exception occurred[" << e.what());	
 	}
 }
 
@@ -103,15 +115,17 @@ void	ActiveObject::Run()
 {
 	Start();
 
-	while(!IsRunning())
+	while(!thread_.joinable())
 	{
 		usleep(1000);
 	}
 
-	while(IsRunning())
+	while(!stop_)
 	{
 		usleep(1000);
 	}
+
+	thread_.join();
 }
 
 bool	ActiveObject::GetProperties(Properties& _properties) const
@@ -126,7 +140,7 @@ bool	ActiveObject::GetProperties(Properties& _properties) const
 	return	false;
 }
 
-bool	ActiveObject::SetProperty(Property const& _property, bool create)
+bool	ActiveObject::SetPropertyInternal(Property const& _property, bool create)
 {
 	if (_property.GetName() == "loop_interval")
 	{
@@ -134,7 +148,7 @@ bool	ActiveObject::SetProperty(Property const& _property, bool create)
 		if (value != NULL)
 		{
 			loop_interval_ = value->Get();
-			TRACE_INFO << "The loop interval of object[" << id_ <<"] was set to " << loop_interval_ << Trace::End;
+			TRACE_INFO("The loop interval of object[" << GetTraceName() <<"] was set to " << loop_interval_);
 			return	true;
 		}
 
@@ -142,15 +156,15 @@ bool	ActiveObject::SetProperty(Property const& _property, bool create)
 		if (value2 != NULL)
 		{
 			loop_interval_ = strtoul(value2->Get().c_str(), 0, 10);
-			TRACE_INFO << "The loop interval of object[" << id_ <<"] was set to " << loop_interval_ << Trace::End;
+			TRACE_INFO("The loop interval of object[" << GetTraceName() <<"] was set to " << loop_interval_);
 			return	true;
 		}
 
-		TRACE_INFO << "Property loop interval value type is incorrect!" << Trace::End;
+		TRACE_INFO("Property loop interval value type is incorrect!");
 	}
 	else
 	{
-		return	Object::SetProperty(_property, create);
+		return	Object::SetPropertyInternal(_property, create);
 	}
 
 	return	false;
@@ -158,13 +172,8 @@ bool	ActiveObject::SetProperty(Property const& _property, bool create)
 
 bool	ActiveObject::IsRunning()
 {
-	return	!stop_;
-}
-
-void	ActiveObject::Print(std::ostream& os) const
-{
-	Object::Print(os);
-	os << std::setw(16) << "Loop Interval : " << loop_interval_ << " us" << Trace::End;
+	//return	!stop_;
+	return	thread_.joinable();
 }
 
 bool	ActiveObject::Post(Message* _message)

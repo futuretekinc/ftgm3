@@ -9,9 +9,9 @@
 class	DeviceFTE : public DeviceSNMP
 {
 public:
-	DeviceFTE();
-	DeviceFTE(Properties const& _properties);
-	DeviceFTE(ValueIP const& _ip);
+	DeviceFTE(ObjectManager& _manager);
+	DeviceFTE(ObjectManager& _manager, Properties const& _properties);
+	DeviceFTE(ObjectManager& _manager, ValueIP const& _ip);
 
 			Type		GetType()	const {	return	FTE;	}
 			bool		IsIncludedIn(Type _type);
@@ -24,8 +24,8 @@ public:
 			bool		ReadValue(std::string const& _endpoint_id, Value* _value);
 
 protected:
-	virtual	bool		Attach(Endpoint* _endpoint);
-	virtual	bool		Detach(Endpoint* _endpoint);
+	virtual	bool		Attach(ValueID const& _endpoint_id);
+	virtual	bool		Detach(ValueID const& _endpoint_id);
 
 
 	std::map<std::string, uint32_t>	endpoint_table_;

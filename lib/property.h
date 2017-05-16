@@ -31,8 +31,8 @@ public:
 	~Property();
 
 	const Property& operator=(Property const& _property);
-			bool		operator=(std::string const& _vlaue);
-			bool		Set(std::string const& _vlaue);
+			bool	operator=(std::string const& _vlaue);
+			bool	Set(std::string const& _vlaue);
 
 	const std::string&	GetName() const;
 	const Value*		GetValue() const;

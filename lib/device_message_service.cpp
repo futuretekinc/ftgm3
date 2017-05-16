@@ -36,17 +36,33 @@ bool	RemoteMessageServer::DeviceMessageService::Service(RemoteMessageServer& _rm
 		{	
 			result = Set(_rms, _request, _response, _error_message);
 		}
+		else if (command == "start")
+		{	
+			result = Start(_rms, _request, _response, _error_message);
+		}
+		else if (command == "stop")
+		{	
+			result = Stop(_rms, _request, _response, _error_message);
+		}
+		else if (command == "enable")
+		{	
+			result = Enable(_rms, _request, _response, _error_message);
+		}
+		else if (command == "disable")
+		{	
+			result = Disable(_rms, _request, _response, _error_message);
+		}
 		else
 		{
 			_error_message << "Failed to call service becuase command[" << command <<"] is unknown!";
-			TRACE_ERROR << _error_message.str() << Trace::End;
+			TRACE_ERROR(_error_message.str());
 			result = false;
 		}
 	}
 	catch(std::out_of_range)
 	{
 		_error_message << "Failed to call service becuase command is not exist!";
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 	
@@ -92,7 +108,7 @@ bool	RemoteMessageServer::DeviceMessageService::Add(RemoteMessageServer& _rms, J
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -148,14 +164,14 @@ bool	RemoteMessageServer::DeviceMessageService::ArrayAdd(RemoteMessageServer& _r
 		catch(std::out_of_range)
 		{
 			_error_message << "Failed to add device because device porperties is invalid.";
-			TRACE_ERROR << _error_message.str() << Trace::End;
+			TRACE_ERROR(_error_message.str());
 			result = false;
 		}
 	}
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -182,7 +198,7 @@ bool	RemoteMessageServer::DeviceMessageService::Del(RemoteMessageServer& _rms, J
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -226,20 +242,20 @@ bool	RemoteMessageServer::DeviceMessageService::ArrayDel(RemoteMessageServer& _r
 			if (result == false)
 			{
 				_error_message << "Failed to del device[" << it->as_string() << "]";
-				TRACE_ERROR << _error_message.str() << Trace::End;
+				TRACE_ERROR(_error_message.str());
 			}
 		}
 	}
 	catch(std::out_of_range)
 	{
 		_error_message << "Failed to del device because device porperties is invalid.";
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -296,7 +312,7 @@ bool	RemoteMessageServer::DeviceMessageService::Get(RemoteMessageServer& _rms, J
 			else
 			{
 				_error_message << "Failed to get device information because device[" << id << "] is not found!";	
-				TRACE_ERROR << _error_message.str() << Trace::End;
+				TRACE_ERROR(_error_message.str());
 				result = false;
 			}
 		}
@@ -308,7 +324,7 @@ bool	RemoteMessageServer::DeviceMessageService::Get(RemoteMessageServer& _rms, J
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -353,21 +369,21 @@ bool	RemoteMessageServer::DeviceMessageService::ArrayGet(RemoteMessageServer& _r
 			else
 			{
 				_error_message << "Failed to get device information because device is not found!";	
-				TRACE_ERROR << _error_message.str() << Trace::End;
+				TRACE_ERROR(_error_message.str());
 				result = false;
 			}
 		}
 		catch(std::out_of_range)
 		{
 			_error_message << "Failed to get device because id field is not found";
-			TRACE_ERROR << _error_message.str() << Trace::End;
+			TRACE_ERROR(_error_message.str());
 			result = false;
 		}
 	}
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
@@ -388,12 +404,24 @@ bool	RemoteMessageServer::DeviceMessageService::Set(RemoteMessageServer& _rms, J
 				throw std::invalid_argument("Device is not node!");
 			}
 
-			JSONNode	id_node = device_node["id"];
+			JSONNode	id_node = device_node[OBJECT_FIELD_ID];
 			std::string	id = id_node.as_string();
 
-			Properties	properties;
-			properties.Append(_request);
+			Device *device = _rms.object_manager_->GetDevice(id);
+			if(device != NULL)
+			{
+				Properties	properties;
+				properties.Append(_request);
 
+				properties.Delete(OBJECT_FIELD_ID);
+
+				result = device->SetProperties(properties);
+			}
+			else
+			{
+				_error_message << "Failed to get device[" << id << "]";
+				result = false;
+			}	
 		}
 		catch(std::out_of_range)
 		{
@@ -403,11 +431,367 @@ bool	RemoteMessageServer::DeviceMessageService::Set(RemoteMessageServer& _rms, J
 	catch(std::invalid_argument& e)
 	{
 		_error_message << e.what();
-		TRACE_ERROR << _error_message.str() << Trace::End;
+		TRACE_ERROR(_error_message.str());
 		result = false;
 	}
 
 	return	result;
 }
 
+
+bool	RemoteMessageServer::DeviceMessageService::Start(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		if (id_node.type() != JSON_STRING)
+		{
+			throw std::invalid_argument("id value is string.");
+		}
+
+		Device*	device = _rms.object_manager_->GetDevice(id_node.as_string());
+		if (device != NULL)
+		{
+			device->Start();
+		}
+		else
+		{
+			_error_message << "Device[" << id_node.as_string() << "] not found!";
+		}
+	}
+	catch(std::out_of_range)
+	{
+		result = ArrayStart(_rms, _request, _response, _error_message);
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::DeviceMessageService::ArrayStart(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		if (ids_node.type() != JSON_ARRAY)
+		{
+			throw std::invalid_argument("ids value is array.");
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			if (it->type() != JSON_STRING)
+			{
+				throw std::invalid_argument("id value is string.");
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Device* device = _rms.object_manager_->GetDevice(it->as_string());
+			if (device == NULL)
+			{
+				std::ostringstream	oss;
+
+				oss << "Failed to delete device because device[" << it->as_string() << "] is not found!";
+				throw std::invalid_argument(oss.str());
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Device* device = _rms.object_manager_->GetDevice(it->as_string());
+
+			device->Start();
+		}
+	}
+	catch(std::out_of_range)
+	{
+		_error_message << "Failed to del device because device porperties is invalid.";
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::DeviceMessageService::Stop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		if (id_node.type() != JSON_STRING)
+		{
+			throw std::invalid_argument("id value is string.");
+		}
+
+		Device*	device = _rms.object_manager_->GetDevice(id_node.as_string());
+		if (device != NULL)
+		{
+			device->Stop();
+		}
+		else
+		{
+			_error_message << "Device[" << id_node.as_string() << "] not found!";
+		}
+	}
+	catch(std::out_of_range)
+	{
+		result = ArrayStop(_rms, _request, _response, _error_message);
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::DeviceMessageService::ArrayStop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		if (ids_node.type() != JSON_ARRAY)
+		{
+			throw std::invalid_argument("ids value is array.");
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			if (it->type() != JSON_STRING)
+			{
+				throw std::invalid_argument("id value is string.");
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Device* device = _rms.object_manager_->GetDevice(it->as_string());
+			if (device == NULL)
+			{
+				std::ostringstream	oss;
+
+				oss << "Failed to delete device because device[" << it->as_string() << "] is not found!";
+				throw std::invalid_argument(oss.str());
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Device* device = _rms.object_manager_->GetDevice(it->as_string());
+
+			device->Stop();
+		}
+	}
+	catch(std::out_of_range)
+	{
+		_error_message << "Failed to del device because device porperties is invalid.";
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::DeviceMessageService::Enable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		if (id_node.type() != JSON_STRING)
+		{
+			throw std::invalid_argument("id value is string.");
+		}
+
+		Device*	device = _rms.object_manager_->GetDevice(id_node.as_string());
+		if (device != NULL)
+		{
+			device->SetEnable(true);
+		}
+		else
+		{
+			_error_message << "Device[" << id_node.as_string() << "] not found!";
+		}
+	}
+	catch(std::out_of_range)
+	{
+		result = ArrayEnable(_rms, _request, _response, _error_message);
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::DeviceMessageService::ArrayEnable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		if (ids_node.type() != JSON_ARRAY)
+		{
+			throw std::invalid_argument("ids value is array.");
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			if (it->type() != JSON_STRING)
+			{
+				throw std::invalid_argument("id value is string.");
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Device* device = _rms.object_manager_->GetDevice(it->as_string());
+			if (device == NULL)
+			{
+				std::ostringstream	oss;
+
+				oss << "Failed to delete device because device[" << it->as_string() << "] is not found!";
+				throw std::invalid_argument(oss.str());
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Device* device = _rms.object_manager_->GetDevice(it->as_string());
+
+			device->SetEnable(true);
+		}
+	}
+	catch(std::out_of_range)
+	{
+		_error_message << "Failed to del device because device porperties is invalid.";
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::DeviceMessageService::Disable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		if (id_node.type() != JSON_STRING)
+		{
+			throw std::invalid_argument("id value is string.");
+		}
+
+		Device*	device = _rms.object_manager_->GetDevice(id_node.as_string());
+		if (device != NULL)
+		{
+			device->SetEnable(false);
+		}
+		else
+		{
+			_error_message << "Device[" << id_node.as_string() << "] not found!";
+		}
+	}
+	catch(std::out_of_range)
+	{
+		result = ArrayDisable(_rms, _request, _response, _error_message);
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
+
+bool	RemoteMessageServer::DeviceMessageService::ArrayDisable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+{
+	bool	result = true;
+	try
+	{
+		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		if (ids_node.type() != JSON_ARRAY)
+		{
+			throw std::invalid_argument("ids value is array.");
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			if (it->type() != JSON_STRING)
+			{
+				throw std::invalid_argument("id value is string.");
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Device* device = _rms.object_manager_->GetDevice(it->as_string());
+			if (device == NULL)
+			{
+				std::ostringstream	oss;
+
+				oss << "Failed to delete device because device[" << it->as_string() << "] is not found!";
+				throw std::invalid_argument(oss.str());
+			}
+		}
+
+		for(auto it = ids_node.begin() ; it != ids_node.end() ; it++)
+		{
+			Device* device = _rms.object_manager_->GetDevice(it->as_string());
+
+			device->SetEnable(false);
+		}
+	}
+	catch(std::out_of_range)
+	{
+		_error_message << "Failed to del device because device porperties is invalid.";
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+	catch(std::invalid_argument& e)
+	{
+		_error_message << e.what();
+		TRACE_ERROR(_error_message.str());
+		result = false;
+	}
+
+	return	result;
+}
 

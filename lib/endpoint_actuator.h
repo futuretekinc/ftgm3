@@ -6,7 +6,7 @@
 class	EndpointActuator : public Endpoint
 {
 public:
-	EndpointActuator();
+	EndpointActuator(ObjectManager& _manager);
 
 };
 

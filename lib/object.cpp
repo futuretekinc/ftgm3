@@ -1,13 +1,17 @@
 #include <inttypes.h>
 #include <iomanip>
 #include <sstream>
+#include <map>
+#include "defined.h"
 #include "trace.h"
 #include "object.h"
 #include "object_manager.h"
 #include <hashlib++/hashlibpp.h>
 
+static std::map<std::string, Object*>	object_map;
+
 Object::Object()
-: parent_(NULL), enable_(false)
+: parent_(NULL), enable_(false), trace(this)
 {
 	md5wrapper*	md5 = new md5wrapper;
 
@@ -19,6 +23,8 @@ Object::Object()
 	id_ = md5->getHashFromString(oss.str());
 
 	name_ = std::string(id_);
+
+	object_map[id_] = this;
 }
 
 
@@ -26,11 +32,14 @@ Object::Object(const ValueID& _id)
 :	parent_(NULL), id_(_id), enable_(false)
 {
 	name_ = std::string(id_);
+
+	object_map[id_] = this;
 }
 
 Object::~Object()
 {
-	
+	object_map.erase(name_);
+	TRACE_INFO("Object[" << GetTraceName() << "] destroy");
 }
 
 std::string		Object::GetClassName()
@@ -64,6 +73,17 @@ const	ValueName&	Object::GetName() const
 	return	name_;
 }
 
+bool	Object::SetName(ValueName const& _name)
+{
+	name_ = _name;
+
+	updated_properties_.Delete(OBJECT_FIELD_NAME);
+
+	updated_properties_.AppendName(name_);
+
+	return	true;
+}
+
 const	Date&		Object::GetDate() const
 {
 	return	date_;
@@ -91,37 +111,72 @@ Object::Stat	Object::GetState() const
 	}
 }
 
+bool	Object::HasChanged() const
+{
+	return	(updated_properties_.size() != 0);
+}
+
+bool	Object::ApplyChanges() 
+{
+	return	false;
+}
+
+bool	Object::AddUpdatedProperties(Property const& _property)
+{
+	const Property*	property = updated_properties_.Get(_property.GetName());
+	if (property != NULL)
+	{
+		updated_properties_.Delete(_property.GetName());
+	}
+
+	updated_properties_.Append(_property);
+
+	return	true;
+}
+
 bool	Object::SetProperty(Property const& _property, bool create)
 {
-	bool	ret_value = false;
+	if (SetPropertyInternal(_property, create))
+	{
+		return	AddUpdatedProperties(_property);
+	}
 
-	if (create && (_property.GetName() == "id"))
+	return	false;
+}
+
+bool	Object::SetPropertyInternal(Property const& _property, bool create)
+{
+	bool	ret_value = true;
+
+	if (create && (_property.GetName() == OBJECT_FIELD_ID))
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
 			ret_value = id_.Set(value->Get());
-			TRACE_INFO << "The id of object[" << id_ <<"] was set to " << id_ << Trace::End;
+			TRACE_INFO("The id set to " << id_);
 		}
 		else
 		{
-			TRACE_INFO << "Property id value type is incorrect!" << Trace::End;
+			ret_value = false;
+			TRACE_INFO("Property id value type is incorrect!");
 		}
 	}
-	else if (_property.GetName() == "name")
+	else if (_property.GetName() == OBJECT_FIELD_NAME)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
 			ret_value = name_.Set(value->Get());
-			TRACE_INFO << "The name of object[" << id_ <<"] was set to " << name_ << Trace::End;
+			TRACE_INFO("The name set to " << name_);
 		}
 		else
 		{
-			TRACE_INFO << "Property name value type is incorrect!" << Trace::End;
+			ret_value = false;
+			TRACE_INFO("Property name value type is incorrect!");
 		}
 	}
-	else if (_property.GetName() == "date")
+	else if (_property.GetName() == OBJECT_FIELD_DATE)
 	{
 		if (create)
 		{
@@ -129,68 +184,81 @@ bool	Object::SetProperty(Property const& _property, bool create)
 			if (value != NULL)
 			{
 				date_ = value->Get();
-				TRACE_INFO << "The date of object[" << id_ <<"] was set to " << date_ << Trace::End;
-				return	true;
+				TRACE_INFO("The date set to " << date_);
 			}
-
-			const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
-			if (string_value != NULL)
+			else
 			{
-				date_ = string_value->Get();
-				TRACE_INFO << "The date of object[" << id_ <<"] was set to " << date_ << "[" << string_value->Get() << "]" << Trace::End;
-				return	true;
+				const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
+				if (string_value != NULL)
+				{
+					date_ = string_value->Get();
+					TRACE_INFO("The date set to " << date_ << "[" << string_value->Get() << "]");
+				}
+				else
+				{
+					ret_value = false;
+					TRACE_INFO("Property date value type is incorrect!");
+				}
 			}
-
-			TRACE_INFO << "Property date value type is incorrect!" << Trace::End;
 		}
 		else
 		{
-			TRACE_INFO << "The date of the device is only set possible at creation time." << Trace::End;
+			ret_value = false;
+			TRACE_INFO("The date of the device is only set possible at creation time.");
 		}
 	}
-	else if (_property.GetName() == "enable")
+	else if (_property.GetName() == OBJECT_FIELD_ENABLE)
 	{
 		const ValueBool*	value = dynamic_cast<const ValueBool*>(_property.GetValue());
 		if (value != NULL)
 		{
 			enable_ = value->Get();
-			TRACE_INFO << "The enable of object[" << id_ <<"] was set to " << enable_ << Trace::End;
-			return	true;
+			TRACE_INFO("The enable set to " << enable_);
 		}
-
-		const ValueString*	value2 = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value2 != NULL)
+		else
 		{
-			if ((value2->Get() == "yes") || (value2->Get() == "on") || (value2->Get() == "1") || (value2->Get() == "true"))
+			const ValueString*	value2 = dynamic_cast<const ValueString*>(_property.GetValue());
+			if (value2 != NULL)
 			{
-				enable_ = true;
-			}
-			else if ((value2->Get() == "no") || (value2->Get() == "off") || (value2->Get() == "0") || (value2->Get() == "false"))
-			{
-				enable_ = false;
+				if ((value2->Get() == "yes") || (value2->Get() == "on") || (value2->Get() == "1") || (value2->Get() == "true"))
+				{
+					enable_ = true;
+					TRACE_INFO("The enable set to " << enable_);
+				}
+				else if ((value2->Get() == "no") || (value2->Get() == "off") || (value2->Get() == "0") || (value2->Get() == "false"))
+				{
+					enable_ = false;
+					TRACE_INFO("The enable set to " << enable_);
+				}
+				else
+				{
+					ret_value = false;	
+					TRACE_INFO("Property enable value is incorrect!");
+				}
+
 			}
 			else
 			{
-				TRACE_INFO << "Property enable value is incorrect!" << Trace::End;
-				return	false;	
+				TRACE_INFO("Property enable value type is incorrect!");
+				ret_value = false;
 			}
-
-			TRACE_INFO << "The enable of object[" << id_ <<"] was set to " << enable_ << Trace::End;
-			return	true;
 		}
-
-		TRACE_INFO << "Property enable value type is incorrect!" << Trace::End;
+	}
+	else
+	{
+		TRACE_ERROR("Property[" << _property.GetName() << "] not supported!");
+		ret_value = false;
 	}
 
-	return	false;
+	return	ret_value;
 }
 
 bool	Object::GetProperties(Properties& _properties) const
 {
-	_properties.Append("id", id_);
-	_properties.Append("name", name_);
-	_properties.Append("date", date_);
-	_properties.Append("enable", enable_);
+	_properties.Append(OBJECT_FIELD_ID, id_);
+	_properties.Append(OBJECT_FIELD_NAME, name_);
+	_properties.Append(OBJECT_FIELD_DATE, date_);
+	_properties.Append(OBJECT_FIELD_ENABLE, enable_);
 
 	return	true;
 }
@@ -199,10 +267,10 @@ Properties	Object::GetProperties() const
 {
 	Properties	properties;
 
-	properties.Append("id", std::string(id_));
-	properties.Append("name", name_);
-	properties.Append("date", date_);
-	properties.Append("enable", enable_);
+	properties.Append(OBJECT_FIELD_ID, std::string(id_));
+	properties.Append(OBJECT_FIELD_NAME, name_);
+	properties.Append(OBJECT_FIELD_DATE, date_);
+	properties.Append(OBJECT_FIELD_ENABLE, enable_);
 
 	return	properties;
 }
@@ -222,6 +290,13 @@ bool	Object::SetProperties(Properties const& _properties, bool create)
 	return	true;
 }
 
+bool	Object::GetUpdatedProperties(Properties& _properties) const
+{
+	_properties = updated_properties_;
+
+	return	true;
+}
+
 Object::operator JSONNode()
 {
 	Properties	properties;
@@ -232,14 +307,6 @@ Object::operator JSONNode()
 }
 
 
-void	Object::Print(std::ostream& os) const
-{
-	os << std::setw(16) << "ID : " << id_ << std::endl;
-	os << std::setw(16) << "Name : " << name_ << std::endl;
-	os << std::setw(16) << "Date : " << date_ << std::endl;
-	os << std::setw(16) << "Enable : " << enable_ << std::endl;
-}
-
 std::ostream&	operator<<(std::ostream& os, Object& _object)
 {
 	JSONNode	json = JSONNode(_object);
@@ -249,22 +316,22 @@ std::ostream&	operator<<(std::ostream& os, Object& _object)
 
 bool	Object::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
-	_field_list.push_back("id");
-	_field_list.push_back("name");
-	_field_list.push_back("type");
-	_field_list.push_back("date");
-	_field_list.push_back("enable");
-	_field_list.push_back("device_id");
-	_field_list.push_back("live_check_interval");
-	_field_list.push_back("loop_interval");
-	_field_list.push_back("ip");
-	_field_list.push_back("module");
-	_field_list.push_back("community");
-	_field_list.push_back("timeout");
-	_field_list.push_back("unit");
-	_field_list.push_back("scale");
-	_field_list.push_back("update_interval");
-	_field_list.push_back("sensor_id");
+	_field_list.push_back(OBJECT_FIELD_ID);
+	_field_list.push_back(OBJECT_FIELD_NAME);
+	_field_list.push_back(OBJECT_FIELD_TYPE);
+	_field_list.push_back(OBJECT_FIELD_DATE);
+	_field_list.push_back(OBJECT_FIELD_ENABLE);
+	_field_list.push_back(OBJECT_FIELD_DEVICE_ID);
+	_field_list.push_back(OBJECT_FIELD_LIVE_CHECK_INTERVAL);
+	_field_list.push_back(OBJECT_FIELD_LOOP_INTERVAL);
+	_field_list.push_back(OBJECT_FIELD_IP);
+	_field_list.push_back(OBJECT_FIELD_MODULE);
+	_field_list.push_back(OBJECT_FIELD_COMMUNITY);
+	_field_list.push_back(OBJECT_FIELD_TIMEOUT);
+	_field_list.push_back(OBJECT_FIELD_UNIT);
+	_field_list.push_back(OBJECT_FIELD_SCALE);
+	_field_list.push_back(OBJECT_FIELD_UPDATE_INTERVAL);
+	_field_list.push_back(OBJECT_FIELD_SENSOR_ID);
 
 	return	true;
 }
@@ -280,4 +347,50 @@ std::string Object::ToString(Object::Stat _stat)
 	}	
 	
 	return	std::string("unknown");
+}
+
+std::string	Object::GetTraceName() const
+{
+	return	std::string(name_);
+}
+
+void	Object::SetTrace(bool	_enable)
+{
+	trace.Enable(_enable);
+}
+
+int	Object::GetCount()
+{
+	return	object_map.size();
+}
+
+Object*	Object::GetAt(int index)
+{
+	if((index < 0) || (index >= object_map.size()))
+	{
+		return	NULL;
+	}
+
+	for(auto it = object_map.begin() ; it != object_map.end();  it++)
+	{
+		if (index == 0)
+		{
+			return	it->second;
+		}
+		index--;
+	}
+
+	return	NULL;
+}
+
+Object*	Object::Get(std::string const& _id)
+{
+	auto it = object_map.find(_id);
+
+	if (it == object_map.end())
+	{
+		return	NULL;	
+	}
+
+	return	it->second;
 }

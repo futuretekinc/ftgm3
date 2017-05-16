@@ -45,7 +45,7 @@ TCPClient::TCPClient()
 	trace.SetClassName(GetClassName());
 	enable_	= true;
 	
-	TRACE_INFO << "TCP Client created" << Trace::End;
+	TRACE_INFO("TCP Client created");
 }
 
 TCPClient::~TCPClient()
@@ -77,14 +77,14 @@ bool	TCPClient::Connect(const string&	_server_ip, uint16_t		_server_port)
 	client_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (client_socket == -1)
 	{
-		TRACE_ERROR << "Failed to create socket." << Trace::End;
+		TRACE_ERROR("Failed to create socket.");
 		return	false;
 	}
 
 #if 0
  	if( fcntl(client_socket, F_SETFL, O_NONBLOCK) == -1 )
 	{
-       	TRACE_ERROR << "Failed to set nonblocking socket." << Trace::End;
+       	TRACE_ERROR("Failed to set nonblocking socket.");
        	return false;
 	}
 #endif			 
@@ -97,7 +97,7 @@ bool	TCPClient::Connect(const string&	_server_ip, uint16_t		_server_port)
 	if (ret_value < 0)
 	{
 		close(client_socket);
-		TRACE_ERROR << "Failed to connect to " << server_ip_.c_str() << ":" << server_port_ << Trace::End;
+		TRACE_ERROR("Failed to connect to " << server_ip_.c_str() << ":" << server_port_);
 		return false;
 	}
 
@@ -131,13 +131,13 @@ bool	TCPClient::Send
 	uint32_t	send_len;
 
 
-	TRACE_INFO << "Send Message : " << std::oct << _frame_len << std::endl;
+	TRACE_INFO("Send Message : " << std::oct << _frame_len);
 	TRACE_INFO_DUMP((const char *)_frame, _frame_len);		
 
 	send_len = send(socket_, _frame, _frame_len, MSG_DONTWAIT);
 	if (send_len != _frame_len)
 	{
-		TRACE_ERROR << "Failed to send frame!" << Trace::End;
+		TRACE_ERROR("Failed to send frame!");
 		return	false;	
 	}
 
@@ -181,7 +181,7 @@ bool		TCPClient::RequestAndReply(std::string const& _request, std::string& _repl
 
 	if (_request.size() == 0)
 	{
-		TRACE_ERROR << "Failed to send because content is null!" << Trace::End;
+		TRACE_ERROR("Failed to send because content is null!");
 	}
 	else if (Send(_request))
 	{   
@@ -207,7 +207,7 @@ bool		TCPClient::RequestAndReply(std::string const& _request, std::string& _repl
 	}   
 	else
 	{   
-		TRACE_ERROR << "Failed to send request!" << Trace::End;
+		TRACE_ERROR("Failed to send request!");
 	}   
 
 	return	result;
@@ -239,7 +239,7 @@ void	TCPClient::Process()
 			{
 				stop_ = true;
 
-				TRACE_ERROR << "The socket has terminated abnormally." << Trace::End;
+				TRACE_ERROR("The socket has terminated abnormally.");
 			}
 		}
 		else if (receive_len > 0)
@@ -247,7 +247,7 @@ void	TCPClient::Process()
 			bool	binary_message = false;
 
 			buffer[receive_len] = 0;
-			TRACE_INFO << "Receive Message : " << std::oct << receive_len << std::endl;
+			TRACE_INFO("Receive Message : " << std::oct << receive_len);
 			TRACE_INFO_DUMP(buffer, receive_len);		
 
 			locker_.Lock();
@@ -257,26 +257,26 @@ void	TCPClient::Process()
 				{
 					if (std::string(message_process_id_).size() != 0)
 					{
-						TRACE_INFO << "Send message to " << message_process_id_ << Trace::End;
+						TRACE_INFO("Send message to " << message_process_id_);
 						Message::SendPacket(message_process_id_, id_, buffer, receive_len);
 					}
 					else
 					{
 						Frame	*frame = new Frame((uint8_t *)buffer, receive_len);
 
-						TRACE_INFO << "Push message to list"<< Trace::End;
+						TRACE_INFO("Push message to list");
 						receive_packet_list_.push_back(frame);
 					}
 				}
 				catch(std::bad_alloc &e)
 				{
-					TRACE_ERROR << "Failed to create frame[receive_len = " <<  receive_len << "]";	
+					TRACE_ERROR("Failed to create frame[receive_len = " <<  receive_len << "]");	
 				
 				}
 			}
 			else
 			{
-				TRACE_INFO << "Receive packet buffer full!" << Trace::End;
+				TRACE_INFO("Receive packet buffer full!");
 			}
 			locker_.Unlock();
 		}

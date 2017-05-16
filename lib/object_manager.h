@@ -12,6 +12,8 @@
 
 class	ObjectManager : public ActiveObject
 {
+	friend	class	Device;
+	friend	class	Endpoint;
 public:
 	ObjectManager();
 	~ObjectManager();
@@ -34,7 +36,6 @@ public:
 			bool		Attach(Endpoint* _endpoint);
 			bool		Detach(Endpoint* _endpoint);
 			Endpoint*	CreateEndpoint(Properties const& _properties, bool from_db = false);
-			Endpoint*	CreateEndpoint(std::string const& _device_id, Properties const& _properties, bool from_db = false);
 			bool		DestroyEndpoint(std::string const& _id);
 			uint32_t	GetEndpointCount();
 			uint32_t	GetEndpointList(std::list<Endpoint*>& _endpoint_list);
@@ -50,6 +51,13 @@ public:
 			void		OnMessage(Message* _message);
 protected:
 	
+			bool		IDChanged(Device* _device, ValueID const& _old_id);
+			bool		IDChanged(Endpoint* _endpoint, ValueID const& _old_id);
+
+			bool		UpdateProperties(Object* _object);
+			bool		UpdateProperties(Device* _device);
+			bool		UpdateProperties(Endpoint* _endpoint);
+
 	virtual	void		Preprocess();
 	virtual	void		Process();
 	virtual	void		Postprocess();

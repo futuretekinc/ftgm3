@@ -37,12 +37,12 @@ RetValue	ShellCommandDevice
 		{
 			std::cout << "* SNMP Device" << std::endl;
 			std::cout << std::setw(id_len) << "ID";
-			std::cout << std::setw(name_len) << "Name";
-			std::cout << std::setw(type_len) << "Type";
-			std::cout << std::setw(stat_len) << "Stat";
-			std::cout << std::setw(ip_len) << "IP";
-			std::cout << std::setw(module_len) << "Module";
-			std::cout << std::setw(community_len) << "Community";
+			std::cout << " " << std::setw(name_len) << "Name";
+			std::cout << " " << std::setw(type_len) << "Type";
+			std::cout << " " << std::setw(stat_len) << "Stat";
+			std::cout << " " << std::setw(ip_len) << "IP";
+			std::cout << " " << std::setw(module_len) << "Module";
+			std::cout << " " << std::setw(community_len) << "Community";
 			std::cout << std::endl;
 
 			for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
@@ -50,12 +50,12 @@ RetValue	ShellCommandDevice
 				DeviceSNMP *device = dynamic_cast<DeviceSNMP*>(*it);
 
 				std::cout << std::setw(id_len) << device->GetID();
-				std::cout << std::setw(name_len) << device->GetName();
-				std::cout << std::setw(type_len) << Device::ToString(Device::SNMP);
-				std::cout << std::setw(stat_len) << Object::ToString(device->GetStat());
-				std::cout << std::setw(ip_len) << device->GetIP();
-				std::cout << std::setw(module_len) << device->GetModule();
-				std::cout << std::setw(community_len) << device->GetCommunity();
+				std::cout << " " << std::setw(name_len) << device->GetName();
+				std::cout << " " << std::setw(type_len) << Device::ToString(Device::SNMP);
+				std::cout << " " << std::setw(stat_len) << Object::ToString(device->GetStat());
+				std::cout << " " << std::setw(ip_len) << device->GetIP();
+				std::cout << " " << std::setw(module_len) << device->GetModule();
+				std::cout << " " << std::setw(community_len) << device->GetCommunity();
 				std::cout << std::endl;	
 			}
 		}
@@ -65,15 +65,15 @@ RetValue	ShellCommandDevice
 		{
 			std::cout << "* MBTCP Device" << std::endl;
 			std::cout << std::setw(id_len) << "ID";
-			std::cout << std::setw(name_len) << "Name";
-			std::cout << std::setw(type_len) << "Type";
+			std::cout << " " << std::setw(name_len) << "Name";
+			std::cout << " " << std::setw(type_len) << "Type";
 			std::cout << std::endl;
 
 			for(auto it = mbtcp_list.begin() ; it != mbtcp_list.end() ; it++)
 			{
 				std::cout << std::setw(id_len) << (*it)->GetID();
-				std::cout << std::setw(name_len) << (*it)->GetName();
-				std::cout << std::setw(type_len) << Device::ToString(Device::MBTCP);
+				std::cout << " " << std::setw(name_len) << (*it)->GetName();
+				std::cout << " " << std::setw(type_len) << Device::ToString(Device::MBTCP);
 				std::cout << std::endl;	
 			}
 		}

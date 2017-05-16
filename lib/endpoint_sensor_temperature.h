@@ -7,8 +7,8 @@
 class	EndpointSensorTemperature : public EndpointSensor
 {
 public:
-	EndpointSensorTemperature();
-	EndpointSensorTemperature(Properties const& _properties);
+	EndpointSensorTemperature(ObjectManager& _manager);
+	EndpointSensorTemperature(ObjectManager& _manager, Properties const& _properties);
 
 			std::string		GetClassName();
 			Type			GetType()	const 		{	return	S_TEMPERATURE;	}

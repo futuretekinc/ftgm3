@@ -1,5 +1,9 @@
 #include <fstream>
+#include <sstream>
 #include <libjson/libjson.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "defined.h"
 #include "trace.h"
 #include "object_manager.h"
@@ -11,6 +15,9 @@
 RemoteMessageServer::RemoteMessageServer(TCPServer *_server, int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout)
 : TCPSession(_server, _socket, _addr_info, _timeout), object_manager_(NULL)
 {
+		
+	trace.SetClassName(GetClassName());
+	name_ 	= std::string("rms-") + inet_ntoa(_addr_info->sin_addr);
 }
 
 RemoteMessageServer::~RemoteMessageServer()
@@ -31,7 +38,7 @@ void	RemoteMessageServer::OnMessage(Message* _base_message)
 				{
 					if (!isprint(message_packet->data[i]))
 					{
-						TRACE_INFO << "Not printable character : " << message_packet->data[i] << Trace::End;
+						TRACE_INFO("Not printable character : " << message_packet->data[i]);
 						printable = false;
 						break;
 					}
@@ -39,12 +46,22 @@ void	RemoteMessageServer::OnMessage(Message* _base_message)
 
 				if(printable)
 				{
-					TRACE_INFO << "Received Packet : " << message_packet->length << Trace::End;
-					TRACE_INFO << (char*)message_packet->data << Trace::End;
+					if (libjson::is_valid((char*)message_packet->data))
+					{
+						TRACE_INFO("Received Packet : " << message_packet->length);
+						JSONNode json = libjson::parse((char*)message_packet->data);
+
+						TRACE_INFO(json.write_formatted());
+					}
+					else
+					{
+						TRACE_INFO("Received Packet : " << message_packet->length);
+						TRACE_INFO((char*)message_packet->data);
+					}
 				}
 				else
 				{
-					TRACE_INFO << *message_packet << Trace::End;
+					TRACE_INFO(*message_packet);
 				}
 
 				try
@@ -59,7 +76,7 @@ void	RemoteMessageServer::OnMessage(Message* _base_message)
 				}
 				catch(std::invalid_argument)
 				{
-					TRACE_ERROR << "Invalid JSON format!" << Trace::End;
+					TRACE_ERROR("Invalid JSON format!");
 				}
 			}
 		}
@@ -147,26 +164,26 @@ bool	RemoteMessageServer::Call(JSONNode& _request, JSONNode& _response)
 			}
 			else if (section == "endpoint")
 			{
-				result = dms_.Service(*this, _request, _response, error_message);
+				result = ems_.Service(*this, _request, _response, error_message);
 			}
 			else
 			{
 				error_message << "Failed to call service becuase section is uknown!";
-				TRACE_ERROR << error_message.str() << Trace::End;
+				TRACE_ERROR(error_message.str());
 				result = false;
 			}
 		}
 		else
 		{
 			error_message << "Failed to call service becuase object manager is not attached!";
-			TRACE_ERROR << error_message.str() << Trace::End;
+			TRACE_ERROR(error_message.str());
 			result = false;
 		}
 	}
 	catch(std::out_of_range)
 	{
 		error_message << "Failed to call service becuase section is not found!";
-		TRACE_ERROR << error_message.str() << Trace::End;
+		TRACE_ERROR(error_message.str());
 	}
 
 	if (result)
@@ -197,17 +214,17 @@ void	RemoteMessageServer::Process()
 			if (errno != EAGAIN)
 			{
 				Disconnect();
-				TRACE_ERROR << "The socket has terminated abnormally." << Trace::End;
+				TRACE_ERROR("The socket has terminated abnormally.");
 			}
 		}
 		else if (receive_len_ == 0)
 		{
 			Disconnect();
-			TRACE_ERROR << "The socket has terminated." << Trace::End;
+			TRACE_ERROR("The socket has terminated.");
 		}
 		else
 		{
-			TRACE_INFO << "Received packet send to [ " << id_ << " -> " << process_id_ << " ]" << Trace::End;
+			TRACE_INFO("Received packet send to [ " << id_ << " -> " << process_id_ << " ]");
 			Message*	message = new MessagePacket(id_, receive_buffer_, receive_len_);
 
 			Post(message);
@@ -223,3 +240,7 @@ void	RemoteMessageServer::Postprocess()
 }
 
 
+void	RemoteMessageServer::SetObjectManager(ObjectManager*	_object_manager)
+{
+	object_manager_ = _object_manager;
+}

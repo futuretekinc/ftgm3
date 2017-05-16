@@ -15,7 +15,7 @@ DataManager::DataManager()
 
 	trace.SetClassName(GetClassName());
 
-	id_ 	= std::string("data_manager");
+	name_ 	= std::string("data_manager");
 	enable_ = true;
 	date 	= Date::GetCurrentDate();
 
@@ -27,7 +27,7 @@ DataManager::DataManager(std::string const& _db_name)
 {
 	trace.SetClassName(GetClassName());
 
-	id_ 	= std::string("data_manager");
+	name_ 	= std::string("data_manager");
 	enable_ = true;
 }
 
@@ -61,14 +61,14 @@ DataManager::Table*	DataManager::CreateTable(std::string const& _table_name, std
 			}
 		}
 		query <<");";
-		TRACE_INFO << "Query : " << query.str() << Trace::End;
+		TRACE_INFO("Query : " << query.str());
 
 		try 
 		{
 			Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(database_);
 			if (statement == NULL)
 			{
-				TRACE_ERROR << "Failed to create SQL statement!" << Trace::End;
+				TRACE_ERROR("Failed to create SQL statement!");
 				return	NULL;	
 			}
 
@@ -78,7 +78,7 @@ DataManager::Table*	DataManager::CreateTable(std::string const& _table_name, std
 		}
 		catch(Kompex::SQLiteException &exception)
 		{
-			TRACE_INFO << "Failed to create table[" << _table_name <<"]" << Trace::End;
+			TRACE_INFO("Failed to create table[" << _table_name <<"]");
 			return	NULL;
 		}
 	}
@@ -86,11 +86,11 @@ DataManager::Table*	DataManager::CreateTable(std::string const& _table_name, std
 	Table* new_table = new	Table(this, _table_name);
 	if (new_table == NULL)
 	{
-		TRACE_ERROR << "Failed to create table[" << _table_name << "]" << Trace::End;
+		TRACE_ERROR("Failed to create table[" << _table_name << "]");
 	}
 	else
 	{
-		TRACE_INFO << "Table[" << _table_name << "] created" << Trace::End;
+		TRACE_INFO("Table[" << _table_name << "] created");
 	}
 
 	return	new_table;
@@ -108,14 +108,14 @@ bool	DataManager::IsTableExist
 		Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(database_);
 		if (statement == NULL)
 		{
-			TRACE_ERROR << "Failed to create SQL statement!" << Trace::End;
+			TRACE_ERROR("Failed to create SQL statement!");
 			return	false;	
 		}
 
 		std::ostringstream	query;
 
 		query << "SELECT COUNT(*) FROM sqlite_master WHERE name=" << "'" << _name << "';";
-		TRACE_INFO << "Query : " <<  query.str().c_str() << Trace::End;
+		TRACE_INFO("Query : " <<  query.str().c_str());
 
 		if (statement->SqlAggregateFuncResult(query.str()) != 0)
 		{
@@ -126,15 +126,16 @@ bool	DataManager::IsTableExist
 	}
 	catch(Kompex::SQLiteException &exception)
 	{
-		TRACE_INFO  << "DB not initialized." << Trace::End;
+		TRACE_INFO("DB not initialized.");
 	}
 
 	return	exist;
 }
 
 DataManager::Table::Table(DataManager* _parent, std::string const& _name)
-: parent_(_parent), name_(_name)
+: parent_(_parent)
 {
+	name_ = _name;
 	trace.SetClassName(GetClassName());
 }
 
@@ -143,14 +144,14 @@ bool	DataManager::Table::Add(Properties const& _properties)
 	const Property*	property = _properties.Get("id");
 	if (property == NULL)
 	{
-		TRACE_ERROR2 << "Failed to add object to DB." << Trace::End;
+		TRACE_ERROR2(NULL, "Failed to add object to DB.");
 		return	false;	
 	}
 
 	const Value* value = property->GetValue();	
 	if (value == NULL)
 	{
-		TRACE_ERROR << "Invalid arguments" << Trace::End;
+		TRACE_ERROR("Invalid arguments");
 		return	false;	
 	}
 
@@ -158,7 +159,7 @@ bool	DataManager::Table::Add(Properties const& _properties)
 
 	if (IsExist(std::string(id)))
 	{
-		TRACE_ERROR << "The object [" << id << "] already exist." << Trace::End;
+		TRACE_ERROR("The object [" << id << "] already exist.");
 		return	false;
 	}
 
@@ -171,7 +172,7 @@ bool	DataManager::Table::Add(Properties const& _properties)
 		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
 		if (statement == NULL)
 		{
-			TRACE_ERROR << "Failed to create SQL statement!" << Trace::End;
+			TRACE_ERROR("Failed to create SQL statement!");
 			return	false;	
 		}
 
@@ -192,7 +193,7 @@ bool	DataManager::Table::Add(Properties const& _properties)
 		}
 		query << ");";
 
-		TRACE_INFO << "Query : " << query.str() << Trace::End;
+		TRACE_INFO("Query : " << query.str());
 		statement->Sql(query.str());
 		statement->BindString(++index, id);
 
@@ -212,7 +213,7 @@ bool	DataManager::Table::Add(Properties const& _properties)
 	}
 	catch(Kompex::SQLiteException &exception)
 	{
-		TRACE_ERROR << "Failed to add object to table[" << name_ << "]" << Trace::End;
+		TRACE_ERROR("Failed to add object to table[" << name_ << "]");
 		return	false;
 	}
 
@@ -224,14 +225,14 @@ bool	DataManager::Table::Delete(std::string const& _id)
 	std::ostringstream	query;
 
 	query << "DELETE FROM " << name_ << " WHERE _id=" << _id << ";";
-	TRACE_INFO << "Query : " << query.str() << Trace::End;
+	TRACE_INFO("Query : " << query.str());
 
 	try 
 	{
 		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
 		if (statement == NULL)
 		{
-			TRACE_ERROR << "Failed to create SQL statement!" << Trace::End;
+			TRACE_ERROR("Failed to create SQL statement!");
 			return	false;	
 		}
 
@@ -249,7 +250,7 @@ bool	DataManager::Table::Delete(std::string const& _id)
 	}
 	catch(Kompex::SQLiteException& exception)
 	{
-		TRACE_ERROR << "Failed to delete object from table[" << name_ << "]";
+		TRACE_ERROR("Failed to delete object from table[" << name_ << "]");
 		return	false;
 	}
 
@@ -263,14 +264,14 @@ bool	DataManager::Table::IsExist(std::string const& _id)
 	std::ostringstream   query;
 
 	query << "SELECT COUNT(*) FROM " << name_ << " WHERE _id = " << "'" << _id << "';";
-	TRACE_INFO << "Query : " << query.str() << Trace::End;
+	TRACE_INFO("Query : " << query.str());
 
 	try  
 	{    
 		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
 		if (statement == NULL)
 		{
-			TRACE_ERROR << "Failed to create SQL statement!" << Trace::End;
+			TRACE_ERROR("Failed to create SQL statement!");
 		}
 		else
 		{
@@ -284,7 +285,7 @@ bool	DataManager::Table::IsExist(std::string const& _id)
 	}    
 	catch(Kompex::SQLiteException& exception)
 	{    
-		TRACE_ERROR << "Failed to check object from table[" << name_ << "]" << Trace::End;
+		TRACE_ERROR("Failed to check object from table[" << name_ << "]");
 	}    
 
 
@@ -296,7 +297,7 @@ uint32_t	DataManager::Table::GetCount()
 	std::ostringstream	query;
 
 	query << "SELECT COUNT(*) FROM " << name_ << ";";
-	TRACE_INFO << "Query : " << query.str() << Trace::End;
+	TRACE_INFO("Query : " << query.str());
 
 	uint32_t	count = 0;
 	try 
@@ -304,7 +305,7 @@ uint32_t	DataManager::Table::GetCount()
 		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
 		if (statement == NULL)
 		{
-			TRACE_ERROR << "Failed to create SQL statement!" << Trace::End;
+			TRACE_ERROR("Failed to create SQL statement!");
 		}
 		else
 		{
@@ -315,7 +316,7 @@ uint32_t	DataManager::Table::GetCount()
 	}
 	catch(Kompex::SQLiteException& exception)
 	{
-		TRACE_ERROR << "Failed to check object from table[" << name_ << "]";
+		TRACE_ERROR("Failed to check object from table[" << name_ << "]");
 	}
 
 	return	count;
@@ -325,28 +326,28 @@ bool	DataManager::Table::GetProperties(std::string const& _id, Properties& _prop
 {
 	if (!IsExist(_id))
 	{
-		TRACE_ERROR << "The object [" << _id << "is not exist!" << Trace::End;
+		TRACE_ERROR("The object [" << _id << "is not exist!");
 		return	false;
 	}
 
 	std::ostringstream	query;
 
 	query << "SELECT * FROM " << name_ << " WHERE _id = " << _id << ";";
-	TRACE_INFO << "Query : " << query.str() << Trace::End;
+	TRACE_INFO("Query : " << query.str());
 
 	try 
 	{
 		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
 		if (statement == NULL)
 		{
-			TRACE_ERROR << "Failed to create SQL statement!" << Trace::End;
+			TRACE_ERROR("Failed to create SQL statement!");
 			return	false;	
 		}
 
 		statement->Sql(query.str());
 		if (statement->FetchRow())
 		{
-			TRACE_INFO << "Fetch Row : " << statement->GetColumnCount() << Trace::End;
+			TRACE_INFO("Fetch Row : " << statement->GetColumnCount());
 			for(auto it = _properties.begin(); it != _properties.end() ; it++)
 			{
 				std::string	value = statement->GetColumnString(it->GetName());
@@ -361,7 +362,7 @@ bool	DataManager::Table::GetProperties(std::string const& _id, Properties& _prop
 	}
 	catch(Kompex::SQLiteException &exception)
 	{
-		TRACE_ERROR << "Failed to get object properties" << Trace::End;
+		TRACE_ERROR("Failed to get object properties");
 	}
 
 	return	true;
@@ -371,7 +372,7 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 {
 	if (!IsExist(_id))
 	{
-		TRACE_ERROR << "The object [" << _id << "is not exist!" << Trace::End;
+		TRACE_ERROR("The object [" << _id << "is not exist!");
 		return	false;
 	}
 
@@ -382,7 +383,7 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
 		if (statement == NULL)
 		{
-			TRACE_ERROR << "Failed to create SQL statement!" << Trace::End;
+			TRACE_ERROR("Failed to create SQL statement!");
 			return	false;	
 		}
 
@@ -400,7 +401,7 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 			}
 		}
 		query << " WHERE _id=@id;";
-		TRACE_INFO << "Query : " << query.str() << Trace::End;
+		TRACE_INFO("Query : " << query.str());
 
 
 		statement->Sql(query.str());
@@ -409,10 +410,10 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 		for(auto it = _properties.begin(); it != _properties.end() ; it++)
 		{
 			statement->BindString(++index, std::string(*(it->GetValue())));
-			TRACE_INFO << it->GetName() << " : " << std::string(*(it->GetValue())) << std::endl;
+			TRACE_INFO(it->GetName() << " : " << std::string(*(it->GetValue())));
 		}
 		statement->BindString(++index, _id);
-		TRACE_INFO << "id : "<<  _id << Trace::End;
+		TRACE_INFO("id : "<<  _id);
 
 		statement->ExecuteAndFree();
 
@@ -420,9 +421,9 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 	}
 	catch(Kompex::SQLiteException &exception)
 	{
-		TRACE_ERROR << "Failed to update! - " << exception.GetErrorDescription() << std::endl;
-		TRACE_ERROR << "Propertyes : " << _properties << std::endl;
-		TRACE_ERROR << "Query : " << query.str() << Trace::End;
+		TRACE_ERROR("Failed to update! - " << exception.GetErrorDescription());
+		TRACE_ERROR("Propertyes : " << _properties);
+		TRACE_ERROR("Query : " << query.str());
 		return	false;
 	}
 
@@ -434,14 +435,14 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 	std::ostringstream	query;
 
 	query << "SELECT * FROM " << name_ << " ORDER BY _id DESC LIMIT " << _count << " OFFSET " << _index <<";";
-	TRACE_INFO << "Query : " << query.str() << Trace::End;
+	TRACE_INFO("Query : " << query.str());
 
 	try 
 	{
 		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
 		if (statement == NULL)
 		{
-			TRACE_ERROR << "Failed to create SQLite statement!" << Trace::End;
+			TRACE_ERROR("Failed to create SQLite statement!");
 			return	false;
 		}
 
@@ -450,7 +451,7 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 		{
 			Properties	properties;
 
-			TRACE_INFO << "Fetch Row : " << statement->GetColumnCount() << Trace::End;
+			TRACE_INFO("Fetch Row : " << statement->GetColumnCount());
 
 			for(int i = 0 ; i < statement->GetColumnCount() ; i++)
 			{
@@ -460,11 +461,11 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 				{
 					std::string	value = statement->GetColumnString(name);
 
-					TRACE_INFO << name.substr(1, name.size()) << " : " << value << Trace::NL;
+					TRACE_INFO(name.substr(1, name.size()) << " : " << value);
 					properties.Append(name.substr(1, name.size() - 1), value);
 				}
 			}
-			TRACE_INFO << Trace::End;
+			TRACE_INFO("");
 
 			if (properties.Count() != 0)
 			{
@@ -477,7 +478,7 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 	}
 	catch(Kompex::SQLiteException &exception)
 	{
-		TRACE_ERROR << "Failed to get object properties" << Trace::End;
+		TRACE_ERROR("Failed to get object properties");
 	}
 
 	return	true;
@@ -486,7 +487,7 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 DataManager::ValueTable::ValueTable(DataManager* _parent, std::string const& _endpoint_id)
 : parent_(_parent)
 {
-	table_name_ = "table_ep_" + _endpoint_id;
+	name_ = "table_ep_" + _endpoint_id;
 	trace.SetClassName(GetClassName());
 }
 
@@ -494,21 +495,21 @@ bool	DataManager::ValueTable::Add(Date const& _date, Value const* _value)
 {
 	if (parent_ == NULL)
 	{
-		TRACE_ERROR << "Value table parent is not assigned!" << Trace::End;
+		TRACE_ERROR("Value table parent is not assigned!");
 		return	false;
 	}
 
-	if (!parent_->IsTableExist(table_name_))
+	if (!parent_->IsTableExist(name_))
 	{
-		TRACE_ERROR << "Value table[" << table_name_ << " not exist!" << Trace::End;
+		TRACE_ERROR("Value table[" << name_ << " not exist!");
 		return	false;	
 	}
 
 	std::ostringstream	query;
 
-	query << "INSERT INTO " << table_name_ << "(_time, _value) values(\"" << time_t(_date) << "\", \"" << std::string(*_value) << "\");";
+	query << "INSERT INTO " << name_ << "(_time, _value) values(\"" << time_t(_date) << "\", \"" << std::string(*_value) << "\");";
 
-	TRACE_INFO << "Query : " << query.str() << Trace::End;
+	TRACE_INFO("Query : " << query.str());
 
 	Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(parent_->database_);
 	try
@@ -517,7 +518,7 @@ bool	DataManager::ValueTable::Add(Date const& _date, Value const* _value)
 	}
 	catch(Kompex::SQLiteException& e)
 	{
-		TRACE_ERROR << "SQLite error! - " << e.GetString() <<  Trace::End;
+		TRACE_ERROR("SQLite error! - " << e.GetString());
 	}
 
 	delete statement;
@@ -528,24 +529,24 @@ bool	DataManager::ValueTable::Add(Date const& _date, Value const* _value)
 
 DataManager::ValueTable*	DataManager::CreateValueTable(std::string const& _endpoint_id)
 {
-	std::string	table_name_ = "table_ep_" + _endpoint_id;
+	std::string	name_ = "table_ep_" + _endpoint_id;
 	ValueTable*	value_table = NULL;
 
-	if (!IsTableExist(table_name_))
+	if (!IsTableExist(name_))
 	{
 		std::ostringstream	query;
 
 
-		query << "CREATE TABLE " << table_name_ << " (_time INT NOT NULL PRIMARY KEY, _value TEXT);";
+		query << "CREATE TABLE " << name_ << " (_time INT NOT NULL PRIMARY KEY, _value TEXT);";
 
-		TRACE_INFO << "Query : " << query.str() << Trace::End;
+		TRACE_INFO("Query : " << query.str());
 
 		try 
 		{
 			Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(database_);
 			if (statement == NULL)
 			{
-				TRACE_ERROR << "Failed to create SQL statement!" << Trace::End;
+				TRACE_ERROR("Failed to create SQL statement!");
 				return	NULL;
 			}
 
@@ -555,7 +556,7 @@ DataManager::ValueTable*	DataManager::CreateValueTable(std::string const& _endpo
 		}
 		catch(Kompex::SQLiteException &exception)
 		{
-			TRACE_INFO << "Failed to create table[" << table_name_ <<"]" << Trace::End;
+			TRACE_INFO("Failed to create table[" << name_ <<"]");
 			return	NULL;
 		}
 	}
@@ -566,7 +567,7 @@ DataManager::ValueTable*	DataManager::CreateValueTable(std::string const& _endpo
 	}
 	catch(std::bad_alloc& e)
 	{
-		TRACE_ERROR << "Failed to create value table!" << Trace::End;
+		TRACE_ERROR("Failed to create value table!");
 		return	NULL;
 	}
 
@@ -585,7 +586,7 @@ bool	DataManager::AddValue(std::string const& _endpoint_id, Date const& _date, V
 	ValueTable*	_value_table = value_table_map_[_endpoint_id];
 	if (!_value_table)
 	{
-		TRACE_ERROR << "Endpoint[" << _endpoint_id << "] value table not exist!" << Trace::End;
+		TRACE_ERROR("Endpoint[" << _endpoint_id << "] value table not exist!");
 		return	false;
 	}
 
@@ -599,20 +600,7 @@ bool	DataManager::AddDevice(Device *_device)
 
 	_device->GetProperties(properties);
 
-	if (device_table_->Add(properties) != true)
-	{
-		return	false;
-	}
-
-	std::list<Endpoint*>	_endpoint_list;
-
-	_device->GetEndpointList(_endpoint_list);
-	for(auto it = _endpoint_list.begin(); it != _endpoint_list.end() ; it++)
-	{
-		AddEndpoint(*it);
-	}
-
-	return	true;
+	return	device_table_->Add(properties);
 }
 
 bool	DataManager::DeleteDevice(std::string const& _id)
@@ -688,17 +676,19 @@ void	DataManager::Preprocess()
 {
 	try 
 	{
-		TRACE_INFO << std::setw(16) << "DB Name : " << file_name_ << Trace::End;
+		TRACE_INFO(std::setw(16) << "DB Name : " << file_name_);
 		database_ = new Kompex::SQLiteDatabase(file_name_, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
-		TRACE_INFO << std::setw(16) << "SQLite Version : " << database_->GetLibVersionNumber() << Trace::End;
+		TRACE_INFO(std::setw(16) << "SQLite Version : " << database_->GetLibVersionNumber());
 
 		std::list<std::string>	device_field_list;
 		Device::GetPropertyFieldList(device_field_list);
 		device_table_ = CreateTable("devices", device_field_list);	
+		device_table_->SetTrace(true);
 
 		std::list<std::string>	endpoint_field_list;
 		Endpoint::GetPropertyFieldList(endpoint_field_list);
 		endpoint_table_ = CreateTable("endpoints", endpoint_field_list);	
+		endpoint_table_->SetTrace(true);
 
 		
 		for(uint32_t i = 0 ; i < GetEndpointCount() ; i++)
@@ -722,9 +712,9 @@ void	DataManager::Preprocess()
 	}
   	catch(Kompex::SQLiteException &exception)
 	{
-		std::cerr << "\nException occured" << Trace::End;
+		TRACE_ERROR("Exception occured");
 		exception.Show();
-		std::cerr << "SQLite result code: " << exception.GetSqliteResultCode() << Trace::End;
+		TRACE_ERROR("SQLite result code: " << exception.GetSqliteResultCode());
 	}
 }
 
@@ -744,9 +734,9 @@ void	DataManager::Postprocess()
 	}
   	catch(Kompex::SQLiteException &exception)
 	{
-		std::cerr << "\nException occured" << Trace::End;
+		TRACE_ERROR("Exception occured");
 		exception.Show();
-		std::cerr << "SQLite result code: " << exception.GetSqliteResultCode() << Trace::End;
+		TRACE_ERROR("SQLite result code: " << exception.GetSqliteResultCode());
 	}
 }
 

@@ -20,10 +20,10 @@ public:
 		operator std::string() const;
 	};
 
-	DeviceSNMP();
-	DeviceSNMP(Properties const& _properties);
-	DeviceSNMP(std::string const& _module);
-	DeviceSNMP(std::string const& _module, ValueIP const& _ip);
+	DeviceSNMP(ObjectManager& _manager);
+	DeviceSNMP(ObjectManager& _manager, Properties const& _properties);
+	DeviceSNMP(ObjectManager& _manager, std::string const& _module);
+	DeviceSNMP(ObjectManager& _manager, std::string const& _module, ValueIP const& _ip);
 	~DeviceSNMP();
 
 			Type	GetType()	const {	return	SNMP;	}
@@ -35,7 +35,6 @@ public:
 			bool			SetCommunity(std::string const& _community);
 
 	virtual	bool	GetProperties(Properties& _properties) const;
-	virtual	bool	SetProperty(Property const& _property, bool create = false);
 
 	virtual	Endpoint*	CreateEndpoint(Properties const& _properties);
 
@@ -43,13 +42,14 @@ public:
 	virtual	OID		GetOID(std::string const& _name, uint32_t index);
 
 	virtual	bool	InsertToDB(Kompex::SQLiteStatement*	_statement);
-	virtual	void	Print(std::ostream& os) const;
 
 	static	bool	AddMIBPath(std::string const& _path);
 	static	bool	ReadAllMIBs();
 	static	bool	ReadMIB(std::string const& _file_name);
 
 protected:
+	virtual	bool	SetPropertyInternal(Property const& _property, bool create = false);
+
 			void	Preprocess();
 			void	Postprocess();
 

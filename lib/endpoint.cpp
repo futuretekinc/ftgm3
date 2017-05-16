@@ -8,49 +8,18 @@
 #include "endpoint_sensor_temperature.h"
 #include "endpoint_sensor_humidity.h"
 
-using namespace std;
+static	bool	trace_on = true;
 
-static list<Endpoint*>	endpoint_list;
-
-Endpoint::ValueMap::ValueMap(uint32_t _limit)
-:	limit_(_limit)
+Endpoint::Endpoint(ObjectManager& _manager)
+:	manager_(_manager), device_id_(""), active_(false), update_interval_(ENDPOINT_UPDATE_INTERVAL), unit_(""), scale_(ENDPOINT_VALUE_SCALE), value_(0), value_map_(ENDPOINT_VALUE_COUNT_MAX)
 {
-	for(auto it = begin() ; it != end() ; it++)
-	{
-		delete it->second;	
-	}
-}
-
-Endpoint::ValueMap::~ValueMap()
-{
-}
-
-bool Endpoint::ValueMap::Add(Date const& _date, Value const* _value)
-{
-	if (_date.IsValid() && (size() < limit_))
-	{
-		insert(std::make_pair(_date, _value->Duplicate()));
-		return	true;
-	}
-
-	return	false;
-}
-
-Endpoint::Endpoint()
-:	device_(NULL), active_(false), update_interval_(ENDPOINT_UPDATE_INTERVAL), unit_(""), scale_(ENDPOINT_VALUE_SCALE), value_(0), value_map_(ENDPOINT_VALUE_COUNT_MAX)
-{
-	endpoint_list.push_back(this);
+	trace.Enable(trace_on);
+	manager_.Attach(this);
 }
 
 Endpoint::~Endpoint()
 {
-	if (device_ != NULL)
-	{
-		Device* device = device_;
-		device_ = NULL;
-		device->Detach(this);	
-	}
-	endpoint_list.remove(this);
+	manager_.Detach(this);
 }
 
 const	ValueUnit&	Endpoint::GetUnit() const
@@ -126,12 +95,12 @@ bool	Endpoint::GetProperties(Properties& _properties) const
 {
 	if (ActiveObject::GetProperties(_properties))
 	{	
-		_properties.Append("type",Endpoint::ToString(GetType()));
-		_properties.Append("sensor_id",sensor_id_);
-		_properties.Append("device_id",((device_)?std::string(device_->GetID()):""));
-		_properties.Append("unit", unit_);
-		_properties.Append("scale", float(scale_));
-		_properties.Append("update_interval", update_interval_);
+		_properties.Append(OBJECT_FIELD_TYPE,		Endpoint::ToString(GetType()));
+		_properties.Append(OBJECT_FIELD_SENSOR_ID,	sensor_id_);
+		_properties.Append(OBJECT_FIELD_DEVICE_ID,	std::string(device_id_));
+		_properties.Append(OBJECT_FIELD_UNIT, 		unit_);
+		_properties.Append(OBJECT_FIELD_SCALE, 		float(scale_));
+		_properties.Append(OBJECT_FIELD_UPDATE_INTERVAL, 		update_interval_);
 
 		return	true;	
 	}
@@ -139,117 +108,174 @@ bool	Endpoint::GetProperties(Properties& _properties) const
 	return	false;
 }
 
-bool	Endpoint::SetProperty(Property const& _property, bool create)
+bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (_property.GetName() == "unit")
+	if (create && (_property.GetName() == OBJECT_FIELD_ID))
+	{
+		ValueID	old_id = id_;
+
+		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+		if (value != NULL)
+		{
+			if (!id_.Set(value->Get()))
+			{
+				TRACE_ERROR("Failed to set id!");
+				return	false;
+			}
+
+			TRACE_INFO("The id set to " << id_);
+
+			manager_.IDChanged(this, old_id);
+		}
+		else
+		{
+			TRACE_INFO("Property id value type is incorrect!");
+		}
+	}
+	else if (_property.GetName() == OBJECT_FIELD_UNIT)
 	{
 		const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (string_value != NULL)
 		{
-			TRACE_INFO << "The unit of endpoint[" << id_ <<"] was set to " << string_value->Get() << Trace::End;
+			TRACE_INFO("The unit set to " << string_value->Get());
 			return	SetUnit(string_value->Get());
 		}
 
-		TRACE_ERROR << "Property[" << id_ << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!" << Trace::End;
+		TRACE_ERROR("Property[" << id_ << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
 	}
-	else if (_property.GetName() == "scale")
+	else if (_property.GetName() == OBJECT_FIELD_SCALE)
 	{
 		const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (string_value != NULL)
 		{
-			TRACE_INFO << "The scale of endpoint[" << id_ <<"] was set to " << string_value->Get() << Trace::End;
+			TRACE_INFO("The scale set to " << string_value->Get());
 			return	SetScale(string_value->Get());
 		}
 
 		const ValueFloat *float_value = dynamic_cast<const ValueFloat*>(_property.GetValue());
 		if (float_value != NULL)
 		{
-			TRACE_INFO << "The scale of endpoint[" << id_ <<"] was set to " << float_value->Get() << Trace::End;
+			TRACE_INFO("The scale set to " << float_value->Get());
 			return	SetScale(float_value->Get());
 		}
 
 		const ValueInt *int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
 		if (float_value != NULL)
 		{
-			TRACE_INFO << "The scale of endpoint[" << id_ <<"] was set to " << int_value->Get() << Trace::End;
+			TRACE_INFO("The scale set to " << int_value->Get());
 			return	SetScale(int_value->Get());
 		}
 
-		TRACE_ERROR << "Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!" << Trace::End;
+		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
 	}
-	else if (_property.GetName() == "update_interval")
+	else if (_property.GetName() == OBJECT_FIELD_UPDATE_INTERVAL)
 	{
 		const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (string_value != NULL)
 		{
-			TRACE_INFO << "The update interval of endpoint[" << id_ <<"] was set to " << string_value->Get() << Trace::End;
+			TRACE_INFO("The update interval set to " << string_value->Get());
 			return	SetUpdateInterval(string_value->Get());
 		}
 
 		const ValueFloat *float_value = dynamic_cast<const ValueFloat*>(_property.GetValue());
 		if (float_value != NULL)
 		{
-			TRACE_INFO << "The update interval of endpoint[" << id_ <<"] was set to " << float_value->Get() << Trace::End;
+			TRACE_INFO("The update interval set to " << float_value->Get());
 			return	SetUpdateInterval(float_value->Get());
 		}
 
 		const ValueUInt32 *int_value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (int_value != NULL)
 		{
-			TRACE_INFO << "The update interval of endpoint[" << id_ <<"] was set to " << int_value->Get() << Trace::End;
+			TRACE_INFO("The update interval set to " << int_value->Get());
 			return	SetUpdateInterval(int_value->Get());
 		}
 
-		TRACE_ERROR << "Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!" << Trace::End;
+		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
 	}
-	else if (_property.GetName() == "sensor_id")
+	else if (_property.GetName() == OBJECT_FIELD_SENSOR_ID)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
-			TRACE_INFO << "The sensor id of endpoint[" << id_ <<"] was set to " << value->Get() << Trace::End;
+			TRACE_INFO("The sensor id set to " << value->Get());
 			return	SetSensorID(value->Get());
 		}
 
-		TRACE_ERROR << "Property[" << id_ << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!" << Trace::End;
+		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
 	}
-
-	return	ActiveObject::SetProperty(_property, create);
-}
-
-Device*	Endpoint::GetDevice()
-{
-	return	device_;
-}
-
-bool	Endpoint::Attach(Device* _device)
-{
-	if (device_ != NULL)
+	else if (_property.GetName() == OBJECT_FIELD_DEVICE_ID)
 	{
-		if (device_ != _device)
+		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+		if (value != NULL)
 		{
-			device_->Detach(this);
+			TRACE_INFO("The device id set to " << value->Get());
+			return	SetDeviceID(value->Get());
 		}
+
+		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
 	}
-	else
+
+	return	ActiveObject::SetPropertyInternal(_property, create);
+}
+
+bool	Endpoint::ApplyChanges()
+{
+	return	manager_.UpdateProperties(this);
+}
+
+const ValueID&	Endpoint::GetDeviceID() const
+{
+	return	device_id_;
+}
+
+bool	Endpoint::SetDeviceID(ValueID const& _device_id) 
+{
+	TRACE_INFO("The device id set to " << _device_id);
+	ValueID old_id(device_id_);
+
+	if (!device_id_.Set(_device_id))
 	{
-		device_ = _device;
-		device_->Attach(this);
+		return	false;	
+	}
+	
+	if (std::string(old_id) != std::string(device_id_))
+	{
+		Device*	old_device = manager_.GetDevice(old_id);
+		if(old_device != NULL)
+		{
+			old_device->Detach(id_);	
+		}
+
+		Device*	device = manager_.GetDevice(device_id_);
+		if(device != NULL)
+		{
+			device->Attach(id_);	
+		}
 	}
 
 	return	true;
 }
 
-bool	Endpoint::Detach(Device* _device)
+bool	Endpoint::Attach(ValueID const& _device_id)
 {
-	if (device_ == _device)
-	{
-		Stop();
+	device_id_ = _device_id;
+	return	true;
+}
 
-		Device*	device = device_;
-		device_ = NULL;
-		device->Detach(this);
+bool	Endpoint::Detach(ValueID const& _device_id)
+{
+	if (device_id_ == _device_id)
+	{
+		device_id_ = ValueID("");	
 	}
+
+	return	true;
+}
+
+bool	Endpoint::Detach()
+{
+	device_id_ = ValueID("");	
 
 	return	true;
 }
@@ -261,22 +287,23 @@ void	Endpoint::Start()
 	{
 		if (active_)
 		{
-			TRACE_INFO << "Endpoint[" << id_ << "] starts in active mode." << Trace::End;
+			TRACE_INFO("Endpoint starts in active mode.");
 			ActiveObject::Start();
 		}
 		else
 		{
-			if (device_ != NULL)
+			Device* device = manager_.GetDevice(device_id_);
+			if (device != NULL)
 			{
 				Timer	timer;
 
-				TRACE_INFO << "Endpoint[" << id_ << "] starts in passive mode." << Trace::End;
+				TRACE_INFO("Endpoint starts in passive mode.");
 				stop_ = false;
-				device_->AddSchedule(id_, timer);
+				device->AddSchedule(id_, timer);
 			}
 			else
 			{
-				TRACE_ERROR << "Failed to start because the endpoint[" << id_ <<"] is not attached to device." << Trace::End;
+				TRACE_ERROR("Failed to start because the endpoint is not attached to device.");
 			}
 		}
 	}
@@ -287,19 +314,20 @@ void	Endpoint::Stop()
 	if (active_)
 	{
 		ActiveObject::Stop();
-		TRACE_INFO << "Endpoint[" << id_ << "] is stopped." << Trace::End;
+		TRACE_INFO("Endpoint is stopped.");
 	}
 	else
 	{
-		if (device_ != NULL)
+		Device* device = manager_.GetDevice(device_id_);
+		if (device != NULL)
 		{
-			device_->RemoveSchedule(id_);
+			device->RemoveSchedule(id_);
 			stop_ = true;
-			TRACE_INFO << "Endpoint[" << id_ << "] is stopped." << Trace::End;
+			TRACE_INFO("Endpoint is stopped.");
 		}
 		else
 		{
-			TRACE_ERROR << "Failed to stop because the endpoint[" << id_ <<"] is not attached to device." << Trace::End;
+			TRACE_ERROR("Failed to stop because the endpoint is not attached to device.");
 		}
 	}
 }
@@ -330,9 +358,10 @@ void	Endpoint::UpdateProcess()
 {
 	ValueFloat	value;
 
-	if(device_ != NULL)
+	Device* device = manager_.GetDevice(device_id_);
+	if(device != NULL)
 	{
-		if (device_->ReadValue(GetID(), &value))
+		if (device->ReadValue(GetID(), &value))
 		{
 			if (IsValid(value))
 			{
@@ -340,17 +369,17 @@ void	Endpoint::UpdateProcess()
 
 				if (!Add(date, &value))
 				{
-					TRACE_ERROR << "Failed to add data" << Trace::End;	
+					TRACE_ERROR("Failed to add data");	
 				}
 			}
 			else
 			{
-				TRACE_ERROR << "Data is invalid!" << Trace::End;
+				TRACE_ERROR("Data is invalid!");
 			}
 		}
 		else
 		{
-			TRACE_ERROR << "Failed to read data from device[" << device_->GetID() << "]" << Trace::End;	
+			TRACE_ERROR("Failed to read data from device[" << device->GetTraceName() << "]");	
 		}
 	}
 }
@@ -424,13 +453,13 @@ bool	Endpoint::Add(Date const& _date, Value const* _value)
 
 bool		Endpoint::IsValidType(std::string const& _type)
 {
-	if ((strcasecmp(_type.c_str(), "s_temperature") == 0) || 
-	    (strcasecmp(_type.c_str(), "s_humidity") == 0) ||
-	    (strcasecmp(_type.c_str(), "s_voltage") == 0) ||
-	    (strcasecmp(_type.c_str(), "s_current") == 0) ||
-	    (strcasecmp(_type.c_str(), "s_di") == 0) ||
-	    (strcasecmp(_type.c_str(), "s_pressure") == 0) ||
-	    (strcasecmp(_type.c_str(), "a_do") == 0))
+	if ((strcasecmp(_type.c_str(), ENDPOINT_TYPE_NAME_TEMPERATURE) == 0) || 
+	    (strcasecmp(_type.c_str(), ENDPOINT_TYPE_NAME_HUMIDITY) == 0) ||
+	    (strcasecmp(_type.c_str(), ENDPOINT_TYPE_NAME_VOLTAGE) == 0) ||
+	    (strcasecmp(_type.c_str(), ENDPOINT_TYPE_NAME_CURRENT) == 0) ||
+	    (strcasecmp(_type.c_str(), ENDPOINT_TYPE_NAME_DI) == 0) ||
+	    (strcasecmp(_type.c_str(), ENDPOINT_TYPE_NAME_PRESSURE) == 0) ||
+	    (strcasecmp(_type.c_str(), ENDPOINT_TYPE_NAME_DO) == 0))
 	{	
 		return	true;
 	}
@@ -438,11 +467,11 @@ bool		Endpoint::IsValidType(std::string const& _type)
 	return	false;
 }
 
-Endpoint*	Endpoint::Create(Properties const& _properties)
+Endpoint*	Endpoint::Create(ObjectManager& _manager, Properties const& _properties)
 {
 
 	Endpoint*	endpoint = NULL;
-	const Property *type_property = _properties.Get("type");
+	const Property *type_property = _properties.Get(OBJECT_FIELD_TYPE);
 	if (type_property != NULL)
 	{
 		const ValueString*	type_value = dynamic_cast<const ValueString*>(type_property->GetValue());
@@ -450,91 +479,48 @@ Endpoint*	Endpoint::Create(Properties const& _properties)
 		{
 			Properties	properties(_properties);
 
-			properties.Delete("type");
+			properties.Delete(OBJECT_FIELD_TYPE);
 
-			if (strcasecmp(type_value->Get().c_str(), "s_temperature") == 0)
+			if (strcasecmp(type_value->Get().c_str(), ENDPOINT_TYPE_NAME_TEMPERATURE) == 0)
 			{
-				endpoint = new EndpointSensorTemperature(properties);
-				TRACE_INFO2 << "The temperature endpoint[" << endpoint->GetID() << "] created" << Trace::End;
+				endpoint = new EndpointSensorTemperature(_manager, properties);
+				TRACE_INFO2(NULL, "The temperature endpoint[" << endpoint->GetID() << "] created");
 			}
-			else if (strcasecmp(type_value->Get().c_str(), "s_humidity") == 0)
+			else if (strcasecmp(type_value->Get().c_str(), ENDPOINT_TYPE_NAME_HUMIDITY) == 0)
 			{
-				endpoint = new EndpointSensorHumidity(properties);
-				TRACE_INFO2 << "The humidity endpoint[" << endpoint->GetID() <<"] created" << Trace::End;
+				endpoint = new EndpointSensorHumidity(_manager, properties);
+				TRACE_INFO2(NULL, "The humidity endpoint[" << endpoint->GetID() <<"] created");
 			}
 			else
 			{
-				TRACE_ERROR2 << "Failed to create endpoint because type[" << type_value->Get().c_str() <<"] is not supported." << Trace::End;
+				TRACE_ERROR2(NULL, "Failed to create endpoint because type[" << type_value->Get().c_str() <<"] is not supported.");
 			
 			}
 		}
 		else
 		{
-			TRACE_ERROR2 << "Failed to create endpoint. Invalid arguments" << Trace::End;
+			TRACE_ERROR2(NULL, "Failed to create endpoint. Invalid arguments");
 		}
 	}
 	else
 	{
-		TRACE_ERROR2 << "Failed to create endpoint. Invalid arguments" << Trace::End;
+		TRACE_ERROR2(NULL, "Failed to create endpoint. Invalid arguments");
 	}
 
 	return	endpoint;
-}
-
-Endpoint*	Endpoint::Get(std::string const& _id)
-{
-	for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
-	{
-		if ((*it)->id_ == _id)
-		{
-			return	(*it);	
-		}
-	}
-
-	return	NULL;
-}
-
-uint32_t	Endpoint::Count()
-{
-	return	endpoint_list.size();
-}
-
-uint32_t	Endpoint::GetList(std::list<Endpoint*>& _endpoint_list)
-{
-	for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
-	{
-		_endpoint_list.push_back(*it);
-	}
-
-	return	_endpoint_list.size();
-}
-
-uint32_t	Endpoint::UnattachedCount()
-{
-	uint32_t	count = 0;
-
-	for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
-	{
-		if ((*it)->device_ == 0)
-		{
-			count++;
-		}
-	}
-
-	return	count;
 }
 
 std::string	Endpoint::ToString(Type _type)
 {
 	switch(_type)
 	{
-	case	S_TEMPERATURE:	return	std::string("s_temperature");
-	case	S_HUMIDITY:	return	std::string("s_humidity");
-	case	S_VOLTAGE:	return	std::string("s_voltage");
-	case	S_CURRENT:	return	std::string("s_current");
-	case	S_PRESSURE:	return	std::string("s_pressure");
-	case	S_DI:	return	std::string("s_di");
-	case	A_DO:	return	std::string("a_do");
+	case	S_TEMPERATURE:	return	std::string(ENDPOINT_TYPE_NAME_TEMPERATURE);
+	case	S_HUMIDITY:	return	std::string(ENDPOINT_TYPE_NAME_HUMIDITY);
+	case	S_VOLTAGE:	return	std::string(ENDPOINT_TYPE_NAME_VOLTAGE);
+	case	S_CURRENT:	return	std::string(ENDPOINT_TYPE_NAME_CURRENT);
+	case	S_PRESSURE:	return	std::string(ENDPOINT_TYPE_NAME_PRESSURE);
+	case	S_DI:	return	std::string(ENDPOINT_TYPE_NAME_DI);
+	case	A_DO:	return	std::string(ENDPOINT_TYPE_NAME_DO);
 	};
 
 	return	std::string("unknown");
@@ -542,17 +528,25 @@ std::string	Endpoint::ToString(Type _type)
 
 bool	Endpoint::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
-	_field_list.push_back("id");
-	_field_list.push_back("name");
-	_field_list.push_back("type");
-	_field_list.push_back("date");
-	_field_list.push_back("enable");
-	_field_list.push_back("device_id");
-	_field_list.push_back("loop_interval");
-	_field_list.push_back("unit");
-	_field_list.push_back("scale");
-	_field_list.push_back("update_interval");
-	_field_list.push_back("sensor_id");
+	_field_list.push_back(OBJECT_FIELD_ID);
+	_field_list.push_back(OBJECT_FIELD_NAME);
+	_field_list.push_back(OBJECT_FIELD_TYPE);
+	_field_list.push_back(OBJECT_FIELD_DATE);
+	_field_list.push_back(OBJECT_FIELD_ENABLE);
+	_field_list.push_back(OBJECT_FIELD_DEVICE_ID);
+	_field_list.push_back(OBJECT_FIELD_LOOP_INTERVAL);
+	_field_list.push_back(OBJECT_FIELD_UNIT);
+	_field_list.push_back(OBJECT_FIELD_SCALE);
+	_field_list.push_back(OBJECT_FIELD_UPDATE_INTERVAL);
+	_field_list.push_back(OBJECT_FIELD_SENSOR_ID);
 
 	return	true;
 }
+
+const char*	ENDPOINT_TYPE_NAME_TEMPERATURE 	= "s_temperature";
+const char*	ENDPOINT_TYPE_NAME_HUMIDITY 	= "s_humidity";
+const char*	ENDPOINT_TYPE_NAME_VOLTAGE 		= "s_voltage";
+const char*	ENDPOINT_TYPE_NAME_CURRENT 		= "s_current";
+const char*	ENDPOINT_TYPE_NAME_DI 			= "s_di";
+const char*	ENDPOINT_TYPE_NAME_PRESSURE 	= "s_pressure";
+const char*	ENDPOINT_TYPE_NAME_DO 			= "a_do";

@@ -4,29 +4,24 @@
 #include "defined.h"
 #include "trace.h"
 #include "device.h"
+#include "object_manager.h"
 #include "device_snmp.h"
 #include "device_fte.h"
 #include "endpoint.h"
 
-static std::list<Device*>	device_list;
 
+static	bool	trace_on = true;
 
-Device::Device(Type _type)
-:	live_check_interval_(OBJECT_LIVE_CHECK_INTERVAL_SEC * TIME_SECOND)
+Device::Device(ObjectManager& _manager, Type _type)
+:	manager_(_manager), live_check_interval_(OBJECT_LIVE_CHECK_INTERVAL_SEC * TIME_SECOND)
 {
-	device_list.push_back(this);
+	trace.Enable(trace_on);
+	manager_.Attach(this);
 }
 
 Device::~Device()
 {
-	endpoint_list_lock_.lock();
-	for(auto it = endpoint_list_.begin(); it != endpoint_list_.end() ; it++)
-	{
-		delete *it;
-	}
-	endpoint_list_lock_.unlock();
-
-	device_list.remove(this);
+	manager_.Detach(this);
 }
 
 bool	Device::SetLiveCheckInterval(int _interval)
@@ -37,6 +32,8 @@ bool	Device::SetLiveCheckInterval(int _interval)
 	}
 
 	live_check_interval_ = _interval * TIME_SECOND;
+
+	return	true;
 }
 
 bool	Device::SetLiveCheckInterval(Time const& _interval)
@@ -47,6 +44,8 @@ bool	Device::SetLiveCheckInterval(Time const& _interval)
 	}
 
 	live_check_interval_ = _interval;
+
+	return	true;
 }
 
 bool	Device::GetProperties(Properties& _properties) const
@@ -62,9 +61,31 @@ bool	Device::GetProperties(Properties& _properties) const
 	return	false;
 }
 
-bool	Device::SetProperty(Property const& _property, bool create)
+bool	Device::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (_property.GetName() == "live_check_interval")
+	if (create && (_property.GetName() == OBJECT_FIELD_ID))
+	{
+		ValueID	old_id = id_;
+
+		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+		if (value != NULL)
+		{
+			if (!id_.Set(value->Get()))
+			{
+				TRACE_ERROR("Failed to set id!");
+				return	false;
+			}
+
+			TRACE_INFO("The id set to " << id_);
+
+			manager_.IDChanged(this, old_id);
+		}
+		else
+		{
+			TRACE_INFO("Property id value type is incorrect!");
+		}
+	}
+	else if (_property.GetName() == "live_check_interval")
 	{
 		
 		const ValueInt*	int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
@@ -86,7 +107,7 @@ bool	Device::SetProperty(Property const& _property, bool create)
 			return	SetLiveCheckInterval(time_value->Get());
 		}
 			
-		TRACE_INFO << "Property live_check_interval value type is incorrect!" << Trace::End;
+		TRACE_INFO("Property live_check_interval value type is incorrect!");
 	}
 	else if (_property.GetName() == "endpoints")
 	{
@@ -96,17 +117,27 @@ bool	Device::SetProperty(Property const& _property, bool create)
 			const PropertiesList& 	properties_list = properties_list_value->Get();
 			for(auto it = properties_list.begin(); it != properties_list.end() ; it++)
 			{
-				TRACE_INFO << *it << Trace::End;
+				const Property* device_id_property = it->Get(OBJECT_FIELD_DEVICE_ID);
+				if (device_id_property != NULL)
+				{
+					TRACE_ERROR("The device id property can't be defined.");
+					return	false;
+				}
+
+				Properties properties(*it);
+				properties.Append(OBJECT_FIELD_DEVICE_ID, this->GetID());
+
+				TRACE_INFO(properties);
 				if (create)
 				{
-					Endpoint* endpoint = Endpoint::Create(*it);
+					Endpoint* endpoint = manager_.CreateEndpoint(properties);
 					if (endpoint == NULL)
 					{
-						TRACE_ERROR << "Failed to create endpoint!" << Trace::End;
+						TRACE_ERROR("Failed to create endpoint!");
 							return	false;	
 					}
 
-					if (!Attach(endpoint))
+					if (!Attach(endpoint->GetID()))
 					{
 						delete endpoint;
 						return	false;
@@ -122,97 +153,97 @@ bool	Device::SetProperty(Property const& _property, bool create)
 	}
 	else
 	{
-		return	ActiveObject::SetProperty(_property, create);
+		return	ActiveObject::SetPropertyInternal(_property, create);
 	}
 
 	return	false;
 }
 
 
+bool	Device::ApplyChanges()
+{
+	return	manager_.UpdateProperties(this);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Endpoint operation
 
-bool	Device::Attach(Endpoint* _endpoint)
+bool	Device::IsAttached(ValueID const& _endpoint_id)
 {
-	if (GetEndpoint(_endpoint->GetID()) == NULL)
+	for(auto it = endpoint_id_list_.begin() ; it != endpoint_id_list_.end() ; it++)
 	{
-		endpoint_list_lock_.lock();
-		endpoint_list_.push_back(_endpoint);
-		endpoint_list_lock_.unlock();
-
-		_endpoint->Attach(this);
-
-		TRACE_INFO << "The endpoint[" << _endpoint->GetID() << "] has been attahced." << Trace::End;
+		if ((*it) == _endpoint_id)
+		{	
+			return	true;
+		}
 	}
+
+	return	false;
+}
+
+bool	Device::Attach(ValueID const& _endpoint_id)
+{
+	if (IsAttached(_endpoint_id))
+	{
+		return	false;
+	}
+
+	endpoint_id_list_.push_back(_endpoint_id);
+	TRACE_INFO("The endpoint[" << _endpoint_id << "] has been attahced.");
 
 	return	true;
 }
 
-bool	Device::Detach(Endpoint* _endpoint)
+bool	Device::Detach(ValueID const& _endpoint_id)
 {
-	if (GetEndpoint(_endpoint->GetID()) == NULL)
+	for(auto it = endpoint_id_list_.begin() ; it != endpoint_id_list_.end() ; it++)
 	{
-		TRACE_ERROR << "The endpoint[" << _endpoint->GetID() << "] not attahced." << Trace::End;
-		return	false;
+		if ((*it) == _endpoint_id)
+		{	
+			endpoint_id_list_.erase(it);
+			TRACE_INFO("The endpoint[" << _endpoint_id << "] has been detahced.");
+			return	true;
+		}
 	}
 
-	endpoint_list_lock_.lock();
-	endpoint_list_.remove(_endpoint);
-	endpoint_list_lock_.unlock();
 
-	_endpoint->Detach(this);
-
-	TRACE_INFO << "The endpoint[" << _endpoint->GetID() << "] has been detahced." << Trace::End;
-
-	return	true;	
+	return	false;
 }
 
-bool	Device::Detach(std::string const& _endpoint_id)
+bool	Device::Detach()
 {
-	Endpoint* endpoint = GetEndpoint(_endpoint_id);
-	if (endpoint == NULL)
-	{
-		TRACE_ERROR << "The endpoint[" << endpoint->GetID() << "] not attahced." << Trace::End;
-		return	false;
-	}
-
-	endpoint_list_lock_.lock();
-	endpoint_list_.remove(endpoint);
-	endpoint_list_lock_.unlock();
-
-	endpoint->Detach(this);
-
-	TRACE_INFO << "The endpoint[" << endpoint->GetID() << "] has been detahced." << Trace::End;
-
-	return	true;	
+	endpoint_id_list_.clear();
+	return	true;
 }
 
 uint32_t	Device::GetEndpointCount()
 {
-	return	endpoint_list_.size();
+	return	endpoint_id_list_.size();
 }
 
-Endpoint*	Device::GetEndpoint(std::string const& _endpoint_id)
+const ValueID&	Device::GetEndpointAt(int index)
 {
-	endpoint_list_lock_.lock();
-	for(auto it = endpoint_list_.begin(); it != endpoint_list_.end() ; it++)
-	{
-		if ((*it)->GetID() == _endpoint_id)
-		{
-			Endpoint *endpoint = (*it);
-			endpoint_list_lock_.unlock();
+	static	ValueID	null_id("");
 
-			return	endpoint;
+	if (index >= 0)
+	{
+		for(auto it = endpoint_id_list_.begin() ; it != endpoint_id_list_.end() ; it++)
+		{
+			if (index == 0)
+			{	
+				return	*it;
+			}
+
+			index--;
 		}
 	}
-	endpoint_list_lock_.unlock();
 
-	return	NULL;
+	return	null_id;
 }
 
-bool		Device::GetEndpointList(std::list<Endpoint*>& _endpoint_list)
+bool		Device::GetEndpointList(std::list<ValueID>& _endpoint_id_list)
 {
-	_endpoint_list = endpoint_list_;
+	_endpoint_id_list = endpoint_id_list_;
 
 	return	true;
 }
@@ -227,22 +258,20 @@ Device::operator JSONNode()
 
 	PropertiesList	properties_list;
 
-	for(auto it = endpoint_list_.begin(); it != endpoint_list_.end() ; it++)
+	for(auto it = endpoint_id_list_.begin(); it != endpoint_id_list_.end() ; it++)
 	{
 		Properties	endpoint_properties;
-		(*it)->GetProperties(endpoint_properties);
-		properties_list.Append(endpoint_properties);
+		Endpoint*	endpoint = manager_.GetEndpoint(std::string(*it));
+		if (endpoint != NULL)
+		{
+			endpoint->GetProperties(endpoint_properties);
+			properties_list.Append(endpoint_properties);
+		}
 	}
 
 	properties.Append("endpoints", properties_list);
 
 	return	ToJSON(properties);
-}
-
-void	Device::Print(std::ostream& os) const
-{
-	ActiveObject::Print(os);
-	os << std::setfill(' ') << std::setw(16) << "Live Check : " << live_check_interval_ / TIME_SECOND << Trace::End;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,12 +280,14 @@ void	Device::Preprocess()
 {
 	ActiveObject::Preprocess();
 
-	endpoint_list_lock_.lock();
-	for(auto it = endpoint_list_.begin(); it != endpoint_list_.end(); it++)
+	for(auto it = endpoint_id_list_.begin(); it != endpoint_id_list_.end(); it++)
 	{
-		(*it)->Start();	
+		Endpoint*	endpoint = manager_.GetEndpoint(*it);
+		if (endpoint != NULL)
+		{
+			endpoint->Start();	
+		}
 	}
-	endpoint_list_lock_.unlock();
 
 	Date date = Date::GetCurrentDate() + live_check_interval_;
 	live_check_timer_.Set(date);
@@ -269,8 +300,6 @@ void	Device::Process()
 	bool	found = false;
 
 
-	endpoint_list_lock_.lock();
-
 	auto it = endpoint_schedule_list_.begin();
 	if (it != endpoint_schedule_list_.end())
 	{
@@ -282,11 +311,10 @@ void	Device::Process()
 			endpoint_schedule_list_.erase(it);
 		}
 	}
-	endpoint_list_lock_.unlock();
 
 	if (found)
 	{
-		Endpoint*	endpoint = GetEndpoint(id);
+		Endpoint*	endpoint = manager_.GetEndpoint(std::string(id));
 		if (endpoint != NULL)
 		{
 			endpoint->UpdateProcess();
@@ -299,22 +327,20 @@ void	Device::Process()
 
 	if (live_check_timer_.RemainTime() == 0)
 	{
-		std::cout << "Live check!" << Trace::End;
 		live_check_timer_ += live_check_interval_;	
 	}
 }
 
 void	Device::Postprocess()
 {
-
-	endpoint_list_lock_.lock();
-
-	for(auto it = endpoint_list_.begin(); it != endpoint_list_.end(); it++)
+	for(auto it = endpoint_id_list_.begin(); it != endpoint_id_list_.end(); it++)
 	{
-		(*it)->Stop();	
+		Endpoint*	endpoint = manager_.GetEndpoint(std::string(*it));
+		if (endpoint != NULL)
+		{
+			endpoint->Stop();	
+		}
 	}
-
-	endpoint_list_lock_.unlock();
 
 	ActiveObject::Postprocess();
 
@@ -323,6 +349,17 @@ void	Device::Postprocess()
 bool	Device::AddSchedule(ValueID const& _id, Timer const& _timer)
 {
 	bool	last = true;
+
+	if (!IsAttached(_id))
+	{
+		TRACE_INFO("The endpoint[" << _id << "] is not attached");
+		if (!Attach(_id) )
+		{
+			TRACE_INFO("Failed to attach the endpoint[" << _id << "]");
+			return	false;
+		}
+	}
+
 	endpoint_schedule_list_lock_.lock();
 
 	for(auto it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
@@ -370,7 +407,7 @@ bool	Device::IsValidType(std::string const& _type)
 	return	((strcasecmp(_type.c_str(), "snmp") == 0) || (strcasecmp(_type.c_str(), "fte") == 0));
 }
 
-Device*	Device::Create(Properties const& _properties)
+Device*	Device::Create(ObjectManager& _manager, Properties const& _properties)
 {
 	Device*	device = NULL;
 	const Property *type_property = _properties.Get("type");
@@ -386,25 +423,25 @@ Device*	Device::Create(Properties const& _properties)
 
 			if (strcasecmp(type_value->Get().c_str(), "SNMP") == 0)
 			{
-				device = new DeviceSNMP(properties);
+				device = new DeviceSNMP(_manager, properties);
 			}
 			else if (strcasecmp(type_value->Get().c_str(), "FTE") == 0)
 			{
-				device = new DeviceFTE(properties);
+				device = new DeviceFTE(_manager, properties);
 			}
 			else
 			{
-				TRACE_ERROR2 << "Failed to create device. Device type[" << type_value->Get() << "] is not supported!" << Trace::End;
+				TRACE_ERROR2(NULL, "Failed to create device. Device type[" << type_value->Get() << "] is not supported!");
 			}
 		}
 		else
 		{
-			TRACE_ERROR2 << "Failed to create device. Device type is invalid!" << Trace::End;
+			TRACE_ERROR2(NULL, "Failed to create device. Device type is invalid!");
 		}
 	}
 	else
 	{
-		TRACE_ERROR2 << "Failed to create device. Device type unknown!" << Trace::End;
+		TRACE_ERROR2(NULL, "Failed to create device. Device type unknown!");
 	}
 
 	return	device;
@@ -444,60 +481,16 @@ Device*	Device::Create(JSONNode const& _node)
 			Endpoint* endpoint = Endpoint::Create(device, it->as_node());		
 			if (endpoint == NULL)
 			{
-				TRACE_ERROR << "Failed to create endpoint!" << Trace::End;	
+				TRACE_ERROR("Failed to create endpoint!");	
 			}
 		}
 	}
 
-	TRACE_INFO << "Device[" << device->GetName() << "] created" << Trace::End;
+	TRACE_INFO("Device[" << device->GetName() << "] created");
 
 	return	device;
 }
 #endif
-
-uint32_t	Device::Count()
-{
-	return	device_list.size();
-}
-
-Device*	Device::Get(std::string const& _id)
-{
-	for(auto it = device_list.begin(); it != device_list.end() ; it++)
-	{
-		if ((*it)->id_ == _id)
-		{
-			return	(*it);	
-		}
-	}
-
-	return	NULL;
-}
-
-Device*	Device::Get(uint32_t _index)
-{
-	for(auto it = device_list.begin(); it != device_list.end() ; it++, _index--)
-	{
-		if (_index == 0)
-		{
-			return	(*it);	
-		}
-	}
-
-	return	NULL;
-}
-
-uint32_t	Device::GetList(Type _type, std::list<Device*>& _device_list)
-{
-	for(auto it = device_list.begin(); it != device_list.end() ; it++)
-	{
-		if ((*it)->GetType() == _type)
-		{
-			_device_list.push_back(*it);
-		}
-	}
-
-	return	_device_list.size();
-}
 
 std::string	Device::ToString(Device::Type _type) 
 {

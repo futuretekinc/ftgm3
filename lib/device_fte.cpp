@@ -1,24 +1,25 @@
 #include <iostream>
+#include "object_manager.h"
 #include "device_fte.h"
 #include "device_snmp.h"
 #include "trace.h"
 
-DeviceFTE::DeviceFTE()
-: DeviceSNMP("FTE-E")
+DeviceFTE::DeviceFTE(ObjectManager& _manager)
+: DeviceSNMP(_manager, "FTE-E")
 {
 	trace.SetClassName(GetClassName());
 	TRACE_CREATE;
 }
 
-DeviceFTE::DeviceFTE(Properties const& _properties)
-: DeviceSNMP(_properties)
+DeviceFTE::DeviceFTE(ObjectManager& _manager, Properties const& _properties)
+: DeviceSNMP(_manager, _properties)
 {
 	trace.SetClassName(GetClassName());
 	TRACE_CREATE;
 }
 
-DeviceFTE::DeviceFTE(ValueIP const& _ip)
-: DeviceSNMP("FTE-E", _ip)
+DeviceFTE::DeviceFTE(ObjectManager& _manager, ValueIP const& _ip)
+: DeviceSNMP(_manager, "FTE-E", _ip)
 {
 	trace.SetClassName(GetClassName());
 	TRACE_CREATE;
@@ -36,83 +37,95 @@ bool	DeviceFTE::IsIncludedIn(Type _type)
 
 Endpoint*	DeviceFTE::CreateEndpoint(Properties const& _properties)
 {
-	Endpoint* endpoint = Endpoint::Create(_properties);
+	Endpoint* endpoint = manager_.CreateEndpoint(_properties);
 	if (endpoint != NULL)
 	{
-		Attach(endpoint);	
+		Attach(endpoint->GetID());	
 	}
 
 	return	endpoint;
 }
 
-bool	DeviceFTE::Attach(Endpoint* _endpoint)
+bool	DeviceFTE::Attach(ValueID const& _endpoint_id)
 {
-	std::string	sensor_id = _endpoint->GetSensorID();
+	Endpoint*	endpoint = manager_.GetEndpoint(std::string(_endpoint_id));
+	if (endpoint == NULL)
+	{
+		return	false;
+	}
+
+	std::string	sensor_id = endpoint->GetSensorID();
 
 	if (sensor_id.size() < 8)
 	{
-		TRACE_ERROR << "Failed to attach endpoint because sensor id is invalid!" << Trace::End;
+		TRACE_ERROR("Failed to attach endpoint because sensor id is invalid!");
 		return	false;
 	}
 
 	uint32_t	index = strtoul(sensor_id.substr(sensor_id.size() - 2, 2).c_str(), 0, 16) - 1;
 	if (index > 255)
 	{
-		TRACE_ERROR << "Failed to attach endpoint because sensor id is invalid!" << Trace::End;
+		TRACE_ERROR("Failed to attach endpoint because sensor id is invalid!");
 		return	false;
 	}
 
-	auto endpoint_it = endpoint_table_.find(_endpoint->GetID());
+	auto endpoint_it = endpoint_table_.find(_endpoint_id);
 	if (endpoint_it == endpoint_table_.end())
 	{
-		endpoint_table_[_endpoint->GetID()] = index;
+		endpoint_table_[_endpoint_id] = index;
 	}
 
-	return	Device::Attach(_endpoint);
+	return	Device::Attach(_endpoint_id);
 }
 
-bool	DeviceFTE::Detach(Endpoint* _endpoint)
+bool	DeviceFTE::Detach(ValueID const& _endpoint_id)
 {
-	std::string	sensor_id = _endpoint->GetSensorID();
+	Endpoint*	endpoint = manager_.GetEndpoint(std::string(_endpoint_id));
+	if (endpoint == NULL)
+	{
+		return	false;
+	}
+
+	std::string	sensor_id = endpoint->GetSensorID();
 
 	if (sensor_id.size() < 8)
 	{
-		TRACE_ERROR << "Failed to attach endpoint because sensor id is invalid!" << Trace::End;
+		TRACE_ERROR("Failed to attach endpoint because sensor id is invalid!");
 		return	false;
 	}
 
 	uint32_t	index = strtoul(sensor_id.substr(sensor_id.size() - 2, 2).c_str(), 0, 16) - 1;
 	if (index > 255)
 	{
-		TRACE_ERROR << "Failed to attach endpoint because sensor id is invalid!" << Trace::End;
+		TRACE_ERROR("Failed to attach endpoint because sensor id is invalid!");
 		return	false;
 	}
 
-	auto endpoint_it = endpoint_table_.find(_endpoint->GetID());
+	auto endpoint_it = endpoint_table_.find(_endpoint_id);
 	if (endpoint_it == endpoint_table_.end())
 	{
-		TRACE_INFO << "The device[" << _endpoint->GetID() << "] is not attached." << Trace::End;
+		TRACE_INFO("The device[" << _endpoint_id << "] is not attached.");
 		return	false;
 	}
 
 	endpoint_table_.erase(endpoint_it);
 
-	return	Device::Detach(_endpoint);
+	return	Device::Detach(_endpoint_id);
 }
 
 bool	DeviceFTE::ReadValue(std::string const& _endpoint_id, Value* _value)
 {
-	Endpoint*	endpoint = GetEndpoint(_endpoint_id);
+	Endpoint*	endpoint = manager_.GetEndpoint(_endpoint_id);
 	if (endpoint == NULL)
 	{
-		TRACE_ERROR << "The endpoint[" << _endpoint_id << "] is not attached" << Trace::End;
+		TRACE_ERROR("The endpoint[" << _endpoint_id << "] is not attached");
 		return	false;	
 	}
 
 	auto it = endpoint_table_.find(_endpoint_id);
 	if (it == endpoint_table_.end())
 	{
-		TRACE_ERROR << "The endpoint[" << _endpoint_id << "] has been abnormally attached" << Trace::End;
+		TRACE_ERROR("The endpoint[" << _endpoint_id << "] has been abnormally attached");
 		return	false;	
 	}
 
@@ -158,7 +171,7 @@ DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
 		oid_map_[_id] = oid;
 	}
 
-	TRACE_INFO << "GetOID(" << _id << ") = " << std::string(oid_map_[_id]) << Trace::End;
+	TRACE_INFO("GetOID(" << _id << ") = " << std::string(oid_map_[_id]));
 
 	return	oid_map_[_id];
 }
@@ -195,7 +208,7 @@ DeviceSNMP::OID DeviceFTE::GetOID(Endpoint::Type _type, uint32_t _index)
 	oid.id[oid.length++] = _index + 1;
 	oid.id[oid.length++] = 0;
 
-	TRACE_INFO << "GetOID(" << _type <<", " << _index << ") = " << std::string(oid) << Trace::End;
+	TRACE_INFO("GetOID(" << _type <<", " << _index << ") = " << std::string(oid));
 	return	oid;
 }
 
