@@ -73,20 +73,18 @@ const	ValueName&	Object::GetName() const
 	return	name_;
 }
 
-bool	Object::SetName(ValueName const& _name)
+bool	Object::SetName(ValueName const& _name, bool _store)
 {
 	name_ = _name;
 
-	updated_properties_.Delete(OBJECT_FIELD_NAME);
-
 	updated_properties_.AppendName(name_);
 
-	return	true;
-}
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 
-const	Date&		Object::GetDate() const
-{
-	return	date_;
+	return	true;
 }
 
 bool	Object::GetEnable() const
@@ -94,9 +92,18 @@ bool	Object::GetEnable() const
 	return	enable_;
 }
 
-void	Object::SetEnable(bool _enable)
+bool	Object::SetEnable(bool _enable, bool _store)
 {
 	enable_ = _enable;
+
+	updated_properties_.AppendEnable(ValueBool(enable_));
+
+	if (_store)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
 }
 
 Object::Stat	Object::GetState() const
@@ -111,6 +118,25 @@ Object::Stat	Object::GetState() const
 	}
 }
 
+const Date&		Object::GetDate() const
+{
+	return	date_;
+}
+
+bool	Object::SetDate(Date const& _date, bool _store)
+{
+	date_ = _date;
+
+	updated_properties_.AppendDate(date_);
+
+	if (_store)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
+}
+
 bool	Object::HasChanged() const
 {
 	return	(updated_properties_.size() != 0);
@@ -118,7 +144,7 @@ bool	Object::HasChanged() const
 
 bool	Object::ApplyChanges() 
 {
-	return	false;
+	return	true;
 }
 
 bool	Object::AddUpdatedProperties(Property const& _property)
@@ -130,6 +156,13 @@ bool	Object::AddUpdatedProperties(Property const& _property)
 	}
 
 	updated_properties_.Append(_property);
+
+	return	true;
+}
+
+bool	Object::ClearUpdatedProperties()
+{
+	updated_properties_.Clear();
 
 	return	true;
 }
@@ -153,12 +186,16 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
-			ret_value = id_.Set(value->Get());
+			if (!id_.Set(value->Get()))
+			{
+				TRACE_ERROR("Failed to set id!");
+				return	false;
+			}
+
 			TRACE_INFO("The id set to " << id_);
 		}
 		else
 		{
-			ret_value = false;
 			TRACE_INFO("Property id value type is incorrect!");
 		}
 	}
@@ -167,8 +204,7 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
-			ret_value = name_.Set(value->Get());
-			TRACE_INFO("The name set to " << name_);
+			return	SetName(value->Get(), !create);
 		}
 		else
 		{
@@ -183,16 +219,17 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 			const ValueDate*	value = dynamic_cast<const ValueDate*>(_property.GetValue());
 			if (value != NULL)
 			{
-				date_ = value->Get();
-				TRACE_INFO("The date set to " << date_);
+				return	SetDate(value->Get(), !create);
 			}
 			else
 			{
 				const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
 				if (string_value != NULL)
 				{
-					date_ = string_value->Get();
-					TRACE_INFO("The date set to " << date_ << "[" << string_value->Get() << "]");
+					Date	date;
+					
+					date = string_value->Get();
+					return	SetDate(date, !create);
 				}
 				else
 				{
@@ -209,11 +246,11 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 	}
 	else if (_property.GetName() == OBJECT_FIELD_ENABLE)
 	{
+		bool	enable	= false;
 		const ValueBool*	value = dynamic_cast<const ValueBool*>(_property.GetValue());
 		if (value != NULL)
 		{
-			enable_ = value->Get();
-			TRACE_INFO("The enable set to " << enable_);
+			enable = value->Get();
 		}
 		else
 		{
@@ -222,13 +259,11 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 			{
 				if ((value2->Get() == "yes") || (value2->Get() == "on") || (value2->Get() == "1") || (value2->Get() == "true"))
 				{
-					enable_ = true;
-					TRACE_INFO("The enable set to " << enable_);
+					enable = true;
 				}
 				else if ((value2->Get() == "no") || (value2->Get() == "off") || (value2->Get() == "0") || (value2->Get() == "false"))
 				{
-					enable_ = false;
-					TRACE_INFO("The enable set to " << enable_);
+					enable = false;
 				}
 				else
 				{
@@ -239,9 +274,14 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 			}
 			else
 			{
-				TRACE_INFO("Property enable value type is incorrect!");
 				ret_value = false;
+				TRACE_INFO("Property enable value type is incorrect!");
 			}
+		}
+
+		if (ret_value == true)
+		{
+			ret_value = SetEnable(enable, !create);
 		}
 	}
 	else
@@ -255,10 +295,10 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 
 bool	Object::GetProperties(Properties& _properties) const
 {
-	_properties.Append(OBJECT_FIELD_ID, id_);
-	_properties.Append(OBJECT_FIELD_NAME, name_);
-	_properties.Append(OBJECT_FIELD_DATE, date_);
-	_properties.Append(OBJECT_FIELD_ENABLE, enable_);
+	_properties.AppendID(id_);
+	_properties.AppendName(name_);
+	_properties.AppendDate(date_);
+	_properties.AppendEnable(enable_);
 
 	return	true;
 }
@@ -267,10 +307,10 @@ Properties	Object::GetProperties() const
 {
 	Properties	properties;
 
-	properties.Append(OBJECT_FIELD_ID, std::string(id_));
-	properties.Append(OBJECT_FIELD_NAME, name_);
-	properties.Append(OBJECT_FIELD_DATE, date_);
-	properties.Append(OBJECT_FIELD_ENABLE, enable_);
+	properties.AppendID(std::string(id_));
+	properties.AppendName(name_);
+	properties.AppendDate(date_);
+	properties.AppendEnable(enable_);
 
 	return	properties;
 }
@@ -279,12 +319,7 @@ bool	Object::SetProperties(Properties const& _properties, bool create)
 {
 	for(auto it = _properties.begin(); it != _properties.end() ; it++)
 	{
-		SetProperty(*it, create);	
-	}
-
-	if ((!create) && (parent_ != NULL))
-	{
-		parent_->UpdateProperties(id_);	
+		SetPropertyInternal(*it, create);	
 	}
 
 	return	true;

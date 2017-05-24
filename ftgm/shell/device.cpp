@@ -33,7 +33,7 @@ RetValue	ShellCommandDevice
 		std::cout << "Device count : " << object_manager->GetDeviceCount() << std::endl;
 		
 		std::list<Device*>	snmp_list;
-		if (object_manager->GetDeviceList(Device::SNMP, snmp_list) != 0)
+		if (object_manager->GetDeviceList(DeviceSNMP::Type(), snmp_list) != 0)
 		{
 			std::cout << "* SNMP Device" << std::endl;
 			std::cout << std::setw(id_len) << "ID";
@@ -51,7 +51,7 @@ RetValue	ShellCommandDevice
 
 				std::cout << std::setw(id_len) << device->GetID();
 				std::cout << " " << std::setw(name_len) << device->GetName();
-				std::cout << " " << std::setw(type_len) << Device::ToString(Device::SNMP);
+				std::cout << " " << std::setw(type_len) << device->GetType();
 				std::cout << " " << std::setw(stat_len) << Object::ToString(device->GetStat());
 				std::cout << " " << std::setw(ip_len) << device->GetIP();
 				std::cout << " " << std::setw(module_len) << device->GetModule();
@@ -61,7 +61,7 @@ RetValue	ShellCommandDevice
 		}
 
 		std::list<Device*>	mbtcp_list;
-		if (object_manager->GetDeviceList(Device::MBTCP, mbtcp_list) != 0)
+		if (object_manager->GetDeviceList(ValueType("d_mbtcp"), mbtcp_list) != 0)
 		{
 			std::cout << "* MBTCP Device" << std::endl;
 			std::cout << std::setw(id_len) << "ID";
@@ -73,7 +73,7 @@ RetValue	ShellCommandDevice
 			{
 				std::cout << std::setw(id_len) << (*it)->GetID();
 				std::cout << " " << std::setw(name_len) << (*it)->GetName();
-				std::cout << " " << std::setw(type_len) << Device::ToString(Device::MBTCP);
+				std::cout << " " << std::setw(type_len) << (*it)->GetType();
 				std::cout << std::endl;	
 			}
 		}
@@ -269,7 +269,7 @@ RetValue	ShellCommandDevice
 						std::cout << "Invalid argument options(" << _arguments[i] << ")" << std::endl;
 						ret_value = RET_VALUE_INVALID_ARGUMENTS;
 					}
-					else if (!properties.Append(_arguments[i].substr(2, _arguments[i].size() - 2), _arguments[i+1]))
+					else if (!properties.Append(Property(_arguments[i].substr(2, _arguments[i].size() - 2), _arguments[i+1])))
 					{
 						std::cout << "properties.Append(" << _arguments[i].substr(2,_arguments[i].size() - 2)<< ", " << _arguments[i+1] << ")" << std::endl;
 						ret_value = RET_VALUE_INVALID_ARGUMENTS;

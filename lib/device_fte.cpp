@@ -5,29 +5,29 @@
 #include "trace.h"
 
 DeviceFTE::DeviceFTE(ObjectManager& _manager)
-: DeviceSNMP(_manager, "FTE-E")
+: DeviceSNMP(_manager, DeviceFTE::Type(), "FTE-E")
 {
 	trace.SetClassName(GetClassName());
 	TRACE_CREATE;
 }
 
 DeviceFTE::DeviceFTE(ObjectManager& _manager, Properties const& _properties)
-: DeviceSNMP(_manager, _properties)
+: DeviceSNMP(_manager, DeviceFTE::Type(), _properties)
 {
 	trace.SetClassName(GetClassName());
 	TRACE_CREATE;
 }
 
 DeviceFTE::DeviceFTE(ObjectManager& _manager, ValueIP const& _ip)
-: DeviceSNMP(_manager, "FTE-E", _ip)
+: DeviceSNMP(_manager, DeviceFTE::Type(), "FTE-E",  _ip)
 {
 	trace.SetClassName(GetClassName());
 	TRACE_CREATE;
 }
 
-bool	DeviceFTE::IsIncludedIn(Type _type)
+bool		DeviceFTE::IsIncludedIn(ValueType const& _type)
 {
-	if (_type == FTE)
+	if (_type == DeviceFTE::Type())
 	{
 		return	true;	
 	}
@@ -58,7 +58,7 @@ bool	DeviceFTE::Attach(ValueID const& _endpoint_id)
 
 	if (sensor_id.size() < 8)
 	{
-		TRACE_ERROR("Failed to attach endpoint because sensor id is invalid!");
+		TRACE_ERROR("Failed to attach endpoint because sensor id[" << sensor_id << "] is invalid!");
 		return	false;
 	}
 
@@ -130,8 +130,16 @@ bool	DeviceFTE::ReadValue(std::string const& _endpoint_id, Value* _value)
 	}
 
 	OID oid = GetOID(endpoint->GetType(), it->second);
-	
-	return	DeviceSNMP::ReadValue(oid, _value);
+
+
+	ValueFloat	*value_float = dynamic_cast<ValueFloat*>(_value);
+	if (value_float != NULL)
+	{
+		value_float->Set((rand() % 10000) / 100.0);
+	}
+
+	return	true;
+	//return	DeviceSNMP::ReadValue(oid, _value);
 }
 
 DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
@@ -210,5 +218,12 @@ DeviceSNMP::OID DeviceFTE::GetOID(Endpoint::Type _type, uint32_t _index)
 
 	TRACE_INFO("GetOID(" << _type <<", " << _index << ") = " << std::string(oid));
 	return	oid;
+}
+
+const	ValueType&	DeviceFTE::Type()
+{
+	static	ValueType	type_("d_fte");
+
+	return	type_;
 }
 

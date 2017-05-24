@@ -11,7 +11,15 @@
 static	bool	trace_on = true;
 
 Endpoint::Endpoint(ObjectManager& _manager)
-:	manager_(_manager), device_id_(""), active_(false), update_interval_(ENDPOINT_UPDATE_INTERVAL), unit_(""), scale_(ENDPOINT_VALUE_SCALE), value_(0), value_map_(ENDPOINT_VALUE_COUNT_MAX)
+:	manager_(_manager), 
+	device_id_(""), 
+	active_(false), 
+	update_interval_(ENDPOINT_UPDATE_INTERVAL), 
+	unit_(""), 
+	scale_(ENDPOINT_VALUE_SCALE), 
+	value_(0), 
+	value_map_(ENDPOINT_VALUE_COUNT_MAX),
+	last_report_date_()
 {
 	trace.Enable(trace_on);
 	manager_.Attach(this);
@@ -27,10 +35,15 @@ const	ValueUnit&	Endpoint::GetUnit() const
 	return	unit_;
 }
 
-bool	Endpoint::SetUnit(std::string const& _unit)
+bool	Endpoint::SetUnit(std::string const& _unit, bool _store)
 {
 	unit_ = _unit;
-
+	
+	updated_properties_.AppendUnit(unit_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 	return	true;
 }
 
@@ -39,38 +52,65 @@ float	Endpoint::GetScale() const
 	return	scale_;
 }
 
-bool	Endpoint::SetScale(std::string const& _scale)
+bool	Endpoint::SetScale(std::string const& _scale, bool _store)
 {
 	scale_ = strtod(_scale.c_str(), NULL);
 
+	updated_properties_.AppendScale(scale_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
+
 	return	true;
 }
 
-bool	Endpoint::SetScale(float _scale)
+bool	Endpoint::SetScale(float _scale, bool _store)
 {
 	scale_ = _scale;
 
+	updated_properties_.AppendScale(scale_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
+
 	return	true;
 }
 
-bool	Endpoint::SetUpdateInterval(Time const& _update_interval)
+bool	Endpoint::SetUpdateInterval(Time const& _update_interval, bool _store)
 {
 	update_interval_ = _update_interval;
 
+	updated_properties_.AppendUpdateInterval(update_interval_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 	return	true;
 }
 
-bool	Endpoint::SetUpdateInterval(uint64_t _update_interval)
+bool	Endpoint::SetUpdateInterval(uint64_t _update_interval, bool _store)
 {
 	update_interval_ = _update_interval;
 
+	updated_properties_.AppendUpdateInterval(update_interval_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 	return	true;
 }
 
-bool	Endpoint::SetUpdateInterval(std::string const& _update_interval)
+bool	Endpoint::SetUpdateInterval(std::string const& _update_interval, bool _store)
 {
 	update_interval_ = strtoul(_update_interval.c_str(), NULL, 10);
-
+	
+	updated_properties_.AppendUpdateInterval(update_interval_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 	return	true;
 }
 
@@ -84,9 +124,15 @@ std::string	Endpoint::GetSensorID() const
 	return	sensor_id_;
 }
 
-bool	Endpoint::SetSensorID(std::string const& _sensor_id)
+bool	Endpoint::SetSensorID(std::string const& _sensor_id, bool _store)
 {
 	sensor_id_ = _sensor_id;
+
+	updated_properties_.AppendSensorID(sensor_id_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 
 	return	true;
 }
@@ -95,12 +141,12 @@ bool	Endpoint::GetProperties(Properties& _properties) const
 {
 	if (ActiveObject::GetProperties(_properties))
 	{	
-		_properties.Append(OBJECT_FIELD_TYPE,		Endpoint::ToString(GetType()));
-		_properties.Append(OBJECT_FIELD_SENSOR_ID,	sensor_id_);
-		_properties.Append(OBJECT_FIELD_DEVICE_ID,	std::string(device_id_));
-		_properties.Append(OBJECT_FIELD_UNIT, 		unit_);
-		_properties.Append(OBJECT_FIELD_SCALE, 		float(scale_));
-		_properties.Append(OBJECT_FIELD_UPDATE_INTERVAL, 		update_interval_);
+		_properties.AppendEndpointType(Endpoint::ToString(GetType()));
+		_properties.AppendSensorID(sensor_id_);
+		_properties.AppendDeviceID(std::string(device_id_));
+		_properties.AppendUnit(unit_);
+		_properties.AppendScale(float(scale_));
+		_properties.AppendUpdateInterval(update_interval_);
 
 		return	true;	
 	}
@@ -125,7 +171,7 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 
 			TRACE_INFO("The id set to " << id_);
 
-			manager_.IDChanged(this, old_id);
+			return	manager_.IDChanged(this, old_id);
 		}
 		else
 		{
@@ -138,7 +184,7 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 		if (string_value != NULL)
 		{
 			TRACE_INFO("The unit set to " << string_value->Get());
-			return	SetUnit(string_value->Get());
+			return	SetUnit(string_value->Get(), !create);
 		}
 
 		TRACE_ERROR("Property[" << id_ << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
@@ -149,21 +195,21 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 		if (string_value != NULL)
 		{
 			TRACE_INFO("The scale set to " << string_value->Get());
-			return	SetScale(string_value->Get());
+			return	SetScale(string_value->Get(), !create);
 		}
 
 		const ValueFloat *float_value = dynamic_cast<const ValueFloat*>(_property.GetValue());
 		if (float_value != NULL)
 		{
 			TRACE_INFO("The scale set to " << float_value->Get());
-			return	SetScale(float_value->Get());
+			return	SetScale(float_value->Get(), !create);
 		}
 
 		const ValueInt *int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
 		if (float_value != NULL)
 		{
 			TRACE_INFO("The scale set to " << int_value->Get());
-			return	SetScale(int_value->Get());
+			return	SetScale(int_value->Get(), !create);
 		}
 
 		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
@@ -174,21 +220,21 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 		if (string_value != NULL)
 		{
 			TRACE_INFO("The update interval set to " << string_value->Get());
-			return	SetUpdateInterval(string_value->Get());
+			return	SetUpdateInterval(string_value->Get(), !create);
 		}
 
 		const ValueFloat *float_value = dynamic_cast<const ValueFloat*>(_property.GetValue());
 		if (float_value != NULL)
 		{
 			TRACE_INFO("The update interval set to " << float_value->Get());
-			return	SetUpdateInterval(float_value->Get());
+			return	SetUpdateInterval(float_value->Get(), !create);
 		}
 
 		const ValueUInt32 *int_value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (int_value != NULL)
 		{
 			TRACE_INFO("The update interval set to " << int_value->Get());
-			return	SetUpdateInterval(int_value->Get());
+			return	SetUpdateInterval(int_value->Get(), !create);
 		}
 
 		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
@@ -199,7 +245,7 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 		if (value != NULL)
 		{
 			TRACE_INFO("The sensor id set to " << value->Get());
-			return	SetSensorID(value->Get());
+			return	SetSensorID(value->Get(), !create);
 		}
 
 		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
@@ -209,8 +255,7 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
-			TRACE_INFO("The device id set to " << value->Get());
-			return	SetDeviceID(value->Get());
+			return	SetDeviceID(value->Get(), !create);
 		}
 
 		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
@@ -229,30 +274,22 @@ const ValueID&	Endpoint::GetDeviceID() const
 	return	device_id_;
 }
 
-bool	Endpoint::SetDeviceID(ValueID const& _device_id) 
+bool	Endpoint::SetDeviceID(ValueID const& _device_id, bool _store) 
 {
-	TRACE_INFO("The device id set to " << _device_id);
 	ValueID old_id(device_id_);
 
 	if (!device_id_.Set(_device_id))
 	{
+		TRACE_ERROR("The device id is invalid["<< _device_id << "]");
 		return	false;	
 	}
-	
-	if (std::string(old_id) != std::string(device_id_))
-	{
-		Device*	old_device = manager_.GetDevice(old_id);
-		if(old_device != NULL)
-		{
-			old_device->Detach(id_);	
-		}
 
-		Device*	device = manager_.GetDevice(device_id_);
-		if(device != NULL)
-		{
-			device->Attach(id_);	
-		}
+	updated_properties_.AppendDeviceID(_device_id);
+	if (_store)
+	{
+		ApplyChanges();	
 	}
+	TRACE_INFO("The device id set to " << device_id_);
 
 	return	true;
 }
@@ -307,6 +344,10 @@ void	Endpoint::Start()
 			}
 		}
 	}
+	else
+	{
+		TRACE_INFO("Failed to start endpoint because endpoint is disabled!");	
+	}
 }
 
 void	Endpoint::Stop()
@@ -330,6 +371,16 @@ void	Endpoint::Stop()
 			TRACE_ERROR("Failed to stop because the endpoint is not attached to device.");
 		}
 	}
+}
+
+bool	Endpoint::IsRunning()
+{
+	if (active_)
+	{
+		return	ActiveObject::IsRunning();	
+	}
+
+	return	!stop_;
 }
 
 void	Endpoint::Preprocess()
@@ -365,9 +416,7 @@ void	Endpoint::UpdateProcess()
 		{
 			if (IsValid(value))
 			{
-				Date	date;
-
-				if (!Add(date, &value))
+				if (!Add(&value))
 				{
 					TRACE_ERROR("Failed to add data");	
 				}
@@ -392,6 +441,21 @@ bool		Endpoint::IsValid(const ValueFloat& _value)
 uint32_t	Endpoint::GetDataCount()
 {
 	return	value_map_.size();
+}
+
+bool	Endpoint::GetUnreportedValueList(ValueList& value_list)
+{
+	Date		current;
+
+	if (GetDataForPeriod(last_report_date_, current, value_list) == false)
+	{
+		TRACE_ERROR("Failed to get data!");
+		return	false;
+	}
+
+	last_report_date_ = current;
+
+	return	true;
 }
 
 Date	Endpoint::GetDateOfFirstData()
@@ -429,6 +493,21 @@ bool	Endpoint::GetDataForPeriod(Date const& _begin, Date const& _end, ValueMap& 
 	{
 		_value_map.Add(it->first, it->second);
 	}
+
+	return	true;
+}
+
+bool	Endpoint::GetDataForPeriod(Date const& _begin, Date const& _end, ValueList& _value_list)
+{
+	ValueMap::iterator	it_low 	= value_map_.lower_bound(_begin);
+	ValueMap::iterator	it_upper= value_map_.upper_bound(_end);
+
+	for(ValueMap::iterator it = it_low ; it != it_upper ; it++)
+	{
+		_value_list.Add(it->second);
+	}
+
+	return	true;
 }
 
 bool	Endpoint::DelDataForPeriod(Date const& _begin, Date const& _end)
@@ -440,15 +519,33 @@ bool	Endpoint::DelDataForPeriod(Date const& _begin, Date const& _end)
 	{
 		value_map_.erase(it);
 	}
+
+	return	true;
 }
 
-bool	Endpoint::Add(Date const& _date, Value const* _value)
+bool	Endpoint::Add(Value const* _value)
 {
-	if (parent_ != NULL)
+	bool	ret_value = false;
+
+	ret_value = value_map_.Add(_value->GetDate(), _value);
+	if (ret_value == true)
 	{
-		parent_->AddData(id_, _date, _value);
+		try
+		{
+			Message *message = new MessageEndpointUpdated(id_, _value);
+
+			if (manager_.Post(message) == false)
+			{
+				TRACE_ERROR("Failed to post message!");	
+				delete message;	
+			}
+		}
+		catch(std::exception& e)
+		{
+			TRACE_ERROR("Failed to create message!");	
+		}
 	}
-	return	value_map_.Add(_date, _value);
+	return	ret_value;
 }
 
 bool		Endpoint::IsValidType(std::string const& _type)

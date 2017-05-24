@@ -219,7 +219,7 @@ void	TCPServer::OnMessage
 {
 	switch(_base_message->type)
 	{
-	case	Message::SESSION_DISCONNECTED:
+	case	MSG_TYPE_SESSION_DISCONNECTED:
 		{
 			MessageSessionDisconnected* message = (MessageSessionDisconnected*)_base_message;
 

@@ -13,8 +13,8 @@ public:
 			bool	IsValid(const ValueFloat& _value);
 
 
-	virtual	bool	SetValueMin(ValueFloat const& _value_min);
-	virtual	bool	SetValueMax(ValueFloat const& _value_max);
+	virtual	bool	SetValueMin(ValueFloat const& _value_min, bool _store = true);
+	virtual	bool	SetValueMax(ValueFloat const& _value_max, bool _store = true);
 protected:
 
 			bool	SetPropertyInternal(Property const& _property, bool create);

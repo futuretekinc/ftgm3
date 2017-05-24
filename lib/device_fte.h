@@ -13,8 +13,7 @@ public:
 	DeviceFTE(ObjectManager& _manager, Properties const& _properties);
 	DeviceFTE(ObjectManager& _manager, ValueIP const& _ip);
 
-			Type		GetType()	const {	return	FTE;	}
-			bool		IsIncludedIn(Type _type);
+			bool		IsIncludedIn(ValueType const& _type);
 
 	virtual	Endpoint*	CreateEndpoint(Properties const& _properties);
 
@@ -23,6 +22,7 @@ public:
 
 			bool		ReadValue(std::string const& _endpoint_id, Value* _value);
 
+	static	const	ValueType&	Type();
 protected:
 	virtual	bool		Attach(ValueID const& _endpoint_id);
 	virtual	bool		Detach(ValueID const& _endpoint_id);

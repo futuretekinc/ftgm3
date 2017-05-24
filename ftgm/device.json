@@ -1,5 +1,5 @@
 {
-	"type" : "fte",
+	"type" : "d_fte",
 	"name" : "sn-1111",
 	"ip" : "10.0.1.26",
 	"module" : "FTE-E.txt",

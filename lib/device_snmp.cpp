@@ -35,21 +35,28 @@ DeviceSNMP::OID::operator string() const
 	return	oss.str();
 }
 
-DeviceSNMP::DeviceSNMP(ObjectManager& _manager)
-: DeviceIP(_manager, SNMP), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type)
+: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
 }
 
-DeviceSNMP::DeviceSNMP(ObjectManager& _manager, Properties const& _properties)
-: DeviceIP(_manager, SNMP), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, Properties const& _properties)
+: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
 	SetProperties(_properties, true);
 }
 
-DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _module)
-: DeviceIP(_manager, SNMP), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, Properties const& _properties)
+: DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+{
+	trace.SetClassName(GetClassName());
+	SetProperties(_properties, true);
+}
+
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module)
+: DeviceIP(_manager, _type), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
 
@@ -66,8 +73,8 @@ DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _module)
 	object_count++;
 }
 
-DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _module, ValueIP const& _ip)
-: DeviceIP(_manager, SNMP, _ip), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module, ValueIP const& _ip)
+: DeviceIP(_manager, _type, _ip), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
 
@@ -100,11 +107,15 @@ DeviceSNMP::~DeviceSNMP()
 	}
 }
 
-bool	DeviceSNMP::IsIncludedIn(Type _type)
+bool		DeviceSNMP::IsIncludedIn(ValueType const& _type)
 {
-	return	(_type == SNMP);
-}
+	if (_type == DeviceSNMP::Type())
+	{
+		return	true;	
+	}
 
+	return	DeviceIP::IsIncludedIn(_type);
+}
 
 bool	DeviceSNMP::Open()
 {
@@ -168,10 +179,15 @@ const	std::string&	DeviceSNMP::GetModule()
 	return	module_;
 }
 
-bool	DeviceSNMP::SetModule(std::string const& _module)
+bool	DeviceSNMP::SetModule(std::string const& _module, bool _store)
 {
 	module_ = _module;
 
+	updated_properties_.AppendSNMPModule(module_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 	return	true;
 }
 
@@ -180,9 +196,33 @@ const	std::string&	DeviceSNMP::GetCommunity()
 	return	community_;
 }
 
-bool	DeviceSNMP::SetCommunity(std::string const& _community)
+bool	DeviceSNMP::SetCommunity(std::string const& _community, bool _store)
 {
 	community_ = _community;
+	
+	updated_properties_.AppendSNMPCommunity(community_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
+}
+
+uint32_t	DeviceSNMP::GetTimeout()
+{
+	return	timeout_;
+}
+
+bool	DeviceSNMP::SetTimeout(uint32_t _timeout, bool _store)
+{
+	timeout_ = _timeout;
+	
+	updated_properties_.AppendTimeout(timeout_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 
 	return	true;
 }
@@ -191,9 +231,9 @@ bool	DeviceSNMP::GetProperties(Properties& _properties) const
 {
 	if (DeviceIP::GetProperties(_properties))
 	{
-		_properties.Append("module", module_);
-		_properties.Append("community", community_);
-		_properties.Append("timeout", timeout_);
+		_properties.AppendSNMPModule(module_);
+		_properties.AppendSNMPCommunity(community_);
+		_properties.AppendTimeout(timeout_);
 
 		return	true;	
 	}
@@ -203,24 +243,28 @@ bool	DeviceSNMP::GetProperties(Properties& _properties) const
 
 bool	DeviceSNMP::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (_property.GetName() == "module")
+	if (_property.GetName() == OBJECT_FIELD_MODULE)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
-			module_ = value->Get();
-			TRACE_INFO("The module set to " << module_);
-			return	true;
+			return	SetModule(value->Get(), !create);
 		}
 	}
-	else if (_property.GetName() == "community")
+	else if (_property.GetName() == OBJECT_FIELD_COMMUNITY)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
-			community_ = value->Get();
-			TRACE_INFO("The community set to " << community_);
-			return	true;
+			return	SetCommunity(value->Get(), !create);
+		}
+	}
+	else if (_property.GetName() == OBJECT_FIELD_TIMEOUT)
+	{
+		const ValueUInt32*	value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
+		if (value != NULL)
+		{
+			return	SetTimeout(value->Get(), !create);
 		}
 	}
 	else
@@ -465,12 +509,12 @@ bool	DeviceSNMP::Convert
 
 void	DeviceSNMP::Preprocess()
 {
-	//Open();
+	Device::Preprocess();
 }
 
 void	DeviceSNMP::Postprocess()
 {
-	//Close();
+	Device::Postprocess();
 }
 
 bool	DeviceSNMP::AddMIBPath(std::string const& _path)
@@ -520,7 +564,7 @@ bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
 
 		_statement->Sql(query.str());
 		_statement->BindString(++index, id_);
-		_statement->BindInt(++index, 	GetType());
+		_statement->BindString(++index, std::string(type_));
 		_statement->BindInt(++index, 	time_t(date_));
 		_statement->BindInt(++index, 	enable_);
 		_statement->BindString(++index, name_);
@@ -540,3 +584,11 @@ bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
 
 	return	true;
 }
+
+const	ValueType&	DeviceSNMP::Type()
+{
+	static	ValueType	type_("d_snmp");
+
+	return	type_;
+}
+

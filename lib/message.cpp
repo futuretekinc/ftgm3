@@ -9,22 +9,22 @@ using namespace std;
 
 struct	MessageTypeString
 {
-	Message::Type	type;
+	uint32_t		type;
 	string			name;
 }
 message_type_string[] =
 {
-	{ Message::UNKNOWN,	"Unknown" },
-	{ Message::START,		"start"	},
-	{ Message::STARTED,	"started"	},
-	{ Message::STOP,		"stop"	},
-	{ Message::STOPPED,	"stopped"	},
-	{ Message::ACTIVATED,	"activated" },
-	{ Message::DEACTIVATED,"deactivated" },
-	{ Message::TEST,		"test"	},
-	{ Message::QUIT,		"quit"	},
-	{ Message::SESSION_DISCONNECTED, "Session disconnected" },
-	{ Message::PACKET_RECEIVED,	"Packet received" }
+	{ MSG_TYPE_UNKNOWN,	"Unknown" },
+	{ MSG_TYPE_START,		"start"	},
+	{ MSG_TYPE_STARTED,	"started"	},
+	{ MSG_TYPE_STOP,		"stop"	},
+	{ MSG_TYPE_STOPPED,	"stopped"	},
+	{ MSG_TYPE_ACTIVATED,	"activated" },
+	{ MSG_TYPE_DEACTIVATED,"deactivated" },
+	{ MSG_TYPE_TEST,		"test"	},
+	{ MSG_TYPE_QUIT,		"quit"	},
+	{ MSG_TYPE_SESSION_DISCONNECTED, "Session disconnected" },
+	{ MSG_TYPE_PACKET_RECEIVED,	"Packet received" }
 };
 
 static std::mutex							active_object_map_lock;
@@ -109,7 +109,7 @@ string&	ToString
 }
 
 
-Message::Type	Message::ToType
+uint32_t	Message::ToType
 (
 	const std::string& _string
 )
@@ -122,13 +122,13 @@ Message::Type	Message::ToType
 		}
 	}
 
-	return	UNKNOWN;
+	return	MSG_TYPE_UNKNOWN;
 }
 	
 
 const std::string&	Message::ToString
 (
-	Type _type
+	uint32_t	_type
 )
 {
 	for(int i = 0 ; sizeof(message_type_string) / sizeof(MessageTypeString) ; i++)
@@ -158,27 +158,27 @@ MessageTest::MessageTest
 (
 	const string& _message
 )
-: Message(TEST), message(_message)
+: Message(MSG_TYPE_TEST), message(_message)
 {
 }
 
 MessageActivated::MessageActivated()
-: Message(ACTIVATED)
+: Message(MSG_TYPE_ACTIVATED)
 {
 }
 
 MessageDeactivated::MessageDeactivated()
-: Message(DEACTIVATED)
+: Message(MSG_TYPE_DEACTIVATED)
 {
 }
 
 MessageQuit::MessageQuit()
-: Message(QUIT)
+: Message(MSG_TYPE_QUIT)
 {
 }
 
 MessagePacket::MessagePacket(ValueID const& _id, void const* _data, uint32_t _length)
-: Message(PACKET), sender(_id), length(_length)
+: Message(MSG_TYPE_PACKET), sender(_id), length(_length)
 {
 	if (_length == 0)
 	{
@@ -225,4 +225,9 @@ void	MessagePacket::Dump(ostream& os) const
 	{
 		os<< std::endl;	
 	}
+}
+
+MessageKeepAlive::MessageKeepAlive(ValueID const& _id)
+:	Message(MSG_TYPE_KEEP_ALIVE), id(_id)
+{
 }

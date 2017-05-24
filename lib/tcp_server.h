@@ -19,7 +19,7 @@ public:
 	struct MessageSessionDisconnected : Message
 	{
 		uint16_t	port;
-		MessageSessionDisconnected(uint16_t _port) : Message(SESSION_DISCONNECTED), port(_port) {};
+		MessageSessionDisconnected(uint16_t _port) : Message(MSG_TYPE_SESSION_DISCONNECTED), port(_port) {};
 	};
 
 	TCPServer();

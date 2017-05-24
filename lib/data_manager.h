@@ -33,7 +33,7 @@ public:
 		public:
 			ValueTable(DataManager* _parent, std::string const& _endpoint_id);
 
-			bool	Add(Date const& _date, Value const* _value);
+			bool	Add(Value const* _value);
 
 		protected:
 			DataManager*	parent_;
@@ -42,6 +42,8 @@ public:
 	DataManager();
 	DataManager(std::string const& _db_name);
 	~DataManager();
+
+	bool		Load(JSONNode const& _json);
 
 	bool		AddDevice(Device* _device);
 	bool		DeleteDevice(std::string const& _id);
@@ -60,7 +62,7 @@ public:
 	bool		SetEndpointProperties(std::string const& _id, Properties& _properties);
 
 	ValueTable*	GetValueTable(std::string const& _endpoint_id);
-	bool		AddValue(std::string const& _endpoint_id, Date const& _date, Value const* _value);
+	bool		AddValue(std::string const& _endpoint_id, Value const* _value);
 
 private:
 	Table*		CreateTable(std::string const& _table_name, std::list<std::string>& field_list);

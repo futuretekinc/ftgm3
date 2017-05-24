@@ -36,6 +36,7 @@ public:
 	bool	SetClassName(std::string const& _class_name);
 	bool	SetOut(std::ostream* _out);
 	bool	SetOut(std::string const& _file, uint32_t ulSize = 1024*1024);
+	bool	ConsoleMode();
 
 	Trace& operator<< (std::streambuf* sb );
     Trace& operator<< (std::ostream& (*pf)(std::ostream&));

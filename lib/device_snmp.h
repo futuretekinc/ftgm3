@@ -20,19 +20,21 @@ public:
 		operator std::string() const;
 	};
 
-	DeviceSNMP(ObjectManager& _manager);
+	DeviceSNMP(ObjectManager& _manager, ValueType const& _type);
 	DeviceSNMP(ObjectManager& _manager, Properties const& _properties);
-	DeviceSNMP(ObjectManager& _manager, std::string const& _module);
-	DeviceSNMP(ObjectManager& _manager, std::string const& _module, ValueIP const& _ip);
+	DeviceSNMP(ObjectManager& _manager, ValueType const& _type, Properties const& _properties);
+	DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module);
+	DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module, ValueIP const& _ip);
 	~DeviceSNMP();
 
-			Type	GetType()	const {	return	SNMP;	}
-	virtual	bool	IsIncludedIn(Type _type);
+			bool	IsIncludedIn(ValueType const& _type);
 
 	const	std::string&	GetModule();
-			bool			SetModule(std::string const& _module);
+			bool			SetModule(std::string const& _module, bool _store = true);
 	const	std::string&	GetCommunity();
-			bool			SetCommunity(std::string const& _community);
+			bool			SetCommunity(std::string const& _community, bool _store = true);
+			uint32_t		GetTimeout();
+			bool			SetTimeout(uint32_t _timeout, bool _store = true);
 
 	virtual	bool	GetProperties(Properties& _properties) const;
 
@@ -43,6 +45,7 @@ public:
 
 	virtual	bool	InsertToDB(Kompex::SQLiteStatement*	_statement);
 
+	static	const	ValueType&	Type();
 	static	bool	AddMIBPath(std::string const& _path);
 	static	bool	ReadAllMIBs();
 	static	bool	ReadMIB(std::string const& _file_name);

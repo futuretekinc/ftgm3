@@ -116,6 +116,17 @@ Date::Date(uint32_t _seconds)
 	value_ = _seconds * 1000000;
 }
 
+Date::Date(std::string const& _date)
+{
+	struct tm	tm;
+
+	strptime(_date.c_str(), "%Y-%m-%d %H:%M:%S", &tm);
+
+	time_t time = mktime(&tm); 
+
+	value_ = time * (uint64_t)1000000;
+}
+
 bool	Date::IsValid() const
 {
 	return	(value_ != 0);

@@ -17,22 +17,15 @@ class	Device : public ActiveObject
 
 public:
 
-	enum	Type
-	{
-		SNMP,
-		FTE,
-		MBTCP,
-	};
-
-	Device(ObjectManager& _manager, Type _type);
+	Device(ObjectManager& _manager, ValueType const& _type);
 	~Device();
 
 	// Properties operation
-	virtual	Type		GetType() const = 0;
-	virtual	bool		IsIncludedIn(Type _type) = 0;
+	ValueType const& 	GetType() const	{	return	type_;};	
+	virtual	bool		IsIncludedIn(ValueType const& _type) 	{	return	(type_ == _type);};
 
-			bool		SetLiveCheckInterval(int _interval);
-			bool		SetLiveCheckInterval(Time const& _interval);
+			bool		SetLiveCheckInterval(int _interval, bool _store = true);
+			bool		SetLiveCheckInterval(Time const& _interval, bool _store = true);
 
 	virtual	bool		GetProperties(Properties& _properties) const;
 
@@ -47,11 +40,11 @@ public:
 	// Utility
 	virtual				operator JSONNode();
 
+	static	const	ValueType&	Type();
 	static	bool		IsValidType(std::string const& _type);
 
 	static	Device*		Create(ObjectManager& _manager, Properties const& _properties);
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
-	static	std::string	ToString(Device::Type _type);
 
 	virtual	bool		ReadValue(std::string const& _endpoint_id, Value* _value) = 0;
 
@@ -72,6 +65,7 @@ protected:
 			bool		RemoveSchedule(ValueID const& _id);
 
 	ObjectManager&	manager_;
+	ValueType	type_;
 	ValueID		parent_id_;
 	Time		live_check_interval_;
 

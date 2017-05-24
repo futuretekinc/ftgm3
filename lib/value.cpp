@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <typeinfo>
+#include <iomanip>
 #include "defined.h"
 #include "value.h"
 #include "property.h"
@@ -9,6 +10,17 @@ using namespace std;
 ///////////////////////////////////////////////////////////////
 // Class Value
 ///////////////////////////////////////////////////////////////
+Value::Value()
+: date_()
+{
+
+}
+
+Value::Value(Date const& _date)
+: date_(_date)
+{
+}
+
 Value::~Value()
 {
 }
@@ -37,6 +49,15 @@ std::string	Value::GetTypeString() const
 ///////////////////////////////////////////////////////////////
 // Class ValueNumber
 ///////////////////////////////////////////////////////////////
+ValueNumber::ValueNumber()
+: Value()
+{
+}
+
+ValueNumber::ValueNumber(Date const& _date)
+: Value(_date)
+{
+}
 
 std::string	ValueNumber::GetTypeString() const
 {
@@ -46,7 +67,12 @@ std::string	ValueNumber::GetTypeString() const
 // Class ValueInt
 ///////////////////////////////////////////////////////////////
 ValueInt::ValueInt(int _value)
-: value_(_value)
+: ValueNumber(), value_(_value)
+{
+}
+
+ValueInt::ValueInt(int _value, Date const& _date)
+: ValueNumber(_date), value_(_value)
 {
 }
 
@@ -58,6 +84,7 @@ std::string	ValueInt::GetTypeString() const
 ValueInt& ValueInt::operator=(int _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -86,7 +113,7 @@ void	ValueInt::Set(int _value)
 
 Value*	ValueInt::Duplicate() const
 {
-	return	new ValueInt(value_);
+	return	new ValueInt(value_, date_);
 }
 
 void	ValueInt::Print(ostream&	os) const
@@ -98,7 +125,12 @@ void	ValueInt::Print(ostream&	os) const
 // Class ValueUInt32
 ///////////////////////////////////////////////////////////////
 ValueUInt32::ValueUInt32(uint32_t _value)
-: value_(_value)
+: ValueNumber(), value_(_value)
+{
+}
+
+ValueUInt32::ValueUInt32(uint32_t _value, Date const& _date)
+: ValueNumber(_date), value_(_value)
 {
 }
 
@@ -110,6 +142,7 @@ std::string	ValueUInt32::GetTypeString() const
 ValueUInt32& ValueUInt32::operator=(uint32_t _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -133,7 +166,7 @@ void	ValueUInt32::Set(uint32_t _value)
 
 Value*	ValueUInt32::Duplicate() const
 {
-	return	new ValueUInt32(value_);
+	return	new ValueUInt32(value_, date_);
 }
 
 ValueUInt32::operator std::string() const
@@ -150,7 +183,12 @@ void	ValueUInt32::Print(ostream&	os) const
 // Class ValueUInt64
 ///////////////////////////////////////////////////////////////
 ValueUInt64::ValueUInt64(uint64_t _value)
-: value_(_value)
+: ValueNumber(), value_(_value)
+{
+}
+
+ValueUInt64::ValueUInt64(uint64_t _value, Date const& _date)
+: ValueNumber(_date), value_(_value)
 {
 }
 
@@ -162,6 +200,7 @@ std::string	ValueUInt64::GetTypeString() const
 ValueUInt64& ValueUInt64::operator=(uint64_t _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -185,7 +224,7 @@ void	ValueUInt64::Set(uint64_t _value)
 
 Value*	ValueUInt64::Duplicate() const
 {
-	return	new ValueUInt64(value_);
+	return	new ValueUInt64(value_, date_);
 }
 
 ValueUInt64::operator std::string() const
@@ -202,7 +241,12 @@ void	ValueUInt64::Print(ostream&	os) const
 // Class ValueBool
 ///////////////////////////////////////////////////////////////
 ValueBool::ValueBool(bool _value)
-: value_(_value)
+: ValueNumber(), value_(_value)
+{
+}
+
+ValueBool::ValueBool(bool _value, Date const& _date)
+: ValueNumber(_date), value_(_value)
 {
 }
 
@@ -214,6 +258,7 @@ std::string	ValueBool::GetTypeString() const
 ValueBool& ValueBool::operator=(bool _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -249,7 +294,7 @@ void	ValueBool::Set(bool _value)
 
 Value*	ValueBool::Duplicate() const
 {
-	return	new ValueBool(value_);
+	return	new ValueBool(value_, date_);
 }
 
 ValueBool::operator std::string() const
@@ -265,7 +310,12 @@ void	ValueBool::Print(ostream&	os) const
 // Class ValueFloat
 ///////////////////////////////////////////////////////////////
 ValueFloat::ValueFloat(float _value)
-: value_(_value)
+: ValueNumber(), value_(_value)
+{
+}
+
+ValueFloat::ValueFloat(float _value, Date const& _date)
+: ValueNumber(_date), value_(_value)
 {
 }
 
@@ -282,6 +332,7 @@ ValueFloat::operator float() const
 ValueFloat& ValueFloat::operator=(float _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -289,6 +340,7 @@ ValueFloat& ValueFloat::operator=(float _value)
 void	ValueFloat::Set(float _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 }
 
 bool	ValueFloat::operator ==(const ValueFloat& _value)
@@ -330,12 +382,15 @@ float	ValueFloat::Get() const
 
 Value*	ValueFloat::Duplicate() const
 {
-	return	new ValueFloat(value_);
+	return	new ValueFloat(value_, date_);
 }
 
 ValueFloat::operator std::string() const
 {
-	return	to_string(value_);	
+	std::ostringstream	oss;
+
+	oss << std::setprecision(2) << value_ << std::setprecision(0);
+	return	oss.str();
 }
 
 void	ValueFloat::Print(ostream&	os) const
@@ -346,7 +401,7 @@ void	ValueFloat::Print(ostream&	os) const
 // Class ValueString
 ///////////////////////////////////////////////////////////////
 ValueString::ValueString()
-: value_("")
+: Value(), value_("")
 {
 }
 
@@ -355,8 +410,18 @@ ValueString::ValueString(char * _value)
 {
 }
 
+ValueString::ValueString(char * _value, Date const& _date)
+: Value(_date), value_(_value)
+{
+}
+
 ValueString::ValueString(const std::string& _value)
 : value_(_value)
+{
+}
+
+ValueString::ValueString(const std::string& _value, Date const& _date)
+: Value(_date), value_(_value)
 {
 }
 
@@ -368,6 +433,7 @@ std::string	ValueString::GetTypeString() const
 ValueString& ValueString::operator=(const string& _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -389,7 +455,7 @@ ValueString::operator string() const
 
 Value*	ValueString::Duplicate() const
 {
-	return	new ValueString(value_);
+	return	new ValueString(value_, date_);
 }
 
 const	std::string&	ValueString::Get() const
@@ -413,7 +479,7 @@ void	ValueString::Print(ostream&	os) const
 // Class ValueStringLimit
 ///////////////////////////////////////////////////////////////
 ValueStringLimit::ValueStringLimit(uint32_t _limit)
-: limit_(_limit)
+: ValueString(), limit_(_limit)
 {
 }
 
@@ -425,6 +491,7 @@ std::string	ValueStringLimit::GetTypeString() const
 ValueStringLimit& ValueStringLimit::operator=(string const& _value)
 {
 	value_ = _value.substr(0, limit_);
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -432,6 +499,7 @@ ValueStringLimit& ValueStringLimit::operator=(string const& _value)
 ValueStringLimit& ValueStringLimit::operator=(char const* _value)
 {
 	string value = _value;
+	date_ = Date::GetCurrentDate();
 
 	if (value.length() > limit_)
 	{
@@ -472,6 +540,13 @@ ValueID::ValueID(const string& _value)
 	Set(_value);
 }
 
+ValueID::ValueID(const string& _value, Date const& _date)
+: ValueStringLimit(ID_LENGTH_MAX)
+{
+	Set(_value);
+	date_ = _date;
+}
+
 std::string	ValueID::GetTypeString() const
 {
 	return	typeid(this).name();
@@ -479,13 +554,57 @@ std::string	ValueID::GetTypeString() const
 
 Value*	ValueID::Duplicate() const
 {
-	return	new ValueID(value_);
+	return	new ValueID(value_, date_);
 }
 
 bool	ValueID::IsValid(std::string const& _id)
 {
 	return	(0 < _id.size() && _id.size() <= ID_LENGTH_MAX);
 }
+
+///////////////////////////////////////////////////////////////
+// Class ValueType
+///////////////////////////////////////////////////////////////
+ValueType::ValueType(const ValueType& _unit)
+: ValueString(_unit.value_, _unit.date_)
+{
+}
+
+ValueType::ValueType(const std::string& _unit)
+:	ValueString(_unit)	
+{
+}
+
+ValueType::ValueType(const std::string& _unit, Date const& _date)
+:	ValueString(_unit, _date)	
+{
+}
+
+std::string	ValueType::GetTypeString() const
+{
+	return	typeid(this).name();
+}
+
+bool	ValueType::Set(const string& _value)
+{
+	value_ = _value;		
+	date_ = Date::GetCurrentDate();
+
+	return	true;
+}
+
+Value*	ValueType::Duplicate() const
+{
+	return	new ValueType(value_, date_);
+}
+
+const	ValueType&	ValueType::operator=(const std::string& _value)
+{
+	Set(_value);
+
+	return	*this;
+}
+
 ///////////////////////////////////////////////////////////////
 // Class ValueName
 ///////////////////////////////////////////////////////////////
@@ -497,7 +616,30 @@ ValueName::ValueName()
 ValueName::ValueName(const string& _value)
 : ValueStringLimit(NAME_LENGTH_MAX)
 {
+	if (_value.size() >	NAME_LENGTH_MAX)
+	{
+		std::ostringstream	message;
+
+		message << "Name length is too long.( < " << NAME_LENGTH_MAX << ")";
+		throw std::invalid_argument(message.str());
+	}
+
 	Set(_value);
+}
+
+ValueName::ValueName(const string& _value, Date const& _date)
+: ValueStringLimit(NAME_LENGTH_MAX)
+{
+	if (_value.size() >	NAME_LENGTH_MAX)
+	{
+		std::ostringstream	message;
+
+		message << "Name length is too long.( < " << NAME_LENGTH_MAX << ")";
+		throw std::invalid_argument(message.str());
+	}
+
+	Set(_value);
+	date_ = _date;
 }
 
 std::string	ValueName::GetTypeString() const
@@ -514,7 +656,7 @@ ValueName& 	ValueName::operator=(const std::string& _value)
 
 Value*	ValueName::Duplicate() const
 {
-	return	new ValueName(value_);
+	return	new ValueName(value_, date_);
 }
 
 bool	ValueName::IsValid(std::string const& _name)
@@ -525,15 +667,26 @@ bool	ValueName::IsValid(std::string const& _name)
 // Class ValueIP
 ///////////////////////////////////////////////////////////////
 ValueIP::ValueIP(const ValueIP& _ip)
-: ValueString(_ip.value_)
+: ValueString(_ip.value_, _ip.date_)
 {
 }
 
 ValueIP::ValueIP(const std::string& _ip)
+: ValueString()
 {
 	if (IsValidIP(_ip))
 	{
 		value_ = _ip;	
+	}
+}
+
+ValueIP::ValueIP(const std::string& _ip, Date const& _date)
+: ValueString()
+{
+	if (IsValidIP(_ip))
+	{
+		value_ = _ip;	
+		date_ = _date;
 	}
 }
 
@@ -550,6 +703,7 @@ bool	ValueIP::Set(const string& _value)
 	}
 
 	value_ = _value;		
+	date_ = Date::GetCurrentDate();
 
 	return	true;
 }
@@ -593,19 +747,24 @@ bool	ValueIP::IsValidIP(const std::string& _ip)
 
 Value*	ValueIP::Duplicate() const
 {
-	return	new ValueIP(value_);
+	return	new ValueIP(value_, date_);
 }
 
 ///////////////////////////////////////////////////////////////
 // Class ValueUnit
 ///////////////////////////////////////////////////////////////
 ValueUnit::ValueUnit(const ValueUnit& _unit)
-: ValueString(_unit.value_)
+: ValueString(_unit.value_, _unit.date_)
 {
 }
 
 ValueUnit::ValueUnit(const std::string& _unit)
 :	ValueString(_unit)	
+{
+}
+
+ValueUnit::ValueUnit(const std::string& _unit, Date const& _date)
+:	ValueString(_unit, _date)	
 {
 }
 
@@ -617,13 +776,14 @@ std::string	ValueUnit::GetTypeString() const
 bool	ValueUnit::Set(const string& _value)
 {
 	value_ = _value;		
+	date_ = Date::GetCurrentDate();
 
 	return	true;
 }
 
 Value*	ValueUnit::Duplicate() const
 {
-	return	new ValueUnit(value_);
+	return	new ValueUnit(value_, date_);
 }
 
 const	ValueUnit&	ValueUnit::operator=(const std::string& _value)
@@ -637,13 +797,23 @@ const	ValueUnit&	ValueUnit::operator=(const std::string& _value)
 // Class ValueTime
 ///////////////////////////////////////////////////////////////
 ValueTime::ValueTime(const ValueTime& _value)
+: Value()
 {
 	value_ = _value.value_;
+	date_ = _value.date_;
 }
 
-ValueTime::ValueTime(const Time& _date)
+ValueTime::ValueTime(const Time& _time)
+: Value()
 {
-	value_ = _date;
+	value_ = _time;
+}
+
+ValueTime::ValueTime(const Time& _time, Date const& _date)
+: Value()
+{
+	value_ = _time;
+	date_  = _date;
 }
 
 std::string	ValueTime::GetTypeString() const
@@ -658,17 +828,19 @@ const	Time&	ValueTime::Get() const
 
 bool	ValueTime::Set(const std::string& _value)
 {
+	date_ = Date::GetCurrentDate();
 	return	false;
 }
 
 Value*	ValueTime::Duplicate() const
 {
-	return	new ValueTime(value_);
+	return	new ValueTime(value_, date_);
 }
 
 const	ValueTime&	ValueTime::operator=(Time const& _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -688,13 +860,23 @@ void	ValueTime::Print(ostream&	os) const
 // Class ValueDate
 ///////////////////////////////////////////////////////////////
 ValueDate::ValueDate(const ValueDate& _value)
+: Value()
 {
 	value_ = _value.value_;
+	date_  = _value.date_;
 }
 
-ValueDate::ValueDate(const Date& _date)
+ValueDate::ValueDate(const Date& _value)
+: Value()
 {
-	value_ = _date;
+	value_ = _value;
+}
+
+ValueDate::ValueDate(const Date& _value, Date const& _date)
+: Value()
+{
+	value_ = _value;
+	date_  = _date;
 }
 
 std::string	ValueDate::GetTypeString() const
@@ -709,17 +891,19 @@ const	Date&	ValueDate::Get() const
 
 bool	ValueDate::Set(const std::string& _value)
 {
+	date_ = Date::GetCurrentDate();
 	return	false;
 }
 
 Value*	ValueDate::Duplicate() const
 {
-	return	new ValueDate(value_);
+	return	new ValueDate(value_, date_);
 }
 
 const	ValueDate&	ValueDate::operator=(Date const& _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -738,13 +922,29 @@ void	ValueDate::Print(ostream&	os) const
 // Class ValueProperties
 ///////////////////////////////////////////////////////////////
 ValueProperties::ValueProperties(const ValueProperties& _value)
+: Value()
 {
 	value_ = new Properties(*_value.value_);
 }
 
+ValueProperties::ValueProperties(const ValueProperties& _value, Date const& _date)
+: Value()
+{
+	value_ = new Properties(*_value.value_);
+	date_  = _date;
+}
+
 ValueProperties::ValueProperties(const Properties& _properties)
+: Value()
 {
 	value_ = new Properties(_properties);
+}
+
+ValueProperties::ValueProperties(const Properties& _properties, Date const& _date)
+: Value()
+{
+	value_ = new Properties(_properties);
+	date_  = _date;
 }
 
 ValueProperties::~ValueProperties()
@@ -769,12 +969,13 @@ bool	ValueProperties::Set(const std::string& _value)
 
 Value*	ValueProperties::Duplicate() const
 {
-	return	new ValueProperties(*value_);
+	return	new ValueProperties(*value_, date_);
 }
 
 const	ValueProperties&	ValueProperties::operator=(Properties const& _value)
 {
 	*value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }
@@ -797,13 +998,29 @@ void	ValueProperties::Print(ostream&	os) const
 // Class ValuePropertiesList
 ///////////////////////////////////////////////////////////////
 ValuePropertiesList::ValuePropertiesList(const ValuePropertiesList& _value)
+: Value()
 {
 	value_ = new PropertiesList(*_value.value_);
 }
 
+ValuePropertiesList::ValuePropertiesList(const ValuePropertiesList& _value, Date const& _date)
+: Value()
+{
+	value_ = new PropertiesList(*_value.value_);
+	date_  = _date;
+}
+
 ValuePropertiesList::ValuePropertiesList(const PropertiesList& _properties)
+: Value()
 {
 	value_ = new PropertiesList(_properties);
+}
+
+ValuePropertiesList::ValuePropertiesList(const PropertiesList& _properties, Date const& _date)
+: Value()
+{
+	value_ = new PropertiesList(_properties);
+	date_  = _date;
 }
 
 ValuePropertiesList::~ValuePropertiesList()
@@ -828,12 +1045,13 @@ bool	ValuePropertiesList::Set(const std::string& _value)
 
 Value*	ValuePropertiesList::Duplicate() const
 {
-	return	new ValuePropertiesList(*value_);
+	return	new ValuePropertiesList(*value_, date_);
 }
 
 const	ValuePropertiesList&	ValuePropertiesList::operator=(PropertiesList const& _value)
 {
 	*value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	*this;
 }

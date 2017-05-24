@@ -281,7 +281,7 @@ RetValue	ShellCommandEndpoint
 						std::cout << "Invalid argument options(" << _arguments[i] << ")" << std::endl;
 						ret_value = RET_VALUE_INVALID_ARGUMENTS;
 					}
-					else if (!properties.Append(_arguments[i].substr(2, _arguments[i].size() - 2), _arguments[i+1]))
+					else if (!properties.Append(Property(_arguments[i].substr(2, _arguments[i].size() - 2), _arguments[i+1])))
 					{
 						std::cout << "properties.Append(" << _arguments[i].substr(2,_arguments[i].size() - 2)<< ", " << _arguments[i+1] << ")" << std::endl;
 						ret_value = RET_VALUE_INVALID_ARGUMENTS;

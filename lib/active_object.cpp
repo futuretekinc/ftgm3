@@ -22,11 +22,11 @@ ActiveObject::~ActiveObject()
 	Message::UnregisterRecipient(id_);
 }
 
-void	ActiveObject::SetEnable(bool _enable)
+bool	ActiveObject::SetEnable(bool _enable, bool _store)
 {
 	if (enable_ != _enable)
 	{	
-		Object::SetEnable(_enable);
+		return	Object::SetEnable(_enable, _store);
 #if 0
 		if (enable_)
 		{
@@ -38,6 +38,8 @@ void	ActiveObject::SetEnable(bool _enable)
 		}
 #endif	
 	}
+
+	return	true;
 }
 
 Object::Stat	ActiveObject::GetStat() const
@@ -128,11 +130,23 @@ void	ActiveObject::Run()
 	thread_.join();
 }
 
+bool	ActiveObject::SetLoopInterval(Time const& _interval, bool _store)
+{
+	loop_interval_ = _interval;
+
+	if (_store)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
+}
+
 bool	ActiveObject::GetProperties(Properties& _properties) const
 {
 	if (Object::GetProperties(_properties))
 	{
-		_properties.Append("loop_interval", loop_interval_);	
+		_properties.AppendLoopInterval(loop_interval_);	
 
 		return	true;
 	}
@@ -142,22 +156,18 @@ bool	ActiveObject::GetProperties(Properties& _properties) const
 
 bool	ActiveObject::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (_property.GetName() == "loop_interval")
+	if (_property.GetName() == OBJECT_FIELD_LOOP_INTERVAL)
 	{
 		const ValueInt* value = dynamic_cast<const ValueInt*>(_property.GetValue());
 		if (value != NULL)
 		{
-			loop_interval_ = value->Get();
-			TRACE_INFO("The loop interval of object[" << GetTraceName() <<"] was set to " << loop_interval_);
-			return	true;
+			return	SetLoopInterval(value->Get(), !create);
 		}
 
 		const ValueString* value2 = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value2 != NULL)
 		{
-			loop_interval_ = strtoul(value2->Get().c_str(), 0, 10);
-			TRACE_INFO("The loop interval of object[" << GetTraceName() <<"] was set to " << loop_interval_);
-			return	true;
+			return	SetLoopInterval(strtoul(value2->Get().c_str(), 0, 10), !create);
 		}
 
 		TRACE_INFO("Property loop interval value type is incorrect!");

@@ -1,5 +1,6 @@
 #include <fstream>
 #include <libjson/libjson.h>
+#include <unistd.h>
 #include "defined.h"
 #include "trace.h"
 #include "object_manager.h"
@@ -8,13 +9,19 @@
 #include "property.h"
 
 ObjectManager::ObjectManager()
-: ActiveObject()
+: 	ActiveObject(), 
+	server_linker_(), 
+	data_manager_("./ftgm.db"),
+	endpoint_report_interval_(ENDPOINT_REPORT_INTERVAL),
+	auto_start_(true)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "object_manager";
 	enable_ = true;
 
-	TRACE_INFO("ObjectManager : " << GetTraceName());
+	server_linker_.AddBroker("ftr-app.japanwest.cloudapp.azure.com:9092");
+
+	TRACE_INFO("Create " << GetTraceName());
 }
 
 ObjectManager::~ObjectManager()
@@ -23,14 +30,6 @@ ObjectManager::~ObjectManager()
 	{
 		delete it->second;
 	}
-}
-
-bool ObjectManager::Attach(DataManager* _data_manager)
-{
-	data_manager_ = _data_manager;
-
-	
-	return	true;
 }
 
 bool ObjectManager::Load(std::string const&  _file_name)
@@ -90,6 +89,14 @@ bool	ObjectManager::Load(JSONNode const& _json)
 			}
 		}
 	}
+	else if (_json.name() == "database")
+	{
+		return	data_manager_.Load(_json);
+	}
+	else if (_json.name() == "server")
+	{
+		return	server_linker_.Load(_json);
+	}
 	else if (_json.type() != JSON_NODE)
 	{
 		std::cout << "Invalid json format" << std::endl;
@@ -115,10 +122,15 @@ Device*		ObjectManager::CreateDevice(Properties const& _properties, bool from_db
 	Device*	device = Device::Create(*this, _properties);
 	if (device != NULL)
 	{
-		if ((!from_db) && (data_manager_ != NULL))
+		if (!from_db)
 		{
-			data_manager_->AddDevice(device);
+			data_manager_.AddDevice(device);
 		}
+
+		std::ostringstream	oss;
+
+		oss << "v1_dev_" << device->GetID();
+		server_linker_.AddUpLink(oss.str());
 	}
 
 	return	device;
@@ -155,7 +167,7 @@ uint32_t	ObjectManager::GetDeviceList(std::list<Device*>& _device_list)
 	return	_device_list.size();
 }
 
-uint32_t	ObjectManager::GetDeviceList(Device::Type _type, std::list<Device*>& _device_list)
+uint32_t	ObjectManager::GetDeviceList(ValueType const& _type, std::list<Device*>& _device_list)
 {
 	for(auto it = device_map_.begin(); it != device_map_.end() ; it++)
 	{
@@ -191,10 +203,15 @@ Endpoint*	ObjectManager::CreateEndpoint(Properties const& _properties, bool from
 	if (endpoint != NULL)
 	{
 		TRACE_INFO("From DB : " << from_db);
-		if ((!from_db) && (data_manager_ != NULL))
+		if (!from_db)
 		{
-			data_manager_->AddEndpoint(endpoint);
+			data_manager_.AddEndpoint(endpoint);
 		}
+
+		std::ostringstream	oss;
+
+		oss << "v1_ep_" << endpoint->GetID();
+		server_linker_.AddUpLink(oss.str());
 	}
 	else
 	{
@@ -251,6 +268,13 @@ Endpoint*		ObjectManager::GetEndpoint(std::string const& _id)
 		return	it->second;	
 	}
 
+	for(auto it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
+	{
+		TRACE_ERROR("Endpoint : " << it->first);
+	}
+
+	TRACE_ERROR("Endpoint [" << _id << "] not found!");
+
 	return	NULL;
 }
 
@@ -282,12 +306,6 @@ bool	ObjectManager::IDChanged(Endpoint* _endpoint, ValueID const& _old_id)
 
 bool	ObjectManager::UpdateProperties(Object* _object)
 {
-	if (data_manager_ == NULL)
-	{
-		TRACE_ERROR("Failed to update properties becasuse data manager is not attached.");
-		return	false;	
-	}
-
 	Device* device = dynamic_cast<Device*>(_object);
 	if (device != NULL)
 	{
@@ -307,24 +325,19 @@ bool	ObjectManager::UpdateProperties(Object* _object)
 
 bool	ObjectManager::UpdateProperties(Device* _device)
 {
-	if (data_manager_ == NULL)
-	{
-		TRACE_ERROR("Failed to update properties becasuse data manager is not attached.");
-		return	false;	
-	}
-
 	Properties	properties;
 	if (_device->GetUpdatedProperties(properties))
 	{
 		properties.Delete(OBJECT_FIELD_ID);
 
-		if (!data_manager_->SetDeviceProperties(_device->GetID(), properties))
+		if (!data_manager_.SetDeviceProperties(_device->GetID(), properties))
 		{
 			TRACE_ERROR("Failed to set device[" << _device->GetTraceName() << "] properties!");	
 			return	false;
 		}
 
-		_device->ApplyChanges();
+		_device->ClearUpdatedProperties();
+//		_device->ApplyChanges();
 	}
 	else
 	{
@@ -337,24 +350,19 @@ bool	ObjectManager::UpdateProperties(Device* _device)
 
 bool	ObjectManager::UpdateProperties(Endpoint* _endpoint)
 {
-	if (data_manager_ == NULL)
-	{
-		TRACE_ERROR("Failed to update properties becasuse data manager is not attached.");
-		return	false;	
-	}
-
 	Properties	properties;
 	if (_endpoint->GetUpdatedProperties(properties))
 	{
 		properties.Delete(OBJECT_FIELD_ID);
 
-		if (!data_manager_->SetDeviceProperties(_endpoint->GetID(), properties))
+		if (!data_manager_.SetEndpointProperties(_endpoint->GetID(), properties))
 		{
 			TRACE_ERROR("Failed to set endpoint[" << _endpoint->GetTraceName() << "] properties!");	
 			return	false;
 		}
 
-		_endpoint->ApplyChanges();
+		_endpoint->ClearUpdatedProperties();
+//		_endpoint->ApplyChanges();
 	}
 	else
 	{
@@ -387,69 +395,136 @@ bool	ObjectManager::UpdateProperties(std::string const& _id)
 
 }
 
-bool	ObjectManager::AddData(std::string const& _endpoint_id, Date const& _date, Value const* _value)
+bool	ObjectManager::AddData(std::string const& _endpoint_id, Value const* _value)
 {
-	if (data_manager_ != NULL)
-	{
-		return	data_manager_->AddValue(_endpoint_id, _date, _value);
-	}
-	return	false;
+	return	data_manager_.AddValue(_endpoint_id, _value);
 }
 
 void	ObjectManager::Preprocess()
 {
-	if (data_manager_ != NULL)
+	data_manager_.Start();
+
+	while(!data_manager_.IsRunning())
 	{
-		uint32_t count = data_manager_->GetDeviceCount();
-		TRACE_INFO("Device Count : " << count);
+		usleep(1000);
+	}
 
-		for(uint32_t i = 0 ; i < count ; i++)
+	uint32_t count = data_manager_.GetDeviceCount();
+	TRACE_INFO("Device Count : " << count);
+
+	for(uint32_t i = 0 ; i < count ; i++)
+	{
+		std::list<Properties> properties_list;
+
+		if (data_manager_.GetDeviceProperties(i, 1, properties_list))
 		{
-			std::list<Properties> properties_list;
-
-			if (data_manager_->GetDeviceProperties(i, 1, properties_list))
+			for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
 			{
-				for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
+				Device*	device = CreateDevice(*it, true);
+				if (device == NULL)
 				{
-					CreateDevice(*it, true);
+					TRACE_ERROR("Failed to create device!");	
+				}
+				else
+				{
+					TRACE_INFO("The device[" << device->GetTraceName() << "] created");	
 				}
 			}
 		}
+	}
 
-		count = data_manager_->GetEndpointCount();
-		TRACE_INFO("Endpoint Count : " << count);
+	TRACE_ENTRY;
+	count = data_manager_.GetEndpointCount();
+	TRACE_INFO("Endpoint Count : " << count);
 
-		for(uint32_t i = 0 ; i < count ; i++)
+	for(uint32_t i = 0 ; i < count ; i++)
+	{
+		std::list<Properties> properties_list;
+
+		if (data_manager_.GetEndpointProperties(i, 1, properties_list))
 		{
-			std::list<Properties> properties_list;
-
-			if (data_manager_->GetEndpointProperties(i, 1, properties_list))
+			for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
 			{
-				for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
+				const Property*	id_property = it->Get(OBJECT_FIELD_ID);
+				if (id_property != NULL)
 				{
-					const Property*	id_property = it->Get(OBJECT_FIELD_ID);
-					if (id_property != NULL)
+					Endpoint* endpoint = CreateEndpoint(*it, true);						
+					if (endpoint == NULL)
 					{
-						CreateEndpoint(*it, true);						
+						TRACE_ERROR("Failed to create endpoint!");	
+					}
+					else
+					{
+						TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] created");	
+
+						Device* device = GetDevice(endpoint->GetDeviceID());
+						if (device != NULL)
+						{
+							if (device->Attach(endpoint->GetID()))
+							{
+								TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] attached to [" << endpoint->GetDeviceID() << "]");
+							
+							}
+						}
+
 					}
 				}
 			}
 		}
 	}
 
-}
+	server_linker_.Start();
 
-void	ObjectManager::OnMessage(Message* _base_message)
-{
+	if (auto_start_)
+	{
+		for(auto it = device_map_.begin(); it != device_map_.end() ; it++)
+		{
+			if(it->second->GetEnable())
+			{
+				it->second->Start();	
+			}
+		}
+	}
+
+	Date date = Date::GetCurrentDate() + endpoint_report_interval_;
+	endpoint_report_timer_.Set(date);
 }
 
 void	ObjectManager::Process()
 {
+	
+	if (endpoint_report_timer_.RemainTime() == 0)
+	{
+		for(auto it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
+		{
+			if (it->second->IsRunning())
+			{
+				Endpoint::ValueList value_list;
+
+				if (it->second->GetUnreportedValueList(value_list))
+				{
+					Message*	message = new MessageEndpointReport(it->second->GetID(), value_list);
+
+					if (!Post(message))
+					{
+						TRACE_ERROR("Failed to post mesage to manager!");	
+
+						delete message;
+					}
+				}
+			}
+		}
+
+		endpoint_report_timer_ += endpoint_report_interval_;
+
+	}
+
 	ActiveObject::Process();
 }
 
 void	ObjectManager::Postprocess()
 {
+	server_linker_.Stop();
 	ActiveObject::Postprocess();
 }
 
@@ -555,4 +630,115 @@ bool	ObjectManager::Detach(RemoteMessageServer* _rms)
 	_rms->SetObjectManager(NULL);
 
 	return	true;
+}
+
+void	ObjectManager::OnMessage(Message* _base_message)
+{
+	switch(_base_message->type)
+	{
+	case	MSG_TYPE_KEEP_ALIVE:
+		{
+			MessageKeepAlive* message = dynamic_cast<MessageKeepAlive*>(_base_message);
+			if (message != NULL)
+			{
+				SendKeepAlive(message->id);
+			}
+
+		}
+		break;
+
+	case	MSG_TYPE_ENDPOINT_UPDATED:
+		{	
+			MessageEndpointUpdated* message = dynamic_cast<MessageEndpointUpdated*>(_base_message);
+
+			if (!data_manager_.AddValue(message->id, message->value))
+			{
+				TRACE_ERROR("Failed to add value!");	
+			}
+		}
+		break;
+
+	case	MSG_TYPE_ENDPOINT_REPORT:
+		{
+			MessageEndpointReport* message = dynamic_cast<MessageEndpointReport *>(_base_message);
+			if (message != NULL)
+			{
+				SendEndpointReport(message->id, message->value_list);
+			}
+		}
+		break;
+	}
+}
+
+
+bool	ObjectManager::SendKeepAlive(ValueID const& _id)
+{
+	std::ostringstream	topic;
+
+	topic << "v1_dev_" << _id;
+	TRACE_INFO("Message : Keep alive " << topic.str());
+
+	JSONNode	root;
+	Date		date;
+
+	root.push_back(JSONNode(MSG_FIELD_DEVICE_ID, _id));
+	root.push_back(JSONNode(MSG_FIELD_CMD, MSG_COMMAND_KEEP_ALIVE));
+	root.push_back(JSONNode(MSG_FIELD_TIME, time_t(date)));
+
+	return	SendMessage(topic.str(), root.write());
+}
+
+bool	ObjectManager::SendEndpointReport(ValueID const& _id, std::list<Value*> const& _value_list)
+{
+	std::ostringstream	topic;
+
+	topic << "v1_ep_" << _id;
+	TRACE_INFO("Message : Endpoint Report " << topic.str());
+
+	JSONNode	root;
+	Date		date;
+
+	root.push_back(JSONNode(MSG_FIELD_ENDPOINT_ID, _id));
+	root.push_back(JSONNode(MSG_FIELD_CMD, MSG_COMMAND_ENDPOINT_REPORT));
+	root.push_back(JSONNode(MSG_FIELD_TIME, time_t(date)));
+	root.push_back(JSONNode(MSG_FIELD_COUNT, _value_list.size()));
+
+	JSONNode	array(JSON_ARRAY);
+	for(auto it = _value_list.begin(); it != _value_list.end() ; it++)
+	{
+		JSONNode	item;
+
+		item.push_back(JSONNode(MSG_FIELD_TIME, time_t((*it)->GetDate())));
+		item.push_back(JSONNode(MSG_FIELD_VALUE, std::string(*(*it))));
+
+		array.push_back(item);
+	}
+
+	array.set_name(MSG_FIELD_DATA);
+
+	root.push_back(array);
+
+	return	SendMessage(topic.str(), root.write());
+}
+
+bool	ObjectManager::SendMessage(std::string const& _topic, std::string const& _message)
+{
+	bool	ret_value = true;
+
+	ServerLinker::UpLink*	up_link = server_linker_.GetUpLink(_topic);
+	if (up_link == NULL)
+	{
+		TRACE_ERROR("Failed to send message because up link[" << _topic << "] not found");	
+		ret_value = false;
+	}
+	else
+	{
+		if (!up_link->Send(_message))
+		{
+			TRACE_ERROR("Failed to send message for up link[" << _topic << "]");	
+			ret_value = false;
+		}
+	}
+
+	return	ret_value;
 }

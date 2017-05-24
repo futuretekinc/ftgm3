@@ -24,3 +24,27 @@ bool Endpoint::ValueMap::Add(Date const& _date, Value const* _value)
 	return	false;
 }
 
+Endpoint::ValueList::ValueList(uint32_t _limit)
+:	limit_(_limit)
+{
+	for(auto it = begin() ; it != end() ; it++)
+	{
+		delete (*it);	
+	}
+}
+
+Endpoint::ValueList::~ValueList()
+{
+}
+
+bool Endpoint::ValueList::Add(Value const* _value)
+{
+	if (size() < limit_)
+	{
+		push_back(_value->Duplicate());
+		return	true;
+	}
+
+	return	false;
+}
+

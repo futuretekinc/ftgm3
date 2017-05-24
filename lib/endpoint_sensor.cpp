@@ -43,17 +43,27 @@ bool	EndpointSensor::IsValid(const ValueFloat& _value)
 	return	((value_min_ <= _value) && (_value <= value_max_));
 }
 
-bool	EndpointSensor::SetValueMin(ValueFloat const& _value_min)
+bool	EndpointSensor::SetValueMin(ValueFloat const& _value_min, bool _store)
 {
 	value_min_ = _value_min;
-
+	
+	updated_properties_.AppendValueMin(value_min_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 	return	true;
 }
 
-bool	EndpointSensor::SetValueMax(ValueFloat const& _value_max)
+bool	EndpointSensor::SetValueMax(ValueFloat const& _value_max, bool _store)
 {
 	value_max_ = _value_max;
 
+	updated_properties_.AppendValueMax(value_max_);
+	if (_store)
+	{
+		ApplyChanges();	
+	}
 	return	true;
 }
 
@@ -64,13 +74,13 @@ bool	EndpointSensor::SetPropertyInternal(Property const& _property, bool create)
 		const ValueInt*	int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
 		if (int_value != NULL)
 		{
-			return	SetValueMin(int_value->Get());
+			return	SetValueMin(int_value->Get(), !create);
 		}
 
 		const ValueFloat*	float_value = dynamic_cast<const ValueFloat*>(_property.GetValue());
 		if (float_value != NULL)
 		{
-			return	SetValueMin(float_value->Get());
+			return	SetValueMin(float_value->Get(), !create);
 		}
 	}
 	else if (_property.GetName() == "max")
@@ -78,13 +88,13 @@ bool	EndpointSensor::SetPropertyInternal(Property const& _property, bool create)
 		const ValueInt*	int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
 		if (int_value != NULL)
 		{
-			return	SetValueMin(int_value->Get());
+			return	SetValueMin(int_value->Get(), !create);
 		}
 
 		const ValueFloat*	float_value = dynamic_cast<const ValueFloat*>(_property.GetValue());
 		if (float_value != NULL)
 		{
-			return	SetValueMax(float_value->Get());
+			return	SetValueMax(float_value->Get(), !create);
 		}
 	}
 	else

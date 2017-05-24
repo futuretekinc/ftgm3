@@ -2,6 +2,7 @@
 #include <iomanip>
 #include "trace.h"
 #include <sstream>
+#include "defined.h"
 #include "data_manager.h"
 #include "KompexSQLiteDatabase.h"
 #include "KompexSQLiteStatement.h"
@@ -13,6 +14,7 @@ DataManager::DataManager()
 {	
 	Date	date;
 
+	trace.Enable(true);
 	trace.SetClassName(GetClassName());
 
 	name_ 	= std::string("data_manager");
@@ -25,6 +27,7 @@ DataManager::DataManager()
 DataManager::DataManager(std::string const& _db_name)
 : ActiveObject(), file_name_(_db_name), temp_db_(false)
 {
+	trace.Enable(true);
 	trace.SetClassName(GetClassName());
 
 	name_ 	= std::string("data_manager");
@@ -42,6 +45,29 @@ DataManager::~DataManager()
 	{
 		std::remove(file_name_.c_str());
 	}
+}
+
+bool	DataManager::Load(JSONNode const& _json)
+{
+	if (_json.name() == "data file")
+	{
+		file_name_ = _json.as_string();
+
+		return	true;
+	}
+	else
+	{
+		for(auto it = _json.begin(); it != _json.end() ; it++)
+		{
+			if (!Load(*it))
+			{
+				std::cout << "Invalid format" << std::endl;
+				return	false;
+			}
+		}
+	}
+
+	return	true;
 }
 
 DataManager::Table*	DataManager::CreateTable(std::string const& _table_name, std::list<std::string>& field_list)
@@ -196,6 +222,7 @@ bool	DataManager::Table::Add(Properties const& _properties)
 		TRACE_INFO("Query : " << query.str());
 		statement->Sql(query.str());
 		statement->BindString(++index, id);
+		TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << std::string(*value));
 
 		for(auto it = _properties.begin() ; it != _properties.end() ; it++)
 		{
@@ -204,6 +231,7 @@ bool	DataManager::Table::Add(Properties const& _properties)
 				const Value*	value = it->GetValue();
 
 				statement->BindString(++index, std::string(*value));
+				TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << std::string(*value));
 			}
 		}
 
@@ -410,10 +438,10 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 		for(auto it = _properties.begin(); it != _properties.end() ; it++)
 		{
 			statement->BindString(++index, std::string(*(it->GetValue())));
-			TRACE_INFO(it->GetName() << " : " << std::string(*(it->GetValue())));
+			TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << std::string(*(it->GetValue())));
 		}
 		statement->BindString(++index, _id);
-		TRACE_INFO("id : "<<  _id);
+		TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) <<  _id);
 
 		statement->ExecuteAndFree();
 
@@ -457,12 +485,12 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 			{
 				std::string name = statement->GetColumnName(i);
 
-				if ((statement->GetColumnType(i) == SQLITE_TEXT) && (statement->GetColumnType(i) == SQLITE3_TEXT))
+				if ((statement->GetColumnType(i) == SQLITE_TEXT) || (statement->GetColumnType(i) == SQLITE3_TEXT))
 				{
 					std::string	value = statement->GetColumnString(name);
 
 					TRACE_INFO(name.substr(1, name.size()) << " : " << value);
-					properties.Append(name.substr(1, name.size() - 1), value);
+					properties.Append(Property(name.substr(1, name.size() - 1), value));
 				}
 			}
 			TRACE_INFO("");
@@ -484,14 +512,15 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 	return	true;
 }
 
-DataManager::ValueTable::ValueTable(DataManager* _parent, std::string const& _endpoint_id)
+DataManager::ValueTable::ValueTable(DataManager* _parent, std::string const& _name)
 : parent_(_parent)
 {
-	name_ = "table_ep_" + _endpoint_id;
+	name_ = _name;
 	trace.SetClassName(GetClassName());
+	trace.Enable(true);
 }
 
-bool	DataManager::ValueTable::Add(Date const& _date, Value const* _value)
+bool	DataManager::ValueTable::Add(Value const* _value)
 {
 	if (parent_ == NULL)
 	{
@@ -501,13 +530,13 @@ bool	DataManager::ValueTable::Add(Date const& _date, Value const* _value)
 
 	if (!parent_->IsTableExist(name_))
 	{
-		TRACE_ERROR("Value table[" << name_ << " not exist!");
+		TRACE_ERROR("Value table[" << name_ << "] not exist!");
 		return	false;	
 	}
 
 	std::ostringstream	query;
 
-	query << "INSERT INTO " << name_ << "(_time, _value) values(\"" << time_t(_date) << "\", \"" << std::string(*_value) << "\");";
+	query << "INSERT INTO " << name_ << "(_time, _value) values(\"" << time_t(_value->GetDate()) << "\", \"" << std::string(*_value) << "\");";
 
 	TRACE_INFO("Query : " << query.str());
 
@@ -529,15 +558,15 @@ bool	DataManager::ValueTable::Add(Date const& _date, Value const* _value)
 
 DataManager::ValueTable*	DataManager::CreateValueTable(std::string const& _endpoint_id)
 {
-	std::string	name_ = "table_ep_" + _endpoint_id;
+	std::string	name = "table_ep_" + _endpoint_id;
 	ValueTable*	value_table = NULL;
 
-	if (!IsTableExist(name_))
+	if (!IsTableExist(name))
 	{
 		std::ostringstream	query;
 
 
-		query << "CREATE TABLE " << name_ << " (_time INT NOT NULL PRIMARY KEY, _value TEXT);";
+		query << "CREATE TABLE " << name << " (_time INT NOT NULL PRIMARY KEY, _value TEXT);";
 
 		TRACE_INFO("Query : " << query.str());
 
@@ -556,14 +585,14 @@ DataManager::ValueTable*	DataManager::CreateValueTable(std::string const& _endpo
 		}
 		catch(Kompex::SQLiteException &exception)
 		{
-			TRACE_INFO("Failed to create table[" << name_ <<"]");
+			TRACE_INFO("Failed to create table[" << name <<"]");
 			return	NULL;
 		}
 	}
 
 	try
 	{
-		value_table = new ValueTable(this, _endpoint_id);
+		value_table = new ValueTable(this, name);
 	}
 	catch(std::bad_alloc& e)
 	{
@@ -571,7 +600,6 @@ DataManager::ValueTable*	DataManager::CreateValueTable(std::string const& _endpo
 		return	NULL;
 	}
 
-	value_table_map_[_endpoint_id] = value_table;
 	return	value_table;
 }
 
@@ -581,7 +609,7 @@ DataManager::ValueTable*	DataManager::GetValueTable(std::string const& _endpoint
 	return	value_table_map_[_endpoint_id];
 }
 
-bool	DataManager::AddValue(std::string const& _endpoint_id, Date const& _date, Value const* _value)
+bool	DataManager::AddValue(std::string const& _endpoint_id, Value const* _value)
 {
 	ValueTable*	_value_table = value_table_map_[_endpoint_id];
 	if (!_value_table)
@@ -590,7 +618,7 @@ bool	DataManager::AddValue(std::string const& _endpoint_id, Date const& _date, V
 		return	false;
 	}
 
-	return	_value_table->Add(_date, _value);
+	return	_value_table->Add(_value);
 }
 
 
@@ -682,12 +710,12 @@ void	DataManager::Preprocess()
 
 		std::list<std::string>	device_field_list;
 		Device::GetPropertyFieldList(device_field_list);
-		device_table_ = CreateTable("devices", device_field_list);	
+		device_table_ = CreateTable(DB_TABLE_NAME_DEVICE, device_field_list);	
 		device_table_->SetTrace(true);
 
 		std::list<std::string>	endpoint_field_list;
 		Endpoint::GetPropertyFieldList(endpoint_field_list);
-		endpoint_table_ = CreateTable("endpoints", endpoint_field_list);	
+		endpoint_table_ = CreateTable(DB_TABLE_NAME_ENDPOINT, endpoint_field_list);	
 		endpoint_table_->SetTrace(true);
 
 		

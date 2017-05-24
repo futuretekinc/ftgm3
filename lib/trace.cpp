@@ -54,14 +54,30 @@ bool	Trace::SetOut(std::string const& _file, uint32_t ulSize)
 	return	true;
 }
 
+bool	Trace::ConsoleMode()
+{
+	mode_ = TO_CONSOLE;
+	return	true;
+}
+
 Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t _line)
 {
 	level_ = _level;
 	headline_ = "";
 
-	size_t colons = _pretty_function.rfind("::");
-	size_t begin = _pretty_function.substr(0,colons).rfind(" ") + 1;
-	size_t end = _pretty_function.rfind("(") - begin;
+	size_t colons, begin, end;
+
+	colons = _pretty_function.find("::");
+	if (colons != _pretty_function.npos)
+	{
+		begin = _pretty_function.substr(0,colons).rfind(" ") + 1;
+	}
+	else
+	{
+		begin = _pretty_function.substr(0,colons).find(" ");
+	}
+
+	end = _pretty_function.rfind("(") - begin;
 
 	std::string function = _pretty_function.substr(begin,end);
 	ostringstream	os;
@@ -72,7 +88,26 @@ Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t 
 	os << "[" << setw(function_line_len_) <<_line << "]";
 	if (object_ != NULL)
 	{
-		os << "[" << setw(object_name_len_) <<object_->GetName() << "]";
+		std::string	name = object_->GetName();
+
+		if (object_name_len_ >= name.size())
+		{
+			os << "[" << setw(object_name_len_) <<name << "]";
+		}
+		else if(object_name_len_ < 5)
+		{
+			os << "[" << setw(object_name_len_) <<name.substr(0, 4) << "]";
+		}
+		else
+		{
+			int begin = (object_name_len_ - 3) / 2;
+			int end   = object_name_len_ - begin - 3;
+			os << "[" << setw(begin) << name.substr(0, begin) << "..." << name.substr(name.size() - end, end) << "]";
+		}
+	}
+	else
+	{
+		os << "[" << setw(object_name_len_) << "global" << "]";
 	}
 	switch(level_)
 	{

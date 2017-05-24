@@ -34,22 +34,24 @@ public:
 	virtual	std::string	GetClassName();
 
 	const	ValueID&	GetID() const;
-	const	Date&		GetDate() const;
 
 	const	ValueName&	GetName() const;
-			bool		SetName(ValueName const& _name);
+			bool		SetName(ValueName const& _name, bool _store = true);
 
 			bool		GetEnable() const;
-	virtual	void		SetEnable(bool _enable);
+	virtual	bool		SetEnable(bool _enable, bool _store = true);
 
 	virtual	Stat		GetState() const;
 			bool		SetState(Stat _stat);
 
+	const	Date&		GetDate() const;
+			bool		SetDate(Date const& _date, bool _store = true);
 
 			bool		HasChanged() const;
 	virtual	bool		ApplyChanges();
 			bool		GetUpdatedProperties(Properties& _properties) const;
 			bool		AddUpdatedProperties(Property const& _property);
+			bool		ClearUpdatedProperties();
 
 	virtual	bool		GetProperties(Properties& _properties) const;
 	virtual	Properties	GetProperties() const;

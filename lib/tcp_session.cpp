@@ -62,7 +62,7 @@ void	TCPSession::OnMessage(Message* _base_message)
 {
 	switch(_base_message->type)
 	{
-	case	Message::Type::PACKET:
+	case	MSG_TYPE_PACKET:
 		{
 			MessagePacket *message_packet = dynamic_cast<MessagePacket*>(_base_message);
 			if (message_packet != NULL)

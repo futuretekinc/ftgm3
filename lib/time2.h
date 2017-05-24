@@ -41,6 +41,7 @@ class	Date
 public:
 	Date();
 	Date(Date const& _date);
+	Date(std::string const& _date);
 	Date(uint32_t _seconds);
 
 			bool	IsValid() const;
