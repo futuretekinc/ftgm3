@@ -452,6 +452,7 @@ bool	DeviceSNMP::Convert
 {
 	if (_variable == NULL) 
 	{   
+		TRACE_ERROR2(NULL, "Failed to convert!");
 		return	false;
 	}
 
@@ -469,18 +470,22 @@ bool	DeviceSNMP::Convert
 
 			if (dynamic_cast<ValueInt*>(_value) != 0)
 			{
+				TRACE_INFO2(NULL,"Set Int!");
 				dynamic_cast<ValueInt*>(_value)->Set(value);
 			}
 			else if (dynamic_cast<ValueBool*>(_value) != 0)
 			{
+				TRACE_INFO2(NULL, "Set Bool!");
 				dynamic_cast<ValueBool*>(_value)->Set(value);
 			}
 			else if (dynamic_cast<ValueFloat*>(_value) != 0)
 			{
+				TRACE_INFO2(NULL, "Set Float!");
 				dynamic_cast<ValueFloat*>(_value)->Set(value);
 			}
 			else
 			{
+				TRACE_ERROR2(NULL, "Failed to convert!");
 				return	false;	
 			}
 		}   
@@ -496,11 +501,13 @@ bool	DeviceSNMP::Convert
 				buffer[_variable->val_len] = 0;
 
 				_value->Set(buffer);	
+				TRACE_INFO2(NULL, "Set Octet! - " << _value->GetDate());
 			}   
 		}   
 		break;
 	
 	default:
+		TRACE_ERROR2(NULL, "Failed to convert[" << (int)_variable->type << "]");
 		return	false;
 	}   
 

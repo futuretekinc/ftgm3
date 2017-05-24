@@ -102,6 +102,7 @@ int		ValueInt::Get() const
 bool	ValueInt::Set(const string& _value)
 {
 	value_ = strtol(_value.c_str(), 0, 10);
+	date_ = Date::GetCurrentDate();
 
 	return	true;
 } 
@@ -109,6 +110,7 @@ bool	ValueInt::Set(const string& _value)
 void	ValueInt::Set(int _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 }
 
 Value*	ValueInt::Duplicate() const
@@ -155,6 +157,7 @@ uint32_t	ValueUInt32::Get() const
 bool	ValueUInt32::Set(const string& _value)
 {
 	value_ = strtol(_value.c_str(), 0, 10);
+	date_ = Date::GetCurrentDate();
 
 	return	true;
 } 
@@ -162,6 +165,7 @@ bool	ValueUInt32::Set(const string& _value)
 void	ValueUInt32::Set(uint32_t _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 }
 
 Value*	ValueUInt32::Duplicate() const
@@ -213,6 +217,7 @@ uint64_t	ValueUInt64::Get() const
 bool	ValueUInt64::Set(const string& _value)
 {
 	value_ = strtol(_value.c_str(), 0, 10);
+	date_ = Date::GetCurrentDate();
 
 	return	true;
 } 
@@ -220,6 +225,7 @@ bool	ValueUInt64::Set(const string& _value)
 void	ValueUInt64::Set(uint64_t _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 }
 
 Value*	ValueUInt64::Duplicate() const
@@ -283,6 +289,7 @@ bool	ValueBool::Set(const string& _value)
 	{
 		value_ = false;
 	}
+	date_ = Date::GetCurrentDate();
 
 	return	true;
 }
@@ -290,6 +297,7 @@ bool	ValueBool::Set(const string& _value)
 void	ValueBool::Set(bool _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 }
 
 Value*	ValueBool::Duplicate() const
@@ -371,6 +379,7 @@ bool	ValueFloat::operator <(const ValueFloat& _value)
 bool	ValueFloat::Set(const string& _value)
 {
 	value_ = ::atof(_value.c_str());
+	date_ = Date::GetCurrentDate();
 
 	return	true;
 }
@@ -466,6 +475,7 @@ const	std::string&	ValueString::Get() const
 bool	ValueString::Set(const string& _value)
 {
 	value_ = _value;
+	date_ = Date::GetCurrentDate();
 
 	return	true;
 }
@@ -522,6 +532,7 @@ bool	ValueStringLimit::Set(const string& _value)
 	}
 
 	value_ = _value.substr(0, limit_);
+	date_ = Date::GetCurrentDate();
 
 	return	true;
 }

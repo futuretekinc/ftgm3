@@ -680,10 +680,13 @@ bool	ObjectManager::SendKeepAlive(ValueID const& _id)
 
 	JSONNode	root;
 	Date		date;
+	time_t		time;
+
+	time = time_t(date);
 
 	root.push_back(JSONNode(MSG_FIELD_DEVICE_ID, _id));
 	root.push_back(JSONNode(MSG_FIELD_CMD, MSG_COMMAND_KEEP_ALIVE));
-	root.push_back(JSONNode(MSG_FIELD_TIME, time_t(date)));
+	root.push_back(JSONNode(MSG_FIELD_TIME, time));
 
 	return	SendMessage(topic.str(), root.write());
 }
@@ -697,18 +700,23 @@ bool	ObjectManager::SendEndpointReport(ValueID const& _id, std::list<Value*> con
 
 	JSONNode	root;
 	Date		date;
+	time_t		time;
+
+	time = time_t(date);
 
 	root.push_back(JSONNode(MSG_FIELD_ENDPOINT_ID, _id));
 	root.push_back(JSONNode(MSG_FIELD_CMD, MSG_COMMAND_ENDPOINT_REPORT));
-	root.push_back(JSONNode(MSG_FIELD_TIME, time_t(date)));
+	root.push_back(JSONNode(MSG_FIELD_TIME, time));
 	root.push_back(JSONNode(MSG_FIELD_COUNT, _value_list.size()));
 
 	JSONNode	array(JSON_ARRAY);
 	for(auto it = _value_list.begin(); it != _value_list.end() ; it++)
 	{
 		JSONNode	item;
+		
+		time = time_t((*it)->GetDate());
 
-		item.push_back(JSONNode(MSG_FIELD_TIME, time_t((*it)->GetDate())));
+		item.push_back(JSONNode(MSG_FIELD_TIME, time));
 		item.push_back(JSONNode(MSG_FIELD_VALUE, std::string(*(*it))));
 
 		array.push_back(item);

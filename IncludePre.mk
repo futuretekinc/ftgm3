@@ -13,7 +13,7 @@ ROOT_OUT_DIR = $(PROJ_ROOT)/out
 ROOT_LIB_DIR = $(ROOT_OUT_DIR)/lib
 ROOT_BIN_DIR = $(ROOT_OUT_DIR)/bin
 
-INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../KompexSQLiteWrapper-Source_1.11.14/inc -I$(PROJ_ROOT)/..
+INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../KompexSQLiteWrapper-Source_1.11.13/inc -I$(PROJ_ROOT)/..
 
 ifeq ($(RELEASE), 1)
 OBJS_DIR = Release

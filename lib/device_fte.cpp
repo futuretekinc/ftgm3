@@ -131,15 +131,7 @@ bool	DeviceFTE::ReadValue(std::string const& _endpoint_id, Value* _value)
 
 	OID oid = GetOID(endpoint->GetType(), it->second);
 
-
-	ValueFloat	*value_float = dynamic_cast<ValueFloat*>(_value);
-	if (value_float != NULL)
-	{
-		value_float->Set((rand() % 10000) / 100.0);
-	}
-
-	return	true;
-	//return	DeviceSNMP::ReadValue(oid, _value);
+	return	DeviceSNMP::ReadValue(oid, _value);
 }
 
 DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
@@ -174,7 +166,6 @@ DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
 		oid.id[oid.length++] = 1;
 		oid.id[oid.length++] = 6;
 		oid.id[oid.length++] = index;
-		oid.id[oid.length++] = 0;
 
 		oid_map_[_id] = oid;
 	}
@@ -214,7 +205,6 @@ DeviceSNMP::OID DeviceFTE::GetOID(Endpoint::Type _type, uint32_t _index)
 	oid.id[oid.length++] = 1;
 	oid.id[oid.length++] = 6;
 	oid.id[oid.length++] = _index + 1;
-	oid.id[oid.length++] = 0;
 
 	TRACE_INFO("GetOID(" << _type <<", " << _index << ") = " << std::string(oid));
 	return	oid;

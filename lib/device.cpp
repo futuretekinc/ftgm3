@@ -7,6 +7,7 @@
 #include "object_manager.h"
 #include "device_snmp.h"
 #include "device_fte.h"
+#include "device_sim.h"
 #include "endpoint.h"
 
 
@@ -454,6 +455,10 @@ Device*	Device::Create(ObjectManager& _manager, Properties const& _properties)
 			{
 				device = new DeviceFTE(_manager, properties);
 			}
+			else if (std::string(*type_value) == std::string(DeviceSIM::Type()))
+			{
+				device = new DeviceSIM(_manager, properties);
+			}
 			else
 			{
 				TRACE_ERROR2(NULL, "Failed to create device. Device type[" << type_value->Get() << "] is not supported!");
@@ -494,24 +499,24 @@ Device*	Device::Create(JSONNode const& _node)
 		node.erase(it);
 	}
 
-	Properties	properties;	
-
-	properties.Append(node);
-
-	Device* device = Create(properties);
-	if (device != NULL)
-	{
-		for(auto it = endpoint_array.begin(); it != endpoint_array.end() ; it++)
-		{
-			Endpoint* endpoint = Endpoint::Create(device, it->as_node());		
-			if (endpoint == NULL)
+			else if (std::string(*type_value) == std::string(DeviceFTE::Type()))
 			{
-				TRACE_ERROR("Failed to create endpoint!");	
+				device = new DeviceFTE(_manager, properties);
+			}
+			else
+			{
+				TRACE_ERROR2(NULL, "Failed to create device. Device type[" << type_value->Get() << "] is not supported!");
 			}
 		}
+		else
+		{
+			TRACE_ERROR2(NULL, "Failed to create device. Device type is invalid!");
+		}
 	}
-
-	TRACE_INFO("Device[" << device->GetName() << "] created");
+	else
+	{
+		TRACE_ERROR2(NULL, "Failed to create device. Device type unknown!");
+	}
 
 	return	device;
 }
