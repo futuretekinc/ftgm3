@@ -49,7 +49,15 @@ bool	DataManager::Load(JSONNode const& _json)
 {
 	bool	ret_value = true;
 
-	if (_json.type() == JSON_NODE)
+	if (_json.name() == TITLE_NAME_DATA_FILE)
+	{
+		file_name_ = _json.as_string();
+	}
+	else if (_json.name() == TITLE_NAME_TRACE)
+	{
+		ret_value = trace.Load(_json);
+	}
+	else if (_json.type() == JSON_NODE)
 	{
 		for(auto it = _json.begin(); it != _json.end() ; it++)
 		{
@@ -60,14 +68,6 @@ bool	DataManager::Load(JSONNode const& _json)
 			}
 		}
 	}
-	else if (_json.name() == "data file")
-	{
-		file_name_ = _json.as_string();
-	}
-	else if (_json.name() == "trace")
-	{
-		ret_value = trace.Load(_json);
-	}
 	else
 	{
 		TRACE_ERROR("Invalid json format");
@@ -75,6 +75,20 @@ bool	DataManager::Load(JSONNode const& _json)
 	}
 
 	return	ret_value;
+}
+
+DataManager::operator JSONNode() const
+{
+	JSONNode	root;
+
+	root.push_back(JSONNode(TITLE_NAME_DATA_FILE, file_name_));
+
+	JSONNode	trace_config = trace;
+	trace_config.set_name(TITLE_NAME_TRACE);
+
+	root.push_back(trace_config);
+
+	return	root;
 }
 
 DataManager::Table*	DataManager::CreateTable(std::string const& _table_name, std::list<std::string>& field_list)
@@ -166,7 +180,7 @@ bool	DataManager::IsTableExist
 }
 
 DataManager::Table::Table(DataManager* _parent, std::string const& _name)
-: parent_(_parent)
+: Object(), parent_(_parent)
 {
 	name_ = _name;
 	trace.SetClassName(GetClassName());
@@ -520,11 +534,10 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 }
 
 DataManager::ValueTable::ValueTable(DataManager* _parent, std::string const& _name)
-: parent_(_parent)
+: Object(), parent_(_parent)
 {
 	name_ = _name;
 	trace.SetClassName(GetClassName());
-	trace.Enable(true);
 }
 
 bool	DataManager::ValueTable::Add(Value const* _value)
@@ -717,13 +730,13 @@ void	DataManager::Preprocess()
 
 		std::list<std::string>	device_field_list;
 		Device::GetPropertyFieldList(device_field_list);
-		device_table_ = CreateTable(DB_TABLE_NAME_DEVICE, device_field_list);	
-		device_table_->SetTrace(true);
+		device_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_DEVICE, device_field_list);	
+		device_table_->SetTrace(trace.GetEnable());
 
 		std::list<std::string>	endpoint_field_list;
 		Endpoint::GetPropertyFieldList(endpoint_field_list);
-		endpoint_table_ = CreateTable(DB_TABLE_NAME_ENDPOINT, endpoint_field_list);	
-		endpoint_table_->SetTrace(true);
+		endpoint_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_ENDPOINT, endpoint_field_list);	
+		endpoint_table_->SetTrace(trace.GetEnable());
 
 		
 		for(uint32_t i = 0 ; i < GetEndpointCount() ; i++)

@@ -44,6 +44,7 @@ public:
 	~DataManager();
 
 	bool		Load(JSONNode const& _json);
+	virtual		operator JSONNode() const;
 
 	bool		AddDevice(Device* _device);
 	bool		DeleteDevice(std::string const& _id);

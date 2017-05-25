@@ -22,14 +22,16 @@ int	main(int argc, char *argv[])
 
 	try
 	{
-		trace.Enable(true);
-		trace.SetOut("/var/log/ftgm.log");
+		trace_master.SetEnable(true);
+
+		if (!object_manager.LoadFromFile("./ftgm.conf"))
+		{
+			std::cerr << "Failed to load config!" << std::endl;	
+		}
 
 		TRACE_INFO2(NULL, "####################################");
 		TRACE_INFO2(NULL, "##                                ##");
 		TRACE_INFO2(NULL, "####################################");
-		object_manager.SetTrace(true);
-		tcp_server.SetTrace(true);
 
 		object_manager.Start();
 		while(!object_manager.IsRunning())

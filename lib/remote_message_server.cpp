@@ -94,7 +94,7 @@ JSONNode	RemoteMessageServer::RequestParse(const char* _message)
 	
 	for(auto it = node.begin() ; it != node.end() ; it++)
 	{
-		if (it->name() == RMC_FIELD_SECTION)
+		if (it->name() == TITLE_NAME_SECTION)
 		{
 			if (it->type() != JSON_STRING)
 			{
@@ -102,7 +102,7 @@ JSONNode	RemoteMessageServer::RequestParse(const char* _message)
 			}
 		}
 
-		if (it->name() == RMC_FIELD_COMMAND)
+		if (it->name() == TITLE_NAME_COMMAND)
 		{
 			if (it->type() != JSON_STRING)
 			{
@@ -110,23 +110,15 @@ JSONNode	RemoteMessageServer::RequestParse(const char* _message)
 			}
 		}
 
-		if (it->name() == RMC_FIELD_DEVICE)
+		if (it->name() == TITLE_NAME_DEVICE)
 		{
-			if (it->type() != JSON_NODE)
+			if ((it->type() != JSON_NODE) && (it->type() != JSON_ARRAY))
 			{
 				throw std::invalid_argument("Invalid device type!");
 			}
 		}
 
-		if (it->name() == RMC_FIELD_DEVICE_ARRAY)
-		{
-			if (it->type() != JSON_ARRAY)
-			{
-				throw std::invalid_argument("Invalid devices type!");
-			}
-		}
-
-		if (it->name() == RMC_FIELD_ID)
+		if (it->name() == TITLE_NAME_ID)
 		{
 			if (it->type() != JSON_STRING)
 			{
@@ -134,7 +126,7 @@ JSONNode	RemoteMessageServer::RequestParse(const char* _message)
 			}
 		}
 
-		if (it->name() == RMC_FIELD_NAME)
+		if (it->name() == TITLE_NAME_NAME)
 		{
 			if (it->type() != JSON_STRING)
 			{
@@ -152,9 +144,9 @@ bool	RemoteMessageServer::Call(JSONNode& _request, JSONNode& _response)
 	std::ostringstream	error_message;
 	try
 	{
-		std::string section = _request.at_nocase(RMC_FIELD_SECTION).as_string();
+		std::string section = _request.at_nocase(TITLE_NAME_SECTION).as_string();
 
-		_response.push_back(JSONNode(RMC_FIELD_SECTION, section));
+		_response.push_back(JSONNode(TITLE_NAME_SECTION, section));
 
 		if (object_manager_ != NULL)
 		{
@@ -188,12 +180,12 @@ bool	RemoteMessageServer::Call(JSONNode& _request, JSONNode& _response)
 
 	if (result)
 	{
-		_response.push_back(JSONNode(RMC_FIELD_RESULT, RMC_RESULT_OK));
+		_response.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
 	}
 	else
 	{
-		_response.push_back(JSONNode(RMC_FIELD_ERROR, error_message.str()));
-		_response.push_back(JSONNode(RMC_FIELD_RESULT, RMC_RESULT_FAILED));
+		_response.push_back(JSONNode(TITLE_NAME_ERROR, error_message.str()));
+		_response.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 	}
 
 	return	true;

@@ -9,17 +9,9 @@
 
 using namespace std;
 
-Trace	trace;
-
 Trace::Trace(Object* _object)
-: object_(_object), level_(INFO), continue_(false), mode_(TO_FILE), enable_(false)
+: master_(trace_master), object_(_object), level_(INFO), continue_(false), state_(UNDEFINED)
 {
-	out_ = &std::cout;
-	file_name_ = std::string(LOG_FILE_PATH) + std::string(program_invocation_short_name) + (".log");
-	file_size_ = LOG_FILE_SIZE;
-	function_name_len_ = 32;
-	object_name_len_ = 16;
-	function_line_len_ = 4;
 }
 
 Trace::~Trace()
@@ -35,56 +27,76 @@ bool	Trace::SetClassName(std::string const& _class_name)
 
 bool	Trace::Load(JSONNode const& _json)
 {
-	if (_json.type() == JSON_NODE)
+	bool	ret_value = true;
+
+	if (_json.name() == TITLE_NAME_ENABLE)
+	{
+		if ((_json.as_string() == "yes") ||  (_json.as_string() == "on"))
+		{
+			SetEnable(true);
+		}
+		else if ((_json.as_string() == "no") ||  (_json.as_string() == "off"))
+		{
+			SetEnable(false);
+		}
+	}
+	else if (_json.type() == JSON_NODE)
 	{
 		for(auto it = _json.begin(); it != _json.end() ; it++)
 		{	
-			Load(*it);
+			ret_value = Load(*it);
+			if (ret_value != true)
+			{
+				break;
+			}
 		}
 	}
-	else if (_json.name() == "enable")
+	else 
 	{
-		if ((_json.as_string() == "yes") &&  (_json.as_string() == "on"))
-		{
-			Enable(true);
-		}
-		else if ((_json.as_string() == "no") &&  (_json.as_string() == "off"))
-		{
-			Enable(false);
-		}
+		TRACE_ERROR("Invalid json format");
+		ret_value = false;
 	}
 
-	return	true;
+	return	ret_value;
 }
 		
-void	Trace::Enable(bool _enable)
+Trace::operator JSONNode() const
 {
-	enable_ = _enable;
+	JSONNode	root;
+
+	if (state_ != UNDEFINED)
+	{
+		root.push_back(JSONNode(TITLE_NAME_ENABLE, ((state_ == ENABLE)?"yes":"no")));
+	}
+
+	return	root;
 }
 
-bool   Trace::SetOut(std::ostream* _out)
+bool	Trace::GetEnable()
 {
-	out_ = _out;
+	if(state_ == ENABLE)
+	{
+		return	true;
+	}
+	else if (state_ == DISABLE)
+	{
+		return	false;
+	}
 
-	return	true;
+	return	master_.GetEnable();	
 }
 
-bool	Trace::SetOut(std::string const& _file, uint32_t ulSize)
+void	Trace::SetEnable(bool _enable)
 {
-	mode_ = TO_FILE;
-	file_name_ = _file;
-	file_size_ = ulSize;
-	
-	return	true;
+	if (_enable)
+	{
+		state_ = ENABLE;
+	}
+
+	state_ = DISABLE;
 }
 
-bool	Trace::ConsoleMode()
-{
-	mode_ = TO_CONSOLE;
-	return	true;
-}
-
-Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t _line)
+Trace& Trace::Begin(TraceLevel _level, std::string const& _pretty_function, uint32_t _line)
 {
 	level_ = _level;
 	headline_ = "";
@@ -108,30 +120,30 @@ Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t 
 
 	Date	date;
 	os << "[" << date << "]";
-	os << "[" << setw(function_name_len_) << function.substr(0, function_name_len_) << "]";
-	os << "[" << setw(function_line_len_) <<_line << "]";
+	os << "[" << setw(master_.GetFunctionNameSize()) << function.substr(0, master_.GetFunctionNameSize()) << "]";
+	os << "[" << setw(master_.GetFunctionLineSize()) <<_line << "]";
 	if (object_ != NULL)
 	{
 		std::string	name = object_->GetName();
 
-		if (object_name_len_ >= name.size())
+		if (master_.GetObjectNameSize() >= name.size())
 		{
-			os << "[" << setw(object_name_len_) <<name << "]";
+			os << "[" << setw(master_.GetObjectNameSize()) <<name << "]";
 		}
-		else if(object_name_len_ < 5)
+		else if(master_.GetObjectNameSize() < 5)
 		{
-			os << "[" << setw(object_name_len_) <<name.substr(0, 4) << "]";
+			os << "[" << setw(master_.GetObjectNameSize()) <<name.substr(0, 4) << "]";
 		}
 		else
 		{
-			int begin = (object_name_len_ - 3) / 2;
-			int end   = object_name_len_ - begin - 3;
+			int begin = (master_.GetObjectNameSize() - 3) / 2;
+			int end   = master_.GetObjectNameSize() - begin - 3;
 			os << "[" << setw(begin) << name.substr(0, begin) << "..." << name.substr(name.size() - end, end) << "]";
 		}
 	}
 	else
 	{
-		os << "[" << setw(object_name_len_) << "global" << "]";
+		os << "[" << setw(master_.GetObjectNameSize()) << "global" << "]";
 	}
 	switch(level_)
 	{
@@ -148,7 +160,7 @@ Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t 
 	return	*this;
 }
 
-Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t _line, Object *_object)
+Trace& Trace::Begin(TraceLevel _level, std::string const& _pretty_function, uint32_t _line, Object *_object)
 {
 	if (_object != NULL)
 	{
@@ -158,7 +170,7 @@ Trace& Trace::Begin(Level _level, std::string const& _pretty_function, uint32_t 
 	return	Begin(_level, _pretty_function, _line);
 }
 
-Trace&	Trace::Dump(Trace::Level _level, std::string const& _pretty_function, uint32_t line, const char* _buffer, uint32_t _length)
+Trace&	Trace::Dump(TraceLevel _level, std::string const& _pretty_function, uint32_t line, const char* _buffer, uint32_t _length)
 {
 	bool	binary_message = false;
 
@@ -201,7 +213,7 @@ Trace&	Trace::Dump(Trace::Level _level, std::string const& _pretty_function, uin
 	return	*this;
 }
 
-Trace&	Trace::Dump(Trace::Level _level, std::string const& _pretty_function, uint32_t line, Object* _object, const char* _buffer, uint32_t _length)
+Trace&	Trace::Dump(TraceLevel _level, std::string const& _pretty_function, uint32_t line, Object* _object, const char* _buffer, uint32_t _length)
 {
 	if (_object != NULL)
 	{
@@ -216,9 +228,9 @@ std::ostream& Trace::End(std::ostream& _trace)
 	Trace* trace = dynamic_cast<Trace*>(&_trace);
 	if (trace != NULL)
 	{
-		if (trace->IsEnable() && (trace->str().size() != 0))
+		if (trace->GetEnable() && (trace->str().size() != 0))
 		{
-			trace->Write(trace->headline_, trace->headline_.size(), trace->str());
+			trace_master.Write(trace->headline_, trace->headline_.size(), trace->str());
 			trace->str("");
 		}
 
@@ -235,9 +247,9 @@ std::ostream& Trace::NL(std::ostream& _trace)
 	Trace* trace = dynamic_cast<Trace*>(&_trace);
 	if (trace != NULL)
 	{
-		if (trace->IsEnable() && (trace->str().size() != 0))
+		if (trace->GetEnable() && (trace->str().size() != 0))
 		{
-			trace->Write("", trace->headline_.size(), trace->str());
+			trace_master.Write("", trace->headline_.size(), trace->str());
 			trace->str("");
 		}
 
@@ -275,64 +287,3 @@ Trace& Trace::operator<< (ios_base& (*pf)(ios_base&))
 	return	*this;
 }
 
-void	Trace::Write(std::string const& _headline, uint32_t _headline_len, std::string const& _log)
-{
-	switch(mode_)
-	{
-	case	TO_FILE:
-		{
-			ofstream	ofs;
-			istringstream	message(_log);
-			bool		first = true;
-
-			ofs.open(file_name_, ofstream::out | ofstream::app);
-
-			while(!message.eof())
-			{
-				char	buffer[1024];
-
-				message.getline(buffer, sizeof(buffer) - 1);
-				if (first)
-				{
-					ofs << setw(_headline_len) << _headline;
-					first = false;
-				}
-				else
-				{
-					ofs << setw(_headline_len) << setfill(' ') << "";
-				}
-
-				ofs << buffer << std::endl;
-			}
-
-			ofs.close();
-		}
-		break;
-
-	case	TO_CONSOLE:
-		{
-			istringstream	message(_log);
-			bool		first = true;
-
-			while(!message.eof())
-			{
-				char	buffer[1024];
-
-				message.getline(buffer, sizeof(buffer) - 1);
-				if (first)
-				{
-					cout << setw(_headline_len) << _headline;
-					first = false;
-				}
-				else
-				{
-					cout << setw(_headline_len) << setfill(' ') << "";
-				}
-
-				cout << buffer << std::endl;
-			}
-		}
-		break;
-	
-	}
-}

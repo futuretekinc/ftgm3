@@ -2,6 +2,7 @@
 #include <typeinfo>
 #include <iomanip>
 #include "defined.h"
+#include "trace.h"
 #include "value.h"
 #include "property.h"
 
@@ -318,12 +319,12 @@ void	ValueBool::Print(ostream&	os) const
 // Class ValueFloat
 ///////////////////////////////////////////////////////////////
 ValueFloat::ValueFloat(float _value)
-: ValueNumber(), value_(_value)
+: ValueNumber(), value_(_value), precision_(2)
 {
 }
 
 ValueFloat::ValueFloat(float _value, Date const& _date)
-: ValueNumber(_date), value_(_value)
+: ValueNumber(_date), value_(_value), precision_(2)
 {
 }
 
@@ -396,10 +397,17 @@ Value*	ValueFloat::Duplicate() const
 
 ValueFloat::operator std::string() const
 {
+#if 0
 	std::ostringstream	oss;
-
-	oss << std::setprecision(2) << value_ << std::setprecision(0);
+	oss << value_;
 	return	oss.str();
+#else
+	char	buffer[32];
+
+	sprintf(buffer, "%.2f", value_);
+
+	return	std::string(buffer);
+#endif
 }
 
 void	ValueFloat::Print(ostream&	os) const

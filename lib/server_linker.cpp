@@ -1,4 +1,5 @@
 #include <exception>
+#include "defined.h"
 #include "server_linker.h"
 #include "trace.h"
 #include "time2.h"
@@ -24,8 +25,6 @@ struct	MessageProduce : Message
 ServerLinker::EventCB::EventCB(ServerLinker& _parent)
 : RdKafka::EventCb(), parent_(_parent)
 {
-	trace.Enable(true);
-	trace.SetOut("/var/log/ftgm.log");
 	trace.SetClassName(GetClassName());
 	name_ 	= "event";
 	enable_ = true;
@@ -68,8 +67,6 @@ void	ServerLinker::EventCB::event_cb(RdKafka::Event &event)
 ServerLinker::DeliveryReportCB::DeliveryReportCB(ServerLinker& _parent)
 : RdKafka::DeliveryReportCb(), parent_(_parent)
 {
-	trace.Enable(true);
-	trace.SetOut("/var/log/linker.log");
 	trace.SetClassName(GetClassName());
 	name_ 	= "delivery_report";
 	enable_ = true;
@@ -90,8 +87,6 @@ void ServerLinker::DeliveryReportCB::dr_cb (RdKafka::Message &message)
 ServerLinker::Link::Link(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
 : linker_(_linker), partition_(_partition), topic_name_(_topic_name), topic_(NULL)
 {
-	trace.Enable(true);
-	trace.SetOut("/var/log/linker.log");
 	trace.SetClassName(GetClassName());
 	name_ 	= "link";
 	enable_ = true;
@@ -231,18 +226,7 @@ bool	ServerLinker::Load(JSONNode const& _json)
 {
 	bool	ret_value = true;
 
-	if (_json.type() == JSON_NODE)
-	{
-		for(auto it = _json.begin(); it != _json.end() ; it++)
-		{
-			ret_value = Load(*it);
-			if (!ret_value)
-			{
-				std::cout << "Invalid format" << std::endl;
-			}
-		}
-	}
-	else if (_json.name() == "broker")
+	if (_json.name() == TITLE_NAME_BROKER)
 	{
 		if (_json.type() == JSON_ARRAY)
 		{
@@ -261,9 +245,20 @@ bool	ServerLinker::Load(JSONNode const& _json)
 			ret_value = false;	
 		}
 	}
-	else if (_json.name() == "trace")
+	else if (_json.name() == TITLE_NAME_TRACE)
 	{
 		ret_value = trace.Load(_json);	
+	}
+	else if (_json.type() == JSON_NODE)
+	{
+		for(auto it = _json.begin(); it != _json.end() ; it++)
+		{
+			ret_value = Load(*it);
+			if (!ret_value)
+			{
+				std::cout << "Invalid format" << std::endl;
+			}
+		}
 	}
 	else 
 	{
@@ -272,6 +267,31 @@ bool	ServerLinker::Load(JSONNode const& _json)
 	}
 
 	return	ret_value;
+}
+
+ServerLinker::operator JSONNode() const
+{
+	JSONNode	root;
+
+	JSONNode	broker_list(JSON_ARRAY);
+
+	for(auto it = broker_list_.begin(); it != broker_list_.end() ; it++)
+	{
+		JSONNode	broker(JSON_STRING);
+
+		broker = (*it);
+
+		broker_list.push_back(broker);
+	}
+	broker_list.set_name(TITLE_NAME_BROKER);
+	root.push_back(broker_list);
+
+	JSONNode	trace_config = trace;
+	trace_config.set_name(TITLE_NAME_TRACE);
+
+	root.push_back(trace_config);
+
+	return	root;
 }
 
 bool		ServerLinker::AddBroker(std::string const& _broker)
@@ -339,8 +359,6 @@ uint32_t	ServerLinker::GetDownLinkNameList(std::list<std::string>& _topic_name_l
 ServerLinker::ServerLinker()
 : ActiveObject(), event_cb_(*this), delivery_report_cb_(*this), consumer_(NULL), producer_(NULL)
 {
-	trace.Enable(true);
-	trace.SetOut("/var/log/linker.log");
 	trace.SetClassName(GetClassName());
 	name_ 	= "link";
 	enable_ = true;

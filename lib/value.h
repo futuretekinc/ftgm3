@@ -197,7 +197,8 @@ public:
 
 			void		Print(std::ostream&	os) const;
 protected:
-	float	value_;
+	float		value_;
+	uint32_t	precision_;
 };
 
 ///////////////////////////////////////////////////////////////

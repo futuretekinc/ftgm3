@@ -12,9 +12,9 @@ public:
 	class EventCB : public RdKafka::EventCb, Object
 	{
 	public:
-		EventCB(ServerLinker& _parent);
+					EventCB(ServerLinker& _parent);
 
-		void event_cb (RdKafka::Event &_event) ;
+			void 	event_cb (RdKafka::Event &_event) ;
 
 	protected:
 		ServerLinker&	parent_;
@@ -23,9 +23,9 @@ public:
 	class DeliveryReportCB : public RdKafka::DeliveryReportCb, Object
 	{
 	public:
-		DeliveryReportCB(ServerLinker& _parent);
+					DeliveryReportCB(ServerLinker& _parent);
 
-		void dr_cb (RdKafka::Message &_message) ;
+			void 	dr_cb (RdKafka::Message &_message) ;
 
 	protected:
 		ServerLinker&	parent_;
@@ -47,11 +47,11 @@ public:
 	class UpLink: public Link
 	{
 	public:
-		UpLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition = RdKafka::Topic::PARTITION_UA);
+					UpLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition = RdKafka::Topic::PARTITION_UA);
 
-				bool	Start();
-				bool	Stop();
-				bool	Send(std::string const& _message);
+			bool	Start();
+			bool	Stop();
+			bool	Send(std::string const& _message);
 	};
 
 	class DownLink: public Link
@@ -60,27 +60,28 @@ public:
 		class	ConsumeCB : public RdKafka::ConsumeCb
 		{
 		public:
-			ConsumeCB(ServerLinker::DownLink& _link)
-				: ConsumeCb(), link_(_link)
-			{};
+			ConsumeCB(ServerLinker::DownLink& _link) : ConsumeCb(), link_(_link) {};
 
 		protected:
-			void	consume_cb(RdKafka::Message& _msg, void *opaque);
+				void	consume_cb(RdKafka::Message& _msg, void *opaque);
 			DownLink&	link_;
 		};
 
-		DownLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition = RdKafka::Topic::PARTITION_UA);
+					DownLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition = RdKafka::Topic::PARTITION_UA);
 
-				bool	Start();
-				bool	Stop();
+			bool	Start();
+			bool	Stop();
 	protected:
 
 		ConsumeCB		message_cb_;
 	};
 
-			ServerLinker();
-			~ServerLinker();
-			bool		Load(JSONNode const& _json);
+						ServerLinker();
+						~ServerLinker();
+
+			bool		Load(JSONNode const& _json); 
+
+			virtual		operator JSONNode() const;
 
 			bool		AddBroker(std::string const& _broker);
 			bool		DeleteBroker(std::string const& _broker);

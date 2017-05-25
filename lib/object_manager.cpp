@@ -11,7 +11,7 @@
 ObjectManager::ObjectManager()
 : 	ActiveObject(), 
 	server_linker_(), 
-	data_manager_(DB_DEFAULT_FILE),
+	data_manager_(DEFAULT_CONST_DB_FILE),
 	endpoint_report_interval_(ENDPOINT_REPORT_INTERVAL),
 	auto_start_(false)
 {
@@ -19,7 +19,7 @@ ObjectManager::ObjectManager()
 	enable_ = true;
 
 	trace.SetClassName(GetClassName());
-	server_linker_.AddBroker(MSG_BROKER_DEFAULT);
+	server_linker_.AddBroker(DEFAULT_CONST_SERVER_LINKER_BROKER);
 }
 
 ObjectManager::~ObjectManager()
@@ -35,8 +35,34 @@ ObjectManager::~ObjectManager()
 	}
 }
 
-bool ObjectManager::Load(std::string const&  _file_name)
+bool	ObjectManager::GetAutoStart()
 {
+	return	auto_start_;
+}
+
+bool	ObjectManager::SetAutoStart(bool _auto_start)
+{
+	auto_start_ = _auto_start;
+
+	return	true;
+}
+
+Time const&	ObjectManager::GetEndpointReportInterval() const
+{
+	return	endpoint_report_interval_;
+}
+
+bool	ObjectManager::	SetEndpointReportInterval(Time const& _time)
+{
+	endpoint_report_interval_ = _time;
+
+	return	true;
+}
+
+bool ObjectManager::LoadFromFile(std::string const&  _file_name)
+{
+	bool	ret_value = false;
+
 	std::fstream	fs(_file_name, std::fstream::in);
 	if (fs)
 	{
@@ -49,19 +75,20 @@ bool ObjectManager::Load(std::string const&  _file_name)
 		buffer[length] = 0;
 		fs.close();
 
-		Load(buffer);
+		ret_value = Load(buffer);
 
 		delete buffer;
 	}
 
-	return	false;
+	return	ret_value;
 }
 
 bool ObjectManager::Load(const char *_buffer)
 {
 	if (!libjson::is_valid(_buffer))
 	{
-		std::cout << "Invalid json format" << std::endl;
+		TRACE_ERROR("Invalid json format");
+		TRACE_ERROR(_buffer);
 		return	false;
 	}
 
@@ -73,33 +100,23 @@ bool ObjectManager::Load(const char *_buffer)
 bool	ObjectManager::Load(JSONNode const& _json)
 {
 	bool	ret_value = true;
-	if (_json.type() == JSON_NODE)
+
+	if (_json.name() == TITLE_NAME_AUTO_START)
 	{
-		for(auto it = _json.begin(); it != _json.end() ; it++)
-		{
-			ret_value = Load(*it);
-			if (!ret_value)
-			{
-				TRACE_ERROR("Invalid json format");
-			}
-		}
-	}
-	else if (_json.name() == "auto_start")
-	{
-		if ((_json.as_string() == "yes") &&  (_json.as_string() == "on"))
+		if ((_json.as_string() == "yes") ||  (_json.as_string() == "on"))
 		{
 			auto_start_ = true;
 		}
-		else if ((_json.as_string() == "no") &&  (_json.as_string() == "off"))
+		else if ((_json.as_string() == "no") ||  (_json.as_string() == "off"))
 		{
 			auto_start_ = false;
 		}
 	}
-	else if (_json.name() == "endpoint_report_interval")
+	else if (_json.name() == TITLE_NAME_ENDPOINT_REPORT_INTERVAL)
 	{
 		endpoint_report_interval_ = _json.as_int();
 	}
-	else if (_json.name() == "device")
+	else if (_json.name() == TITLE_NAME_DEVICE)
 	{
 		if (_json.type() == JSON_ARRAY)
 		{
@@ -131,25 +148,58 @@ bool	ObjectManager::Load(JSONNode const& _json)
 			}
 		}
 	}
-	else if (_json.name() == "database")
+	else if (_json.name() == TITLE_NAME_DATA_MANAGER)
 	{
 		ret_value = data_manager_.Load(_json);
 	}
-	else if (_json.name() == "server")
+	else if (_json.name() == TITLE_NAME_SERVER_LINKER)
 	{
 		ret_value = server_linker_.Load(_json);
 	}
-	else if (_json.name() == "trace")
+	else if (_json.name() == TITLE_NAME_TRACE)
 	{
-		ret_value = trace.Load(_json);
+		ret_value = trace_master.Load(_json);
+	}
+	else if (_json.type() == JSON_NODE)
+	{
+		for(auto it = _json.begin(); it != _json.end() ; it++)
+		{
+			ret_value = Load(*it);
+			if(ret_value == false)
+			{
+				break;
+			}
+		}
 	}
 	else
 	{
-		TRACE_ERROR("Invalid json format");
+		TRACE_ERROR("Undefined field[" << _json.name() << "]");
 		ret_value = false;
 	}
 
 	return	ret_value;
+}
+
+ObjectManager::operator JSONNode() const
+{
+	JSONNode	root, item;
+
+	root.push_back(JSONNode(TITLE_NAME_ENDPOINT_REPORT_INTERVAL, endpoint_report_interval_));
+	root.push_back(JSONNode(TITLE_NAME_AUTO_START, (auto_start_)?"yes":"no"));
+
+	item = JSONNode(data_manager_);
+	item.set_name(TITLE_NAME_DATA_MANAGER);
+	root.push_back(item);
+
+	item = JSONNode(server_linker_);
+	item.set_name(TITLE_NAME_SERVER_LINKER);
+	root.push_back(item);
+
+	item = JSONNode(trace_master);
+	item.set_name(TITLE_NAME_TRACE);
+	root.push_back(item);
+
+	return	root;
 }
 
 Device*		ObjectManager::CreateDevice(Properties const& _properties, bool from_db)
@@ -352,7 +402,7 @@ bool	ObjectManager::UpdateProperties(Device* _device)
 	Properties	properties;
 	if (_device->GetUpdatedProperties(properties))
 	{
-		properties.Delete(OBJECT_FIELD_ID);
+		properties.Delete(TITLE_NAME_ID);
 
 		if (!data_manager_.SetDeviceProperties(_device->GetID(), properties))
 		{
@@ -377,7 +427,7 @@ bool	ObjectManager::UpdateProperties(Endpoint* _endpoint)
 	Properties	properties;
 	if (_endpoint->GetUpdatedProperties(properties))
 	{
-		properties.Delete(OBJECT_FIELD_ID);
+		properties.Delete(TITLE_NAME_ID);
 
 		if (!data_manager_.SetEndpointProperties(_endpoint->GetID(), properties))
 		{
@@ -395,33 +445,6 @@ bool	ObjectManager::UpdateProperties(Endpoint* _endpoint)
 	}
 
 	return	true;
-}
-
-bool	ObjectManager::UpdateProperties(std::string const& _id)
-{
-	auto device_it = device_map_.find(_id);
-	if (device_it != device_map_.end())
-	{
-		Device* device = device_it->second;
-	
-		return	UpdateProperties(device);
-	}
-
-	auto endpoint_it = endpoint_map_.find(_id);
-	if (endpoint_it != endpoint_map_.end())
-	{
-		Endpoint* endpoint = endpoint_it->second;
-	
-		return	UpdateProperties(endpoint);
-	}
-
-	return	false;
-
-}
-
-bool	ObjectManager::AddData(std::string const& _endpoint_id, Value const* _value)
-{
-	return	data_manager_.AddValue(_endpoint_id, _value);
 }
 
 void	ObjectManager::Preprocess()
@@ -469,7 +492,7 @@ void	ObjectManager::Preprocess()
 		{
 			for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
 			{
-				const Property*	id_property = it->Get(OBJECT_FIELD_ID);
+				const Property*	id_property = it->Get(TITLE_NAME_ID);
 				if (id_property != NULL)
 				{
 					Endpoint* endpoint = CreateEndpoint(*it, true);						
@@ -708,9 +731,9 @@ bool	ObjectManager::SendKeepAlive(ValueID const& _id)
 
 	time = time_t(date);
 
-	root.push_back(JSONNode(MSG_FIELD_DEVICE_ID, _id));
-	root.push_back(JSONNode(MSG_FIELD_CMD, MSG_COMMAND_KEEP_ALIVE));
-	root.push_back(JSONNode(MSG_FIELD_TIME, time));
+	root.push_back(JSONNode(TITLE_NAME_DEVICE_ID, _id));
+	root.push_back(JSONNode(TITLE_NAME_CMD, MSG_CMD_KEEP_ALIVE));
+	root.push_back(JSONNode(TITLE_NAME_TIME, time));
 
 	return	SendMessage(topic.str(), root.write());
 }
@@ -728,10 +751,10 @@ bool	ObjectManager::SendEndpointReport(ValueID const& _id, std::list<Value*> con
 
 	time = time_t(date);
 
-	root.push_back(JSONNode(MSG_FIELD_ENDPOINT_ID, _id));
-	root.push_back(JSONNode(MSG_FIELD_CMD, MSG_COMMAND_ENDPOINT_REPORT));
-	root.push_back(JSONNode(MSG_FIELD_TIME, time));
-	root.push_back(JSONNode(MSG_FIELD_COUNT, _value_list.size()));
+	root.push_back(JSONNode(TITLE_NAME_ENDPOINT_ID, _id));
+	root.push_back(JSONNode(TITLE_NAME_CMD, MSG_CMD_ENDPOINT_REPORT));
+	root.push_back(JSONNode(TITLE_NAME_TIME, time));
+	root.push_back(JSONNode(TITLE_NAME_COUNT, _value_list.size()));
 
 	JSONNode	array(JSON_ARRAY);
 	for(auto it = _value_list.begin(); it != _value_list.end() ; it++)
@@ -740,13 +763,13 @@ bool	ObjectManager::SendEndpointReport(ValueID const& _id, std::list<Value*> con
 		
 		time = time_t((*it)->GetDate());
 
-		item.push_back(JSONNode(MSG_FIELD_TIME, time));
-		item.push_back(JSONNode(MSG_FIELD_VALUE, std::string(*(*it))));
+		item.push_back(JSONNode(TITLE_NAME_TIME, time));
+		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
 
 		array.push_back(item);
 	}
 
-	array.set_name(MSG_FIELD_DATA);
+	array.set_name(TITLE_NAME_DATA);
 
 	root.push_back(array);
 

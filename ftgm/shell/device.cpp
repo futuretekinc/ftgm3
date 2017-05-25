@@ -158,6 +158,18 @@ RetValue	ShellCommandDevice
 		{
 			ret_value = RET_VALUE_INVALID_ARGUMENTS;
 		}
+		else if (_arguments[2] == "all")
+		{
+			std::list<Device*>	device_list;
+
+			object_manager->GetDeviceList(device_list);
+
+			for(auto it = device_list.begin(); it != device_list.end() ; it++)
+			{
+				(*it)->Start();
+				std::cout << "The device[" << (*it)->GetTraceName() << "] is started!" << std::endl;
+			}
+		}
 		else
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
@@ -180,6 +192,18 @@ RetValue	ShellCommandDevice
 		if (_count < 3)
 		{
 			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+		}
+		else if (_arguments[2] == "all")
+		{
+			std::list<Device*>	device_list;
+
+			object_manager->GetDeviceList(device_list);
+
+			for(auto it = device_list.begin(); it != device_list.end() ; it++)
+			{
+				(*it)->Stop();
+				std::cout << "The device[" << (*it)->GetTraceName() << "] is stopped!" << std::endl;
+			}
 		}
 		else
 		{
@@ -204,6 +228,18 @@ RetValue	ShellCommandDevice
 		{
 			ret_value = RET_VALUE_INVALID_ARGUMENTS;
 		}
+		else if (_arguments[2] == "all")
+		{
+			std::list<Device*>	device_list;
+
+			object_manager->GetDeviceList(device_list);
+
+			for(auto it = device_list.begin(); it != device_list.end() ; it++)
+			{
+				(*it)->SetEnable(true);
+				std::cout << "The device[" << (*it)->GetTraceName() << "] is enabled!" << std::endl;
+			}
+		}
 		else
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
@@ -226,6 +262,18 @@ RetValue	ShellCommandDevice
 		if (_count < 3)
 		{
 			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+		}
+		else if (_arguments[2] == "all")
+		{
+			std::list<Device*>	device_list;
+
+			object_manager->GetDeviceList(device_list);
+
+			for(auto it = device_list.begin(); it != device_list.end() ; it++)
+			{
+				(*it)->SetEnable(false);
+				std::cout << "The device[" << (*it)->GetTraceName() << "] is disabled!" << std::endl;
+			}
 		}
 		else
 		{
@@ -281,53 +329,6 @@ RetValue	ShellCommandDevice
 					device->SetProperties(properties);	
 				}
 			}
-		}
-	}
-	else if (_arguments[1] == "load")
-	{
-		if (_count < 3)
-		{
-			ret_value = RET_VALUE_INVALID_ARGUMENTS;
-		}
-		else
-		{
-			JSONNode	json;
-			std::fstream	fs(_arguments[2], std::fstream::in);
-			if (fs)
-			{
-			   fs.seekg (0, fs.end);
-			   int length = fs.tellg();
-				fs.seekg (0, fs.beg);
-
-				char * buffer = new char [length + 1];
-				fs.read(buffer, length);
-				buffer[length] = 0;
-				fs.close();
-
-				if (libjson::is_valid(buffer))
-				{
-					json = libjson::parse(buffer);
-				
-					Properties	properties;
-					properties.Append(json);
-				
-					Device* device = object_manager->CreateDevice(properties);
-					if (device == NULL)
-					{
-						std::cout << "Failed to create device!" << std::endl;
-					}
-					else
-					{
-						std::cout << "The device is created!" << std::endl;
-					}
-				}
-				else
-				{
-					std::cout << "Invalid json format" << std::endl;	
-				}
-				delete buffer;
-			}
-			
 		}
 	}
 	else

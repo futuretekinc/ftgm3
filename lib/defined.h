@@ -3,6 +3,18 @@
 
 #include <cstdint>
 
+#ifdef	MAKE_BODY
+#define	DEFAULT_CONST(name, value)	const char* DEFAULT_CONST_##name=value
+#define	TITLE_NAME(name, value)		const char* TITLE_NAME_##name=value
+#define	MSG_CMD(name, value)		const char* MSG_CMD_##name=value
+#define	RET_CONST(name, value)		const char* RET_CONST_##name=value
+#else
+#define	DEFAULT_CONST(name, value)	extern	const char* DEFAULT_CONST_##name
+#define	TITLE_NAME(name, value)		extern	const char* TITLE_NAME_##name
+#define	MSG_CMD(name, value)		extern	const char* MSG_CMD_##name
+#define	RET_CONST(name, value)		extern	const char* RET_CONST_##name
+#endif
+
 #define	ID_LENGTH_MAX		32
 #define	NAME_LENGTH_MAX		64
 #define	IP_LENGTH_MAX		16
@@ -39,82 +51,6 @@ extern	int			SNMP_COMMUNITY_LENGTH_MAX;
 extern	const char*	LOG_FILE_PATH;
 extern	uint32_t	LOG_FILE_SIZE;
 
-extern	const char* DB_DEFAULT_FILE;
-extern	const char* DB_TABLE_NAME_DEVICE;
-extern	const char* DB_TABLE_NAME_ENDPOINT;
-
-extern	const char* RMC_RESULT_OK;
-extern	const char* RMC_RESULT_FAILED;
-extern	const char* RMC_FIELD_SECTION;
-extern	const char* RMC_FIELD_COMMAND;
-extern	const char* RMC_FIELD_RESULT;
-extern	const char* RMC_FIELD_ERROR;
-extern	const char* RMC_FIELD_TYPE;
-extern	const char* RMC_FIELD_DEVICE;
-extern	const char* RMC_FIELD_DEVICE_ARRAY;
-extern	const char* RMC_FIELD_ENDPOINT;
-extern	const char* RMC_FIELD_ENDPOINT_ARRAY;
-extern	const char* RMC_FIELD_ID;
-extern	const char*	RMC_FIELD_ID_ARRAY;
-extern	const char*	RMC_FIELD_NAME;
-
-extern	const char* OBJECT_FIELD_TYPE;
-extern	const char* OBJECT_FIELD_DEVICE;
-extern	const char* OBJECT_FIELD_DEVICE_ARRAY;
-extern	const char* OBJECT_FIELD_ID;
-extern	const char* OBJECT_FIELD_ID_ARRAY;
-extern	const char* OBJECT_FIELD_NAME;
-extern	const char* OBJECT_FIELD_DATE;
-extern	const char* OBJECT_FIELD_ENABLE;
-extern	const char* OBJECT_FIELD_SENSOR_ID;
-extern	const char* OBJECT_FIELD_DEVICE_ID;
-extern	const char* OBJECT_FIELD_NAME;
-extern	const char* OBJECT_FIELD_UNIT;
-extern	const char* OBJECT_FIELD_SCALE;
-extern	const char* OBJECT_FIELD_UPDATE_INTERVAL;
-extern	const char* OBJECT_FIELD_LOOP_INTERVAL;
-extern	const char* OBJECT_FIELD_LIVE_CHECK_INTERVAL;
-extern	const char* OBJECT_FIELD_MODULE;
-extern	const char* OBJECT_FIELD_IP;
-extern	const char* OBJECT_FIELD_COMMUNITY;
-extern	const char* OBJECT_FIELD_TIMEOUT;
-extern	const char* OBJECT_FIELD_DEV_NAME;
-extern	const char* OBJECT_FIELD_ENDPOINTS;
-extern	const char* OBJECT_FIELD_VALUE_MAX;
-extern	const char* OBJECT_FIELD_VALUE_MIN;
-
-extern	const char*	MSG_BROKER_DEFAULT;
-
-extern	const char* MSG_FIELD_CMD;
-extern	const char* MSG_FIELD_TIME;
-extern	const char* MSG_FIELD_DATA;
-extern	const char* MSG_FIELD_COUNT;
-
-extern	const char* MSG_FIELD_TYPE;
-extern	const char* MSG_FIELD_DEVICE;
-extern	const char* MSG_FIELD_DEVICE_ID;
-extern	const char* MSG_FIELD_ENDPOINT_ID;
-extern	const char* MSG_FIELD_DATE;
-extern	const char* MSG_FIELD_ENABLE;
-extern	const char* MSG_FIELD_SENSOR_ID;
-extern	const char* MSG_FIELD_NAME;
-extern	const char* MSG_FIELD_UNIT;
-extern	const char* MSG_FIELD_SCALE;
-extern	const char* MSG_FIELD_UPDATE_INTERVAL;
-extern	const char* MSG_FIELD_LOOP_INTERVAL;
-extern	const char* MSG_FIELD_LIVE_CHECK_INTERVAL;
-extern	const char* MSG_FIELD_MODULE;
-extern	const char* MSG_FIELD_IP;
-extern	const char* MSG_FIELD_COMMUNITY;
-extern	const char* MSG_FIELD_TIMEOUT;
-extern	const char* MSG_FIELD_VALUE;
-extern	const char* MSG_FIELD_VALUE_MAX;
-extern	const char* MSG_FIELD_VALUE_MIN;
-extern	const char* MSG_FIELD_DEV_NAME;
-extern	const char* MSG_FIELD_ENDPOINTS;
-
-extern	const char* MSG_COMMAND_KEEP_ALIVE;
-extern	const char* MSG_COMMAND_ENDPOINT_REPORT;
 enum	RetValue
 {
 	RET_VALUE_OK,
@@ -124,5 +60,56 @@ enum	RetValue
 	RET_VALUE_INVALID_NAME,
 };
 
+DEFAULT_CONST(SERVER_LINKER_BROKER,"localhost:9092");
+
+DEFAULT_CONST(DB_FILE, "./ftgm.db");
+DEFAULT_CONST(DB_TABLE_NAME_DEVICE, "devices");
+DEFAULT_CONST(DB_TABLE_NAME_ENDPOINT, "endpoints");
+
+RET_CONST(OK,	 "ok");
+RET_CONST(FAILED,	"failed");
+
+TITLE_NAME(AUTO_START, "auto_start");
+TITLE_NAME(BROKER, "broker");
+TITLE_NAME(CMD, "cmd");
+TITLE_NAME(COMMAND, "command");
+TITLE_NAME(COMMUNITY, "community");
+TITLE_NAME(COUNT, "count");
+TITLE_NAME(DATA, "data");
+TITLE_NAME(DATA_FILE, "data file");
+TITLE_NAME(DATA_MANAGER, "database");
+TITLE_NAME(DATE, "date");
+TITLE_NAME(DEV_NAME, "dev_name");
+TITLE_NAME(DEVICE, "device");
+TITLE_NAME(DEVICE_ID, "device_id");
+TITLE_NAME(ENABLE, "enable");
+TITLE_NAME(ENDPOINT, "endpoint");
+TITLE_NAME(ENDPOINT_ID, "ep_id");
+TITLE_NAME(ENDPOINT_REPORT_INTERVAL,"endpoint_report_interval");
+TITLE_NAME(ENDPOINTS, "endpoints");
+TITLE_NAME(ERROR, "error");
+TITLE_NAME(ID, "id");
+TITLE_NAME(IP, "ip");
+TITLE_NAME(LIVE_CHECK_INTERVAL, "live_check_interval");
+TITLE_NAME(LOOP_INTERVAL, "loop_interval");
+TITLE_NAME(MODULE, "module");
+TITLE_NAME(NAME, "name");
+TITLE_NAME(RESULT,  "result");
+TITLE_NAME(SCALE, "scale");
+TITLE_NAME(SECTION, "section");
+TITLE_NAME(SENSOR_ID, "sensor_id");
+TITLE_NAME(SERVER_LINKER, "server_linker");
+TITLE_NAME(TIME, "time");
+TITLE_NAME(TIMEOUT, "timeout");
+TITLE_NAME(TRACE, "trace");
+TITLE_NAME(TYPE, "type");
+TITLE_NAME(UNIT, "unit");
+TITLE_NAME(UPDATE_INTERVAL, "update_interval");
+TITLE_NAME(VALUE, "value");
+TITLE_NAME(VALUE_MAX, "value_max");
+TITLE_NAME(VALUE_MIN, "value_min");
+
+MSG_CMD(KEEP_ALIVE,"keep_alive");
+MSG_CMD(ENDPOINT_REPORT, "endpoint_report");
 #endif
 

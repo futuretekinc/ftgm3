@@ -243,7 +243,7 @@ bool	DeviceSNMP::GetProperties(Properties& _properties) const
 
 bool	DeviceSNMP::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (_property.GetName() == OBJECT_FIELD_MODULE)
+	if (_property.GetName() == TITLE_NAME_MODULE)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
@@ -251,7 +251,7 @@ bool	DeviceSNMP::SetPropertyInternal(Property const& _property, bool create)
 			return	SetModule(value->Get(), !create);
 		}
 	}
-	else if (_property.GetName() == OBJECT_FIELD_COMMUNITY)
+	else if (_property.GetName() == TITLE_NAME_COMMUNITY)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
@@ -259,7 +259,7 @@ bool	DeviceSNMP::SetPropertyInternal(Property const& _property, bool create)
 			return	SetCommunity(value->Get(), !create);
 		}
 	}
-	else if (_property.GetName() == OBJECT_FIELD_TIMEOUT)
+	else if (_property.GetName() == TITLE_NAME_TIMEOUT)
 	{
 		const ValueUInt32*	value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (value != NULL)
@@ -501,7 +501,6 @@ bool	DeviceSNMP::Convert
 				buffer[_variable->val_len] = 0;
 
 				_value->Set(buffer);	
-				TRACE_INFO2(NULL, "Set Octet! - " << _value->GetDate());
 			}   
 		}   
 		break;

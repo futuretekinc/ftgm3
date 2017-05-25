@@ -33,12 +33,12 @@ uint64_t	Time::Get() const
 
 uint64_t	Time::GetMilliseconds() const
 {
-	return	value_ / 1000;
+	return	value_ / TIME_MILLISECOND;
 }
 
 uint32_t	Time::GetSeconds() const
 {
-	return	value_ / 1000000;
+	return	value_ / TIME_SECOND;
 }
 
 Time::operator uint64_t() const
@@ -103,7 +103,7 @@ Date::Date()
 
 	gettimeofday(&value, 0);
 
-	value_ = value.tv_sec * 1000000 + value.tv_usec;
+	value_ = value.tv_sec * TIME_SECOND + value.tv_usec;
 }
 
 Date::Date(Date const& _date)
@@ -113,7 +113,7 @@ Date::Date(Date const& _date)
 
 Date::Date(uint32_t _seconds)
 {
-	value_ = _seconds * 1000000;
+	value_ = _seconds * TIME_SECOND;
 }
 
 Date::Date(std::string const& _date)
@@ -124,7 +124,7 @@ Date::Date(std::string const& _date)
 
 	time_t time = mktime(&tm); 
 
-	value_ = time * (uint64_t)1000000;
+	value_ = time * TIME_SECOND;
 }
 
 bool	Date::IsValid() const
@@ -134,7 +134,7 @@ bool	Date::IsValid() const
 
 void	Date::Set(uint32_t _seconds)
 {
-	value_ = _seconds * 1000000;
+	value_ = _seconds * TIME_SECOND;
 }
 
 Date	Date::operator+(const Time& _time)
@@ -214,14 +214,17 @@ const	Date&	Date::operator=(std::string const& _date)
 
 	time_t time = mktime(&tm); 
 
-	value_ = time * (uint64_t)1000000;
+	value_ = time * TIME_SECOND;
 
 	return	*this;
 }
 
 Date::operator time_t() const
 {
-	return	value_ / TIME_SECOND;
+	uint64_t	second = value_ / TIME_SECOND;
+	time_t	time = (time_t)second;
+
+	return	time;
 }
 
 uint64_t	Date::GetMicroSecond()
@@ -232,7 +235,7 @@ uint64_t	Date::GetMicroSecond()
 const string	Date::ToString() const
 {
  	char    buffer[64];
-	time_t	time = (time_t)value_ / TIME_SECOND;
+	time_t	time = time_t(value_ / TIME_SECOND);
 
    	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localtime(&time));
 

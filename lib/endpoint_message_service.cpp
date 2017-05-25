@@ -13,9 +13,9 @@ bool	RemoteMessageServer::EndpointMessageService::Service(RemoteMessageServer& _
 	bool	result = true;
 	try
 	{
-		std::string	command = _request.at_nocase(RMC_FIELD_COMMAND).as_string();
+		std::string	command = _request.at_nocase(TITLE_NAME_COMMAND).as_string();
 
-		_response.push_back(JSONNode(RMC_FIELD_COMMAND, command));
+		_response.push_back(JSONNode(TITLE_NAME_COMMAND, command));
 		if (command == "add")
 		{
 			result = Add(_rms, _request, _response, _error_message);
@@ -76,7 +76,7 @@ bool	RemoteMessageServer::EndpointMessageService::Add(RemoteMessageServer& _rms,
 	{
 		try
 		{
-			JSONNode	endpoint_node = _request.at_nocase(RMC_FIELD_DEVICE);
+			JSONNode	endpoint_node = _request.at_nocase(TITLE_NAME_DEVICE);
 
 			if (endpoint_node.type() != JSON_NODE)
 			{
@@ -97,7 +97,7 @@ bool	RemoteMessageServer::EndpointMessageService::Add(RemoteMessageServer& _rms,
 
 			new_endpoint->GetProperties(new_properties);
 			JSONNode	new_endpoint_node = ToJSON(new_properties);
-			new_endpoint_node.set_name(RMC_FIELD_DEVICE);
+			new_endpoint_node.set_name(TITLE_NAME_DEVICE);
 			_response.push_back(new_endpoint_node);
 		}
 		catch(std::out_of_range)
@@ -122,7 +122,7 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayAdd(RemoteMessageServer& 
 	{
 		try
 		{
-			JSONNode	array_node = _request.at_nocase(RMC_FIELD_DEVICE_ARRAY);
+			JSONNode	array_node = _request.at_nocase(TITLE_NAME_DEVICE);
 			JSONNode	new_endpoint_array_node(JSON_ARRAY);
 
 			if (array_node.type() != JSON_ARRAY)
@@ -158,7 +158,7 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayAdd(RemoteMessageServer& 
 				new_endpoint_array_node.push_back(new_endpoint_node);
 			}
 
-			new_endpoint_array_node.set_name(RMC_FIELD_DEVICE_ARRAY);
+			new_endpoint_array_node.set_name(TITLE_NAME_DEVICE);
 			_response.push_back(new_endpoint_array_node);
 		}
 		catch(std::out_of_range)
@@ -183,7 +183,7 @@ bool	RemoteMessageServer::EndpointMessageService::Del(RemoteMessageServer& _rms,
 	bool	result = true;
 	try
 	{
-		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		JSONNode	id_node = _request.at_nocase(TITLE_NAME_ID);
 		if (id_node.type() != JSON_STRING)
 		{
 			throw std::invalid_argument("id value is string.");
@@ -210,7 +210,7 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayDel(RemoteMessageServer& 
 	bool	result = true;
 	try
 	{
-		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		JSONNode	ids_node = _request.at_nocase(TITLE_NAME_ID);
 		if (ids_node.type() != JSON_ARRAY)
 		{
 			throw std::invalid_argument("ids value is array.");
@@ -268,7 +268,7 @@ bool	RemoteMessageServer::EndpointMessageService::List(RemoteMessageServer& _rms
 
 	JSONNode	endpoint_array(JSON_ARRAY);
 
-	endpoint_array.set_name(RMC_FIELD_DEVICE_ARRAY);
+	endpoint_array.set_name(TITLE_NAME_DEVICE);
 
 	std::list<Endpoint*>	endpoint_list;
 
@@ -291,7 +291,7 @@ bool	RemoteMessageServer::EndpointMessageService::Get(RemoteMessageServer& _rms,
 	{
 		try
 		{
-			JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+			JSONNode	id_node = _request.at_nocase(TITLE_NAME_ID);
 			if (id_node.type() != JSON_STRING)
 			{
 				throw std::invalid_argument("id value is string.");
@@ -307,7 +307,7 @@ bool	RemoteMessageServer::EndpointMessageService::Get(RemoteMessageServer& _rms,
 				endpoint->GetProperties(properties);				
 
 				JSONNode	properties_node = ToJSON(properties);
-				properties_node.set_name(RMC_FIELD_DEVICE);
+				properties_node.set_name(TITLE_NAME_DEVICE);
 				_response.push_back(properties_node);
 			}
 			else
@@ -339,7 +339,7 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayGet(RemoteMessageServer& 
 	{
 		try
 		{
-			JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+			JSONNode	id_node = _request.at_nocase(TITLE_NAME_ID);
 			if (id_node.type() != JSON_ARRAY)
 			{
 				throw	std::invalid_argument("id properties value is array!");
@@ -364,7 +364,7 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayGet(RemoteMessageServer& 
 
 			if (endpoint_array.size() != 0)
 			{
-				endpoint_array.set_name(RMC_FIELD_DEVICE_ARRAY);
+				endpoint_array.set_name(TITLE_NAME_DEVICE);
 				_response.push_back(endpoint_array);
 			}
 			else
@@ -398,7 +398,7 @@ bool	RemoteMessageServer::EndpointMessageService::Set(RemoteMessageServer& _rms,
 	{
 		try
 		{
-			JSONNode	endpoint_node = _request.at_nocase(RMC_FIELD_DEVICE);
+			JSONNode	endpoint_node = _request.at_nocase(TITLE_NAME_DEVICE);
 
 			if (endpoint_node.type() != JSON_NODE)
 			{
@@ -432,7 +432,7 @@ bool	RemoteMessageServer::EndpointMessageService::Start(RemoteMessageServer& _rm
 	bool	result = true;
 	try
 	{
-		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		JSONNode	id_node = _request.at_nocase(TITLE_NAME_ID);
 		if (id_node.type() != JSON_STRING)
 		{
 			throw std::invalid_argument("id value is string.");
@@ -467,7 +467,7 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayStart(RemoteMessageServer
 	bool	result = true;
 	try
 	{
-		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		JSONNode	ids_node = _request.at_nocase(TITLE_NAME_ID);
 		if (ids_node.type() != JSON_ARRAY)
 		{
 			throw std::invalid_argument("ids value is array.");
@@ -521,7 +521,7 @@ bool	RemoteMessageServer::EndpointMessageService::Stop(RemoteMessageServer& _rms
 	bool	result = true;
 	try
 	{
-		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		JSONNode	id_node = _request.at_nocase(TITLE_NAME_ID);
 		if (id_node.type() != JSON_STRING)
 		{
 			throw std::invalid_argument("id value is string.");
@@ -556,7 +556,7 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayStop(RemoteMessageServer&
 	bool	result = true;
 	try
 	{
-		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		JSONNode	ids_node = _request.at_nocase(TITLE_NAME_ID);
 		if (ids_node.type() != JSON_ARRAY)
 		{
 			throw std::invalid_argument("ids value is array.");
@@ -610,7 +610,7 @@ bool	RemoteMessageServer::EndpointMessageService::Enable(RemoteMessageServer& _r
 	bool	result = true;
 	try
 	{
-		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		JSONNode	id_node = _request.at_nocase(TITLE_NAME_ID);
 		if (id_node.type() != JSON_STRING)
 		{
 			throw std::invalid_argument("id value is string.");
@@ -645,7 +645,7 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayEnable(RemoteMessageServe
 	bool	result = true;
 	try
 	{
-		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		JSONNode	ids_node = _request.at_nocase(TITLE_NAME_ID);
 		if (ids_node.type() != JSON_ARRAY)
 		{
 			throw std::invalid_argument("ids value is array.");
@@ -699,7 +699,7 @@ bool	RemoteMessageServer::EndpointMessageService::Disable(RemoteMessageServer& _
 	bool	result = true;
 	try
 	{
-		JSONNode	id_node = _request.at_nocase(RMC_FIELD_ID);
+		JSONNode	id_node = _request.at_nocase(TITLE_NAME_ID);
 		if (id_node.type() != JSON_STRING)
 		{
 			throw std::invalid_argument("id value is string.");
@@ -734,7 +734,7 @@ bool	RemoteMessageServer::EndpointMessageService::ArrayDisable(RemoteMessageServ
 	bool	result = true;
 	try
 	{
-		JSONNode	ids_node = _request.at_nocase(RMC_FIELD_ID_ARRAY);
+		JSONNode	ids_node = _request.at_nocase(TITLE_NAME_ID);
 		if (ids_node.type() != JSON_ARRAY)
 		{
 			throw std::invalid_argument("ids value is array.");

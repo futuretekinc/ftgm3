@@ -273,49 +273,49 @@ bool Properties::Append(JSONNode const& _json)
 
 bool	Properties::AppendID(ValueID const& _id)
 {
-	Delete(OBJECT_FIELD_ID);
+	Delete(TITLE_NAME_ID);
 
-	return	Append(Property(OBJECT_FIELD_ID, _id));
+	return	Append(Property(TITLE_NAME_ID, _id));
 }
 
 bool	Properties::AppendName(ValueName const& _name)
 {
-	Delete(OBJECT_FIELD_NAME);
+	Delete(TITLE_NAME_NAME);
 
-	return	Append(Property(OBJECT_FIELD_NAME, _name));
+	return	Append(Property(TITLE_NAME_NAME, _name));
 }
 
 bool	Properties::AppendEnable(ValueBool const& _enable)
 {
-	Delete(OBJECT_FIELD_ENABLE);
+	Delete(TITLE_NAME_ENABLE);
 
-	return	Append(Property(OBJECT_FIELD_ENABLE, bool(_enable)));
+	return	Append(Property(TITLE_NAME_ENABLE, bool(_enable)));
 }
 
 bool	Properties::AppendEnable(bool _enable)
 {
-	Delete(OBJECT_FIELD_ENABLE);
+	Delete(TITLE_NAME_ENABLE);
 
-	return	Append(Property(OBJECT_FIELD_ENABLE, _enable));
+	return	Append(Property(TITLE_NAME_ENABLE, _enable));
 }
 
 bool	Properties::AppendDate(Date const& _date)
 {
-	Delete(OBJECT_FIELD_DATE);
+	Delete(TITLE_NAME_DATE);
 
-	return	Append(Property(OBJECT_FIELD_DATE, _date));
+	return	Append(Property(TITLE_NAME_DATE, _date));
 }
 
 bool	Properties::AppendDevName(std::string const& _dev_name)
 {
-	Delete(OBJECT_FIELD_DEV_NAME);
+	Delete(TITLE_NAME_DEV_NAME);
 
-	return	Append(Property(OBJECT_FIELD_DEV_NAME, _dev_name));
+	return	Append(Property(TITLE_NAME_DEV_NAME, _dev_name));
 }
 
 bool	Properties::AppendDeviceType(int _type)
 {
-	return	Append(Property(OBJECT_FIELD_TYPE, _type));
+	return	Append(Property(TITLE_NAME_TYPE, _type));
 }
 
 bool	Properties::AppendDeviceType(std::string const& _type)
@@ -325,7 +325,7 @@ bool	Properties::AppendDeviceType(std::string const& _type)
 		return	false;	
 	}
 
-	return	Append(Property(OBJECT_FIELD_TYPE, _type));
+	return	Append(Property(TITLE_NAME_TYPE, _type));
 }
 
 bool	Properties::AppendEndpointType(std::string const& _type)
@@ -335,72 +335,72 @@ bool	Properties::AppendEndpointType(std::string const& _type)
 		return	false;	
 	}
 
-	return	Append(Property(OBJECT_FIELD_TYPE, _type));
+	return	Append(Property(TITLE_NAME_TYPE, _type));
 }
 
 bool	Properties::AppendSensorID(std::string const& _sensor_id)
 {
-	return	Append(Property(OBJECT_FIELD_SENSOR_ID, _sensor_id));
+	return	Append(Property(TITLE_NAME_SENSOR_ID, _sensor_id));
 }
 
 bool	Properties::AppendDeviceID(ValueID const& _device_id)
 {
-	return	Append(Property(OBJECT_FIELD_DEVICE_ID, _device_id));
+	return	Append(Property(TITLE_NAME_DEVICE_ID, _device_id));
 }
 
 bool	Properties::AppendUnit(std::string const& _unit)
 {
-	return	Append(Property(OBJECT_FIELD_UNIT, _unit));
+	return	Append(Property(TITLE_NAME_UNIT, _unit));
 }
 
 bool	Properties::AppendScale(double _scale)
 {
-	return	Append(Property(OBJECT_FIELD_SCALE, _scale));
+	return	Append(Property(TITLE_NAME_SCALE, _scale));
 }
 
 bool	Properties::AppendIP(ValueIP const& _ip)
 {
-	return	Append(Property(OBJECT_FIELD_IP, _ip));
+	return	Append(Property(TITLE_NAME_IP, _ip));
 }
 
 bool	Properties::AppendUpdateInterval(uint32_t _interval)
 {
-	return	Append(Property(OBJECT_FIELD_UPDATE_INTERVAL, _interval));
+	return	Append(Property(TITLE_NAME_UPDATE_INTERVAL, _interval));
 }
 
 bool	Properties::AppendLoopInterval(uint32_t _interval)
 {
-	return	Append(Property(OBJECT_FIELD_LOOP_INTERVAL, _interval));
+	return	Append(Property(TITLE_NAME_LOOP_INTERVAL, _interval));
 }
 
 bool	Properties::AppendLiveCheckInterval(uint32_t _interval)
 {
-	return	Append(Property(OBJECT_FIELD_LIVE_CHECK_INTERVAL, _interval));
+	return	Append(Property(TITLE_NAME_LIVE_CHECK_INTERVAL, _interval));
 }
 
 bool	Properties::AppendSNMPModule(std::string const& _module)
 {
-	return	Append(Property(OBJECT_FIELD_MODULE, _module));
+	return	Append(Property(TITLE_NAME_MODULE, _module));
 }
 
 bool	Properties::AppendSNMPCommunity(std::string const& _community)
 {
-	return	Append(Property(OBJECT_FIELD_COMMUNITY, _community));
+	return	Append(Property(TITLE_NAME_COMMUNITY, _community));
 }
 
 bool	Properties::AppendTimeout(uint32_t	_timeout)
 {
-	return	Append(Property(OBJECT_FIELD_TIMEOUT, _timeout));
+	return	Append(Property(TITLE_NAME_TIMEOUT, _timeout));
 }
 
 bool	Properties::AppendValueMin(ValueFloat const& _value)
 {
-	return	Append(Property(OBJECT_FIELD_VALUE_MIN, _value));
+	return	Append(Property(TITLE_NAME_VALUE_MIN, _value));
 }
 
 bool	Properties::AppendValueMax(ValueFloat const& _value)
 {
-	return	Append(Property(OBJECT_FIELD_VALUE_MAX, _value));
+	return	Append(Property(TITLE_NAME_VALUE_MAX, _value));
 }
 
 bool	AppendDeviceType(std::string const& _type);

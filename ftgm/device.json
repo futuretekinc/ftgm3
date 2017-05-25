@@ -7,13 +7,63 @@
 	[
 		{
 			"type": "s_temperature",
-			"name" : "temperature01",
+			"name" : "temp01",
+			"update_interval" : 1000000,
 			"sensor_id" : "01000001"
 		},
 		{
-			"type": "s_humidity",
-			"name" : "humidity01",
-			"sensor_id" : "02000001"
+			"type": "s_temperature",
+			"name" : "temp02",
+			"update_interval" : 2000000,
+			"sensor_id" : "01000002"
+		},
+		{
+			"type": "s_temperature",
+			"name" : "temp03",
+			"update_interval" : 3000000,
+			"sensor_id" : "01000003"
+		},
+		{
+			"type": "s_temperature",
+			"name" : "temp04",
+			"update_interval" : 4000000,
+			"sensor_id" : "01000004"
+		},
+		{
+			"type": "s_temperature",
+			"name" : "temp05",
+			"update_interval" : 5000000,
+			"sensor_id" : "01000005"
+		},
+		{
+			"type": "s_temperature",
+			"name" : "temp06",
+			"update_interval" : 5000000,
+			"sensor_id" : "01000006"
+		},
+		{
+			"type": "s_temperature",
+			"name" : "temp07",
+			"update_interval" : 4000000,
+			"sensor_id" : "01000007"
+		},
+		{
+			"type": "s_temperature",
+			"name" : "temp08",
+			"update_interval" : 3000000,
+			"sensor_id" : "01000008"
+		},
+		{
+			"type": "s_temperature",
+			"name" : "temp09",
+			"update_interval" : 2000000,
+			"sensor_id" : "01000009"
+		},
+		{
+			"type": "s_temperature",
+			"name" : "temp10",
+			"update_interval" : 1000000,
+			"sensor_id" : "0100000A"
 		}
 	]
 }

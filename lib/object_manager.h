@@ -16,12 +16,20 @@ class	ObjectManager : public ActiveObject
 	friend	class	Device;
 	friend	class	Endpoint;
 public:
-	ObjectManager();
-	~ObjectManager();
+						ObjectManager();
+						~ObjectManager();
 
-			bool		Load(std::string const& _file_name);
+			bool		GetAutoStart();
+			bool		SetAutoStart(bool _auto_start);
+
+			Time const&	GetEndpointReportInterval() const;
+			bool		SetEndpointReportInterval(Time const& _time);
+
+			bool		LoadFromFile(std::string const& _file_name);
 			bool		Load(const char *_json);
 			bool		Load(JSONNode const& _json);
+
+						operator JSONNode() const;
 
 			bool		Attach(Device* _device);
 			bool		Detach(Device* _device);
@@ -40,22 +48,21 @@ public:
 			uint32_t	GetEndpointList(std::list<Endpoint*>& _endpoint_list);
 			Endpoint*	GetEndpoint(std::string const& _id);
 
-			bool		AddData(std::string const& _endpoint_id, Value const* _value);
-
+			// Data Manager
 			bool		Attach(DataManager* _data_manager);
 
+			// External Service Call Server
 			bool		Attach(RemoteMessageServer* _rms);
 			bool		Detach(RemoteMessageServer* _rms);
 
-			bool		UpdateProperties(std::string const& _id);
-
+protected:
+	
 			void		OnMessage(Message* _message);
 
 			bool		SendKeepAlive(ValueID const& _id);
 			bool		SendEndpointReport(ValueID const& _id, std::list<Value*> const& _value_list);
 			bool		SendMessage(std::string const& _topic, std::string const& _message);
-protected:
-	
+
 			bool		IDChanged(Device* _device, ValueID const& _old_id);
 			bool		IDChanged(Endpoint* _endpoint, ValueID const& _old_id);
 

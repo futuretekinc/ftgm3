@@ -181,7 +181,7 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 {
 	bool	ret_value = true;
 
-	if (create && (_property.GetName() == OBJECT_FIELD_ID))
+	if (create && (_property.GetName() == TITLE_NAME_ID))
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
@@ -199,7 +199,7 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 			TRACE_INFO("Property id value type is incorrect!");
 		}
 	}
-	else if (_property.GetName() == OBJECT_FIELD_NAME)
+	else if (_property.GetName() == TITLE_NAME_NAME)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
@@ -212,7 +212,7 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 			TRACE_INFO("Property name value type is incorrect!");
 		}
 	}
-	else if (_property.GetName() == OBJECT_FIELD_DATE)
+	else if (_property.GetName() == TITLE_NAME_DATE)
 	{
 		if (create)
 		{
@@ -244,7 +244,7 @@ bool	Object::SetPropertyInternal(Property const& _property, bool create)
 			TRACE_INFO("The date of the device is only set possible at creation time.");
 		}
 	}
-	else if (_property.GetName() == OBJECT_FIELD_ENABLE)
+	else if (_property.GetName() == TITLE_NAME_ENABLE)
 	{
 		bool	enable	= false;
 		const ValueBool*	value = dynamic_cast<const ValueBool*>(_property.GetValue());
@@ -351,22 +351,22 @@ std::ostream&	operator<<(std::ostream& os, Object& _object)
 
 bool	Object::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
-	_field_list.push_back(OBJECT_FIELD_ID);
-	_field_list.push_back(OBJECT_FIELD_NAME);
-	_field_list.push_back(OBJECT_FIELD_TYPE);
-	_field_list.push_back(OBJECT_FIELD_DATE);
-	_field_list.push_back(OBJECT_FIELD_ENABLE);
-	_field_list.push_back(OBJECT_FIELD_DEVICE_ID);
-	_field_list.push_back(OBJECT_FIELD_LIVE_CHECK_INTERVAL);
-	_field_list.push_back(OBJECT_FIELD_LOOP_INTERVAL);
-	_field_list.push_back(OBJECT_FIELD_IP);
-	_field_list.push_back(OBJECT_FIELD_MODULE);
-	_field_list.push_back(OBJECT_FIELD_COMMUNITY);
-	_field_list.push_back(OBJECT_FIELD_TIMEOUT);
-	_field_list.push_back(OBJECT_FIELD_UNIT);
-	_field_list.push_back(OBJECT_FIELD_SCALE);
-	_field_list.push_back(OBJECT_FIELD_UPDATE_INTERVAL);
-	_field_list.push_back(OBJECT_FIELD_SENSOR_ID);
+	_field_list.push_back(TITLE_NAME_ID);
+	_field_list.push_back(TITLE_NAME_NAME);
+	_field_list.push_back(TITLE_NAME_TYPE);
+	_field_list.push_back(TITLE_NAME_DATE);
+	_field_list.push_back(TITLE_NAME_ENABLE);
+	_field_list.push_back(TITLE_NAME_DEVICE_ID);
+	_field_list.push_back(TITLE_NAME_LIVE_CHECK_INTERVAL);
+	_field_list.push_back(TITLE_NAME_LOOP_INTERVAL);
+	_field_list.push_back(TITLE_NAME_IP);
+	_field_list.push_back(TITLE_NAME_MODULE);
+	_field_list.push_back(TITLE_NAME_COMMUNITY);
+	_field_list.push_back(TITLE_NAME_TIMEOUT);
+	_field_list.push_back(TITLE_NAME_UNIT);
+	_field_list.push_back(TITLE_NAME_SCALE);
+	_field_list.push_back(TITLE_NAME_UPDATE_INTERVAL);
+	_field_list.push_back(TITLE_NAME_SENSOR_ID);
 
 	return	true;
 }
@@ -391,7 +391,7 @@ std::string	Object::GetTraceName() const
 
 void	Object::SetTrace(bool	_enable)
 {
-	trace.Enable(_enable);
+	trace.SetEnable(_enable);
 }
 
 int	Object::GetCount()

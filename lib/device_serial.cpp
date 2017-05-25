@@ -47,7 +47,7 @@ bool	DeviceSerial::GetProperties(Properties& _properties) const
 
 bool	DeviceSerial::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (strcasecmp(_property.GetName().c_str(), OBJECT_FIELD_DEV_NAME) == 0)
+	if (strcasecmp(_property.GetName().c_str(), TITLE_NAME_DEV_NAME) == 0)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)

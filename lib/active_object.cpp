@@ -156,7 +156,7 @@ bool	ActiveObject::GetProperties(Properties& _properties) const
 
 bool	ActiveObject::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (_property.GetName() == OBJECT_FIELD_LOOP_INTERVAL)
+	if (_property.GetName() == TITLE_NAME_LOOP_INTERVAL)
 	{
 		const ValueInt* value = dynamic_cast<const ValueInt*>(_property.GetValue());
 		if (value != NULL)

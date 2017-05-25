@@ -18,6 +18,7 @@ class	Object
 public:
 	friend class	ObjectManager;
 	friend class	Trace;
+	friend class	TraceMaster;
 
 	enum	Stat
 	{

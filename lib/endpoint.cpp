@@ -8,10 +8,9 @@
 #include "endpoint_sensor_temperature.h"
 #include "endpoint_sensor_humidity.h"
 
-static	bool	trace_on = true;
-
 Endpoint::Endpoint(ObjectManager& _manager)
-:	manager_(_manager), 
+:	ActiveObject(),
+	manager_(_manager), 
 	device_id_(""), 
 	active_(false), 
 	update_interval_(ENDPOINT_UPDATE_INTERVAL), 
@@ -21,7 +20,6 @@ Endpoint::Endpoint(ObjectManager& _manager)
 	value_map_(ENDPOINT_VALUE_COUNT_MAX),
 	last_report_date_()
 {
-	trace.Enable(trace_on);
 	manager_.Attach(this);
 }
 
@@ -156,7 +154,7 @@ bool	Endpoint::GetProperties(Properties& _properties) const
 
 bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (create && (_property.GetName() == OBJECT_FIELD_ID))
+	if (create && (_property.GetName() == TITLE_NAME_ID))
 	{
 		ValueID	old_id = id_;
 
@@ -178,7 +176,7 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 			TRACE_INFO("Property id value type is incorrect!");
 		}
 	}
-	else if (_property.GetName() == OBJECT_FIELD_UNIT)
+	else if (_property.GetName() == TITLE_NAME_UNIT)
 	{
 		const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (string_value != NULL)
@@ -189,7 +187,7 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 
 		TRACE_ERROR("Property[" << id_ << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
 	}
-	else if (_property.GetName() == OBJECT_FIELD_SCALE)
+	else if (_property.GetName() == TITLE_NAME_SCALE)
 	{
 		const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (string_value != NULL)
@@ -214,7 +212,7 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 
 		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
 	}
-	else if (_property.GetName() == OBJECT_FIELD_UPDATE_INTERVAL)
+	else if (_property.GetName() == TITLE_NAME_UPDATE_INTERVAL)
 	{
 		const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (string_value != NULL)
@@ -239,7 +237,7 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 
 		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
 	}
-	else if (_property.GetName() == OBJECT_FIELD_SENSOR_ID)
+	else if (_property.GetName() == TITLE_NAME_SENSOR_ID)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
@@ -250,7 +248,7 @@ bool	Endpoint::SetPropertyInternal(Property const& _property, bool create)
 
 		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
 	}
-	else if (_property.GetName() == OBJECT_FIELD_DEVICE_ID)
+	else if (_property.GetName() == TITLE_NAME_DEVICE_ID)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
@@ -568,7 +566,7 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, Properties const& _propertie
 {
 
 	Endpoint*	endpoint = NULL;
-	const Property *type_property = _properties.Get(OBJECT_FIELD_TYPE);
+	const Property *type_property = _properties.Get(TITLE_NAME_TYPE);
 	if (type_property != NULL)
 	{
 		const ValueString*	type_value = dynamic_cast<const ValueString*>(type_property->GetValue());
@@ -576,7 +574,7 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, Properties const& _propertie
 		{
 			Properties	properties(_properties);
 
-			properties.Delete(OBJECT_FIELD_TYPE);
+			properties.Delete(TITLE_NAME_TYPE);
 
 			if (strcasecmp(type_value->Get().c_str(), ENDPOINT_TYPE_NAME_TEMPERATURE) == 0)
 			{
@@ -625,17 +623,17 @@ std::string	Endpoint::ToString(Type _type)
 
 bool	Endpoint::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
-	_field_list.push_back(OBJECT_FIELD_ID);
-	_field_list.push_back(OBJECT_FIELD_NAME);
-	_field_list.push_back(OBJECT_FIELD_TYPE);
-	_field_list.push_back(OBJECT_FIELD_DATE);
-	_field_list.push_back(OBJECT_FIELD_ENABLE);
-	_field_list.push_back(OBJECT_FIELD_DEVICE_ID);
-	_field_list.push_back(OBJECT_FIELD_LOOP_INTERVAL);
-	_field_list.push_back(OBJECT_FIELD_UNIT);
-	_field_list.push_back(OBJECT_FIELD_SCALE);
-	_field_list.push_back(OBJECT_FIELD_UPDATE_INTERVAL);
-	_field_list.push_back(OBJECT_FIELD_SENSOR_ID);
+	_field_list.push_back(TITLE_NAME_ID);
+	_field_list.push_back(TITLE_NAME_NAME);
+	_field_list.push_back(TITLE_NAME_TYPE);
+	_field_list.push_back(TITLE_NAME_DATE);
+	_field_list.push_back(TITLE_NAME_ENABLE);
+	_field_list.push_back(TITLE_NAME_DEVICE_ID);
+	_field_list.push_back(TITLE_NAME_LOOP_INTERVAL);
+	_field_list.push_back(TITLE_NAME_UNIT);
+	_field_list.push_back(TITLE_NAME_SCALE);
+	_field_list.push_back(TITLE_NAME_UPDATE_INTERVAL);
+	_field_list.push_back(TITLE_NAME_SENSOR_ID);
 
 	return	true;
 }

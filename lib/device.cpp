@@ -11,12 +11,9 @@
 #include "endpoint.h"
 
 
-static	bool	trace_on = true;
-
 Device::Device(ObjectManager& _manager, ValueType const& _type)
-:	manager_(_manager), type_(_type), live_check_interval_(OBJECT_LIVE_CHECK_INTERVAL_SEC * TIME_SECOND)
+:	ActiveObject(), manager_(_manager), type_(_type), live_check_interval_(OBJECT_LIVE_CHECK_INTERVAL_SEC * TIME_SECOND)
 {
-	trace.Enable(trace_on);
 	manager_.Attach(this);
 }
 
@@ -76,7 +73,7 @@ bool	Device::GetProperties(Properties& _properties) const
 
 bool	Device::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (create && (_property.GetName() == OBJECT_FIELD_ID))
+	if (create && (_property.GetName() == TITLE_NAME_ID))
 	{
 		ValueID	old_id = id_;
 
@@ -98,7 +95,7 @@ bool	Device::SetPropertyInternal(Property const& _property, bool create)
 			TRACE_INFO("Property id value type is incorrect!");
 		}
 	}
-	else if (_property.GetName() == OBJECT_FIELD_LIVE_CHECK_INTERVAL)
+	else if (_property.GetName() == TITLE_NAME_LIVE_CHECK_INTERVAL)
 	{
 		const ValueInt*	int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
 		if (int_value != NULL)
@@ -121,7 +118,7 @@ bool	Device::SetPropertyInternal(Property const& _property, bool create)
 			
 		TRACE_INFO("Property live_check_interval value type is incorrect!");
 	}
-	else if (_property.GetName() == OBJECT_FIELD_ENDPOINTS)
+	else if (_property.GetName() == TITLE_NAME_ENDPOINTS)
 	{
 		const ValuePropertiesList* properties_list_value = dynamic_cast<const ValuePropertiesList*>(_property.GetValue());
 		if (properties_list_value != NULL)
@@ -129,7 +126,7 @@ bool	Device::SetPropertyInternal(Property const& _property, bool create)
 			const PropertiesList& 	properties_list = properties_list_value->Get();
 			for(auto it = properties_list.begin(); it != properties_list.end() ; it++)
 			{
-				const Property* device_id_property = it->Get(OBJECT_FIELD_DEVICE_ID);
+				const Property* device_id_property = it->Get(TITLE_NAME_DEVICE_ID);
 				if (device_id_property != NULL)
 				{
 					TRACE_ERROR("The device id property can't be defined.");
@@ -436,7 +433,7 @@ bool	Device::IsValidType(std::string const& _type)
 Device*	Device::Create(ObjectManager& _manager, Properties const& _properties)
 {
 	Device*	device = NULL;
-	const Property *type_property = _properties.Get(OBJECT_FIELD_TYPE);
+	const Property *type_property = _properties.Get(TITLE_NAME_TYPE);
 
 	if (type_property != NULL)
 	{
@@ -445,7 +442,7 @@ Device*	Device::Create(ObjectManager& _manager, Properties const& _properties)
 		{
 			Properties	properties(_properties);
 
-			properties.Delete(OBJECT_FIELD_TYPE);
+			properties.Delete(TITLE_NAME_TYPE);
 
 			if (std::string(*type_value) == std::string(DeviceSNMP::Type()))
 			{
@@ -532,18 +529,18 @@ const	ValueType&	Device::Type()
 
 bool	Device::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
-	_field_list.push_back(OBJECT_FIELD_ID);
-	_field_list.push_back(OBJECT_FIELD_NAME);
-	_field_list.push_back(OBJECT_FIELD_TYPE);
-	_field_list.push_back(OBJECT_FIELD_DATE);
-	_field_list.push_back(OBJECT_FIELD_ENABLE);
-	_field_list.push_back(OBJECT_FIELD_DEVICE_ID);
-	_field_list.push_back(OBJECT_FIELD_LIVE_CHECK_INTERVAL);
-	_field_list.push_back(OBJECT_FIELD_LOOP_INTERVAL);
-	_field_list.push_back(OBJECT_FIELD_IP);
-	_field_list.push_back(OBJECT_FIELD_MODULE);
-	_field_list.push_back(OBJECT_FIELD_COMMUNITY);
-	_field_list.push_back(OBJECT_FIELD_TIMEOUT);
+	_field_list.push_back(TITLE_NAME_ID);
+	_field_list.push_back(TITLE_NAME_NAME);
+	_field_list.push_back(TITLE_NAME_TYPE);
+	_field_list.push_back(TITLE_NAME_DATE);
+	_field_list.push_back(TITLE_NAME_ENABLE);
+	_field_list.push_back(TITLE_NAME_DEVICE_ID);
+	_field_list.push_back(TITLE_NAME_LIVE_CHECK_INTERVAL);
+	_field_list.push_back(TITLE_NAME_LOOP_INTERVAL);
+	_field_list.push_back(TITLE_NAME_IP);
+	_field_list.push_back(TITLE_NAME_MODULE);
+	_field_list.push_back(TITLE_NAME_COMMUNITY);
+	_field_list.push_back(TITLE_NAME_TIMEOUT);
 	return	true;
 }
 

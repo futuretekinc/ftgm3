@@ -168,6 +168,18 @@ RetValue	ShellCommandEndpoint
 		{
 			ret_value = RET_VALUE_INVALID_ARGUMENTS;
 		}
+		else if (_arguments[2] == "all")
+		{
+			std::list<Endpoint*>	endpoint_list;
+
+			object_manager->GetEndpointList(endpoint_list);
+
+			for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+			{
+				(*it)->Start();
+				std::cout << "The endpoint[" << (*it)->GetTraceName() << "] is started!" << std::endl;
+			}
+		}
 		else
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
@@ -193,6 +205,18 @@ RetValue	ShellCommandEndpoint
 		{
 			ret_value = RET_VALUE_INVALID_ARGUMENTS;
 		}
+		else if (_arguments[2] == "all")
+		{
+			std::list<Endpoint*>	endpoint_list;
+
+			object_manager->GetEndpointList(endpoint_list);
+
+			for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+			{
+				(*it)->Stop();
+				std::cout << "The endpoint[" << (*it)->GetTraceName() << "] is stopped!" << std::endl;
+			}
+		}
 		else
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
@@ -216,6 +240,18 @@ RetValue	ShellCommandEndpoint
 		{
 			ret_value = RET_VALUE_INVALID_ARGUMENTS;
 		}
+		else if (_arguments[2] == "all")
+		{
+			std::list<Endpoint*>	endpoint_list;
+
+			object_manager->GetEndpointList(endpoint_list);
+
+			for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+			{
+				(*it)->SetEnable(true);
+				std::cout << "The endpoint[" << (*it)->GetTraceName() << "] is enabled!" << std::endl;
+			}
+		}
 		else
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
@@ -238,6 +274,18 @@ RetValue	ShellCommandEndpoint
 		if (_count < 3)
 		{
 			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+		}
+		else if (_arguments[2] == "all")
+		{
+			std::list<Endpoint*>	endpoint_list;
+
+			object_manager->GetEndpointList(endpoint_list);
+
+			for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+			{
+				(*it)->SetEnable(false);
+				std::cout << "The endpoint[" << (*it)->GetTraceName() << "] is disabled!" << std::endl;
+			}
 		}
 		else
 		{
