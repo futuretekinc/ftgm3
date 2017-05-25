@@ -13,14 +13,14 @@
 #include "trace.h"
 #include "message.h"
 #include "object_manager.h"
-#include "remote_message_server.h"
+#include "rcs_session.h"
 
 
 /////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////
-TCPServer::TCPServer()
-: port_(8888), max_session_count_(10), timeout_(60 * TIME_SECOND), onMessageCallback_(NULL), object_manager_(NULL)
+TCPServer::TCPServer(ObjectManager* _manager)
+: manager_(_manager), port_(8888), max_session_count_(10), timeout_(60 * TIME_SECOND), onMessageCallback_(NULL)
 {
 	trace.SetClassName(GetClassName());
 	enable_	= true;
@@ -37,9 +37,68 @@ TCPServer::~TCPServer()
 	session_map_locker_.Unlock();
 }
 
-void	TCPServer::Attach(ObjectManager* _object_manager)
+bool	TCPServer::Load(JSONNode const& _json)
 {
-	object_manager_ = _object_manager;
+	bool	ret_value = true;
+
+	if ((_json.name() == TITLE_NAME_TCP_SERVER) || (_json.name().size() == 0))
+	{
+		if (_json.type() == JSON_NODE)
+		{
+			for(auto it = _json.begin(); it != _json.end() ; it++)
+			{
+				ret_value = Load(*it);
+				if (!ret_value)
+				{
+					std::cout << "Invalid format" << std::endl;
+				}
+			}
+		}
+	}
+	else if (_json.name() == TITLE_NAME_PORT)
+	{
+		port_ = _json.as_int();
+	}
+	else if (_json.name() == TITLE_NAME_ENABLE)
+	{
+		if ((_json.as_string() == "yes") ||  (_json.as_string() == "on"))
+		{
+			SetEnable(true);
+		}
+		else if ((_json.as_string() == "no") ||  (_json.as_string() == "off"))
+		{
+			SetEnable(false);
+		}
+	}
+	else if (_json.name() == TITLE_NAME_TIMEOUT)
+	{
+		timeout_ = _json.as_int();
+	}
+	else
+	{
+		ret_value = ActiveObject::Load(_json);
+	}
+
+	return	ret_value;
+}
+
+TCPServer::operator JSONNode() const
+{
+	JSONNode	root;
+	
+	root.push_back(JSONNode(TITLE_NAME_PORT, port_));
+	root.push_back(JSONNode(TITLE_NAME_TIMEOUT, timeout_));
+	root.push_back(JSONNode(TITLE_NAME_ENABLE, ((enable_)?"yes":"no")));
+
+	JSONNode	trace_config = trace;
+
+	if (trace_config.size() != 0)
+	{
+		trace_config.set_name(TITLE_NAME_TRACE);
+		root.push_back(trace_config);
+	}
+
+	return	root;
 }
 
 bool	TCPServer::SetPropertyInternal(Property const& _property, bool create)
@@ -137,14 +196,10 @@ void	TCPServer::Process()
 		{
 			try
 			{
-				RemoteMessageServer*	rms = new RemoteMessageServer(this,client_socket, &client, timeout_);
-
-				object_manager_->Attach(rms);
-				rms->SetTrace(true);
-				rms->Start();
+				TCPSession* session = CreateSession(this, client_socket, &client, timeout_);
 
 				session_map_locker_.Lock();
-				session_map_[ntohs(client.sin_port)] = rms;
+				session_map_[ntohs(client.sin_port)] = session;
 				session_map_locker_.Unlock();
 
 				TRACE_INFO("New session created[" << inet_ntoa(client.sin_addr) << ":" << ntohs(client.sin_port) << "]");
@@ -169,6 +224,10 @@ void	TCPServer::Postprocess()
 	session_map_locker_.Unlock();
 }
 
+TCPSession*	TCPServer::CreateSession(TCPServer *_server, int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout)
+{
+	return	new TCPSession(_server, _socket, _addr_info, _timeout);
+}
 
 bool	TCPServer::SessionDisconnected
 (

@@ -98,6 +98,7 @@ public:
 			uint32_t	GetDownLinkNameList(std::list<std::string>& _topic_name_list);
 
 
+			bool		Start();
 			bool		Produce(std::string const& _topic_name, int32_t _partition, std::string const& _message);
 
 protected:

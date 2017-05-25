@@ -8,7 +8,8 @@
 #include "device.h"
 #include "data_manager.h"
 #include "message.h"
-#include "remote_message_server.h"
+#include "rcs_server.h"
+#include "rcs_session.h"
 #include "server_linker.h"
 
 class	ObjectManager : public ActiveObject
@@ -52,8 +53,8 @@ public:
 			bool		Attach(DataManager* _data_manager);
 
 			// External Service Call Server
-			bool		Attach(RemoteMessageServer* _rms);
-			bool		Detach(RemoteMessageServer* _rms);
+			bool		Attach(RCSSession* _rms);
+			bool		Detach(RCSSession* _rms);
 
 protected:
 	
@@ -79,10 +80,11 @@ protected:
 	Timer				endpoint_report_timer_;
 
 	DataManager									data_manager_;
-	ServerLinker								server_linker_;
-	std::map<std::string,RemoteMessageServer*>	rms_map_;
-	std::map<std::string,Device*>				device_map_;
-	std::map<std::string,Endpoint*>				endpoint_map_;
+	ServerLinker						server_linker_;
+	RCSServer							rcs_server_;
+	std::map<std::string,RCSSession*>	rms_map_;
+	std::map<std::string,Device*>		device_map_;
+	std::map<std::string,Endpoint*>		endpoint_map_;
 
 };
 

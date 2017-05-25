@@ -11,6 +11,7 @@
 ObjectManager::ObjectManager()
 : 	ActiveObject(), 
 	server_linker_(), 
+	rcs_server_(this),
 	data_manager_(DEFAULT_CONST_DB_FILE),
 	endpoint_report_interval_(ENDPOINT_REPORT_INTERVAL),
 	auto_start_(false)
@@ -19,7 +20,6 @@ ObjectManager::ObjectManager()
 	enable_ = true;
 
 	trace.SetClassName(GetClassName());
-	server_linker_.AddBroker(DEFAULT_CONST_SERVER_LINKER_BROKER);
 }
 
 ObjectManager::~ObjectManager()
@@ -101,7 +101,27 @@ bool	ObjectManager::Load(JSONNode const& _json)
 {
 	bool	ret_value = true;
 
-	if (_json.name() == TITLE_NAME_AUTO_START)
+	if ((_json.name() == TITLE_NAME_OBJECT_MANAGER) || (_json.name().size() == 0))
+	{
+		if (_json.type() == JSON_NODE)
+		{
+			std::cout << "Name : " << _json.name() << std::endl;
+			for(auto it = _json.begin(); it != _json.end() ; it++)
+			{
+				ret_value = Load(*it);
+				if(ret_value == false)
+				{
+					break;
+				}
+			}
+		}
+		else
+		{
+			TRACE_ERROR("Failed to load because json format is invalid.");
+			ret_value = false;	
+		}
+	}
+	else if (_json.name() == TITLE_NAME_AUTO_START)
 	{
 		if ((_json.as_string() == "yes") ||  (_json.as_string() == "on"))
 		{
@@ -156,20 +176,13 @@ bool	ObjectManager::Load(JSONNode const& _json)
 	{
 		ret_value = server_linker_.Load(_json);
 	}
+	else if (_json.name() == TITLE_NAME_RCS_SERVER)
+	{
+		ret_value = rcs_server_.Load(_json);
+	}
 	else if (_json.name() == TITLE_NAME_TRACE)
 	{
 		ret_value = trace_master.Load(_json);
-	}
-	else if (_json.type() == JSON_NODE)
-	{
-		for(auto it = _json.begin(); it != _json.end() ; it++)
-		{
-			ret_value = Load(*it);
-			if(ret_value == false)
-			{
-				break;
-			}
-		}
 	}
 	else
 	{
@@ -193,6 +206,10 @@ ObjectManager::operator JSONNode() const
 
 	item = JSONNode(server_linker_);
 	item.set_name(TITLE_NAME_SERVER_LINKER);
+	root.push_back(item);
+
+	item = JSONNode(rcs_server_);
+	item.set_name(TITLE_NAME_RCS_SERVER);
 	root.push_back(item);
 
 	item = JSONNode(trace_master);
@@ -456,6 +473,13 @@ void	ObjectManager::Preprocess()
 		usleep(TIME_MILLISECOND);
 	}
 
+	rcs_server_.Start();
+	while(!rcs_server_.IsRunning())
+	{
+		usleep(TIME_MILLISECOND);
+	}
+
+
 	uint32_t count = data_manager_.GetDeviceCount();
 	TRACE_INFO("Device Count : " << count);
 
@@ -571,11 +595,10 @@ void	ObjectManager::Process()
 
 void	ObjectManager::Postprocess()
 {
+	rcs_server_.Stop(true);
 	server_linker_.Stop();
 	ActiveObject::Postprocess();
 }
-
-
 
 bool	ObjectManager::Attach(Device* _device)
 {
@@ -647,34 +670,34 @@ bool	ObjectManager::Detach(Endpoint* _endpoint)
 	return	true;
 }
 
-bool	ObjectManager::Attach(RemoteMessageServer* _rms)
+bool	ObjectManager::Attach(RCSSession* _session)
 {
-	auto it = rms_map_.find(_rms->GetID());
+	auto it = rms_map_.find(_session->GetID());
 	if (it != rms_map_.end())
 	{
-		TRACE_ERROR("The rms[" << _rms->GetTraceName() << "] has been already attached.");
+		TRACE_ERROR("The rms[" << _session->GetTraceName() << "] has been already attached.");
 		return	false;	
 	}
 
-	rms_map_[_rms->GetID()] = _rms;
-	_rms->SetObjectManager(this);
+	rms_map_[_session->GetID()] = _session;
+	_session->SetObjectManager(this);
 
-	TRACE_INFO("The rms[" << _rms->GetTraceName() << "] has been attached."); 
+	TRACE_INFO("The rms[" << _session->GetTraceName() << "] has been attached."); 
 
 	return	true;
 }
 
-bool	ObjectManager::Detach(RemoteMessageServer* _rms)
+bool	ObjectManager::Detach(RCSSession* _session)
 {
-	auto it = rms_map_.find(_rms->GetID());
+	auto it = rms_map_.find(_session->GetID());
 	if (it == rms_map_.end())
 	{
-		TRACE_ERROR("The rms[" << _rms->GetTraceName() << "] not attached.");
+		TRACE_ERROR("The rms[" << _session->GetTraceName() << "] not attached.");
 		return	false;	
 	}
 
 	rms_map_.erase(it);
-	_rms->SetObjectManager(NULL);
+	_session->SetObjectManager(NULL);
 
 	return	true;
 }

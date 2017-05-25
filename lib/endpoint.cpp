@@ -316,7 +316,7 @@ bool	Endpoint::Detach()
 }
 
 
-void	Endpoint::Start()
+bool	Endpoint::Start()
 {
 	if (enable_)
 	{
@@ -339,20 +339,26 @@ void	Endpoint::Start()
 			else
 			{
 				TRACE_ERROR("Failed to start because the endpoint is not attached to device.");
+				return	false;
 			}
 		}
 	}
 	else
 	{
 		TRACE_INFO("Failed to start endpoint because endpoint is disabled!");	
+		return	false;
 	}
+
+	return	true;
 }
 
-void	Endpoint::Stop()
+bool	Endpoint::Stop(bool _wait)
 {
+	bool	ret_value = true;
+
 	if (active_)
 	{
-		ActiveObject::Stop();
+		ret_value = ActiveObject::Stop(_wait);
 		TRACE_INFO("Endpoint is stopped.");
 	}
 	else
@@ -367,8 +373,11 @@ void	Endpoint::Stop()
 		else
 		{
 			TRACE_ERROR("Failed to stop because the endpoint is not attached to device.");
+			ret_value = false;
 		}
 	}
+
+	return	ret_value;
 }
 
 bool	Endpoint::IsRunning()

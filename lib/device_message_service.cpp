@@ -6,9 +6,9 @@
 #include "device.h"
 #include "endpoint.h"
 #include "property.h"
-#include "remote_message_server.h"
+#include "rcs_session.h"
 
-bool	RemoteMessageServer::DeviceMessageService::Service(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::Service(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -69,7 +69,7 @@ bool	RemoteMessageServer::DeviceMessageService::Service(RemoteMessageServer& _rm
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::Add(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::Add(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -115,7 +115,7 @@ bool	RemoteMessageServer::DeviceMessageService::Add(RemoteMessageServer& _rms, J
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::ArrayAdd(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::ArrayAdd(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -178,7 +178,7 @@ bool	RemoteMessageServer::DeviceMessageService::ArrayAdd(RemoteMessageServer& _r
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::Del(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::Del(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -205,7 +205,7 @@ bool	RemoteMessageServer::DeviceMessageService::Del(RemoteMessageServer& _rms, J
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::ArrayDel(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::ArrayDel(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -262,7 +262,7 @@ bool	RemoteMessageServer::DeviceMessageService::ArrayDel(RemoteMessageServer& _r
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::List(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::List(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 
@@ -283,7 +283,7 @@ bool	RemoteMessageServer::DeviceMessageService::List(RemoteMessageServer& _rms, 
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::Get(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::Get(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -331,7 +331,7 @@ bool	RemoteMessageServer::DeviceMessageService::Get(RemoteMessageServer& _rms, J
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::ArrayGet(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::ArrayGet(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -390,7 +390,7 @@ bool	RemoteMessageServer::DeviceMessageService::ArrayGet(RemoteMessageServer& _r
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::Set(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::Set(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -439,7 +439,7 @@ bool	RemoteMessageServer::DeviceMessageService::Set(RemoteMessageServer& _rms, J
 }
 
 
-bool	RemoteMessageServer::DeviceMessageService::Start(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::Start(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -474,7 +474,7 @@ bool	RemoteMessageServer::DeviceMessageService::Start(RemoteMessageServer& _rms,
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::ArrayStart(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::ArrayStart(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -528,7 +528,7 @@ bool	RemoteMessageServer::DeviceMessageService::ArrayStart(RemoteMessageServer& 
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::Stop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::Stop(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -563,7 +563,7 @@ bool	RemoteMessageServer::DeviceMessageService::Stop(RemoteMessageServer& _rms, 
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::ArrayStop(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::ArrayStop(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -617,7 +617,7 @@ bool	RemoteMessageServer::DeviceMessageService::ArrayStop(RemoteMessageServer& _
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::Enable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::Enable(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -652,7 +652,7 @@ bool	RemoteMessageServer::DeviceMessageService::Enable(RemoteMessageServer& _rms
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::ArrayEnable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::ArrayEnable(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -706,7 +706,7 @@ bool	RemoteMessageServer::DeviceMessageService::ArrayEnable(RemoteMessageServer&
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::Disable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::Disable(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try
@@ -741,7 +741,7 @@ bool	RemoteMessageServer::DeviceMessageService::Disable(RemoteMessageServer& _rm
 	return	result;
 }
 
-bool	RemoteMessageServer::DeviceMessageService::ArrayDisable(RemoteMessageServer& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
+bool	RCSSession::DeviceMessageService::ArrayDisable(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
 	try

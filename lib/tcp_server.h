@@ -22,12 +22,14 @@ public:
 		MessageSessionDisconnected(uint16_t _port) : Message(MSG_TYPE_SESSION_DISCONNECTED), port(_port) {};
 	};
 
-	TCPServer();
+	TCPServer(ObjectManager* _manager);
 	~TCPServer();
 
-	void		Attach(ObjectManager* _object_manager);
+	bool		Load(JSONNode const& _json);
 
+				operator JSONNode() const;
 
+	TCPSession*	CreateSession(TCPServer *_server, int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout);
 	bool		SessionDisconnected(uint16_t _port);
 	bool		PacketReceived(uint16_t _port, void* _data, uint32_t _length);
 
@@ -46,7 +48,7 @@ protected:
 	uint32_t	max_session_count_;
 	uint32_t	timeout_;
 
-	ObjectManager*	object_manager_;
+	ObjectManager*	manager_;
 	int			socket_;	
 	
 	bool		(*onMessageCallback_)(void*, Message*);

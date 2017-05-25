@@ -22,6 +22,34 @@ ActiveObject::~ActiveObject()
 	Message::UnregisterRecipient(id_);
 }
 
+bool	ActiveObject::Load(JSONNode const& _json)
+{
+	bool	ret_value = true;
+
+	if (_json.name() == TITLE_NAME_TRACE)
+	{
+		ret_value = trace.Load(_json);
+	}
+	else
+	{
+		TRACE_ERROR("Invalid json format");
+		ret_value = false;
+	}
+
+	return	ret_value;
+}
+
+ActiveObject::operator JSONNode() const
+{
+	JSONNode	root;
+
+	JSONNode	trace_config = trace;
+	trace_config.set_name(TITLE_NAME_TRACE);
+	root.push_back(trace_config);
+
+	return	root;
+}
+
 bool	ActiveObject::SetEnable(bool _enable, bool _store)
 {
 	if (enable_ != _enable)
@@ -61,8 +89,9 @@ Object::Stat	ActiveObject::GetStat() const
 	}
 }
 
-void	ActiveObject::Start()
+bool	ActiveObject::Start()
 {
+	bool	ret_value = true;
 	Timer	timer;
 
 	if (enable_)
@@ -90,11 +119,15 @@ void	ActiveObject::Start()
 	else
 	{
 		TRACE_ERROR("The object[" << GetTraceName() << "] is disabled.");	
+		ret_value = false;
 	}
+
+	return	ret_value;
 }
 
-void	ActiveObject::Stop(bool _wait)
+bool	ActiveObject::Stop(bool _wait)
 {
+	bool	ret_value = true;
 	try
 	{
 		if (thread_.joinable())
@@ -110,7 +143,10 @@ void	ActiveObject::Stop(bool _wait)
 	catch(exception& e)
 	{
 		TRACE_ERROR("Exception occurred[" << e.what());	
+		ret_value = false;
 	}
+
+	return	ret_value;
 }
 
 void	ActiveObject::Run()

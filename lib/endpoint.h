@@ -95,8 +95,8 @@ public:
 			bool		Detach(ValueID const& _device_id);
 			bool		Detach();
 
-			void		Start();
-			void		Stop();
+	virtual	bool		Start();
+	virtual	bool		Stop(bool _wait = false);
 
 	virtual	bool		IsRunning();
 	static	bool		IsValidType(std::string const& _type);

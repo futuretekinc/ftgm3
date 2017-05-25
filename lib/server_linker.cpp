@@ -222,11 +222,46 @@ bool	ServerLinker::DownLink::Stop()
 /////////////////////////////////////////////////////////////////////////////////////////////
 //	Class ServerLinker
 /////////////////////////////////////////////////////////////////////////////////////////////
+ServerLinker::ServerLinker()
+: ActiveObject(), event_cb_(*this), delivery_report_cb_(*this), consumer_(NULL), producer_(NULL)
+{
+	trace.SetClassName(GetClassName());
+	name_ 	= "link";
+	enable_ = true;
+}
+
+ServerLinker::~ServerLinker()
+{
+	for(auto it = up_link_map_.begin() ; it != up_link_map_.end() ; it++)
+	{
+		delete it->second;	
+	}
+
+	for(auto it = down_link_map_.begin() ; it != down_link_map_.end() ; it++)
+	{
+		delete it->second;	
+	}
+}
+
 bool	ServerLinker::Load(JSONNode const& _json)
 {
 	bool	ret_value = true;
 
-	if (_json.name() == TITLE_NAME_BROKER)
+	if ((_json.name() == TITLE_NAME_SERVER_LINKER) || (_json.name().size() == 0))
+	{
+		if (_json.type() == JSON_NODE)
+		{
+			for(auto it = _json.begin(); it != _json.end() ; it++)
+			{
+				ret_value = Load(*it);
+				if (!ret_value)
+				{
+					std::cout << "Invalid format" << std::endl;
+				}
+			}
+		}
+	}
+	else if (_json.name() == TITLE_NAME_BROKER)
 	{
 		if (_json.type() == JSON_ARRAY)
 		{
@@ -245,25 +280,9 @@ bool	ServerLinker::Load(JSONNode const& _json)
 			ret_value = false;	
 		}
 	}
-	else if (_json.name() == TITLE_NAME_TRACE)
+	else
 	{
-		ret_value = trace.Load(_json);	
-	}
-	else if (_json.type() == JSON_NODE)
-	{
-		for(auto it = _json.begin(); it != _json.end() ; it++)
-		{
-			ret_value = Load(*it);
-			if (!ret_value)
-			{
-				std::cout << "Invalid format" << std::endl;
-			}
-		}
-	}
-	else 
-	{
-		TRACE_ERROR("Invalid json format");
-		ret_value = false;
+		ret_value = ActiveObject::Load(_json);	
 	}
 
 	return	ret_value;
@@ -354,27 +373,6 @@ uint32_t	ServerLinker::GetDownLinkNameList(std::list<std::string>& _topic_name_l
 	}
 
 	return	_topic_name_list.size();
-}
-
-ServerLinker::ServerLinker()
-: ActiveObject(), event_cb_(*this), delivery_report_cb_(*this), consumer_(NULL), producer_(NULL)
-{
-	trace.SetClassName(GetClassName());
-	name_ 	= "link";
-	enable_ = true;
-}
-
-ServerLinker::~ServerLinker()
-{
-	for(auto it = up_link_map_.begin() ; it != up_link_map_.end() ; it++)
-	{
-		delete it->second;	
-	}
-
-	for(auto it = down_link_map_.begin() ; it != down_link_map_.end() ; it++)
-	{
-		delete it->second;	
-	}
 }
 
 RdKafka::Topic*	ServerLinker::CreateProducerTopic(std::string const& _topic_name, std::string& _error_string)
@@ -645,6 +643,16 @@ void	ServerLinker::OnMessage(Message* _message)
 		}
 
 	}
+}
+
+bool	ServerLinker::Start()
+{
+	if (broker_list_.size() == 0)
+	{
+		return	false;	
+	}
+
+	return	ActiveObject::Start();
 }
 
 bool	ServerLinker::Produce(std::string const& _topic_name, int32_t _partition, std::string const& _message)

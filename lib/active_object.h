@@ -11,14 +11,17 @@ public:
 	ActiveObject();
 	~ActiveObject();
 
+			bool	Load(JSONNode const& _json);
+					operator JSONNode() const;
+
 	virtual	bool	SetEnable(bool _enable, bool _store = true);
 
 			Stat	GetStat() const;
 			
 			bool	SetLoopInterval(Time const& _interval, bool _store = true);
 
-	virtual	void	Start();
-	virtual	void	Stop(bool _wait = false);
+	virtual	bool	Start();
+	virtual	bool	Stop(bool _wait = false);
 	virtual	void	Run();
 
 	virtual	bool	IsRunning();

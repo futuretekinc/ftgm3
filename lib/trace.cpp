@@ -92,8 +92,10 @@ void	Trace::SetEnable(bool _enable)
 	{
 		state_ = ENABLE;
 	}
-
-	state_ = DISABLE;
+	else
+	{
+		state_ = DISABLE;
+	}
 }
 
 Trace& Trace::Begin(TraceLevel _level, std::string const& _pretty_function, uint32_t _line)

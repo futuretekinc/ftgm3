@@ -49,29 +49,27 @@ bool	DataManager::Load(JSONNode const& _json)
 {
 	bool	ret_value = true;
 
-	if (_json.name() == TITLE_NAME_DATA_FILE)
+	if ((_json.name() == TITLE_NAME_DATA_MANAGER) || (_json.name().size() == 0))
 	{
-		file_name_ = _json.as_string();
-	}
-	else if (_json.name() == TITLE_NAME_TRACE)
-	{
-		ret_value = trace.Load(_json);
-	}
-	else if (_json.type() == JSON_NODE)
-	{
-		for(auto it = _json.begin(); it != _json.end() ; it++)
+		if (_json.type() == JSON_NODE)
 		{
-			ret_value = Load(*it);
-			if (!ret_value)
+			for(auto it = _json.begin(); it != _json.end() ; it++)
 			{
-				std::cout << "Invalid format" << std::endl;
+				ret_value = Load(*it);
+				if (!ret_value)
+				{
+					std::cout << "Invalid format" << std::endl;
+				}
 			}
 		}
 	}
+	else if (_json.name() == TITLE_NAME_DATA_FILE)
+	{
+		file_name_ = _json.as_string();
+	}
 	else
 	{
-		TRACE_ERROR("Invalid json format");
-		ret_value = false;
+		ret_value = ActiveObject::Load(_json);
 	}
 
 	return	ret_value;
@@ -85,7 +83,6 @@ DataManager::operator JSONNode() const
 
 	JSONNode	trace_config = trace;
 	trace_config.set_name(TITLE_NAME_TRACE);
-
 	root.push_back(trace_config);
 
 	return	root;

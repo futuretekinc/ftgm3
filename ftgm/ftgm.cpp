@@ -18,7 +18,6 @@ static void sigterm (int sig)
 int	main(int argc, char *argv[])
 {
 	ObjectManager	object_manager;
-	TCPServer		tcp_server;
 
 	try
 	{
@@ -39,15 +38,6 @@ int	main(int argc, char *argv[])
 			usleep(1000);
 		}
 
-		tcp_server.Attach(&object_manager);
-
-		tcp_server.Start();
-		while(!tcp_server.IsRunning())
-		{
-			usleep(1000);
-		}
-
-
 		//	signal(SIGINT, sigterm);
 		// 	signal(SIGTERM, sigterm);
 
@@ -55,7 +45,6 @@ int	main(int argc, char *argv[])
 
 		shell.Run();
 
-		tcp_server.Stop(true);
 		object_manager.Stop(true);
 	}
 	catch(std::exception& e)
