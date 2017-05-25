@@ -3,6 +3,7 @@
 #include <chrono>
 #include <unistd.h>
 #include <sys/time.h>
+#include "defined.h"
 #include "message_queue.h"
 #include "time.h"
 
@@ -85,7 +86,7 @@ bool MessageQueue::TimedWait
 			return	true;	
 		}
 
-		usleep(1000);	
+		usleep(TIME_MILLISECOND);	
 		gettimeofday(&timer, NULL);
 	}
 

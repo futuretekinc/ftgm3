@@ -229,7 +229,20 @@ bool	ServerLinker::DownLink::Stop()
 /////////////////////////////////////////////////////////////////////////////////////////////
 bool	ServerLinker::Load(JSONNode const& _json)
 {
-	if (_json.name() == "broker")
+	bool	ret_value = true;
+
+	if (_json.type() == JSON_NODE)
+	{
+		for(auto it = _json.begin(); it != _json.end() ; it++)
+		{
+			ret_value = Load(*it);
+			if (!ret_value)
+			{
+				std::cout << "Invalid format" << std::endl;
+			}
+		}
+	}
+	else if (_json.name() == "broker")
 	{
 		if (_json.type() == JSON_ARRAY)
 		{
@@ -244,24 +257,21 @@ bool	ServerLinker::Load(JSONNode const& _json)
 		}
 		else
 		{
-			return	false;	
+			TRACE_ERROR("Invalid json format");
+			ret_value = false;	
 		}
-
-		return	true;
 	}
-	else
+	else if (_json.name() == "trace")
 	{
-		for(auto it = _json.begin(); it != _json.end() ; it++)
-		{
-			if (!Load(*it))
-			{
-				std::cout << "Invalid format" << std::endl;
-				return	false;
-			}
-		}
+		ret_value = trace.Load(_json);	
+	}
+	else 
+	{
+		TRACE_ERROR("Invalid json format");
+		ret_value = false;
 	}
 
-	return	true;
+	return	ret_value;
 }
 
 bool		ServerLinker::AddBroker(std::string const& _broker)

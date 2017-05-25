@@ -39,6 +39,7 @@ extern	int			SNMP_COMMUNITY_LENGTH_MAX;
 extern	const char*	LOG_FILE_PATH;
 extern	uint32_t	LOG_FILE_SIZE;
 
+extern	const char* DB_DEFAULT_FILE;
 extern	const char* DB_TABLE_NAME_DEVICE;
 extern	const char* DB_TABLE_NAME_ENDPOINT;
 
@@ -81,6 +82,8 @@ extern	const char* OBJECT_FIELD_DEV_NAME;
 extern	const char* OBJECT_FIELD_ENDPOINTS;
 extern	const char* OBJECT_FIELD_VALUE_MAX;
 extern	const char* OBJECT_FIELD_VALUE_MIN;
+
+extern	const char*	MSG_BROKER_DEFAULT;
 
 extern	const char* MSG_FIELD_CMD;
 extern	const char* MSG_FIELD_TIME;

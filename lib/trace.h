@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <streambuf>
+#include <libjson/libjson.h>
 
 class	Object;
 class	Trace : public std::ostringstream
@@ -27,6 +28,8 @@ public:
 
 	bool	IsEnable()	{	return	enable_;	};
 	void	Enable(bool on);
+
+	bool	Load(JSONNode const& _json);
 
 	Trace& 	Begin(Trace::Level _level, std::string const& _pretty_function, uint32_t line);
 	Trace& 	Begin(Trace::Level _level, std::string const& _pretty_function, uint32_t line, Object* _object);

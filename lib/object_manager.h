@@ -67,15 +67,16 @@ protected:
 	virtual	void		Process();
 	virtual	void		Postprocess();
 
+	bool				auto_start_;
+	Time				endpoint_report_interval_;
+	Timer				endpoint_report_timer_;
+
 	DataManager									data_manager_;
 	ServerLinker								server_linker_;
 	std::map<std::string,RemoteMessageServer*>	rms_map_;
 	std::map<std::string,Device*>				device_map_;
 	std::map<std::string,Endpoint*>				endpoint_map_;
 
-	bool				auto_start_;
-	Time				endpoint_report_interval_;
-	Timer				endpoint_report_timer_;
 };
 
 #endif

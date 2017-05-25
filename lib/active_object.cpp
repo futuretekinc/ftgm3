@@ -79,7 +79,7 @@ void	ActiveObject::Start()
 				{
 					break;
 				}
-				usleep(1000);
+				usleep(TIME_MILLISECOND);
 			}
 		}
 		else
@@ -119,12 +119,12 @@ void	ActiveObject::Run()
 
 	while(!thread_.joinable())
 	{
-		usleep(1000);
+		usleep(TIME_MILLISECOND);
 	}
 
 	while(!stop_)
 	{
-		usleep(1000);
+		usleep(TIME_MILLISECOND);
 	}
 
 	thread_.join();

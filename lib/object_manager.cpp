@@ -11,22 +11,25 @@
 ObjectManager::ObjectManager()
 : 	ActiveObject(), 
 	server_linker_(), 
-	data_manager_("./ftgm.db"),
+	data_manager_(DB_DEFAULT_FILE),
 	endpoint_report_interval_(ENDPOINT_REPORT_INTERVAL),
-	auto_start_(true)
+	auto_start_(false)
 {
-	trace.SetClassName(GetClassName());
 	name_ 	= "object_manager";
 	enable_ = true;
 
-	server_linker_.AddBroker("ftr-app.japanwest.cloudapp.azure.com:9092");
-
-	TRACE_INFO("Create " << GetTraceName());
+	trace.SetClassName(GetClassName());
+	server_linker_.AddBroker(MSG_BROKER_DEFAULT);
 }
 
 ObjectManager::~ObjectManager()
 {
 	for(auto it = device_map_.begin() ; it != device_map_.end() ; it++)
+	{
+		delete it->second;
+	}
+
+	for(auto it = endpoint_map_.begin() ; it != endpoint_map_.end() ; it++)
 	{
 		delete it->second;
 	}
@@ -69,52 +72,84 @@ bool ObjectManager::Load(const char *_buffer)
 
 bool	ObjectManager::Load(JSONNode const& _json)
 {
-	if (_json.name() == "devices")
+	bool	ret_value = true;
+	if (_json.type() == JSON_NODE)
 	{
-		if (_json.type() != JSON_ARRAY)
-		{
-			return	false;
-		}
-
 		for(auto it = _json.begin(); it != _json.end() ; it++)
+		{
+			ret_value = Load(*it);
+			if (!ret_value)
+			{
+				TRACE_ERROR("Invalid json format");
+			}
+		}
+	}
+	else if (_json.name() == "auto_start")
+	{
+		if ((_json.as_string() == "yes") &&  (_json.as_string() == "on"))
+		{
+			auto_start_ = true;
+		}
+		else if ((_json.as_string() == "no") &&  (_json.as_string() == "off"))
+		{
+			auto_start_ = false;
+		}
+	}
+	else if (_json.name() == "endpoint_report_interval")
+	{
+		endpoint_report_interval_ = _json.as_int();
+	}
+	else if (_json.name() == "device")
+	{
+		if (_json.type() == JSON_ARRAY)
+		{
+			for(auto it = _json.begin(); it != _json.end() ; it++)
+			{
+				Properties	properties;
+
+				properties.Append(*it);
+
+				Device *device = CreateDevice(properties);
+				if (device == NULL)
+				{
+					TRACE_ERROR("Failed to create device!");
+					ret_value = false;
+				}
+			}
+		}
+		else if (_json.type() == JSON_NODE)
 		{
 			Properties	properties;
 
-			properties.Append(*it);
+			properties.Append(_json);
 
 			Device *device = CreateDevice(properties);
 			if (device == NULL)
 			{
 				TRACE_ERROR("Failed to create device!");
+				ret_value = false;
 			}
 		}
 	}
 	else if (_json.name() == "database")
 	{
-		return	data_manager_.Load(_json);
+		ret_value = data_manager_.Load(_json);
 	}
 	else if (_json.name() == "server")
 	{
-		return	server_linker_.Load(_json);
+		ret_value = server_linker_.Load(_json);
 	}
-	else if (_json.type() != JSON_NODE)
+	else if (_json.name() == "trace")
 	{
-		std::cout << "Invalid json format" << std::endl;
-		return	false;
+		ret_value = trace.Load(_json);
 	}
 	else
 	{
-		for(auto it = _json.begin(); it != _json.end() ; it++)
-		{
-			if (!Load(*it))
-			{
-				std::cout << "Invalid format" << std::endl;
-				return	false;
-			}
-		}
+		TRACE_ERROR("Invalid json format");
+		ret_value = false;
 	}
 
-	return	true;
+	return	ret_value;
 }
 
 Device*		ObjectManager::CreateDevice(Properties const& _properties, bool from_db)
@@ -188,11 +223,6 @@ Device*		ObjectManager::GetDevice(std::string const& _id)
 		return	it->second;	
 	}
 
-	for(auto it = device_map_.begin(); it != device_map_.end() ; it++)
-	{
-		TRACE_ERROR("Device : " << it->first);
-	}
-
 	TRACE_ERROR("Device[" << _id << "] not found!");
 	return	NULL;
 }
@@ -202,7 +232,6 @@ Endpoint*	ObjectManager::CreateEndpoint(Properties const& _properties, bool from
 	Endpoint*	endpoint = Endpoint::Create(*this, _properties);		
 	if (endpoint != NULL)
 	{
-		TRACE_INFO("From DB : " << from_db);
 		if (!from_db)
 		{
 			data_manager_.AddEndpoint(endpoint);
@@ -266,11 +295,6 @@ Endpoint*		ObjectManager::GetEndpoint(std::string const& _id)
 	if (it != endpoint_map_.end())
 	{
 		return	it->second;	
-	}
-
-	for(auto it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
-	{
-		TRACE_ERROR("Endpoint : " << it->first);
 	}
 
 	TRACE_ERROR("Endpoint [" << _id << "] not found!");
@@ -406,7 +430,7 @@ void	ObjectManager::Preprocess()
 
 	while(!data_manager_.IsRunning())
 	{
-		usleep(1000);
+		usleep(TIME_MILLISECOND);
 	}
 
 	uint32_t count = data_manager_.GetDeviceCount();

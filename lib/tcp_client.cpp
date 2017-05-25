@@ -202,7 +202,7 @@ bool		TCPClient::RequestAndReply(std::string const& _request, std::string& _repl
 					break;
 				}   
 			}   
-			usleep(1000);
+			usleep(TIME_MILLISECOND);
 		}   
 	}   
 	else

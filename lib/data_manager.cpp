@@ -14,7 +14,6 @@ DataManager::DataManager()
 {	
 	Date	date;
 
-	trace.Enable(true);
 	trace.SetClassName(GetClassName());
 
 	name_ 	= std::string("data_manager");
@@ -27,7 +26,6 @@ DataManager::DataManager()
 DataManager::DataManager(std::string const& _db_name)
 : ActiveObject(), file_name_(_db_name), temp_db_(false)
 {
-	trace.Enable(true);
 	trace.SetClassName(GetClassName());
 
 	name_ 	= std::string("data_manager");
@@ -49,25 +47,34 @@ DataManager::~DataManager()
 
 bool	DataManager::Load(JSONNode const& _json)
 {
-	if (_json.name() == "data file")
-	{
-		file_name_ = _json.as_string();
+	bool	ret_value = true;
 
-		return	true;
-	}
-	else
+	if (_json.type() == JSON_NODE)
 	{
 		for(auto it = _json.begin(); it != _json.end() ; it++)
 		{
-			if (!Load(*it))
+			ret_value = Load(*it);
+			if (!ret_value)
 			{
 				std::cout << "Invalid format" << std::endl;
-				return	false;
 			}
 		}
 	}
+	else if (_json.name() == "data file")
+	{
+		file_name_ = _json.as_string();
+	}
+	else if (_json.name() == "trace")
+	{
+		ret_value = trace.Load(_json);
+	}
+	else
+	{
+		TRACE_ERROR("Invalid json format");
+		ret_value = false;
+	}
 
-	return	true;
+	return	ret_value;
 }
 
 DataManager::Table*	DataManager::CreateTable(std::string const& _table_name, std::list<std::string>& field_list)

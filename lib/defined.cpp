@@ -32,6 +32,7 @@ int			SNMP_COMMUNITY_LENGTH_MAX=	128;
 const char*	LOG_FILE_PATH			= "/var/log/";
 uint32_t	LOG_FILE_SIZE			= (1024*1024);
 
+const char*	DB_DEFAULT_FILE			=	"./ftgm.db";
 const char* DB_TABLE_NAME_DEVICE	= "devices";
 const char* DB_TABLE_NAME_ENDPOINT	= "endpoints";
 
@@ -75,6 +76,7 @@ const char* OBJECT_FIELD_VALUE_MIN	= "value_min";
 const char* OBJECT_FIELD_DEV_NAME	= "dev_name";
 const char* OBJECT_FIELD_ENDPOINTS	= "endpoints";
 
+const char*	MSG_BROKER_DEFAULT		= "localhost:9092";
 const char* MSG_FIELD_CMD			= "cmd";
 const char* MSG_FIELD_TIME			= "time";
 const char* MSG_FIELD_DATA			= "data";
