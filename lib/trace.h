@@ -114,6 +114,7 @@ extern	Trace		trace;
 #define	TRACE_ERROR(x)	{	trace.Begin(TraceLevel::ERROR, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}
 #define	TRACE_CRITICAL	{	trace.Begin(TraceLevel::CRITICAL, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}
 #define	TRACE_INFO_DUMP(buffer, len)	{	trace.Dump(TraceLevel::INFO, __PRETTY_FUNCTION__, __LINE__, buffer, len) << Trace::End;	}
+#define	TRACE_INFO_JSON(x)	{	JSONNode json = libjson::parse(x); trace.Begin(TraceLevel::INFO, __PRETTY_FUNCTION__, __LINE__) << json.write_formatted() << Trace::End;	}
 
 #define	TRACE_INFO2(x, y)	{	::trace.Begin(TraceLevel::INFO, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
 #define	TRACE_WARN2(x, y)	{	::trace.Begin(TraceLevel::WARNING, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }

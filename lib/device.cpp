@@ -14,12 +14,10 @@
 Device::Device(ObjectManager& _manager, ValueType const& _type)
 :	ActiveObject(), manager_(_manager), type_(_type), live_check_interval_(OBJECT_LIVE_CHECK_INTERVAL_SEC * TIME_SECOND)
 {
-	manager_.Attach(this);
 }
 
 Device::~Device()
 {
-	manager_.Detach(this);
 }
 
 bool	Device::SetLiveCheckInterval(int _interval, bool _store)
@@ -340,7 +338,7 @@ void	Device::Process()
 
 	if (live_check_timer_.RemainTime() == 0)
 	{
-		Message*	message = new MessageKeepAlive(id_);
+		Message*	message = new MessageKeepAlive(id_, id_);
 
 		TRACE_INFO("Post live check!");	
 		if (!manager_.Post(message))

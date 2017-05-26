@@ -30,6 +30,30 @@ message_type_string[] =
 static std::mutex							active_object_map_lock;
 static std::map<std::string,ActiveObject*>	active_object_map;
 
+Message::Message(const Message& _message)
+: type(_message.type), sender(_message.sender) 
+{
+	Date	date;
+
+	id = date.GetMicroSecond();
+}
+
+Message::Message(uint32_t	_type)
+: type(_type), sender("") 
+{
+	Date	date;
+
+	id = date.GetMicroSecond();
+}
+
+Message::Message(uint32_t	_type, const std::string& _sender)
+: type(_type), sender(_sender) 
+{
+	Date	date;
+
+	id = date.GetMicroSecond();
+}
+
 void	Message::RegisterRecipient(std::string const& _id, ActiveObject* _object)
 {
 	active_object_map_lock.lock();
@@ -44,18 +68,18 @@ void	Message::UnregisterRecipient(std::string const& _id)
 	active_object_map_lock.unlock();
 }
 
-void	Message::Send(std::string const& _id, Message* _message)
+void	Message::Send(std::string const& _sender, Message* _message)
 {
 	active_object_map_lock.lock();
-	auto object_it = active_object_map.find(_id);
+	auto object_it = active_object_map.find(_sender);
 	if (object_it == active_object_map.end())
 	{
-		TRACE_ERROR2(NULL, "Unknwon target[" << _id << "]");
+		TRACE_ERROR2(NULL, "Unknwon target[" << _sender << "]");
 		delete _message;
 	}
 	else
 	{
-		TRACE_INFO2(NULL, "Packet send to target[" << _id << "]");
+		TRACE_INFO2(NULL, "Packet send to target[" << _sender << "]");
 		object_it->second->Post(_message);	
 	}
 	active_object_map_lock.unlock();
@@ -177,8 +201,8 @@ MessageQuit::MessageQuit()
 {
 }
 
-MessagePacket::MessagePacket(ValueID const& _id, void const* _data, uint32_t _length)
-: Message(MSG_TYPE_PACKET), sender(_id), length(_length)
+MessagePacket::MessagePacket(std::string const& _sender, void const* _data, uint32_t _length)
+: Message(MSG_TYPE_PACKET, _sender), length(_length)
 {
 	if (_length == 0)
 	{
@@ -227,7 +251,12 @@ void	MessagePacket::Dump(ostream& os) const
 	}
 }
 
-MessageKeepAlive::MessageKeepAlive(ValueID const& _id)
-:	Message(MSG_TYPE_KEEP_ALIVE), id(_id)
+MessageKeepAlive::MessageKeepAlive(std::string const& _sender, std::string const& _object_id)
+:	Message(MSG_TYPE_KEEP_ALIVE, _sender), object_id(_object_id)
+{
+}
+
+MessageConsume::MessageConsume(std::string const& _sender, std::string const& _topic, JSONNode& _payload)
+:	Message(MSG_TYPE_CONSUME), topic(_topic), payload(_payload)
 {
 }

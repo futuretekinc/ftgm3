@@ -20,12 +20,10 @@ Endpoint::Endpoint(ObjectManager& _manager)
 	value_map_(ENDPOINT_VALUE_COUNT_MAX),
 	last_report_date_()
 {
-	manager_.Attach(this);
 }
 
 Endpoint::~Endpoint()
 {
-	manager_.Detach(this);
 }
 
 const	ValueUnit&	Endpoint::GetUnit() const
@@ -539,7 +537,7 @@ bool	Endpoint::Add(Value const* _value)
 	{
 		try
 		{
-			Message *message = new MessageEndpointUpdated(id_, _value);
+			Message *message = new MessageEndpointUpdated(id_, id_, _value);
 
 			if (manager_.Post(message) == false)
 			{

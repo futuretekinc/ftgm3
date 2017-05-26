@@ -1,6 +1,8 @@
 # IncludePost.mk
 
+ifneq ($(LIB_NAME),)
 LIB_FULL_NAME = $(ROOT_LIB_DIR)/$(OBJS_DIR)/lib$(LIB_NAME).a
+endif
 LIB_OBJS = $(LIB_SRCS:%.cpp=$(OBJS_DIR)/%.o)
 
 #ALL_LIBS = -l$(LIB_NAME) $(DEPEND_LIBS) $(LIBS)
@@ -31,6 +33,7 @@ targets : $(TARGET_NAMES)
 
 $(LIB_FULL_NAME) : $(LIB_OBJS)
 	@`[ -d $(ROOT_LIB_DIR)/$(OBJS_DIR) ] || $(MKDIR) -p $(ROOT_LIB_DIR)/$(OBJS_DIR)`
+	rm -rf $@
 	$(AR) rcv $@ $(LIB_OBJS)
 	$(RANLIB) $@
 
@@ -57,8 +60,8 @@ endif
 depend :
 	@`[ -d $(OBJS_DIR) ] || $(MKDIR) $(OBJS_DIR)`
 	@$(RM) -f $(DEPEND_FILE)
-	@for FILE in $(LIB_SRCS:%.c=%) $(TARGET_SRCS:%.c=%); do \
-		$(CC) -MM -MT $(OBJS_DIR)/$$FILE.o $$FILE.c $(CFLAGS) $(DBG_FLAGS) $(INC_DIRS) >> $(DEPEND_FILE); \
+	@for FILE in $(LIB_SRCS:%.cpp=%) $(TARGET_SRCS:%.cpp=%); do \
+		$(CC) -MM -MT $(OBJS_DIR)/$$FILE.o $$FILE.cpp $(CFLAGS) $(DBG_FLAGS) $(INC_DIRS) >> $(DEPEND_FILE); \
 	done
 
 dependall : depend

@@ -139,8 +139,8 @@ extern	const	char*	ENDPOINT_TYPE_NAME_DO;
 
 struct	MessageEndpointUpdated : Message
 {
-	MessageEndpointUpdated(ValueID const& _id, Value const *_value) 
-	: Message(MSG_TYPE_ENDPOINT_UPDATED), id(_id)
+	MessageEndpointUpdated(std::string const& _sender, std::string const& _endpoint_id, Value const *_value) 
+	: Message(MSG_TYPE_ENDPOINT_UPDATED, _sender), endpoint_id(_endpoint_id)
 	{
 		value = _value->Duplicate();
 	};
@@ -149,14 +149,14 @@ struct	MessageEndpointUpdated : Message
 		delete value;
 	};
 
-	ValueID		id;
+	ValueID		endpoint_id;
 	Value*		value;
 };
 
 struct	MessageEndpointReport : Message
 {
-	MessageEndpointReport(ValueID const& _id, Endpoint::ValueList const& _value_list) 
-	: Message(MSG_TYPE_ENDPOINT_REPORT), id(_id)
+	MessageEndpointReport(std::string const& _sender, std::string const& _endpoint_id, Endpoint::ValueList const& _value_list) 
+	: Message(MSG_TYPE_ENDPOINT_REPORT, _sender), endpoint_id(_endpoint_id)
 	{
 		for(auto it = _value_list.begin() ; it != _value_list.end() ; it++)
 		{
@@ -171,7 +171,7 @@ struct	MessageEndpointReport : Message
 		}
 	};
 
-	ValueID		id;
+	ValueID				endpoint_id;
 	std::list<Value*>	value_list;
 };
 

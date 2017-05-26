@@ -18,6 +18,7 @@ class	ObjectManager : public ActiveObject
 	friend	class	Endpoint;
 public:
 						ObjectManager();
+						ObjectManager(ValueID const& _id);
 						~ObjectManager();
 
 			bool		GetAutoStart();
@@ -55,6 +56,10 @@ public:
 			// External Service Call Server
 			bool		Attach(RCSSession* _rms);
 			bool		Detach(RCSSession* _rms);
+
+			std::string	GetTopicNameGateway(std::string const& _id);
+			std::string	GetTopicNameDevice(std::string const& _id);
+			std::string	GetTopicNameEndpoint(std::string const& _id);
 
 protected:
 	

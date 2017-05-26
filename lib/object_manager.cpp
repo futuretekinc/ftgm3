@@ -22,6 +22,21 @@ ObjectManager::ObjectManager()
 	trace.SetClassName(GetClassName());
 }
 
+ObjectManager::ObjectManager(ValueID const& _id)
+: 	ActiveObject(), 
+	server_linker_(), 
+	rcs_server_(this),
+	data_manager_(DEFAULT_CONST_DB_FILE),
+	endpoint_report_interval_(ENDPOINT_REPORT_INTERVAL),
+	auto_start_(false)
+{
+	id_		= _id;
+	name_ 	= "object_manager";
+	enable_ = true;
+
+	trace.SetClassName(GetClassName());
+}
+
 ObjectManager::~ObjectManager()
 {
 	for(auto it = device_map_.begin() ; it != device_map_.end() ; it++)
@@ -224,15 +239,12 @@ Device*		ObjectManager::CreateDevice(Properties const& _properties, bool from_db
 	Device*	device = Device::Create(*this, _properties);
 	if (device != NULL)
 	{
+		Attach(device);
+
 		if (!from_db)
 		{
 			data_manager_.AddDevice(device);
 		}
-
-		std::ostringstream	oss;
-
-		oss << "v1_dev_" << device->GetID();
-		server_linker_.AddUpLink(oss.str());
 	}
 
 	return	device;
@@ -304,10 +316,7 @@ Endpoint*	ObjectManager::CreateEndpoint(Properties const& _properties, bool from
 			data_manager_.AddEndpoint(endpoint);
 		}
 
-		std::ostringstream	oss;
-
-		oss << "v1_ep_" << endpoint->GetID();
-		server_linker_.AddUpLink(oss.str());
+		Attach(endpoint);
 	}
 	else
 	{
@@ -333,6 +342,8 @@ bool		ObjectManager::DestroyEndpoint(std::string const& _endpoint_id)
 		{
 			endpoint_map_.erase(it);
 		}
+
+		Detach(endpoint);
 
 		delete endpoint;
 		return	true;
@@ -546,6 +557,9 @@ void	ObjectManager::Preprocess()
 
 	server_linker_.Start();
 
+	server_linker_.AddUpLink("v1_server_1");
+	server_linker_.AddDownLink(GetTopicNameGateway(id_));
+
 	if (auto_start_)
 	{
 		for(auto it = device_map_.begin(); it != device_map_.end() ; it++)
@@ -574,7 +588,7 @@ void	ObjectManager::Process()
 
 				if (it->second->GetUnreportedValueList(value_list))
 				{
-					Message*	message = new MessageEndpointReport(it->second->GetID(), value_list);
+					Message*	message = new MessageEndpointReport(GetID(), it->second->GetID(), value_list);
 
 					if (!Post(message))
 					{
@@ -611,6 +625,8 @@ bool	ObjectManager::Attach(Device* _device)
 
 	device_map_[_device->GetID()] = _device;
 
+	server_linker_.AddDownLink(GetTopicNameDevice(_device->GetID()));
+
 	TRACE_INFO("The device[" << _device->GetTraceName() << "] has been attached."); 
 	return	true;
 }
@@ -623,6 +639,8 @@ bool	ObjectManager::Detach(Device* _device)
 		TRACE_ERROR("The device[" << _device->GetTraceName() << "] not attached.");
 		return	false;	
 	}
+
+	server_linker_.DeleteDownLink(GetTopicNameDevice(_device->GetID()));
 
 	device_map_.erase(it);
 
@@ -650,6 +668,9 @@ bool	ObjectManager::Attach(Endpoint* _endpoint)
 			device->Attach(_endpoint->GetID());	
 		}
 	}
+
+	server_linker_.AddDownLink(GetTopicNameEndpoint(_endpoint->GetID()));
+
 	TRACE_INFO("The endpoint[" << _endpoint->GetTraceName() << "] has been attached."); 
 
 	return	true;
@@ -663,6 +684,8 @@ bool	ObjectManager::Detach(Endpoint* _endpoint)
 		TRACE_ERROR("The endpoint[" << _endpoint->GetTraceName() << "] not attached.");
 		return	false;	
 	}
+
+	server_linker_.DeleteDownLink(GetTopicNameEndpoint(_endpoint->GetID()));
 
 	endpoint_map_.erase(it);
 	_endpoint->parent_ = this;
@@ -711,7 +734,7 @@ void	ObjectManager::OnMessage(Message* _base_message)
 			MessageKeepAlive* message = dynamic_cast<MessageKeepAlive*>(_base_message);
 			if (message != NULL)
 			{
-				SendKeepAlive(message->id);
+				SendKeepAlive(message->object_id);
 			}
 
 		}
@@ -721,7 +744,7 @@ void	ObjectManager::OnMessage(Message* _base_message)
 		{	
 			MessageEndpointUpdated* message = dynamic_cast<MessageEndpointUpdated*>(_base_message);
 
-			if (!data_manager_.AddValue(message->id, message->value))
+			if (!data_manager_.AddValue(message->endpoint_id, message->value))
 			{
 				TRACE_ERROR("Failed to add value!");	
 			}
@@ -733,7 +756,7 @@ void	ObjectManager::OnMessage(Message* _base_message)
 			MessageEndpointReport* message = dynamic_cast<MessageEndpointReport *>(_base_message);
 			if (message != NULL)
 			{
-				SendEndpointReport(message->id, message->value_list);
+				SendEndpointReport(message->endpoint_id, message->value_list);
 			}
 		}
 		break;
@@ -743,39 +766,31 @@ void	ObjectManager::OnMessage(Message* _base_message)
 
 bool	ObjectManager::SendKeepAlive(ValueID const& _id)
 {
-	std::ostringstream	topic;
-
-	topic << "v1_dev_" << _id;
-	TRACE_INFO("Message : Keep alive " << topic.str());
-
 	JSONNode	root;
 	Date		date;
 	time_t		time;
 
 	time = time_t(date);
 
+	root.push_back(JSONNode(TITLE_NAME_MSG_ID, std::to_string(date.GetMicroSecond() / 1000)));
+	root.push_back(JSONNode(TITLE_NAME_CMD, MSG_EVENT_KEEP_ALIVE));
 	root.push_back(JSONNode(TITLE_NAME_DEVICE_ID, _id));
-	root.push_back(JSONNode(TITLE_NAME_CMD, MSG_CMD_KEEP_ALIVE));
 	root.push_back(JSONNode(TITLE_NAME_TIME, time));
 
-	return	SendMessage(topic.str(), root.write());
+	return	SendMessage("v1_server_1", root.write());
 }
 
 bool	ObjectManager::SendEndpointReport(ValueID const& _id, std::list<Value*> const& _value_list)
 {
-	std::ostringstream	topic;
-
-	topic << "v1_ep_" << _id;
-	TRACE_INFO("Message : Endpoint Report " << topic.str());
-
 	JSONNode	root;
 	Date		date;
 	time_t		time;
 
 	time = time_t(date);
 
+	root.push_back(JSONNode(TITLE_NAME_MSG_ID, std::to_string(date.GetMicroSecond() / 1000)));
+	root.push_back(JSONNode(TITLE_NAME_CMD, MSG_EVENT_ENDPOINT_REPORT));
 	root.push_back(JSONNode(TITLE_NAME_ENDPOINT_ID, _id));
-	root.push_back(JSONNode(TITLE_NAME_CMD, MSG_CMD_ENDPOINT_REPORT));
 	root.push_back(JSONNode(TITLE_NAME_TIME, time));
 	root.push_back(JSONNode(TITLE_NAME_COUNT, _value_list.size()));
 
@@ -796,7 +811,7 @@ bool	ObjectManager::SendEndpointReport(ValueID const& _id, std::list<Value*> con
 
 	root.push_back(array);
 
-	return	SendMessage(topic.str(), root.write());
+	return	SendMessage("v1_server_1", root.write());
 }
 
 bool	ObjectManager::SendMessage(std::string const& _topic, std::string const& _message)
@@ -820,3 +835,31 @@ bool	ObjectManager::SendMessage(std::string const& _topic, std::string const& _m
 
 	return	ret_value;
 }
+
+std::string	ObjectManager::GetTopicNameGateway(std::string const& _id)
+{
+	std::ostringstream	topic;
+
+	topic << DEFAULT_CONST_MSG_VERSION << "_gw_" << _id;
+
+	return	topic.str();
+}
+
+std::string	ObjectManager::GetTopicNameDevice(std::string const& _id)
+{
+	std::ostringstream	topic;
+
+	topic << DEFAULT_CONST_MSG_VERSION << "_dev_" << _id;
+
+	return	topic.str();
+}
+
+std::string	ObjectManager::GetTopicNameEndpoint(std::string const& _id)
+{
+	std::ostringstream	topic;
+
+	topic << DEFAULT_CONST_MSG_VERSION << "_ep_" << _id;
+
+	return	topic.str();
+}
+

@@ -4,15 +4,21 @@
 #include <cstdint>
 
 #ifdef	MAKE_BODY
-#define	DEFAULT_CONST(name, value)	const char* DEFAULT_CONST_##name=value
-#define	TITLE_NAME(name, value)		const char* TITLE_NAME_##name=value
-#define	MSG_CMD(name, value)		const char* MSG_CMD_##name=value
-#define	RET_CONST(name, value)		const char* RET_CONST_##name=value
+#define	DEFAULT_CONST(name, value)			const char* 	DEFAULT_CONST_##name=value
+#define	TITLE_NAME(name, value)				const char* 	TITLE_NAME_##name=value
+#define	MSG_CMD(name, value)				const char* 	MSG_CMD_##name=value
+#define	MSG_EVENT(name, value)				const char* 	MSG_EVENT_##name=value
+#define	MSG_REQ(name, value)				const char* 	MSG_REQ_##name=value
+#define	MSG_RES(name, value)				const char* 	MSG_RES_##name=value
+#define	RET_CONST(name, value)				const char* 	RET_CONST_##name=value
 #else
-#define	DEFAULT_CONST(name, value)	extern	const char* DEFAULT_CONST_##name
-#define	TITLE_NAME(name, value)		extern	const char* TITLE_NAME_##name
-#define	MSG_CMD(name, value)		extern	const char* MSG_CMD_##name
-#define	RET_CONST(name, value)		extern	const char* RET_CONST_##name
+#define	DEFAULT_CONST(name, value)			extern	const char* 	DEFAULT_CONST_##name
+#define	TITLE_NAME(name, value)				extern	const char* 	TITLE_NAME_##name
+#define	MSG_CMD(name, value)				extern	const char* 	MSG_CMD_##name
+#define	MSG_EVENT(name, value)				extern	const char* 	MSG_EVENT_##name
+#define	MSG_REQ(name, value)				extern	const char* 	MSG_REQ_##name
+#define	MSG_RES(name, value)				extern	const char* 	MSG_RES_##name
+#define	RET_CONST(name, value)				extern	const char* 	RET_CONST_##name
 #endif
 
 #define	ID_LENGTH_MAX		32
@@ -42,14 +48,15 @@ extern	uint32_t	ENDPOINT_SENSOR_HUMIDITY_MAX;
 extern	uint32_t	ENDPOINT_SENSOR_HUMIDITY_MIN;
 extern	const char*	ENDPOINT_SENSOR_HUMIDITY_UNIT;
 
-extern	const char*	DEFAULT_LOCAL_IP;
-extern	const char*	DEFAULT_SERVER_IP;	
-extern	uint16_t	DEFAULT_SERVER_PORT;
+DEFAULT_CONST(LOCAL_IP, "127.0.0.1");
+
+DEFAULT_CONST(RCS_SERVER_IP, "127.0.0.1");
+#define	DEFAULT_CONST_RCS_SERVER_PORT	 8888
 
 extern	int			SNMP_COMMUNITY_LENGTH_MAX;
 
-extern	const char*	LOG_FILE_PATH;
-extern	uint32_t	LOG_FILE_SIZE;
+#define	DEFAULT_CONST_LOG_FILE_SIZE	 (1024*1024)
+DEFAULT_CONST(LOG_FILE_PATH, "/var/log/");
 
 enum	RetValue
 {
@@ -66,8 +73,8 @@ DEFAULT_CONST(DB_FILE, "./ftgm.db");
 DEFAULT_CONST(DB_TABLE_NAME_DEVICE, "devices");
 DEFAULT_CONST(DB_TABLE_NAME_ENDPOINT, "endpoints");
 
-RET_CONST(OK,	 "ok");
-RET_CONST(FAILED,	"failed");
+RET_CONST(OK, "ok");
+RET_CONST(FAILED, "failed");
 
 TITLE_NAME(AUTO_START, "auto_start");
 TITLE_NAME(BROKER, "broker");
@@ -94,14 +101,17 @@ TITLE_NAME(IP, "ip");
 TITLE_NAME(LIVE_CHECK_INTERVAL, "live_check_interval");
 TITLE_NAME(LOOP_INTERVAL, "loop_interval");
 TITLE_NAME(MODULE, "module");
+TITLE_NAME(MSG_ID, "msg_id");
 TITLE_NAME(NAME, "name");
 TITLE_NAME(OBJECT_MANAGER, "object_manager");
+TITLE_NAME(PATH, "path");
 TITLE_NAME(PORT, "port");
 TITLE_NAME(RESULT,  "result");
 TITLE_NAME(SCALE, "scale");
 TITLE_NAME(SECTION, "section");
 TITLE_NAME(SENSOR_ID, "sensor_id");
 TITLE_NAME(SERVER_LINKER, "server_linker");
+TITLE_NAME(SIZE, "size");
 TITLE_NAME(TCP_SERVER, "tcp_server");
 TITLE_NAME(TIME, "time");
 TITLE_NAME(TIMEOUT, "timeout");
@@ -113,7 +123,10 @@ TITLE_NAME(VALUE, "value");
 TITLE_NAME(VALUE_MAX, "value_max");
 TITLE_NAME(VALUE_MIN, "value_min");
 
-MSG_CMD(KEEP_ALIVE,"keep_alive");
-MSG_CMD(ENDPOINT_REPORT, "endpoint_report");
+DEFAULT_CONST(MSG_VERSION, "v1");
+#define	DEFAULT_CONST_MSG_PARTITION	0
+//#define	DEFAULT_CONST_MSG_PARTITION RdKafka::Topic::PARTITION_UA
+MSG_EVENT(KEEP_ALIVE,"keep_alive");
+MSG_EVENT(ENDPOINT_REPORT, "endpoint_report");
 #endif
 

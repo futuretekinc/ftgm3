@@ -17,7 +17,8 @@ static void sigterm (int sig)
 
 int	main(int argc, char *argv[])
 {
-	ObjectManager	object_manager;
+	ValueID			gateway_id("xtra1234");
+	ObjectManager	object_manager(gateway_id);
 
 	try
 	{

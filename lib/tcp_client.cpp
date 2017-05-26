@@ -39,8 +39,8 @@ TCPClient::Frame::~Frame()
 	}
 }
 
-TCPClient::TCPClient()
-:ActiveObject(), server_ip_(DEFAULT_SERVER_IP), server_port_(DEFAULT_SERVER_PORT), socket_(0)
+TCPClient::TCPClient(std::string const& _ip, uint16_t _port)
+:ActiveObject(), server_ip_(_ip), server_port_(_port), socket_(0)
 {
 	trace.SetClassName(GetClassName());
 	enable_	= true;

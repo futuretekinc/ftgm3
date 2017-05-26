@@ -16,11 +16,11 @@ TraceMaster::TraceMaster()
 : level_(INFO), continue_(false), mode_(TO_FILE), enable_(false)
 {
 	out_ = &std::cout;
-	file_name_ = std::string(LOG_FILE_PATH) + std::string(program_invocation_short_name) + (".log");
-	file_size_ = LOG_FILE_SIZE;
-	function_name_len_ = 32;
-	object_name_len_ = 16;
-	function_line_len_ = 4;
+	file_name_ = std::string(DEFAULT_CONST_LOG_FILE_PATH) + std::string(program_invocation_short_name) + (".log");
+	file_size_ = DEFAULT_CONST_LOG_FILE_SIZE;
+	function_name_len_ 	= 32;
+	object_name_len_ 	= 16;
+	function_line_len_ 	= 4;
 }
 
 TraceMaster::~TraceMaster()
@@ -31,22 +31,22 @@ bool	TraceMaster::Load(JSONNode const& _json)
 {
 	bool	ret_value = true;
 
-	if (_json.name() == "enable")
+	if (_json.name() == TITLE_NAME_ENABLE)
 	{
-		if ((_json.as_string() == "yes") &&  (_json.as_string() == "on"))
+		if ((_json.as_string() == "yes") ||  (_json.as_string() == "on"))
 		{
 			SetEnable(true);
 		}
-		else if ((_json.as_string() == "no") &&  (_json.as_string() == "off"))
+		else if ((_json.as_string() == "no") ||  (_json.as_string() == "off"))
 		{
 			SetEnable(false);
 		}
 	}
-	else if (_json.name() == "path")
+	else if (_json.name() == TITLE_NAME_PATH)
 	{
 		file_name_ = _json.as_string() + std::string(program_invocation_short_name) + (".log");
 	}
-	else if (_json.name() == "size")
+	else if (_json.name() == TITLE_NAME_SIZE)
 	{
 		file_size_ = _json.as_int();
 	}

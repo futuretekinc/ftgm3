@@ -21,7 +21,7 @@ public:
 		~Frame();
 	};	
 
-	TCPClient();
+	TCPClient(std::string const& _ip, uint16_t _port);
 	~TCPClient();
 
 	bool		Connect(const std::string& _server_ip, uint16_t _server_port = 8888);

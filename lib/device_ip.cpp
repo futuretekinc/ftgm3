@@ -4,7 +4,7 @@
 #include "device_ip.h"
 
 DeviceIP::DeviceIP(ObjectManager& _manager, ValueType const& _type)
-: Device(_manager, _type), ip_(DEFAULT_LOCAL_IP)
+: Device(_manager, _type), ip_(DEFAULT_CONST_LOCAL_IP)
 {
 }
 
