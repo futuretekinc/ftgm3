@@ -256,7 +256,3 @@ MessageKeepAlive::MessageKeepAlive(std::string const& _sender, std::string const
 {
 }
 
-MessageConsume::MessageConsume(std::string const& _sender, std::string const& _topic, JSONNode& _payload)
-:	Message(MSG_TYPE_CONSUME), topic(_topic), payload(_payload)
-{
-}

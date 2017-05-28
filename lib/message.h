@@ -124,12 +124,5 @@ struct MessageKeepAlive : Message
 	std::string	object_id;
 };
 
-struct	MessageConsume : Message
-{
-	MessageConsume(std::string const& _sender, std::string const& _topic, JSONNode& _payload);
-
-	std::string	topic;
-	JSONNode	payload;
-};
 
 #endif

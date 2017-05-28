@@ -10,6 +10,7 @@
 #define	MSG_EVENT(name, value)				const char* 	MSG_EVENT_##name=value
 #define	MSG_REQ(name, value)				const char* 	MSG_REQ_##name=value
 #define	MSG_RES(name, value)				const char* 	MSG_RES_##name=value
+#define	MSG_STR(name, value)				const char* 	MSG_STR_##name=value
 #define	RET_CONST(name, value)				const char* 	RET_CONST_##name=value
 #else
 #define	DEFAULT_CONST(name, value)			extern	const char* 	DEFAULT_CONST_##name
@@ -18,6 +19,7 @@
 #define	MSG_EVENT(name, value)				extern	const char* 	MSG_EVENT_##name
 #define	MSG_REQ(name, value)				extern	const char* 	MSG_REQ_##name
 #define	MSG_RES(name, value)				extern	const char* 	MSG_RES_##name
+#define	MSG_STR(name, value)				extern	const char* 	MSG_STR_##name
 #define	RET_CONST(name, value)				extern	const char* 	RET_CONST_##name
 #endif
 
@@ -31,9 +33,9 @@ extern	uint32_t	TIME_MINUTE;
 
 extern	uint32_t	ACTIVE_OBJECT_LOOP_INTERVAL;
 
-extern	uint32_t	OBJECT_LIVE_CHECK_INTERVAL_SEC;
-extern	uint32_t	OBJECT_LIVE_CHECK_INTERVAL_SEC_MIN;
-extern	uint32_t	OBJECT_LIVE_CHECK_INTERVAL_SEC_MAX;
+extern	uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC;
+extern	uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN;
+extern	uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX;
 
 extern	uint32_t	ENDPOINT_REPORT_INTERVAL;
 extern	uint32_t	ENDPOINT_UPDATE_INTERVAL;
@@ -94,11 +96,10 @@ TITLE_NAME(ENABLE, "enable");
 TITLE_NAME(ENDPOINT, "endpoint");
 TITLE_NAME(ENDPOINT_ID, "ep_id");
 TITLE_NAME(ENDPOINT_REPORT_INTERVAL,"endpoint_report_interval");
-TITLE_NAME(ENDPOINTS, "endpoints");
 TITLE_NAME(ERROR, "error");
 TITLE_NAME(ID, "id");
 TITLE_NAME(IP, "ip");
-TITLE_NAME(LIVE_CHECK_INTERVAL, "live_check_interval");
+TITLE_NAME(KEEP_ALIVE_INTERVAL, "keep_alive_interval");
 TITLE_NAME(LOOP_INTERVAL, "loop_interval");
 TITLE_NAME(MODULE, "module");
 TITLE_NAME(MSG_ID, "msg_id");
@@ -126,7 +127,7 @@ TITLE_NAME(VALUE_MIN, "value_min");
 DEFAULT_CONST(MSG_VERSION, "v1");
 #define	DEFAULT_CONST_MSG_PARTITION	0
 //#define	DEFAULT_CONST_MSG_PARTITION RdKafka::Topic::PARTITION_UA
-MSG_EVENT(KEEP_ALIVE,"keep_alive");
-MSG_EVENT(ENDPOINT_REPORT, "endpoint_report");
+MSG_STR(KEEP_ALIVE,"keep_alive");
+MSG_STR(ENDPOINT_REPORT, "endpoint_report");
 #endif
 

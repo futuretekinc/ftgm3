@@ -11,8 +11,6 @@
 #include "property.h"
 
 
-class	ObjectManager;
-
 class	Object
 {
 public:
@@ -28,8 +26,8 @@ public:
 		STOP
 	};
 
-	Object();
-	Object(const ValueID& _id);
+	Object(Object* _parent = NULL);
+	Object(ValueID const& _id, Object* _parent = NULL);
 	virtual	~Object();
 
 	virtual	std::string	GetClassName();
@@ -47,6 +45,9 @@ public:
 
 	const	Date&		GetDate() const;
 			bool		SetDate(Date const& _date, bool _store = true);
+
+			Object*		GetParent();
+			bool		SetParent(Object* _parent);
 
 			bool		HasChanged() const;
 	virtual	bool		ApplyChanges();
@@ -75,7 +76,7 @@ public:
 protected:
 	virtual	bool		SetPropertyInternal(Property const& _property, bool create = false);
 
-	ObjectManager*	parent_;
+	Object*		parent_;
 	std::string	class_name_;
 	ValueID		id_;
 	ValueName	name_;	

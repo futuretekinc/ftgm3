@@ -17,9 +17,6 @@ public:
 
 	virtual	Endpoint*	CreateEndpoint(Properties const& _properties);
 
-			OID 		GetOID(std::string const& _id);
-			OID 		GetOID(Endpoint::Type _type, uint32_t _index);
-
 			bool		ReadValue(std::string const& _endpoint_id, Value* _value);
 
 	static	const	ValueType&	Type();

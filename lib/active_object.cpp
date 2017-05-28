@@ -11,8 +11,14 @@
 using namespace	std;
 
 
-ActiveObject::ActiveObject()
-: Object(), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
+ActiveObject::ActiveObject(Object* _parent)
+: Object(_parent), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
+{
+	Message::RegisterRecipient(id_, this);
+}
+
+ActiveObject::ActiveObject(ValueID const& _id, Object* _parent)
+: Object(_id, _parent), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
 {
 	Message::RegisterRecipient(id_, this);
 }

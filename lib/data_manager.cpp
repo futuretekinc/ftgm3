@@ -18,7 +18,7 @@ DataManager::DataManager()
 
 	name_ 	= std::string("data_manager");
 	enable_ = true;
-	date 	= Date::GetCurrentDate();
+	date 	= Date::GetCurrent();
 
 	file_name_ = "dm-" + date.ToString() + ".db";
 }
@@ -176,8 +176,8 @@ bool	DataManager::IsTableExist
 	return	exist;
 }
 
-DataManager::Table::Table(DataManager* _parent, std::string const& _name)
-: Object(), parent_(_parent)
+DataManager::Table::Table(DataManager* _manager, std::string const& _name)
+: Object(_manager), manager_(_manager)
 {
 	name_ = _name;
 	trace.SetClassName(GetClassName());
@@ -213,7 +213,7 @@ bool	DataManager::Table::Add(Properties const& _properties)
 		uint32_t		count= 1;
 		uint32_t		index = 0;
 
-		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
 		if (statement == NULL)
 		{
 			TRACE_ERROR("Failed to create SQL statement!");
@@ -275,7 +275,7 @@ bool	DataManager::Table::Delete(std::string const& _id)
 
 	try 
 	{
-		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
 		if (statement == NULL)
 		{
 			TRACE_ERROR("Failed to create SQL statement!");
@@ -314,7 +314,7 @@ bool	DataManager::Table::IsExist(std::string const& _id)
 
 	try  
 	{    
-		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
 		if (statement == NULL)
 		{
 			TRACE_ERROR("Failed to create SQL statement!");
@@ -348,7 +348,7 @@ uint32_t	DataManager::Table::GetCount()
 	uint32_t	count = 0;
 	try 
 	{
-		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
 		if (statement == NULL)
 		{
 			TRACE_ERROR("Failed to create SQL statement!");
@@ -383,7 +383,7 @@ bool	DataManager::Table::GetProperties(std::string const& _id, Properties& _prop
 
 	try 
 	{
-		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
 		if (statement == NULL)
 		{
 			TRACE_ERROR("Failed to create SQL statement!");
@@ -426,7 +426,7 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 
 	try 
 	{
-		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
 		if (statement == NULL)
 		{
 			TRACE_ERROR("Failed to create SQL statement!");
@@ -485,7 +485,7 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 
 	try 
 	{
-		Kompex::SQLiteStatement*	statement = parent_->CreateStatement();
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
 		if (statement == NULL)
 		{
 			TRACE_ERROR("Failed to create SQLite statement!");
@@ -530,8 +530,8 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 	return	true;
 }
 
-DataManager::ValueTable::ValueTable(DataManager* _parent, std::string const& _name)
-: Object(), parent_(_parent)
+DataManager::ValueTable::ValueTable(DataManager* _manager, std::string const& _name)
+: Object(_manager), manager_(_manager)
 {
 	name_ = _name;
 	trace.SetClassName(GetClassName());
@@ -539,13 +539,13 @@ DataManager::ValueTable::ValueTable(DataManager* _parent, std::string const& _na
 
 bool	DataManager::ValueTable::Add(Value const* _value)
 {
-	if (parent_ == NULL)
+	if (manager_ == NULL)
 	{
-		TRACE_ERROR("Value table parent is not assigned!");
+		TRACE_ERROR("Value table manager is not assigned!");
 		return	false;
 	}
 
-	if (!parent_->IsTableExist(name_))
+	if (!manager_->IsTableExist(name_))
 	{
 		TRACE_ERROR("Value table[" << name_ << "] not exist!");
 		return	false;	
@@ -557,7 +557,7 @@ bool	DataManager::ValueTable::Add(Value const* _value)
 
 	TRACE_INFO("Query : " << query.str());
 
-	Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(parent_->database_);
+	Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(manager_->database_);
 	try
 	{
 		statement->SqlStatement(query.str());
@@ -684,7 +684,21 @@ bool	DataManager::AddEndpoint(Endpoint *_endpoint)
 
 	_endpoint->GetProperties(properties);
 
-	return	endpoint_table_->Add(properties);
+	if (endpoint_table_->Add(properties) == false)
+	{
+		return	false;
+	}
+
+
+	const Property*	id_property = properties.Get(TITLE_NAME_ID);
+	if (id_property != NULL)
+	{
+		const Value*	value = id_property->GetValue();
+
+		value_table_map_[std::string(*value)]= CreateValueTable(std::string(*value));
+	}
+
+	return	true;
 }
 
 bool	DataManager::DeleteEndpoint(std::string const& _id)
@@ -744,7 +758,7 @@ void	DataManager::Preprocess()
 
 			for(auto it = properties_list.begin(); it != properties_list.end() ; it++)
 			{
-				const Property*	id_property = it->Get("id");
+				const Property*	id_property = it->Get(TITLE_NAME_ID);
 				if (id_property != NULL)
 				{
 					const Value*	value = id_property->GetValue();

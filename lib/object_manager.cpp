@@ -10,7 +10,7 @@
 
 ObjectManager::ObjectManager()
 : 	ActiveObject(), 
-	server_linker_(), 
+	server_linker_(this), 
 	rcs_server_(this),
 	data_manager_(DEFAULT_CONST_DB_FILE),
 	endpoint_report_interval_(ENDPOINT_REPORT_INTERVAL),
@@ -23,14 +23,13 @@ ObjectManager::ObjectManager()
 }
 
 ObjectManager::ObjectManager(ValueID const& _id)
-: 	ActiveObject(), 
-	server_linker_(), 
+: 	ActiveObject(_id), 
+	server_linker_(this), 
 	rcs_server_(this),
 	data_manager_(DEFAULT_CONST_DB_FILE),
 	endpoint_report_interval_(ENDPOINT_REPORT_INTERVAL),
 	auto_start_(false)
 {
-	id_		= _id;
 	name_ 	= "object_manager";
 	enable_ = true;
 
@@ -120,7 +119,6 @@ bool	ObjectManager::Load(JSONNode const& _json)
 	{
 		if (_json.type() == JSON_NODE)
 		{
-			std::cout << "Name : " << _json.name() << std::endl;
 			for(auto it = _json.begin(); it != _json.end() ; it++)
 			{
 				ret_value = Load(*it);
@@ -157,28 +155,19 @@ bool	ObjectManager::Load(JSONNode const& _json)
 		{
 			for(auto it = _json.begin(); it != _json.end() ; it++)
 			{
-				Properties	properties;
-
-				properties.Append(*it);
-
-				Device *device = CreateDevice(properties);
+				Device* device = CreateDevice(*it);
 				if (device == NULL)
 				{
-					TRACE_ERROR("Failed to create device!");
 					ret_value = false;
+					break;
 				}
 			}
 		}
 		else if (_json.type() == JSON_NODE)
 		{
-			Properties	properties;
-
-			properties.Append(_json);
-
-			Device *device = CreateDevice(properties);
+			Device* device = CreateDevice(_json);
 			if (device == NULL)
 			{
-				TRACE_ERROR("Failed to create device!");
 				ret_value = false;
 			}
 		}
@@ -234,12 +223,70 @@ ObjectManager::operator JSONNode() const
 	return	root;
 }
 
+Device*	ObjectManager::CreateDevice(JSONNode const& _json)
+{
+	Device*	device = NULL;
+
+	if (_json.type() == JSON_NODE)
+	{
+		Properties	properties;
+
+		properties.Append(_json);
+
+		TRACE_INFO(properties);
+		device = CreateDevice(properties);
+		if (device != NULL)
+		{
+			const Property*	endpoint_property = properties.Get(TITLE_NAME_ENDPOINT);
+			if (endpoint_property)
+			{
+				const ValuePropertiesList* properties_list_value = dynamic_cast<const ValuePropertiesList*>(endpoint_property->GetValue());
+				if (properties_list_value != NULL)
+				{
+					const PropertiesList& 	properties_list = properties_list_value->Get();
+					for(auto it = properties_list.begin(); it != properties_list.end() ; it++)
+					{
+						Properties properties(*it);
+
+						properties.Delete(TITLE_NAME_DEVICE_ID);
+
+						properties.AppendDeviceID(device->GetID());
+
+						TRACE_INFO(properties);
+						Endpoint* endpoint = CreateEndpoint(properties);
+						if (endpoint == NULL)
+						{
+							TRACE_ERROR("Failed to create endpoint!");
+							break;
+						}
+						else if (!device->Attach(endpoint->GetID()))
+						{
+							TRACE_ERROR("Failed to attach endpoint[" << endpoint->GetTraceName() << "]");
+							delete endpoint;
+							break;
+						}
+					}
+				}
+
+			}
+		}
+		else
+		{
+			TRACE_ERROR("Failed to create device!");
+		}
+	}
+
+	return	device;
+}
+
 Device*		ObjectManager::CreateDevice(Properties const& _properties, bool from_db)
 {
-	Device*	device = Device::Create(*this, _properties);
+	Device*		device = NULL;
+
+	device = Device::Create(*this, _properties);
 	if (device != NULL)
 	{
-		Attach(device);
+		Attach(device);	
 
 		if (!from_db)
 		{
@@ -571,7 +618,7 @@ void	ObjectManager::Preprocess()
 		}
 	}
 
-	Date date = Date::GetCurrentDate() + endpoint_report_interval_;
+	Date date = Date::GetCurrent() + endpoint_report_interval_;
 	endpoint_report_timer_.Set(date);
 }
 
@@ -584,19 +631,7 @@ void	ObjectManager::Process()
 		{
 			if (it->second->IsRunning())
 			{
-				Endpoint::ValueList value_list;
-
-				if (it->second->GetUnreportedValueList(value_list))
-				{
-					Message*	message = new MessageEndpointReport(GetID(), it->second->GetID(), value_list);
-
-					if (!Post(message))
-					{
-						TRACE_ERROR("Failed to post mesage to manager!");	
-
-						delete message;
-					}
-				}
+				Report(it->second);
 			}
 		}
 
@@ -729,6 +764,7 @@ void	ObjectManager::OnMessage(Message* _base_message)
 {
 	switch(_base_message->type)
 	{
+#if 0
 	case	MSG_TYPE_KEEP_ALIVE:
 		{
 			MessageKeepAlive* message = dynamic_cast<MessageKeepAlive*>(_base_message);
@@ -739,7 +775,7 @@ void	ObjectManager::OnMessage(Message* _base_message)
 
 		}
 		break;
-
+#endif
 	case	MSG_TYPE_ENDPOINT_UPDATED:
 		{	
 			MessageEndpointUpdated* message = dynamic_cast<MessageEndpointUpdated*>(_base_message);
@@ -760,24 +796,85 @@ void	ObjectManager::OnMessage(Message* _base_message)
 			}
 		}
 		break;
+
+	case	MSG_TYPE_SERVER_LINKER_CONSUME:
+		{
+			MessageConsume* message_consume = dynamic_cast<MessageConsume*>(_base_message);
+			if (message_consume != NULL)
+			{
+				std::string	topic;
+				JSONNode	payload;
+			}
+		}
+		break;
+
+	default:
+		{
+			TRACE_ERROR("Unknown message[" << _base_message->type << "]");	
+		}
+
 	}
 }
 
-
-bool	ObjectManager::SendKeepAlive(ValueID const& _id)
+bool	ObjectManager::KeepAlive(ActiveObject* _object)
 {
-	JSONNode	root;
-	Date		date;
-	time_t		time;
+	JSONNode	payload;
 
-	time = time_t(date);
+	payload.push_back(JSONNode(TITLE_NAME_TYPE, MSG_STR_KEEP_ALIVE));
+	payload.push_back(JSONNode(TITLE_NAME_TIME, time_t(Date::GetCurrent())));
 
-	root.push_back(JSONNode(TITLE_NAME_MSG_ID, std::to_string(date.GetMicroSecond() / 1000)));
-	root.push_back(JSONNode(TITLE_NAME_CMD, MSG_EVENT_KEEP_ALIVE));
-	root.push_back(JSONNode(TITLE_NAME_DEVICE_ID, _id));
-	root.push_back(JSONNode(TITLE_NAME_TIME, time));
+	if (dynamic_cast<Device*>(_object))
+	{
+		payload.push_back(JSONNode(TITLE_NAME_DEVICE_ID, _object->GetID()));
+	}
+	else if (dynamic_cast<Endpoint*>(_object))
+	{
+		payload.push_back(JSONNode(TITLE_NAME_ENDPOINT_ID, _object->GetID()));
+	}
+	else
+	{
+		TRACE_WARN("The object[" << _object->GetTraceName() << " that does not support keepalive.");
+		return	false;	
+	}
 
-	return	SendMessage("v1_server_1", root.write());
+
+	return	server_linker_.Produce(payload);
+	
+}
+
+bool	ObjectManager::Report(Endpoint* _endpoint)
+{
+	JSONNode	payload;
+
+	Endpoint::ValueList value_list;
+
+	if (!_endpoint->GetUnreportedValueList(value_list))
+	{
+		TRACE_WARN("Failed to get unreported value list.");
+		return	false;
+	}
+
+	payload.push_back(JSONNode(TITLE_NAME_TYPE, MSG_STR_ENDPOINT_REPORT));
+	payload.push_back(JSONNode(TITLE_NAME_TIME, time_t(Date::GetCurrent())));
+	payload.push_back(JSONNode(TITLE_NAME_ENDPOINT_ID, _endpoint->GetID()));
+	payload.push_back(JSONNode(TITLE_NAME_COUNT, value_list.size()));
+
+	JSONNode	array(JSON_ARRAY);
+	for(auto it = value_list.begin(); it != value_list.end() ; it++)
+	{
+		JSONNode	item;
+		
+		item.push_back(JSONNode(TITLE_NAME_TIME, time_t((*it)->GetDate())));
+		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
+
+		array.push_back(item);
+	}
+
+	array.set_name(TITLE_NAME_DATA);
+
+	payload.push_back(array);
+
+	return	server_linker_.Produce(payload);
 }
 
 bool	ObjectManager::SendEndpointReport(ValueID const& _id, std::list<Value*> const& _value_list)
@@ -789,7 +886,7 @@ bool	ObjectManager::SendEndpointReport(ValueID const& _id, std::list<Value*> con
 	time = time_t(date);
 
 	root.push_back(JSONNode(TITLE_NAME_MSG_ID, std::to_string(date.GetMicroSecond() / 1000)));
-	root.push_back(JSONNode(TITLE_NAME_CMD, MSG_EVENT_ENDPOINT_REPORT));
+	root.push_back(JSONNode(TITLE_NAME_TYPE, MSG_STR_ENDPOINT_REPORT));
 	root.push_back(JSONNode(TITLE_NAME_ENDPOINT_ID, _id));
 	root.push_back(JSONNode(TITLE_NAME_TIME, time));
 	root.push_back(JSONNode(TITLE_NAME_COUNT, _value_list.size()));

@@ -1,29 +1,17 @@
 #include <exception>
 #include "defined.h"
 #include "server_linker.h"
+#include "object_manager.h"
 #include "trace.h"
 #include "time2.h"
 
-#define	MESSAGE_SERVER_LINKER			(0x00020000)
-#define	MESSAGE_SERVER_LINKER_PRODUCE	(MESSAGE_SERVER_LINKER + 1)
-
-struct	MessageProduce : Message
+MessageConsume::MessageConsume(std::string const& _sender, std::string const& _topic, JSONNode& _payload)
+:	Message(MSG_TYPE_CONSUME), topic(_topic), payload(_payload)
 {
-	MessageProduce(std::string const& _sender, std::string const& _topic, int32_t _partition, std::string const& _message)
-	: Message(MESSAGE_SERVER_LINKER_PRODUCE, _sender)
-	{
-		topic = _topic;	
-		message = _message;	
-		partition = _partition;
-	}
+}
 
-	std::string		topic;
-	std::string		message;
-	int32_t			partition;
-};
-
-ServerLinker::EventCB::EventCB(ServerLinker& _parent)
-: RdKafka::EventCb(), parent_(_parent)
+ServerLinker::EventCB::EventCB(ServerLinker& _linker)
+: Object(&_linker), RdKafka::EventCb(), linker_(_linker)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "event";
@@ -39,7 +27,7 @@ void	ServerLinker::EventCB::event_cb(RdKafka::Event &event)
 			TRACE_INFO("ERROR (" << RdKafka::err2str(event.err()) << "): " << event.str());
 			if (event.err() == RdKafka::ERR__ALL_BROKERS_DOWN)
 			{
-				parent_.Stop();
+				linker_.Stop();
 			}
 		}
 		break;
@@ -64,8 +52,8 @@ void	ServerLinker::EventCB::event_cb(RdKafka::Event &event)
 	}   
 }
 
-ServerLinker::DeliveryReportCB::DeliveryReportCB(ServerLinker& _parent)
-: RdKafka::DeliveryReportCb(), parent_(_parent)
+ServerLinker::DeliveryReportCB::DeliveryReportCB(ServerLinker& _linker)
+: Object(&_linker), RdKafka::DeliveryReportCb(), linker_(_linker)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "delivery_report";
@@ -85,7 +73,7 @@ void ServerLinker::DeliveryReportCB::dr_cb (RdKafka::Message &message)
 //	Class ServerLinker::Link
 /////////////////////////////////////////////////////////////////////////////////////////////
 ServerLinker::Link::Link(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
-: linker_(_linker), partition_(_partition), topic_name_(_topic_name), topic_(NULL)
+: Object(&_linker), linker_(_linker), partition_(_partition), topic_name_(_topic_name), topic_(NULL)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "link";
@@ -152,6 +140,9 @@ bool	ServerLinker::UpLink::Send(std::string const& _message)
 	return	true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+//	Class ServerLinker::DownLink::ConsumCB
+/////////////////////////////////////////////////////////////////////////////////////////////
 void	ServerLinker::DownLink::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
 {
 	if (_msg.err() == RdKafka::ERR_NO_ERROR)
@@ -222,6 +213,19 @@ bool	ServerLinker::DownLink::Stop()
 	return	true;
 }
 
+bool	ServerLinker::DownLink::Consume(RdKafka::ConsumeCb* _consum_cb)
+{
+	if ((linker_.GetConsumer() != NULL) && (topic_ != NULL))
+	{
+		if (linker_.GetConsumer()->consume_callback(topic_, partition_, 1, _consum_cb, this) > 0)
+		{
+			return	true;	
+		}
+	}
+
+	return	false;	
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 //	Class ServerLinker::ConsumCB
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,8 +251,14 @@ void	ServerLinker::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
 					{
 						Message *message = new MessageConsume(linker_.GetID(), _msg.topic_name(), payload);
 
-
-						Message::Send(linker_.GetID(), message);
+						if (linker_.manager_ != NULL)
+						{
+							Message::Send(linker_.manager_->GetID(), message);
+						}
+						else
+						{
+							Message::Send(linker_.GetID(), message);
+						}
 					}
 					catch(std::exception& e)
 					{
@@ -266,11 +276,11 @@ void	ServerLinker::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
 /////////////////////////////////////////////////////////////////////////////////////////////
 //	Class ServerLinker
 /////////////////////////////////////////////////////////////////////////////////////////////
-ServerLinker::ServerLinker()
-: ActiveObject(), event_cb_(*this), delivery_report_cb_(*this), consumer_(NULL), producer_(NULL), connection_retry_interval_(10000000), consume_cb_(*this)
+ServerLinker::ServerLinker(ObjectManager* _manager)
+: ActiveObject(_manager), manager_(_manager), event_cb_(*this), delivery_report_cb_(*this), consumer_(NULL), producer_(NULL), connection_retry_interval_(10000000), consume_cb_(*this)
 {
 	trace.SetClassName(GetClassName());
-	name_ 	= "link";
+	name_ 	= "linker";
 	enable_ = true;
 }
 
@@ -596,7 +606,7 @@ void	ServerLinker::Preprocess()
 	conf_global_->set("dr_cb", &delivery_report_cb_, error_string_);
 	conf_global_->set("event_cb", &event_cb_, error_string_);
 
-	Date date = Date::GetCurrentDate();
+	Date date = Date::GetCurrent();
 	producer_retry_timeout_.Set(date);
 	consumer_retry_timeout_.Set(date);
 
@@ -619,7 +629,7 @@ void	ServerLinker::Process()
 			if (producer_ == NULL)
 			{
 				TRACE_ERROR("Failed to create producer!");
-				Date date = Date::GetCurrentDate() + connection_retry_interval_;
+				Date date = Date::GetCurrent() + connection_retry_interval_;
 				producer_retry_timeout_.Set(date);
 			}
 			else
@@ -636,15 +646,10 @@ void	ServerLinker::Process()
 
 	if(consumer_ != NULL)
 	{
-#if 1
 		for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 		{
-			if (consumer_->consume_callback(it->second->GetTopic(), it->second->GetPartition(), 1, it->second->GetConsumCB(), it->second) < 0)
-			{
-				TRACE_ERROR("Failed to set down link callback!");
-			}
+			it->second->Consume(&consume_cb_);
 		}
-#endif
 	}
 	else
 	{
@@ -655,7 +660,7 @@ void	ServerLinker::Process()
 			if (consumer_ == NULL)
 			{
 				TRACE_ERROR("Failed to create consumer!");
-				Date date = Date::GetCurrentDate() + connection_retry_interval_;
+				Date date = Date::GetCurrent() + connection_retry_interval_;
 				consumer_retry_timeout_.Set(date);
 			}
 			else
@@ -702,28 +707,57 @@ void	ServerLinker::Postprocess()
 
 }
 
-void	ServerLinker::OnMessage(Message* _message)
+void	ServerLinker::OnMessage(Message* _base)
 {
-	switch(_message->type)
+	switch(_base->type)
 	{
-	case	MESSAGE_SERVER_LINKER_PRODUCE:
+	case	MSG_TYPE_SERVER_LINKER_PRODUCE2:
 		{
 			if (producer_ != NULL)
 			{
-				MessageProduce*	message_produce = dynamic_cast<MessageProduce*>(_message);
-
-				if (message_produce != 0)
+				MessageProduce2*	message = dynamic_cast<MessageProduce2*>(_base);
+				if (message != NULL)
 				{
-					RdKafka::ErrorCode error_code = producer_->produce(const_cast<char *>(message_produce->topic.c_str()), message_produce->partition, 
-							RdKafka::Producer::RK_MSG_COPY, const_cast<char *>(message_produce->message.c_str()), message_produce->message.size(), NULL, 0, 0, NULL);
+					message->payload.push_back(JSONNode(TITLE_NAME_MSG_ID, std::to_string(Date::GetCurrent().GetMicroSecond())));
+			
+					std::string	payload = message->payload.write();
+
+					RdKafka::ErrorCode error_code = producer_->produce(const_cast<char *>(message->topic.c_str()), 0, 
+							RdKafka::Producer::RK_MSG_COPY, const_cast<char *>(payload.c_str()), payload.size(), NULL, 0, 0, NULL);
 					if (error_code != RdKafka::ERR_NO_ERROR)
 					{
 						TRACE_ERROR("Failed to produce : " << RdKafka::err2str(error_code));
 					}
 					else
 					{
-						TRACE_INFO("Message : " << message_produce->topic << ":" << message_produce->partition );
-						TRACE_INFO_JSON(message_produce->message);
+						TRACE_INFO_JSON(payload);
+					}
+				}
+				else
+				{
+					TRACE_ERROR("Invalid message!");
+				}
+			}
+		}
+		break;
+
+	case	MSG_TYPE_SERVER_LINKER_PRODUCE:
+		{
+			if (producer_ != NULL)
+			{
+				MessageProduce*	message = dynamic_cast<MessageProduce*>(_base);
+				if (message != NULL)
+				{
+					RdKafka::ErrorCode error_code = producer_->produce(const_cast<char *>(message->topic.c_str()), message->partition, 
+							RdKafka::Producer::RK_MSG_COPY, const_cast<char *>(message->payload.c_str()), message->payload.size(), NULL, 0, 0, NULL);
+					if (error_code != RdKafka::ERR_NO_ERROR)
+					{
+						TRACE_ERROR("Failed to produce : " << RdKafka::err2str(error_code));
+					}
+					else
+					{
+						TRACE_INFO("Message : " << message->topic << ":" << message->partition );
+						TRACE_INFO_JSON(message->payload);
 					}
 				}
 				else
@@ -738,9 +772,20 @@ void	ServerLinker::OnMessage(Message* _message)
 		}
 		break;
 
+	case	MSG_TYPE_SERVER_LINKER_CONSUME:
+		{
+			MessageConsume* message_consume = dynamic_cast<MessageConsume*>(_base);
+			if (message_consume != NULL)
+			{
+				std::string	topic;
+				JSONNode	payload;
+			}
+		}
+		break;
+
 	default:
 		{
-			TRACE_ERROR("Unknown message[" << _message->type << "]");	
+			TRACE_ERROR("Unknown message[" << _base->type << "]");	
 		}
 
 	}
@@ -756,11 +801,18 @@ bool	ServerLinker::Start()
 	return	ActiveObject::Start();
 }
 
-bool	ServerLinker::Produce(std::string const& _topic_name, int32_t _partition, std::string const& _message)
+bool	ServerLinker::Produce(JSONNode const& _payload)
+{
+	MessageProduce2 *message = new MessageProduce2(this->GetID(), "v1_server_1", _payload);
+
+	Post(message);
+}
+
+bool	ServerLinker::Produce(std::string const& _topic_name, int32_t _partition, std::string const& _payload)
 {
 	try
 	{
-		Post(new MessageProduce(id_, _topic_name, _partition, _message));
+		Post(new MessageProduce(id_, _topic_name, _partition, _payload));
 	}
 	catch(std::exception& e)
 	{

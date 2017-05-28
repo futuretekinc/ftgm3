@@ -82,17 +82,14 @@ RetValue	ShellCommandLoad
 					{
 						json = libjson::parse(buffer);
 
-						Properties	properties;
-						properties.Append(json);
-
-						Device* device = manager->CreateDevice(properties);
-						if (device == NULL)
+						Device *device = manager->CreateDevice(json);
+						if (device != NULL)
 						{
-							std::cout << "Failed to create device!" << std::endl;
+							std::cout << "Device[" << device->GetTraceName() << "] created"  << std::endl;	
 						}
 						else
 						{
-							std::cout << "The device is created!" << std::endl;
+							std::cout << "Failed to create device!" << std::endl;	
 						}
 					}
 					else

@@ -10,12 +10,12 @@
 
 static std::map<std::string, Object*>	object_map;
 
-Object::Object()
-: parent_(NULL), enable_(false), trace(this)
+Object::Object(Object* _parent)
+: parent_(_parent), enable_(false), trace(this)
 {
 	md5wrapper*	md5 = new md5wrapper;
 
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 	std::ostringstream	oss;
 
 	oss << date_.GetMicroSecond();
@@ -27,10 +27,16 @@ Object::Object()
 	object_map[id_] = this;
 }
 
-
-Object::Object(const ValueID& _id)
-:	parent_(NULL), id_(_id), enable_(false)
+Object::Object(ValueID const& _id, Object* _parent)
+: parent_(_parent), id_(_id), enable_(false), trace(this)
 {
+	md5wrapper*	md5 = new md5wrapper;
+
+	date_ = Date::GetCurrent();
+	std::ostringstream	oss;
+
+	oss << date_.GetMicroSecond();
+
 	name_ = std::string(id_);
 
 	object_map[id_] = this;
@@ -133,6 +139,18 @@ bool	Object::SetDate(Date const& _date, bool _store)
 	{
 		ApplyChanges();	
 	}
+
+	return	true;
+}
+
+Object*	Object::GetParent()
+{
+	return	parent_;
+}
+
+bool	Object::SetParent(Object* _parent)
+{
+	parent_ = _parent;
 
 	return	true;
 }
@@ -357,7 +375,7 @@ bool	Object::GetPropertyFieldList(std::list<std::string>& _field_list)
 	_field_list.push_back(TITLE_NAME_DATE);
 	_field_list.push_back(TITLE_NAME_ENABLE);
 	_field_list.push_back(TITLE_NAME_DEVICE_ID);
-	_field_list.push_back(TITLE_NAME_LIVE_CHECK_INTERVAL);
+	_field_list.push_back(TITLE_NAME_KEEP_ALIVE_INTERVAL);
 	_field_list.push_back(TITLE_NAME_LOOP_INTERVAL);
 	_field_list.push_back(TITLE_NAME_IP);
 	_field_list.push_back(TITLE_NAME_MODULE);

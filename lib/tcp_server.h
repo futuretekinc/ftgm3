@@ -12,6 +12,7 @@
 #include "tcp_session.h"
 
 class	TCPSession;
+class	ObjectManager;
 
 class	TCPServer : public ActiveObject
 {

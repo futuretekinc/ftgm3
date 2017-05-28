@@ -373,9 +373,9 @@ bool	Properties::AppendLoopInterval(uint32_t _interval)
 	return	Append(Property(TITLE_NAME_LOOP_INTERVAL, _interval));
 }
 
-bool	Properties::AppendLiveCheckInterval(uint32_t _interval)
+bool	Properties::AppendKeepAliveInterval(uint32_t _interval)
 {
-	return	Append(Property(TITLE_NAME_LIVE_CHECK_INTERVAL, _interval));
+	return	Append(Property(TITLE_NAME_KEEP_ALIVE_INTERVAL, _interval));
 }
 
 bool	Properties::AppendSNMPModule(std::string const& _module)

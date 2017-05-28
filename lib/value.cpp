@@ -85,7 +85,7 @@ std::string	ValueInt::GetTypeString() const
 ValueInt& ValueInt::operator=(int _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -103,7 +103,7 @@ int		ValueInt::Get() const
 bool	ValueInt::Set(const string& _value)
 {
 	value_ = strtol(_value.c_str(), 0, 10);
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 } 
@@ -111,7 +111,7 @@ bool	ValueInt::Set(const string& _value)
 void	ValueInt::Set(int _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 }
 
 Value*	ValueInt::Duplicate() const
@@ -145,7 +145,7 @@ std::string	ValueUInt32::GetTypeString() const
 ValueUInt32& ValueUInt32::operator=(uint32_t _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -158,7 +158,7 @@ uint32_t	ValueUInt32::Get() const
 bool	ValueUInt32::Set(const string& _value)
 {
 	value_ = strtol(_value.c_str(), 0, 10);
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 } 
@@ -166,7 +166,7 @@ bool	ValueUInt32::Set(const string& _value)
 void	ValueUInt32::Set(uint32_t _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 }
 
 Value*	ValueUInt32::Duplicate() const
@@ -205,7 +205,7 @@ std::string	ValueUInt64::GetTypeString() const
 ValueUInt64& ValueUInt64::operator=(uint64_t _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -218,7 +218,7 @@ uint64_t	ValueUInt64::Get() const
 bool	ValueUInt64::Set(const string& _value)
 {
 	value_ = strtol(_value.c_str(), 0, 10);
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 } 
@@ -226,7 +226,7 @@ bool	ValueUInt64::Set(const string& _value)
 void	ValueUInt64::Set(uint64_t _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 }
 
 Value*	ValueUInt64::Duplicate() const
@@ -265,7 +265,7 @@ std::string	ValueBool::GetTypeString() const
 ValueBool& ValueBool::operator=(bool _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -290,7 +290,7 @@ bool	ValueBool::Set(const string& _value)
 	{
 		value_ = false;
 	}
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 }
@@ -298,7 +298,7 @@ bool	ValueBool::Set(const string& _value)
 void	ValueBool::Set(bool _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 }
 
 Value*	ValueBool::Duplicate() const
@@ -341,7 +341,7 @@ ValueFloat::operator float() const
 ValueFloat& ValueFloat::operator=(float _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -349,7 +349,7 @@ ValueFloat& ValueFloat::operator=(float _value)
 void	ValueFloat::Set(float _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 }
 
 bool	ValueFloat::operator ==(const ValueFloat& _value)
@@ -380,7 +380,7 @@ bool	ValueFloat::operator <(const ValueFloat& _value)
 bool	ValueFloat::Set(const string& _value)
 {
 	value_ = ::atof(_value.c_str());
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 }
@@ -450,7 +450,7 @@ std::string	ValueString::GetTypeString() const
 ValueString& ValueString::operator=(const string& _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -483,7 +483,7 @@ const	std::string&	ValueString::Get() const
 bool	ValueString::Set(const string& _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 }
@@ -509,7 +509,7 @@ std::string	ValueStringLimit::GetTypeString() const
 ValueStringLimit& ValueStringLimit::operator=(string const& _value)
 {
 	value_ = _value.substr(0, limit_);
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -517,7 +517,7 @@ ValueStringLimit& ValueStringLimit::operator=(string const& _value)
 ValueStringLimit& ValueStringLimit::operator=(char const* _value)
 {
 	string value = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	if (value.length() > limit_)
 	{
@@ -540,7 +540,7 @@ bool	ValueStringLimit::Set(const string& _value)
 	}
 
 	value_ = _value.substr(0, limit_);
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 }
@@ -607,7 +607,7 @@ std::string	ValueType::GetTypeString() const
 bool	ValueType::Set(const string& _value)
 {
 	value_ = _value;		
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 }
@@ -722,7 +722,7 @@ bool	ValueIP::Set(const string& _value)
 	}
 
 	value_ = _value;		
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 }
@@ -795,7 +795,7 @@ std::string	ValueUnit::GetTypeString() const
 bool	ValueUnit::Set(const string& _value)
 {
 	value_ = _value;		
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	true;
 }
@@ -847,7 +847,7 @@ const	Time&	ValueTime::Get() const
 
 bool	ValueTime::Set(const std::string& _value)
 {
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 	return	false;
 }
 
@@ -859,7 +859,7 @@ Value*	ValueTime::Duplicate() const
 const	ValueTime&	ValueTime::operator=(Time const& _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -910,7 +910,7 @@ const	Date&	ValueDate::Get() const
 
 bool	ValueDate::Set(const std::string& _value)
 {
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 	return	false;
 }
 
@@ -922,7 +922,7 @@ Value*	ValueDate::Duplicate() const
 const	ValueDate&	ValueDate::operator=(Date const& _value)
 {
 	value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -994,7 +994,7 @@ Value*	ValueProperties::Duplicate() const
 const	ValueProperties&	ValueProperties::operator=(Properties const& _value)
 {
 	*value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }
@@ -1070,7 +1070,7 @@ Value*	ValuePropertiesList::Duplicate() const
 const	ValuePropertiesList&	ValuePropertiesList::operator=(PropertiesList const& _value)
 {
 	*value_ = _value;
-	date_ = Date::GetCurrentDate();
+	date_ = Date::GetCurrent();
 
 	return	*this;
 }

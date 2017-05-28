@@ -242,7 +242,7 @@ const string	Date::ToString() const
 	return	string(buffer);
 }
 
-Date	Date::GetCurrentDate()
+Date	Date::GetCurrent()
 {
 	Date	date;
 

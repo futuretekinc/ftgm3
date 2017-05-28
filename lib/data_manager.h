@@ -13,7 +13,7 @@ public:
 	class	Table : public Object
 	{
 		public:
-			Table(DataManager* _parent, std::string const& _name);
+			Table(DataManager* _manager, std::string const& _name);
 
 			std::string	GetClassName()	const	{	return	"DataManager::Table";	};
 			bool		Add(Properties const& _properties);
@@ -25,18 +25,18 @@ public:
 			bool		SetProperties(std::string const& _id, Properties& _properties);
 
 		protected:
-			DataManager*	parent_;
+			DataManager*	manager_;
 	};
 
 	class	ValueTable : public Object
 	{
 		public:
-			ValueTable(DataManager* _parent, std::string const& _endpoint_id);
+			ValueTable(DataManager* _manager, std::string const& _endpoint_id);
 
 			bool	Add(Value const* _value);
 
 		protected:
-			DataManager*	parent_;
+			DataManager*	manager_;
 	};
 
 	DataManager();

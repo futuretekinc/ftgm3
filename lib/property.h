@@ -70,7 +70,7 @@ public:
 	bool	AppendIP(ValueIP const& _ip);
 	bool	AppendUpdateInterval(uint32_t _interval);
 	bool	AppendLoopInterval(uint32_t _interval);
-	bool	AppendLiveCheckInterval(uint32_t _interval);
+	bool	AppendKeepAliveInterval(uint32_t _interval);
 	bool	AppendSNMPModule(std::string const& _module);
 	bool	AppendSNMPCommunity(std::string const& _community);
 	bool	AppendTimeout(uint32_t	_timeout);

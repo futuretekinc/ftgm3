@@ -61,7 +61,7 @@ public:
 
 	friend	std::ostream&	::operator<<(std::ostream& os, Date const& _date) ;
 
-	static	Date	GetCurrentDate();
+	static	Date	GetCurrent();
 	
 
 protected:

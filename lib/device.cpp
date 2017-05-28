@@ -12,7 +12,7 @@
 
 
 Device::Device(ObjectManager& _manager, ValueType const& _type)
-:	ActiveObject(), manager_(_manager), type_(_type), live_check_interval_(OBJECT_LIVE_CHECK_INTERVAL_SEC * TIME_SECOND)
+:	ActiveObject(&_manager), manager_(_manager), type_(_type), keep_alive_interval_(OBJECT_KEEP_ALIVE_INTERVAL_SEC * TIME_SECOND)
 {
 }
 
@@ -20,16 +20,16 @@ Device::~Device()
 {
 }
 
-bool	Device::SetLiveCheckInterval(int _interval, bool _store)
+bool	Device::SetKeepAliveInterval(int _interval, bool _store)
 {
-	if ((_interval < OBJECT_LIVE_CHECK_INTERVAL_SEC_MIN) || (OBJECT_LIVE_CHECK_INTERVAL_SEC_MAX	< _interval))
+	if ((_interval < OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN) || (OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX	< _interval))
 	{
 		return	false;	
 	}
 
-	live_check_interval_ = _interval * TIME_SECOND;
+	keep_alive_interval_ = _interval * TIME_SECOND;
 
-	updated_properties_.AppendLiveCheckInterval(live_check_interval_);
+	updated_properties_.AppendKeepAliveInterval(keep_alive_interval_);
 	if (_store)
 	{
 		ApplyChanges();
@@ -38,16 +38,16 @@ bool	Device::SetLiveCheckInterval(int _interval, bool _store)
 	return	true;
 }
 
-bool	Device::SetLiveCheckInterval(Time const& _interval, bool _store)
+bool	Device::SetKeepAliveInterval(Time const& _interval, bool _store)
 {
-	if ((uint64_t(_interval) < OBJECT_LIVE_CHECK_INTERVAL_SEC_MIN * TIME_SECOND) || (OBJECT_LIVE_CHECK_INTERVAL_SEC_MAX * TIME_SECOND	< uint64_t(_interval)))
+	if ((uint64_t(_interval) < OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN * TIME_SECOND) || (OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX * TIME_SECOND	< uint64_t(_interval)))
 	{
 		return	false;	
 	}
 
-	live_check_interval_ = _interval;
+	keep_alive_interval_ = _interval;
 
-	updated_properties_.AppendLiveCheckInterval(live_check_interval_);
+	updated_properties_.AppendKeepAliveInterval(keep_alive_interval_);
 	if (_store)
 	{
 		ApplyChanges();
@@ -61,7 +61,7 @@ bool	Device::GetProperties(Properties& _properties) const
 	if (ActiveObject::GetProperties(_properties))
 	{
 		_properties.AppendDeviceType(GetType());
-		_properties.AppendLiveCheckInterval(live_check_interval_ / TIME_SECOND);
+		_properties.AppendKeepAliveInterval(keep_alive_interval_ / TIME_SECOND);
 
 		return	true;	
 	}
@@ -71,100 +71,76 @@ bool	Device::GetProperties(Properties& _properties) const
 
 bool	Device::SetPropertyInternal(Property const& _property, bool create)
 {
-	if (create && (_property.GetName() == TITLE_NAME_ID))
+	bool	ret_value = true;
+
+	if (_property.GetName() == TITLE_NAME_ID)
 	{
-		ValueID	old_id = id_;
-
-		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value != NULL)
+		if (create)
 		{
-			if (!id_.Set(value->Get()))
+			ValueID	old_id = id_;
+
+			const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+			if (value != NULL)
 			{
-				TRACE_ERROR("Failed to set id!");
-				return	false;
+				if (!id_.Set(value->Get()))
+				{
+					TRACE_ERROR("Failed to set id!");
+					ret_value = false;
+				}
+				else
+				{
+					TRACE_INFO("The id set to " << id_);
+
+					ret_value = manager_.IDChanged(this, old_id);
+				}
 			}
-
-			TRACE_INFO("The id set to " << id_);
-
-			return	manager_.IDChanged(this, old_id);
-		}
-		else
-		{
-			TRACE_INFO("Property id value type is incorrect!");
+			else
+			{
+				TRACE_INFO("Property id value type is incorrect!");
+				ret_value = false;
+			}
 		}
 	}
-	else if (_property.GetName() == TITLE_NAME_LIVE_CHECK_INTERVAL)
+	else if (_property.GetName() == TITLE_NAME_KEEP_ALIVE_INTERVAL)
 	{
 		const ValueInt*	int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
 		if (int_value != NULL)
 		{
-			return	SetLiveCheckInterval(int_value->Get(), !create);
+			ret_value = SetKeepAliveInterval(int_value->Get(), !create);
 		}
-
-		const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (string_value != NULL)
+		else
 		{
-			uint32_t	value = strtoul(string_value->Get().c_str(), NULL, 10);
-			return	SetLiveCheckInterval(value, !create);
-		}
-
-		const ValueTime *time_value = dynamic_cast<const ValueTime*>(_property.GetValue());
-		if (time_value != NULL)
-		{
-			return	SetLiveCheckInterval(time_value->Get(), !create);
-		}
-			
-		TRACE_INFO("Property live_check_interval value type is incorrect!");
-	}
-	else if (_property.GetName() == TITLE_NAME_ENDPOINTS)
-	{
-		const ValuePropertiesList* properties_list_value = dynamic_cast<const ValuePropertiesList*>(_property.GetValue());
-		if (properties_list_value != NULL)
-		{
-			const PropertiesList& 	properties_list = properties_list_value->Get();
-			for(auto it = properties_list.begin(); it != properties_list.end() ; it++)
+			const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
+			if (string_value != NULL)
 			{
-				const Property* device_id_property = it->Get(TITLE_NAME_DEVICE_ID);
-				if (device_id_property != NULL)
+				uint32_t	value = strtoul(string_value->Get().c_str(), NULL, 10);
+				ret_value = SetKeepAliveInterval(value, !create);
+			}
+			else
+			{
+				const ValueTime *time_value = dynamic_cast<const ValueTime*>(_property.GetValue());
+				if (time_value != NULL)
 				{
-					TRACE_ERROR("The device id property can't be defined.");
-					return	false;
-				}
-
-				Properties properties(*it);
-				properties.AppendDeviceID(this->GetID());
-
-				TRACE_INFO(properties);
-				if (create)
-				{
-					Endpoint* endpoint = manager_.CreateEndpoint(properties);
-					if (endpoint == NULL)
-					{
-						TRACE_ERROR("Failed to create endpoint!");
-							return	false;	
-					}
-
-					if (!Attach(endpoint->GetID()))
-					{
-						TRACE_ERROR("Failed to attach endpoint[" << endpoint->GetTraceName() << "]");
-						delete endpoint;
-						return	false;
-					}
+					ret_value = SetKeepAliveInterval(time_value->Get(), !create);
 				}
 				else
-				{
+				{	
+					TRACE_INFO("Property keep_alive_interval value type is incorrect!");
+					ret_value = false;
 				}
 			}
 
-			return	true;
 		}
+	}
+	else if (_property.GetName() == TITLE_NAME_ENDPOINT)
+	{
 	}
 	else
 	{
-		return	ActiveObject::SetPropertyInternal(_property, create);
+		ret_value = ActiveObject::SetPropertyInternal(_property, create);
 	}
 
-	return	false;
+	return	ret_value;
 }
 
 
@@ -299,8 +275,8 @@ void	Device::Preprocess()
 		}
 	}
 
-	Date date = Date::GetCurrentDate() + live_check_interval_;
-	live_check_timer_.Set(date);
+	Date date = Date::GetCurrent() + keep_alive_interval_;
+	keep_alive_timer_.Set(date);
 	TRACE_INFO("live checker start [" << date << "]");
 }
 
@@ -336,19 +312,10 @@ void	Device::Process()
 		}
 	}
 
-	if (live_check_timer_.RemainTime() == 0)
+	if (keep_alive_timer_.RemainTime() == 0)
 	{
-		Message*	message = new MessageKeepAlive(id_, id_);
-
-		TRACE_INFO("Post live check!");	
-		if (!manager_.Post(message))
-		{
-			TRACE_ERROR("Failed to post mesage to manager!");	
-
-			delete message;
-		}
-
-		live_check_timer_ += live_check_interval_;	
+		manager_.KeepAlive(this);
+		keep_alive_timer_ += keep_alive_interval_;	
 	}
 }
 
@@ -425,7 +392,9 @@ bool	Device::RemoveSchedule(ValueID const& _id)
 
 bool	Device::IsValidType(std::string const& _type)
 {
-	return	(std::string(_type) == std::string(DeviceSNMP::Type())) || (std::string(_type) == std::string(DeviceFTE::Type()));
+	return	(std::string(_type) == std::string(DeviceSNMP::Type())) 
+			|| (std::string(_type) == std::string(DeviceFTE::Type()))
+			|| (std::string(_type) == std::string(DeviceSIM::Type()));
 }
 
 Device*	Device::Create(ObjectManager& _manager, Properties const& _properties)
@@ -533,7 +502,7 @@ bool	Device::GetPropertyFieldList(std::list<std::string>& _field_list)
 	_field_list.push_back(TITLE_NAME_DATE);
 	_field_list.push_back(TITLE_NAME_ENABLE);
 	_field_list.push_back(TITLE_NAME_DEVICE_ID);
-	_field_list.push_back(TITLE_NAME_LIVE_CHECK_INTERVAL);
+	_field_list.push_back(TITLE_NAME_KEEP_ALIVE_INTERVAL);
 	_field_list.push_back(TITLE_NAME_LOOP_INTERVAL);
 	_field_list.push_back(TITLE_NAME_IP);
 	_field_list.push_back(TITLE_NAME_MODULE);

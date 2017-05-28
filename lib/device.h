@@ -9,6 +9,7 @@
 #include "KompexSQLiteStatement.h"
 
 class	Endpoint;
+class	ObjectManager;
 
 class	Device : public ActiveObject
 {
@@ -24,8 +25,8 @@ public:
 	ValueType const& 	GetType() const	{	return	type_;};	
 	virtual	bool		IsIncludedIn(ValueType const& _type) 	{	return	(type_ == _type);};
 
-			bool		SetLiveCheckInterval(int _interval, bool _store = true);
-			bool		SetLiveCheckInterval(Time const& _interval, bool _store = true);
+			bool		SetKeepAliveInterval(int _interval, bool _store = true);
+			bool		SetKeepAliveInterval(Time const& _interval, bool _store = true);
 
 	virtual	bool		GetProperties(Properties& _properties) const;
 
@@ -67,9 +68,9 @@ protected:
 	ObjectManager&	manager_;
 	ValueType	type_;
 	ValueID		parent_id_;
-	Time		live_check_interval_;
+	Time		keep_alive_interval_;
 
-	Timer		live_check_timer_;
+	Timer		keep_alive_timer_;
 
 	std::list<ValueID>	endpoint_id_list_;
 

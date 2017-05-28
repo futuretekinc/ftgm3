@@ -7,29 +7,70 @@
 #include "librdkafka/rdkafkacpp.h"
 #include "timer.h"
 
+#define	MSG_TYPE_SERVER_LINKER			(0x00030000)
+#define	MSG_TYPE_SERVER_LINKER_PRODUCE	(MSG_TYPE_SERVER_LINKER + 1)
+#define	MSG_TYPE_SERVER_LINKER_CONSUME	(MSG_TYPE_SERVER_LINKER + 2)
+#define	MSG_TYPE_SERVER_LINKER_PRODUCE2	(MSG_TYPE_SERVER_LINKER + 3)
+
+class	ObjectManager;
+
+struct	MessageProduce : Message
+{
+	MessageProduce(std::string const& _sender, std::string const& _topic, int32_t _partition, std::string const& _payload)
+	: Message(MSG_TYPE_SERVER_LINKER_PRODUCE, _sender)
+	{
+		topic = _topic;	
+		payload = _payload;	
+		partition = _partition;
+	}
+
+	std::string		topic;
+	std::string		payload;
+	int32_t			partition;
+};
+
+struct	MessageProduce2 : Message
+{
+	MessageProduce2(std::string const& _sender, std::string const& _topic, JSONNode const& _payload)
+	: Message(MSG_TYPE_SERVER_LINKER_PRODUCE2, _sender), topic(_topic), payload(_payload) 
+	{
+	}
+
+	std::string		topic;
+	JSONNode		payload;
+};
+
+struct	MessageConsume : Message
+{
+	MessageConsume(std::string const& _sender, std::string const& _topic, JSONNode& _payload);
+
+	std::string	topic;
+	JSONNode	payload;
+};
+
 class	ServerLinker : public ActiveObject
 {
 public:
 	class EventCB : public RdKafka::EventCb, Object
 	{
 	public:
-					EventCB(ServerLinker& _parent);
+					EventCB(ServerLinker& _linker);
 
 			void 	event_cb (RdKafka::Event &_event) ;
 
 	protected:
-		ServerLinker&	parent_;
+		ServerLinker&	linker_;
 	};
 
 	class DeliveryReportCB : public RdKafka::DeliveryReportCb, Object
 	{
 	public:
-					DeliveryReportCB(ServerLinker& _parent);
+					DeliveryReportCB(ServerLinker& _linker);
 
 			void 	dr_cb (RdKafka::Message &_message) ;
 
 	protected:
-		ServerLinker&	parent_;
+		ServerLinker&	linker_;
 	};
 
 	class Link : public Object
@@ -76,6 +117,8 @@ public:
 			bool		Start();
 			bool		Stop();
 
+			bool		Consume(RdKafka::ConsumeCb* _consum_cb);
+
 			ConsumeCB*	GetConsumCB()	{	return	&message_cb_;	};
 
 			int64_t		GetOffset()		{	return	offset_;	};
@@ -89,6 +132,7 @@ public:
 	class	ConsumeCB : public RdKafka::ConsumeCb
 	{
 	public:
+		friend	class	ServerLinker;
 		ConsumeCB(ServerLinker& _linker) : ConsumeCb(), linker_(_linker) {};
 
 	protected:
@@ -96,7 +140,7 @@ public:
 		ServerLinker&	linker_;
 	};
 
-						ServerLinker();
+						ServerLinker(ObjectManager* _manager= NULL);
 						~ServerLinker();
 
 			bool		Load(JSONNode const& _json); 
@@ -118,6 +162,7 @@ public:
 			uint32_t	GetDownLinkNameList(std::list<std::string>& _topic_name_list);
 
 			bool		Start();
+			bool		Produce(JSONNode const& _message);
 			bool		Produce(std::string const& _topic_name, int32_t _partition, std::string const& _message);
 
 protected:
@@ -132,6 +177,7 @@ protected:
 
 			void		OnMessage(Message* _message);
 
+	ObjectManager*		manager_;
 	std::list<std::string>	broker_list_;
 	
 	Time				connection_retry_interval_;

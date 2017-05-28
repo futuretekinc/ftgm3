@@ -8,7 +8,8 @@
 class	ActiveObject : public Object
 {
 public:
-	ActiveObject();
+	ActiveObject(Object* _parent = NULL);
+	ActiveObject(ValueID const& _id, Object* _parent = NULL);
 	~ActiveObject();
 
 			bool	Load(JSONNode const& _json);

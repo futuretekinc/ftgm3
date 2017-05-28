@@ -35,6 +35,7 @@ public:
 
 			bool		Attach(Device* _device);
 			bool		Detach(Device* _device);
+			Device*		CreateDevice(JSONNode const& _json);
 			Device*		CreateDevice(Properties const& _properties, bool from_db = false);
 			bool		DestroyDevice(std::string const& _id);
 			uint32_t	GetDeviceCount();
@@ -57,6 +58,8 @@ public:
 			bool		Attach(RCSSession* _rms);
 			bool		Detach(RCSSession* _rms);
 
+			// External Service Call Server
+
 			std::string	GetTopicNameGateway(std::string const& _id);
 			std::string	GetTopicNameDevice(std::string const& _id);
 			std::string	GetTopicNameEndpoint(std::string const& _id);
@@ -65,7 +68,10 @@ protected:
 	
 			void		OnMessage(Message* _message);
 
-			bool		SendKeepAlive(ValueID const& _id);
+			bool		KeepAlive(ActiveObject* _object);
+			bool		Report(Endpoint* _endpiont);
+
+	//		bool		SendKeepAlive(ValueID const& _id);
 			bool		SendEndpointReport(ValueID const& _id, std::list<Value*> const& _value_list);
 			bool		SendMessage(std::string const& _topic, std::string const& _message);
 

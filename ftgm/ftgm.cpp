@@ -33,6 +33,8 @@ int	main(int argc, char *argv[])
 		TRACE_INFO2(NULL, "##                                ##");
 		TRACE_INFO2(NULL, "####################################");
 
+		object_manager.SetTrace(true);
+
 		object_manager.Start();
 		while(!object_manager.IsRunning())
 		{

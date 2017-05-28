@@ -15,8 +15,13 @@ Endpoint::ValueMap::~ValueMap()
 
 bool Endpoint::ValueMap::Add(Date const& _date, Value const* _value)
 {
-	if (_date.IsValid() && (size() < limit_))
-	{
+	if (_date.IsValid())
+	{ 
+		if (size() >= limit_)
+		{
+			erase(begin());
+		}
+
 		insert(std::make_pair(_date, _value->Duplicate()));
 		return	true;
 	}

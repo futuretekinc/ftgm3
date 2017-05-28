@@ -13,7 +13,7 @@ void	ServerLinkerTest::Preprocess()
 
 	ServerLinker::Preprocess();
 
-	timer_.Set(Date::GetCurrentDate());
+	timer_.Set(Date::GetCurrent());
 	timer_ += interval_;
 }
 

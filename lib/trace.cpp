@@ -83,6 +83,11 @@ bool	Trace::GetEnable()
 		return	false;
 	}
 
+	if ((object_ != NULL) && (object_->GetParent() != NULL))
+	{
+		return	object_->GetParent()->trace.GetEnable();
+	}
+
 	return	master_.GetEnable();	
 }
 

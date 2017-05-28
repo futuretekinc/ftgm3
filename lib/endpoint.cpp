@@ -9,7 +9,7 @@
 #include "endpoint_sensor_humidity.h"
 
 Endpoint::Endpoint(ObjectManager& _manager)
-:	ActiveObject(),
+:	ActiveObject(&_manager),
 	manager_(_manager), 
 	device_id_(""), 
 	active_(false), 
@@ -392,7 +392,7 @@ void	Endpoint::Preprocess()
 {
 	Date	date;
 
-	date = Date::GetCurrentDate() + update_interval_;
+	date = Date::GetCurrent() + update_interval_;
 
 	update_timer_.Set(date);
 }

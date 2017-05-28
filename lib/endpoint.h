@@ -10,6 +10,8 @@
 #define	MSG_TYPE_ENDPOINT_UPDATED		(MSG_TYPE_ENDPOINT + 1)
 #define	MSG_TYPE_ENDPOINT_REPORT		(MSG_TYPE_ENDPOINT + 2)
 
+class	ObjectManager;
+
 class	Endpoint : public ActiveObject
 {
 	friend 	class	Device;
