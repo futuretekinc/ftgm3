@@ -27,6 +27,12 @@ Shell::Command::Command
 	help = _command.help;
 	short_help = _command.short_help;
 	function = _command.function;
+	sub.resize(_command.sub.size());
+
+	for(uint32_t i = 0 ; i < _command.sub.size() ; i++)
+	{
+		sub[i] = new Command(*_command.sub[i]);	
+	}
 }
 
 Shell::Command::Command
@@ -43,6 +49,35 @@ Shell::Command::Command
 	function = _function;
 }
 
+Shell::Command::Command
+(
+	const std::string&  _name, 
+	const std::string&  _help, 
+	const std::string& 	_short_help, 
+	RetValue	(*_function)(std::string [], uint32_t, Shell*),
+	Command*	_sub_list,
+	uint32_t	_sub_count
+)
+:	sub(_sub_count)
+{
+	name = _name;
+	help = _help;
+	short_help = _short_help;
+	function = _function;
+
+	for(uint32_t i = 0 ; i < _sub_count ; i++)
+	{
+		sub[i] = new Command(_sub_list[i]);
+	}
+}
+
+Shell::Command::~Command()
+{
+	for(uint32_t i = 0 ; i < sub.size() ; i++)
+	{
+		delete sub[i];	
+	}
+}
 
 Shell::Shell
 (
@@ -160,9 +195,9 @@ uint32_t	Shell::GetCommandWidth()
 }
 
 
-void	Shell::OnMessage(Message* _message)
+bool		Shell::OnMessage(Message* _message)
 {
-	ActiveObject::OnMessage(_message);
+	return	ActiveObject::OnMessage(_message);
 }
 
 int		Shell::Parser

@@ -37,7 +37,7 @@ void	ServerLinkerTest::Postprocess()
 {
 }
 
-void	ServerLinkerTest::OnMessage(Message* _message)
+bool	ServerLinkerTest::OnMessage(Message* _message)
 {
-	ServerLinker::OnMessage(_message);
+	return	ServerLinker::OnMessage(_message);
 }

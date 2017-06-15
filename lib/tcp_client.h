@@ -21,11 +21,15 @@ public:
 		~Frame();
 	};	
 
+	TCPClient();
 	TCPClient(std::string const& _ip, uint16_t _port);
 	~TCPClient();
 
+	bool		Connect();
 	bool		Connect(const std::string& _server_ip, uint16_t _server_port = 8888);
 	bool		Disconnect();
+	bool		IsConnected();
+
 	bool		Send(std::string const& _message);
 	bool		Send(const void*	_frame, uint32_t	_frame_len);
 	uint32_t	Receive(void*	_frame, uint32_t	_frame_len);
@@ -36,8 +40,9 @@ public:
 
 protected:
 
+	void		Preprocess();
 	void		Process();
-	void		PostProcess();
+	void		Postprocess();
 
 	ValueID					message_process_id_;
 	Locker					locker_;

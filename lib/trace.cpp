@@ -83,9 +83,13 @@ bool	Trace::GetEnable()
 		return	false;
 	}
 
-	if ((object_ != NULL) && (object_->GetParent() != NULL))
+	if (object_ != NULL)
 	{
-		return	object_->GetParent()->trace.GetEnable();
+		Object* parent = Object::Get(object_->GetParentID());
+		if (parent != NULL)
+		{
+			return	parent->trace.GetEnable();
+		}
 	}
 
 	return	master_.GetEnable();	

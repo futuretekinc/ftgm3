@@ -282,15 +282,20 @@ bool	ValueBool::Get() const
 
 bool	ValueBool::Set(const string& _value)
 {
-	if (_value.compare("true") == 0)
+	if ((_value == "true") || (_value == "1"))
 	{	
+		date_ = Date::GetCurrent();
 		value_ = true;
 	}
-	else if (_value.compare("false") == 0)
+	else if ((_value == "false") || (_value == "0"))
 	{
+		date_ = Date::GetCurrent();
 		value_ = false;
 	}
-	date_ = Date::GetCurrent();
+	else 
+	{
+		return	false;
+	}
 
 	return	true;
 }
@@ -414,6 +419,25 @@ void	ValueFloat::Print(ostream&	os) const
 {
 	os << value_;
 }
+///////////////////////////////////////////////////////////////
+// Class ValueScale
+///////////////////////////////////////////////////////////////
+ValueScale::ValueScale(float _value)
+: ValueFloat(_value)
+{
+}
+
+ValueScale::ValueScale(float _value, Date const& _date)
+: ValueFloat(_value, _date)
+{
+}
+
+
+Value*	ValueScale::Duplicate() const
+{
+	return	new ValueScale(value_, date_);
+};
+
 ///////////////////////////////////////////////////////////////
 // Class ValueString
 ///////////////////////////////////////////////////////////////

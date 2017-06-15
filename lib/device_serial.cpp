@@ -34,7 +34,7 @@ bool	DeviceSerial::SetPort(std::string const& _dev_name, bool _store)
 }
 
 
-bool	DeviceSerial::GetProperties(Properties& _properties) const
+bool	DeviceSerial::GetProperties(Properties& _properties) 
 {
 	if (Device::GetProperties(_properties))
 	{

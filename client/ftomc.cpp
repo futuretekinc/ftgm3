@@ -6,11 +6,12 @@
 #include <mutex>
 #include <unistd.h>
 #include "trace.h"
+#include "defined.h"
 #include "device.h"
 #include "device_fte.h"
 #include "endpoint.h"
 #include "shell.h"
-#include "tcp_client.h"
+#include "rcs_client.h"
 
 using namespace std;
 
@@ -28,7 +29,11 @@ int main
 	bool	show_usage = false;
 	bool	load_from_file = false;
 	string	config_file_name = string(program_invocation_short_name) + string(".conf");
+	std::string	rcs_server_ip = DEFAULT_CONST_RCS_SERVER_IP;
+	uint16_t	rcs_server_port=DEFAULT_CONST_RCS_SERVER_PORT;
 	Date	date;
+
+	trace_master.SetEnable(true);
 
 	TRACE_INFO(setw(80) << std::setfill('#') << "");
 	TRACE_INFO("Start : " << program_invocation_short_name << " - " << date);
@@ -49,7 +54,9 @@ int main
 		}   
 	}   
 
-	TCPClient	client;
+	RCSClient	client;
+
+	client.SetDumpPacket(true);
 
 	client.Start();
 	Shell	shell(object_manager_shell_commands, object_manager_shell_command_count, &client);

@@ -6,12 +6,13 @@
 #include "trace.h"
 #include "object.h"
 #include "object_manager.h"
+#include "utils.h"
 #include <hashlib++/hashlibpp.h>
 
 static std::map<std::string, Object*>	object_map;
 
-Object::Object(Object* _parent)
-: parent_(_parent), enable_(false), trace(this)
+Object::Object()
+: parent_id_(""), enable_(false), trace(this), lazy_store_(false)
 {
 	md5wrapper*	md5 = new md5wrapper;
 
@@ -27,8 +28,8 @@ Object::Object(Object* _parent)
 	object_map[id_] = this;
 }
 
-Object::Object(ValueID const& _id, Object* _parent)
-: parent_(_parent), id_(_id), enable_(false), trace(this)
+Object::Object(ValueID const& _id)
+: parent_id_(""), id_(_id), enable_(false), trace(this)
 {
 	md5wrapper*	md5 = new md5wrapper;
 
@@ -74,18 +75,32 @@ const	ValueID&	Object::GetID() const
 	return	id_;
 }
 
+bool	Object::SetID(ValueID const& _id)
+{
+	id_ = _id;
+	
+	updated_properties_.AppendID(id_);
+
+	if (!lazy_store_)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
+}
+
 const	ValueName&	Object::GetName() const
 {
 	return	name_;
 }
 
-bool	Object::SetName(ValueName const& _name, bool _store)
+bool	Object::SetName(ValueName const& _name)
 {
 	name_ = _name;
 
 	updated_properties_.AppendName(name_);
 
-	if (_store)
+	if (!lazy_store_)
 	{
 		ApplyChanges();	
 	}
@@ -98,13 +113,13 @@ bool	Object::GetEnable() const
 	return	enable_;
 }
 
-bool	Object::SetEnable(bool _enable, bool _store)
+bool	Object::SetEnable(bool _enable)
 {
 	enable_ = _enable;
 
 	updated_properties_.AppendEnable(ValueBool(enable_));
 
-	if (_store)
+	if (!lazy_store_)
 	{
 		ApplyChanges();	
 	}
@@ -129,13 +144,13 @@ const Date&		Object::GetDate() const
 	return	date_;
 }
 
-bool	Object::SetDate(Date const& _date, bool _store)
+bool	Object::SetDate(Date const& _date)
 {
 	date_ = _date;
 
 	updated_properties_.AppendDate(date_);
 
-	if (_store)
+	if (!lazy_store_)
 	{
 		ApplyChanges();	
 	}
@@ -143,14 +158,33 @@ bool	Object::SetDate(Date const& _date, bool _store)
 	return	true;
 }
 
-Object*	Object::GetParent()
+const ValueID&	Object::GetParentID() const
 {
-	return	parent_;
+	return	parent_id_;
 }
 
-bool	Object::SetParent(Object* _parent)
+bool	Object::SetParentID(ValueID const& _parent_id)
 {
-	parent_ = _parent;
+	parent_id_ = _parent_id;
+
+	updated_properties_.AppendParentID(parent_id_);
+
+	if (!lazy_store_)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
+}
+
+bool	Object::SetLazyStore(bool _enable)
+{
+	lazy_store_ = _enable;
+
+	if (!lazy_store_)
+	{
+		ApplyChanges();	
+	}
 
 	return	true;
 }
@@ -162,6 +196,8 @@ bool	Object::HasChanged() const
 
 bool	Object::ApplyChanges() 
 {
+	lazy_store_ = false;
+
 	return	true;
 }
 
@@ -178,169 +214,206 @@ bool	Object::AddUpdatedProperties(Property const& _property)
 	return	true;
 }
 
-bool	Object::ClearUpdatedProperties()
+bool	Object::ClearUpdatedProperties() 
 {
 	updated_properties_.Clear();
 
 	return	true;
 }
 
-bool	Object::SetProperty(Property const& _property, bool create)
+bool	Object::GetProperties(Properties& _properties, Properties::Fields const& _fields) 
 {
-	if (SetPropertyInternal(_property, create))
+	if (_fields.id)
 	{
-		return	AddUpdatedProperties(_property);
+		_properties.AppendID(id_);
 	}
 
-	return	false;
+	if (_fields.name)
+	{
+		_properties.AppendName(name_);
+	}
+	
+	if (_fields.time)
+	{
+		_properties.AppendDate(date_);
+	}
+
+	if (_fields.enable)
+	{
+		_properties.AppendEnable(enable_);
+	}
+
+	if (_fields.parent_id)
+	{
+		_properties.AppendParentID(parent_id_);
+	}
+
+	return	true;
 }
 
-bool	Object::SetPropertyInternal(Property const& _property, bool create)
+bool	Object::GetProperties(JSONNode& _properties, Properties::Fields const& _fields)
+{
+	if (_fields.id)
+	{
+		_properties.push_back(JSONNode(TITLE_NAME_ID, id_));
+	}
+
+	if (_fields.name)
+	{
+		_properties.push_back(JSONNode(TITLE_NAME_NAME, name_));
+	}
+	
+	if (_fields.time)
+	{
+#ifdef	PROPERTY_VALUE_STRING_ONLY
+		_properties.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(date_))));
+#else
+		_properties.push_back(JSONNode(TITLE_NAME_TIME, time_t(date_)));
+#endif
+	}
+
+	if (_fields.enable)
+	{
+		_properties.push_back(JSONNode(TITLE_NAME_ENABLE, enable_));
+	}
+
+	if (_fields.parent_id)
+	{
+		_properties.push_back(JSONNode(TITLE_NAME_PARENT_ID, parent_id_));
+	}
+
+	return	true;
+
+}
+
+bool	Object::SetProperty(Property const& _property, Properties::Fields const& _fields)
 {
 	bool	ret_value = true;
 
-	if (create && (_property.GetName() == TITLE_NAME_ID))
+	try
 	{
-		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value != NULL)
+		if (_property.GetName() == TITLE_NAME_ID)
 		{
-			if (!id_.Set(value->Get()))
+			if (_fields.id)
 			{
-				TRACE_ERROR("Failed to set id!");
-				return	false;
-			}
-
-			TRACE_INFO("The id set to " << id_);
-		}
-		else
-		{
-			TRACE_INFO("Property id value type is incorrect!");
-		}
-	}
-	else if (_property.GetName() == TITLE_NAME_NAME)
-	{
-		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value != NULL)
-		{
-			return	SetName(value->Get(), !create);
-		}
-		else
-		{
-			ret_value = false;
-			TRACE_INFO("Property name value type is incorrect!");
-		}
-	}
-	else if (_property.GetName() == TITLE_NAME_DATE)
-	{
-		if (create)
-		{
-			const ValueDate*	value = dynamic_cast<const ValueDate*>(_property.GetValue());
-			if (value != NULL)
-			{
-				return	SetDate(value->Get(), !create);
-			}
-			else
-			{
-				const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
-				if (string_value != NULL)
+				const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+				if (!value)
 				{
-					Date	date;
-					
-					date = string_value->Get();
-					return	SetDate(date, !create);
+					throw InvalidArgument(_property.GetName(), _property.GetValue());
+				}
+
+				ret_value = SetID(value->Get());
+			}
+		}
+		else if (_property.GetName() == TITLE_NAME_NAME)
+		{
+			if (_fields.name)
+			{
+				const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+				if (!value)
+				{
+					throw InvalidArgument(_property.GetName(), _property.GetValue());
+				}
+
+				ret_value = SetName(value->Get());
+			}
+		}
+		else if (_property.GetName() == TITLE_NAME_TIME)
+		{
+			if (_fields.time)
+			{
+				Date	time;
+				const ValueDate*	value = dynamic_cast<const ValueDate*>(_property.GetValue());
+				if (!value)
+				{
+					const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
+					if (!string_value)
+					{
+						throw InvalidArgument(_property.GetName(), _property.GetValue());
+					}
+
+					time = string_value->Get();
 				}
 				else
 				{
-					ret_value = false;
-					TRACE_INFO("Property date value type is incorrect!");
+					time = value->Get();
 				}
+
+			
+				ret_value = SetDate(time);
+			}
+		}
+		else if (_property.GetName() == TITLE_NAME_PARENT_ID)
+		{
+			const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+			if (!value)
+			{
+				throw InvalidArgument(_property.GetName(), _property.GetValue());
+			}
+
+			ret_value = SetParentID(value->Get());
+		}
+		else if (_property.GetName() == TITLE_NAME_ENABLE)
+		{
+			if (dynamic_cast<const ValueBool*>(_property.GetValue()))
+			{
+				const ValueBool*	value = dynamic_cast<const ValueBool*>(_property.GetValue());
+
+				ret_value = SetEnable(value->Get());
+			}
+			else if(dynamic_cast<const ValueString*>(_property.GetValue()))
+			{
+				ValueBool	value;
+
+				value.Set(dynamic_cast<const ValueString*>(_property.GetValue())->Get());
+
+				ret_value = SetEnable(value.Get());
+			}
+			else	
+			{
+				throw InvalidArgument(_property.GetName(), _property.GetValue());
 			}
 		}
 		else
 		{
+			TRACE_ERROR("Property[" << _property.GetName() << "] not supported!");
 			ret_value = false;
-			TRACE_INFO("The date of the device is only set possible at creation time.");
 		}
 	}
-	else if (_property.GetName() == TITLE_NAME_ENABLE)
+	catch(std::exception& e)
 	{
-		bool	enable	= false;
-		const ValueBool*	value = dynamic_cast<const ValueBool*>(_property.GetValue());
-		if (value != NULL)
-		{
-			enable = value->Get();
-		}
-		else
-		{
-			const ValueString*	value2 = dynamic_cast<const ValueString*>(_property.GetValue());
-			if (value2 != NULL)
-			{
-				if ((value2->Get() == "yes") || (value2->Get() == "on") || (value2->Get() == "1") || (value2->Get() == "true"))
-				{
-					enable = true;
-				}
-				else if ((value2->Get() == "no") || (value2->Get() == "off") || (value2->Get() == "0") || (value2->Get() == "false"))
-				{
-					enable = false;
-				}
-				else
-				{
-					ret_value = false;	
-					TRACE_INFO("Property enable value is incorrect!");
-				}
-
-			}
-			else
-			{
-				ret_value = false;
-				TRACE_INFO("Property enable value type is incorrect!");
-			}
-		}
-
-		if (ret_value == true)
-		{
-			ret_value = SetEnable(enable, !create);
-		}
-	}
-	else
-	{
-		TRACE_ERROR("Property[" << _property.GetName() << "] not supported!");
+		TRACE_ERROR(e.what());
 		ret_value = false;
 	}
 
 	return	ret_value;
 }
 
-bool	Object::GetProperties(Properties& _properties) const
+bool	Object::SetProperties(Properties const& _properties, Properties::Fields const& _fields, bool create)
 {
-	_properties.AppendID(id_);
-	_properties.AppendName(name_);
-	_properties.AppendDate(date_);
-	_properties.AppendEnable(enable_);
+	SetLazyStore(create);
 
-	return	true;
-}
-
-Properties	Object::GetProperties() const
-{
-	Properties	properties;
-
-	properties.AppendID(std::string(id_));
-	properties.AppendName(name_);
-	properties.AppendDate(date_);
-	properties.AppendEnable(enable_);
-
-	return	properties;
-}
-
-bool	Object::SetProperties(Properties const& _properties, bool create)
-{
 	for(auto it = _properties.begin(); it != _properties.end() ; it++)
 	{
-		SetPropertyInternal(*it, create);	
+		SetProperty(*it, _fields);	
+	}
+
+	if (create)
+	{
+		ClearUpdatedProperties();
+		SetLazyStore(!create);
 	}
 
 	return	true;
+}
+
+bool	Object::SetProperties(JSONNode const& _properties, Properties::Fields const& _fields, bool create)
+{
+	Properties	properties;
+
+	properties.Append(_properties);
+
+	return	SetProperties(properties, _fields, create);
 }
 
 bool	Object::GetUpdatedProperties(Properties& _properties) const
@@ -350,13 +423,13 @@ bool	Object::GetUpdatedProperties(Properties& _properties) const
 	return	true;
 }
 
-Object::operator JSONNode()
+Object::operator JSONNode() 
 {
-	Properties	properties;
+	JSONNode	properties;
 
 	GetProperties(properties);
 
-	return	ToJSON(properties);
+	return	properties;
 }
 
 
@@ -372,9 +445,8 @@ bool	Object::GetPropertyFieldList(std::list<std::string>& _field_list)
 	_field_list.push_back(TITLE_NAME_ID);
 	_field_list.push_back(TITLE_NAME_NAME);
 	_field_list.push_back(TITLE_NAME_TYPE);
-	_field_list.push_back(TITLE_NAME_DATE);
+	_field_list.push_back(TITLE_NAME_TIME);
 	_field_list.push_back(TITLE_NAME_ENABLE);
-	_field_list.push_back(TITLE_NAME_DEVICE_ID);
 	_field_list.push_back(TITLE_NAME_KEEP_ALIVE_INTERVAL);
 	_field_list.push_back(TITLE_NAME_LOOP_INTERVAL);
 	_field_list.push_back(TITLE_NAME_IP);

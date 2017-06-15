@@ -42,7 +42,8 @@ public:
 	Date();
 	Date(Date const& _date);
 	Date(std::string const& _date);
-	Date(uint32_t _seconds);
+	Date(time_t _time);
+
 
 			bool	IsValid() const;
 			void	Set(uint32_t _seconds);
@@ -57,7 +58,7 @@ public:
 	const	Date&	operator=(Date const& _date);
 	const	Date&	operator=(std::string const& _date);
 					operator time_t() const;
-			uint64_t	GetMicroSecond();
+			uint64_t	GetMicroSecond() const;
 
 	friend	std::ostream&	::operator<<(std::ostream& os, Date const& _date) ;
 

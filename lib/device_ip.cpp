@@ -35,47 +35,55 @@ const ValueIP&	DeviceIP::GetIP()
 	return	ip_;
 }
 
-void	DeviceIP::SetIP(const ValueIP& _ip, bool _store)
+void	DeviceIP::SetIP(const ValueIP& _ip)
 {
 	ip_ = _ip;
 
 	updated_properties_.AppendIP(ip_);
-	if (_store)
+
+	if (!lazy_store_)
 	{
 		ApplyChanges();	
 	}
+
 }
 
-bool	DeviceIP::SetIP(const std::string& _ip, bool _store)
+bool	DeviceIP::SetIP(const std::string& _ip)
 {
-	if (ValueIP::IsValidIP(_ip))
+	if (!ValueIP::IsValidIP(_ip))
 	{
-		ip_ = _ip;
-
-		updated_properties_.AppendIP(ip_);
-		if (_store)
-		{
-			ApplyChanges();	
-		}
-
-		return	true;
+		TRACE_ERROR("Invalid IP!");
+		return	false;
 	}
 
-	return	false;
+	ip_ = _ip;
+
+	updated_properties_.AppendIP(ip_);
+
+	if (!lazy_store_)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
 }
 
-bool	DeviceIP::GetProperties(Properties& _properties) const
+bool	DeviceIP::GetProperties(Properties& _properties, Properties::Fields const& _fields) 
 {
-	if (Device::GetProperties(_properties))
+	if (Device::GetProperties(_properties, _fields))
 	{
-		_properties.AppendIP(ip_);
+		if(_fields.ip)
+		{
+			_properties.AppendIP(ip_);
+		}
+
 		return	true;	
 	}
 
 	return	false;
 }
 
-bool	DeviceIP::SetPropertyInternal(Property const& _property, bool create)
+bool	DeviceIP::SetProperty(Property const& _property, Properties::Fields const& _fields)
 {
 	if (strcasecmp(_property.GetName().c_str(), TITLE_NAME_IP) == 0)
 	{
@@ -92,7 +100,7 @@ bool	DeviceIP::SetPropertyInternal(Property const& _property, bool create)
 	}
 	else
 	{
-		return	Device::SetPropertyInternal(_property, create);
+		return	Device::SetProperty(_property, _fields);
 	}
 
 	return	false;

@@ -10,16 +10,18 @@ public:
 	DeviceIP(ObjectManager& _manager, ValueType const& _type, const ValueIP& _ip);
 
 			bool		IsIncludedIn(ValueType const& _type);
-	virtual	bool		GetProperties(Properties& _properties) const;
+
+	virtual	bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+
+	virtual	bool		GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
 
 	const 	ValueIP&	GetIP();
-			void		SetIP(const ValueIP& _ip, bool _store = true);
-			bool		SetIP(const std::string& _ip, bool _store = true);
+			void		SetIP(const ValueIP& _ip);
+			bool		SetIP(const std::string& _ip);
 
 	static	const	ValueType&	Type();
 
 protected:
-	virtual	bool		SetPropertyInternal(Property const& _property, bool create = false);
 
 	ValueIP		ip_;
 };

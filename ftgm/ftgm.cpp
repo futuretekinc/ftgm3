@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iostream>
+#include <fstream>
 #include <csignal>
 #include <exception>
 #include "device.h"
@@ -24,10 +25,30 @@ int	main(int argc, char *argv[])
 	{
 		trace_master.SetEnable(true);
 
-		if (!object_manager.LoadFromFile("./ftgm.conf"))
+		std::fstream	fs("./ftgm.conf", std::fstream::in);
+		if (fs)
 		{
-			std::cerr << "Failed to load config!" << std::endl;	
+			fs.seekg (0, fs.end);
+			int length = fs.tellg();
+			fs.seekg (0, fs.beg);
+
+			char * buffer = new char [length + 1];
+			fs.read(buffer, length);
+			buffer[length] = 0;
+			fs.close();
+
+			if (libjson::is_valid(buffer))
+			{
+				JSONNode	json = libjson::parse(buffer);
+
+				if (!object_manager.Load(json))
+				{
+					std::cerr << "Failed to load config!" << std::endl;	
+				}
+			}
+			delete buffer;
 		}
+
 
 		TRACE_INFO2(NULL, "####################################");
 		TRACE_INFO2(NULL, "##                                ##");

@@ -27,12 +27,14 @@ public:
 			bool	Send(void *data, uint32_t len);
 
 	const 	Information&	GetInformation();
-			void	OnMessage(Message* _message);
+			bool	OnMessage(Message* _message);
 
 protected:
-	void		Preprocess();
-	void		Process();
-	void		Postprocess();
+	virtual	bool	OnReceive(void *_data, uint32_t _len);
+
+			void	Preprocess();
+			void	Process();
+			void	Postprocess();
 
 	TCPServer	*server_;
 	int			socket_;

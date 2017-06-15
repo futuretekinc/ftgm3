@@ -5,7 +5,7 @@
 #include "shell.h"
 #include "object_manager.h"
 #include "data_manager.h"
-#include "tcp_client.h"
+#include "rcs_client.h"
 
 using namespace std;
 
@@ -16,10 +16,10 @@ RetValue	ShellCommandConnect
 	Shell* 		_shell
 )
 {
-	TCPClient*	client = dynamic_cast<TCPClient*>(_shell->GetObject());
+	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	RetValue	ret_value = RET_VALUE_OK;
-	string		server_ip = "127.0.0.1";
-	uint16_t	port;
+	string		server_ip = client->GetServerIP();
+	uint16_t	port = client->GetServerPort();
 
 	if (_count == 2)	
 	{
@@ -37,7 +37,9 @@ RetValue	ShellCommandConnect
 		goto finished;
 	}
 
-	if (client->Connect(server_ip, port))
+	client->SetServerIP(server_ip);
+	client->SetServerPort(port);
+	if (client->Connect())
 	{
 		_shell->Out() << "Client started" << std::endl;
 		client->Start();
@@ -59,7 +61,7 @@ RetValue	ShellCommandDisconnect
 )
 {
 	RetValue	ret_value = RET_VALUE_OK;
-	TCPClient*	client = dynamic_cast<TCPClient*>(_shell->GetObject());
+	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 
 	client->Disconnect();
 
@@ -74,11 +76,11 @@ RetValue	ShellCommandSend
 )
 {
 	RetValue	ret_value = RET_VALUE_OK;
-	TCPClient*	client = dynamic_cast<TCPClient*>(_shell->GetObject());
+	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 
 	if (_count == 2)
 	{
-		client->Send(_arguments[1].c_str(), _arguments[1].length());	
+		//client->Send(_arguments[1].c_str(), _arguments[1].length());	
 	}
 	else 
 	{

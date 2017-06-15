@@ -10,7 +10,6 @@
 #include "time2.h"
 #include "property.h"
 
-
 class	Object
 {
 public:
@@ -26,44 +25,51 @@ public:
 		STOP
 	};
 
-	Object(Object* _parent = NULL);
-	Object(ValueID const& _id, Object* _parent = NULL);
+	Object();
+	Object(ValueID const& _id);
 	virtual	~Object();
 
 	virtual	std::string	GetClassName();
 
+			bool		SetID(ValueID const& _id);
 	const	ValueID&	GetID() const;
 
 	const	ValueName&	GetName() const;
-			bool		SetName(ValueName const& _name, bool _store = true);
+			bool		SetName(ValueName const& _name);
 
 			bool		GetEnable() const;
-	virtual	bool		SetEnable(bool _enable, bool _store = true);
+	virtual	bool		SetEnable(bool _enable);
 
 	virtual	Stat		GetState() const;
 			bool		SetState(Stat _stat);
 
 	const	Date&		GetDate() const;
-			bool		SetDate(Date const& _date, bool _store = true);
+			bool		SetDate(Date const& _date);
 
-			Object*		GetParent();
-			bool		SetParent(Object* _parent);
+	const	ValueID&	GetParentID() const;
+			bool		SetParentID(ValueID const& _parent);
+
+			bool		SetLazyStore(bool _enable);
 
 			bool		HasChanged() const;
 	virtual	bool		ApplyChanges();
+
 			bool		GetUpdatedProperties(Properties& _properties) const;
 			bool		AddUpdatedProperties(Property const& _property);
 			bool		ClearUpdatedProperties();
 
-	virtual	bool		GetProperties(Properties& _properties) const;
-	virtual	Properties	GetProperties() const;
-			bool		SetProperty(Property const& _property, bool create = false);
-	virtual	bool		SetProperties(Properties const& _properties, bool create = false);
+	virtual	bool		GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		GetProperties(JSONNode& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+
+	virtual	bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+			bool		SetProperties(Properties const& _properties, Properties::Fields const& _fields = PROPERTY_ALL, bool create = false);
+			bool		SetProperties(JSONNode const& _properties, Properties::Fields const& _fields = PROPERTY_ALL, bool create = false);
 	
 	virtual				operator JSONNode();
 
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 	static	std::string ToString(Stat _stat);
+
 	static	int			GetCount();
 	static	Object*		Get(std::string const& _name);
 	static	Object*		GetAt(int index);
@@ -74,14 +80,14 @@ public:
 	friend std::ostream&	operator<<(std::ostream& os, Object & _object);
 
 protected:
-	virtual	bool		SetPropertyInternal(Property const& _property, bool create = false);
 
-	Object*		parent_;
+	ValueID		parent_id_;
 	std::string	class_name_;
 	ValueID		id_;
 	ValueName	name_;	
 	Date		date_;
 	bool		enable_;
+	bool		lazy_store_;
 	std::mutex	mutex_;
 
 	Properties	updated_properties_;

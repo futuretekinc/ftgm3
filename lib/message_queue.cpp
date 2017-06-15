@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include "defined.h"
+#include "trace.h"
 #include "message_queue.h"
 #include "time.h"
 
@@ -54,6 +55,10 @@ Message* MessageQueue::Pop
 			delete message;
 			message = NULL;
 		}
+	}
+	else
+	{
+		TRACE_ERROR("Queue element is NULL!!!");	
 	}
 
 	return	message;

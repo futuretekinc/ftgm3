@@ -1,17 +1,96 @@
 #include <exception>
+#include <list>
+#include <string>
+#include <iomanip>
+#include "node.h"
 #include "defined.h"
+#include "gateway.h"
+#include "property.h"
+#include "endpoint.h"
+#include "endpoint_actuator.h"
 #include "server_linker.h"
+#include "rcs_message.h"
 #include "object_manager.h"
 #include "trace.h"
 #include "time2.h"
+#include "sha1.h"
+#include "md5.h"
+#include "sha256.h"
+#include "utils.h"
 
-MessageConsume::MessageConsume(std::string const& _sender, std::string const& _topic, JSONNode& _payload)
-:	Message(MSG_TYPE_CONSUME), topic(_topic), payload(_payload)
+ServerLinker::Produce::Produce(std::string const& _topic, RCSMessage const& _message)
+: Message(MSG_TYPE_SL_PRODUCE), topic_(_topic), message_(_message)
 {
 }
 
+ServerLinker::Produce::Produce(std::string const& _topic, std::string const& _payload)
+: Message(MSG_TYPE_SL_PRODUCE), topic_(_topic)
+{
+	if (libjson::is_valid(_payload))
+	{
+		message_ = libjson::parse(_payload);
+
+		message_.Make();
+	}
+}
+
+ServerLinker::Consume::Consume(std::string const& _topic, std::string const& _payload)
+: Message(MSG_TYPE_SL_CONSUME), topic_(_topic)
+{
+	if (libjson::is_valid(_payload))
+	{
+		message_ = libjson::parse(_payload);
+
+		message_.Make();
+	}
+}
+
+ServerLinker::SLMError::SLMError()
+{
+}
+
+const char* ServerLinker::SLMError::what() const throw()
+{
+	return	message_.c_str();
+}
+
+ServerLinker::SLMInvalidArgument::SLMInvalidArgument(std::string const& _argument)
+: SLMError()
+{
+	std::ostringstream	oss;
+
+	oss << "Invalid argument[" << _argument << "]";
+
+	message_ = oss.str();
+}
+
+ServerLinker::SLMObjectNotFound::SLMObjectNotFound(std::string const& _object_id)
+: SLMError(), object_id_(_object_id)
+{
+	std::ostringstream	oss;
+
+	oss << "Object[" << _object_id << "] not found!";
+
+	message_ = oss.str();
+}
+
+ServerLinker::SLMRequestTimeout::SLMRequestTimeout(RCSMessage* _message)
+: SLMError()
+{ 
+	std::ostringstream	oss;
+	oss << "Message[" << _message->GetMsgID() <<"] arrives late or is invalid.";
+
+	message_ = oss.str();
+}
+
+ServerLinker::SLMNotInitialized::SLMNotInitialized(std::string const& _message)
+: SLMError()
+{
+	message_ = _message;
+}
+
 ServerLinker::EventCB::EventCB(ServerLinker& _linker)
-: Object(&_linker), RdKafka::EventCb(), linker_(_linker)
+: Object(), RdKafka::EventCb(), linker_(_linker)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "event";
@@ -27,7 +106,8 @@ void	ServerLinker::EventCB::event_cb(RdKafka::Event &event)
 			TRACE_INFO("ERROR (" << RdKafka::err2str(event.err()) << "): " << event.str());
 			if (event.err() == RdKafka::ERR__ALL_BROKERS_DOWN)
 			{
-				linker_.Stop();
+				linker_.InternalDisconnect();
+				linker_.InternalConnect();
 			}
 		}
 		break;
@@ -53,19 +133,39 @@ void	ServerLinker::EventCB::event_cb(RdKafka::Event &event)
 }
 
 ServerLinker::DeliveryReportCB::DeliveryReportCB(ServerLinker& _linker)
-: Object(&_linker), RdKafka::DeliveryReportCb(), linker_(_linker)
+: Object(), RdKafka::DeliveryReportCb(), linker_(_linker)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "delivery_report";
 	enable_ = true;
 }
 
-void ServerLinker::DeliveryReportCB::dr_cb (RdKafka::Message &message) 
+void ServerLinker::DeliveryReportCB::dr_cb (RdKafka::Message &data) 
 {
-	TRACE_INFO("Message delivery for (" << message.len() << " bytes): " << message.errstr());
-	if (message.key())
+
+	Produce *produce = (Produce*) data.msg_opaque();
+	if (produce!= NULL)
 	{
-		TRACE_INFO("Key: " << *(message.key()));
+		std::string	topic = produce->GetTopic();
+		RCSMessage&	message = produce->GetMessage();
+
+		auto it = linker_.message_map_.find(message.GetMsgID());
+		if (it != linker_.message_map_.end())
+		{
+			TRACE_INFO("The Message[" << message.GetMsgID() << "] was delivered");
+
+			uint64_t	expire_time = message.GetTime().GetMicroSecond() + (linker_.request_timeout_ * TIME_SECOND);
+
+			TRACE_INFO("The request expiry time[" << expire_time << "] has been set in the request message[" << message.GetMsgID() << "].");
+			linker_.request_map_[expire_time] = produce;
+			linker_.message_map_.erase(it);
+		}
+
+	}
+
+	if (data.key())
+	{
+		TRACE_INFO("Key: " << *(data.key()));
 	}
 }
 
@@ -73,18 +173,30 @@ void ServerLinker::DeliveryReportCB::dr_cb (RdKafka::Message &message)
 //	Class ServerLinker::Link
 /////////////////////////////////////////////////////////////////////////////////////////////
 ServerLinker::Link::Link(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
-: Object(&_linker), linker_(_linker), partition_(_partition), topic_name_(_topic_name), topic_(NULL)
+: Object(), linker_(_linker), partition_(_partition), topic_name_(_topic_name), topic_(NULL)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "link";
 	enable_ = true;
 }
 
+bool	ServerLinker::Link::Touch()
+{
+	keep_alive_timer_.Set(Date::GetCurrent() + Time(60000000));
+
+	return	true;
+}
+
+uint32_t	ServerLinker::Link::GetLiveTime()
+{
+	return	keep_alive_timer_.RemainTime().GetSeconds();
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 //	Class ServerLinker::UpLink
 /////////////////////////////////////////////////////////////////////////////////////////////
 ServerLinker::UpLink::UpLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
-: Link(_linker, _topic_name, _partition)
+: Link(_linker, _topic_name, _partition), number_of_out_going_messages_(0), number_of_error_messages_(0)
 {
 }
 
@@ -100,6 +212,8 @@ bool	ServerLinker::UpLink::Start()
 		}
 	}
 
+	Touch();
+	
 	TRACE_INFO("Uplink[" << topic_name_ << "] started");
 	return	true;
 }
@@ -134,8 +248,8 @@ bool	ServerLinker::UpLink::Send(std::string const& _message)
 		}
 	}
 
-	TRACE_INFO("Send(" << topic_->name() << ", " << partition_ << ", " << _message << ")");
-	linker_.Produce(topic_->name(), partition_, _message);
+//	TRACE_INFO("Send(" << topic_->name() << ", " << partition_ << ", " << _message << ")");
+//	linker_.Send(_message);
 
 	return	true;
 }
@@ -161,7 +275,7 @@ void	ServerLinker::DownLink::ConsumeCB::consume_cb(RdKafka::Message& _msg, void 
 //	Class ServerLinker::DownLink
 /////////////////////////////////////////////////////////////////////////////////////////////
 ServerLinker::DownLink::DownLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
-: Link(_linker, _topic_name, _partition), message_cb_(*this), offset_(RdKafka::Topic::OFFSET_END)
+: Link(_linker, _topic_name, _partition), message_cb_(*this), offset_(RdKafka::Topic::OFFSET_END), number_of_incomming_messages_(0), number_of_error_messages_(0)
 {
 }
 
@@ -183,6 +297,8 @@ bool	ServerLinker::DownLink::Start()
 		TRACE_ERROR("Failed to start down link[" << error_code << "]!");
 		return	false;	
 	}
+
+	Touch();
 
 	return	true;
 }
@@ -232,60 +348,94 @@ bool	ServerLinker::DownLink::Consume(RdKafka::ConsumeCb* _consum_cb)
 void	ServerLinker::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
 {
 	DownLink*	link = (DownLink *)opaque;
-
+	
 	if (link != NULL)
 	{
 		if (_msg.err() == RdKafka::ERR_NO_ERROR)
 		{
 			link->SetOffset(_msg.offset());
+			link->IncreaseNumberOfIncommingMessages();
+			link->Touch();
 
 			TRACE_INFO2(&linker_, _msg.topic_name() << " : " << _msg.offset());
 			if (_msg.len() != 0)
 			{
-				if (libjson::is_valid((char *)_msg.payload()))
+				std::string	payload = (char *)_msg.payload();
+
+				size_t	close_brace_pos = payload.rfind('}');
+
+				if (close_brace_pos == std::string::npos)
 				{
-					JSONNode	payload = libjson::parse((char *)_msg.payload());
-					TRACE_INFO2(&linker_, "Payload : " << payload.write_formatted());
-
-					try
-					{
-						Message *message = new MessageConsume(linker_.GetID(), _msg.topic_name(), payload);
-
-						if (linker_.manager_ != NULL)
-						{
-							Message::Send(linker_.manager_->GetID(), message);
-						}
-						else
-						{
-							Message::Send(linker_.GetID(), message);
-						}
-					}
-					catch(std::exception& e)
-					{
-						TRACE_ERROR2(&linker_, "Failed to create message[" << e.what() << "]");	
-					}
+					link->IncreaseNumberOfErrorMessages();
+					TRACE_ERROR2(&linker_, "Invalid payload : " << payload);
 				}
 				else
 				{
-					TRACE_ERROR2(&linker_, "Invalid payload : " << (char *)_msg.payload());
+					payload = payload.substr(0, close_brace_pos+1);
+
+					try
+					{
+						Consume	*consume = new Consume(_msg.topic_name(), payload);
+						linker_.Post(consume);
+					}
+					catch(std::exception& e)
+					{
+						link->IncreaseNumberOfErrorMessages();
+						TRACE_ERROR2(&linker_, "Exception : " << e.what());
+						TRACE_ERROR2(&linker_, "Invalid payload : " << payload);
+					}
 				}
 			}
 		}
+		else
+		{
+			if (_msg.err() != RdKafka::ERR__PARTITION_EOF)
+			{
+				TRACE_ERROR2(NULL, "Topic : " << _msg.topic_name());
+				TRACE_ERROR2(NULL, "Error : " << RdKafka::err2str(_msg.err()));
+			}
+		}
+	}
+	else
+	{
+		TRACE_ERROR2(NULL, "Down link unknown!");	
 	}
 }
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 //	Class ServerLinker
 /////////////////////////////////////////////////////////////////////////////////////////////
 ServerLinker::ServerLinker(ObjectManager* _manager)
-: ActiveObject(_manager), manager_(_manager), event_cb_(*this), delivery_report_cb_(*this), consumer_(NULL), producer_(NULL), connection_retry_interval_(10000000), consume_cb_(*this)
+: 	ActiveObject(), 
+	manager_(_manager), 
+	event_cb_(*this), 
+	delivery_report_cb_(*this), 
+	consume_cb_(*this),
+	consumer_(NULL), 
+	producer_(NULL), 
+	broker_connected_(false),
+	auto_connection_(true),
+	keep_alive_enable_(true),
+	report_late_arrive_message_(SERVER_LNKER_REPORT_LATE_ARRIVE_MESSAGE),
+	request_timeout_(SERVER_LINKER_REQUEST_TIMEOUT_SEC),
+	broker_retry_interval_(SERVER_LINKER_CONNECTION_RETRY_INTERVAL_SEC * TIME_SECOND)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "linker";
 	enable_ = true;
+	global_up_topic_  = "v1_server_1";
+	global_down_topic_  = "v1_client_1";
+	secret_code_hash_ = sha1;
+
+	conf_global_= RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+	conf_topic_ = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
 }
 
 ServerLinker::~ServerLinker()
 {
+	delete conf_global_;
+	delete conf_topic_;
+
 	for(auto it = up_link_map_.begin() ; it != up_link_map_.end() ; it++)
 	{
 		delete it->second;	
@@ -301,7 +451,45 @@ bool	ServerLinker::Load(JSONNode const& _json)
 {
 	bool	ret_value = true;
 
-	if ((_json.name() == TITLE_NAME_SERVER_LINKER) || (_json.name().size() == 0))
+	if (_json.name() == TITLE_NAME_SECRET)
+	{
+		if (_json.type() == JSON_STRING)
+		{
+			secret_code_ = _json.as_string();	
+		}
+		else
+		{
+			TRACE_ERROR("Invalid secure code!");
+		}
+	}
+	else if (_json.name() == TITLE_NAME_HASH)
+	{
+		if (_json.type() == JSON_STRING)
+		{
+			if (_json.as_string() == "md5")
+			{
+				secret_code_hash_ = md5;	
+			}
+			else if (_json.as_string() == "sha1")
+			{
+				secret_code_hash_ = sha1;	
+			}
+			else if (_json.as_string() == "sha256")
+			{
+				secret_code_hash_ = sha256;	
+			}
+			else
+			{
+				TRACE_ERROR("Not supported hash algorithm[" << _json.as_string() << "]");
+			}
+		}
+		else
+		{
+			TRACE_ERROR("Invalid secure code!");
+		}
+	
+	}
+	else if ((_json.name() == TITLE_NAME_SERVER_LINKER) || (_json.name().size() == 0))
 	{
 		if (_json.type() == JSON_NODE)
 		{
@@ -317,16 +505,9 @@ bool	ServerLinker::Load(JSONNode const& _json)
 	}
 	else if (_json.name() == TITLE_NAME_BROKER)
 	{
-		if (_json.type() == JSON_ARRAY)
+		if (_json.type() == JSON_STRING)
 		{
-			for(auto broker = _json.begin() ; broker != _json.end() ; broker++)
-			{
-				AddBroker(broker->as_string());
-			}
-		}
-		else if (_json.type() == JSON_STRING)
-		{
-			AddBroker(_json.as_string());
+			SetBroker(_json.as_string());
 		}
 		else
 		{
@@ -346,18 +527,7 @@ ServerLinker::operator JSONNode() const
 {
 	JSONNode	root;
 
-	JSONNode	broker_list(JSON_ARRAY);
-
-	for(auto it = broker_list_.begin(); it != broker_list_.end() ; it++)
-	{
-		JSONNode	broker(JSON_STRING);
-
-		broker = (*it);
-
-		broker_list.push_back(broker);
-	}
-	broker_list.set_name(TITLE_NAME_BROKER);
-	root.push_back(broker_list);
+	root.push_back(JSONNode(TITLE_NAME_BROKER, broker_));
 
 	JSONNode	trace_config = trace;
 	trace_config.set_name(TITLE_NAME_TRACE);
@@ -367,49 +537,50 @@ ServerLinker::operator JSONNode() const
 	return	root;
 }
 
-bool		ServerLinker::AddBroker(std::string const& _broker)
+bool	ServerLinker::SetSecureCode(std::string const& _secret_code)
 {
-	for(auto it = broker_list_.begin(); it != broker_list_.end() ; it++)
-	{
-		if (_broker == (*it))
-		{
-			TRACE_ERROR("Failed to add broker because already exist broker.");
-			return	false;	
-		}
-	}
-
-	broker_list_.push_back(_broker);
+	secret_code_=  _secret_code;
 
 	return	true;
 }
 
-bool		ServerLinker::DeleteBroker(std::string const& _broker)
+bool	ServerLinker::GetSecureCode(std::string & _secret_code)
 {
-	for(auto it = broker_list_.begin(); it != broker_list_.end() ; it++)
-	{
-		if (_broker == (*it))
-		{
-			broker_list_.erase(it);
-			return	true;	
-		}
-	}
+	_secret_code = secret_code_;
 
-	TRACE_WARN("Failed to delete broker because broker is not exist.");
-
-	return	false;
+	return	true;
 }
 
-uint32_t	ServerLinker::GetBrokerList(std::list<std::string>& _broker_list)
+bool	ServerLinker::SetBroker(std::string const& _broker)
 {
-	for(auto it = broker_list_.begin(); it != broker_list_.end() ; it++)
-	{
-		_broker_list.push_back(*it);		
-	}
+	broker_ = _broker;
 
-	return	_broker_list.size();
+	return	true;
 }
 
-uint32_t	ServerLinker::GetUpLinkNameList(std::list<std::string>& _topic_name_list)
+const std::string&	ServerLinker::GetBroker()
+{
+	return	broker_;
+}
+
+bool		ServerLinker::SetAutoConnection(bool _auto)
+{
+	auto_connection_ = _auto;
+
+	return	true;
+}
+
+uint32_t	ServerLinker::GetUpLink(std::vector<UpLink*>& _link_list)
+{
+	for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
+	{
+		_link_list.push_back(it->second);		
+	}
+
+	return	_link_list.size();
+}
+
+uint32_t	ServerLinker::GetUpLink(std::list<std::string>& _topic_name_list)
 {
 	for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
@@ -419,7 +590,17 @@ uint32_t	ServerLinker::GetUpLinkNameList(std::list<std::string>& _topic_name_lis
 	return	_topic_name_list.size();
 }
 
-uint32_t	ServerLinker::GetDownLinkNameList(std::list<std::string>& _topic_name_list)
+uint32_t	ServerLinker::GetDownLink(std::vector<DownLink*>& _link_list)
+{
+	for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
+	{
+		_link_list.push_back(it->second);		
+	}
+
+	return	_link_list.size();
+}
+
+uint32_t	ServerLinker::GetDownLink(std::list<std::string>& _topic_name_list)
 {
 	for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
@@ -440,11 +621,10 @@ RdKafka::Topic*	ServerLinker::CreateProducerTopic(std::string const& _topic_name
 		{
 			TRACE_INFO("The producer topic[" << _topic_name << "] created");
 		}
-	}
-
-	if (topic == NULL)
-	{
-		TRACE_ERROR("Failed to create topic!");
+		else
+		{
+			TRACE_ERROR("Failed to create topic!");
+		}
 	}
 
 	return	topic;
@@ -461,11 +641,10 @@ RdKafka::Topic*	ServerLinker::CreateConsumerTopic(std::string const& _topic_name
 		{
 			TRACE_INFO("The consumer topic[" << _topic_name << "] created");
 		}
-	}
-
-	if (topic == NULL)
-	{
-		TRACE_ERROR("Failed to create topic!");
+		else
+		{
+			TRACE_ERROR("Failed to create topic!");
+		}
 	}
 
 	return	topic;
@@ -484,6 +663,11 @@ ServerLinker::UpLink*	ServerLinker::AddUpLink(std::string const& _topic_name, in
 
 			up_link_map_[_topic_name] = link;
 			TRACE_INFO("Uplink added : " << _topic_name << "[" << link << "]");
+
+			if (IsConnected())
+			{
+				link->Start();
+			}
 		}
 		catch(std::exception& e)
 		{
@@ -499,29 +683,29 @@ ServerLinker::UpLink*	ServerLinker::AddUpLink(std::string const& _topic_name, in
 ServerLinker::UpLink*	ServerLinker::GetUpLink(std::string const& _topic_name)
 {
 	auto it = up_link_map_.find(_topic_name);
-	if (it != up_link_map_.end())
+	if (it == up_link_map_.end())
 	{
-		return	it->second;	
+		return	NULL;
 	}
 
-	return	NULL;
+	return	it->second;	
 }
 
-bool		ServerLinker::DeleteUpLink(std::string const& _topic_name)
+bool		ServerLinker::DelUpLink(std::string const& _topic_name)
 {
 	auto it = up_link_map_.find(_topic_name);
-	if (it != up_link_map_.end())
+	if (it == up_link_map_.end())
 	{
-		UpLink*	link = it->second;	
-
-		up_link_map_.erase(it);
-
-		delete link;
-
-		return	true;	
+		return	false;
 	}
 
-	return	false;
+	UpLink*	link = it->second;	
+
+	up_link_map_.erase(it);
+
+	delete link;
+
+	return	true;	
 }
 
 ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic_name, int32_t _partition)
@@ -536,6 +720,12 @@ ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic_name
 			link = new DownLink(*this, _topic_name, _partition);	
 
 			down_link_map_[_topic_name] = link;
+			TRACE_INFO("Downlink added : " << _topic_name << "[" << link << "]");
+
+			if (IsConnected())
+			{
+				link->Start();
+			}
 		}
 		catch(std::exception& e)
 		{
@@ -544,60 +734,46 @@ ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic_name
 		}
 	}
 
+#if 0
+	if (up_link_map_.size() == 0)
+	{
+		AddUpLink(topic_);
+	}
+#endif
 	TRACE_INFO("DownLink[" << _topic_name << "] added.");
 	return	link;
 }
 
-bool		ServerLinker::DeleteDownLink(std::string const& _topic_name)
+bool		ServerLinker::DelDownLink(std::string const& _topic_name)
 {
 	auto it = down_link_map_.find(_topic_name);
-	if (it != down_link_map_.end())
+	if (it == down_link_map_.end())
 	{
-		DownLink*	link = it->second;	
-
-		down_link_map_.erase(it);
-
-		delete link;
-
-		return	true;	
+		return	false;
 	}
+	DownLink*	link = it->second;	
 
-	return	false;
+	down_link_map_.erase(it);
+
+	delete link;
+
+	return	true;	
 }
 
 ServerLinker::DownLink*	ServerLinker::GetDownLink(std::string const& _topic_name)
 {
 	auto it = down_link_map_.find(_topic_name);
-	if (it != down_link_map_.end())
+	if (it == down_link_map_.end())
 	{
-		return	it->second;	
+		return	NULL;
 	}
 
-	return	NULL;
+	return	it->second;	
 }
 
 void	ServerLinker::Preprocess()
 {
-	conf_global_= RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
-	conf_topic_ = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
-
-	std::ostringstream oss;
-	bool	first = true;
-
-	for(auto it = broker_list_.begin(); it != broker_list_.end() ; it++)
-	{
-		if (!first)
-		{
-			oss << "," << (*it);
-		}
-		else
-		{
-			oss << (*it);
-			first = false;	
-		}
-	}
-
-	RdKafka::Conf::ConfResult result = conf_global_->set("metadata.broker.list", oss.str(), error_string_);
+	RdKafka::Conf::ConfResult result = conf_global_->set("metadata.broker.list", broker_, error_string_);
 	if (result != RdKafka::Conf::CONF_OK)
 	{
 		TRACE_ERROR("Failed to set broker to conf_global!");
@@ -606,9 +782,8 @@ void	ServerLinker::Preprocess()
 	conf_global_->set("dr_cb", &delivery_report_cb_, error_string_);
 	conf_global_->set("event_cb", &event_cb_, error_string_);
 
-	Date date = Date::GetCurrent();
-	producer_retry_timeout_.Set(date);
-	consumer_retry_timeout_.Set(date);
+	AddUpLink(global_up_topic_);
+	AddDownLink(global_down_topic_);
 
 	ActiveObject::Preprocess();
 	
@@ -616,71 +791,162 @@ void	ServerLinker::Preprocess()
 
 void	ServerLinker::Process()
 {
-	if (producer_ != NULL)
+	if (IsConnected())
 	{
-		producer_->poll(0);
-	}
-	else
-	{
-		if (producer_retry_timeout_.RemainTime() == 0)
+		try
 		{
-			TRACE_INFO("Create producer")
-				producer_ 	= RdKafka::Producer::create(conf_global_, error_string_);
-			if (producer_ == NULL)
+			producer_->poll(0);
+
+			for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 			{
-				TRACE_ERROR("Failed to create producer!");
-				Date date = Date::GetCurrent() + connection_retry_interval_;
-				producer_retry_timeout_.Set(date);
-			}
-			else
-			{
-				TRACE_INFO("Up Link Count : " << up_link_map_.size());
-				for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
-				{
-					TRACE_INFO("Up Link : " << it->second);
-					it->second->Start();
-				}
+				it->second->Consume(&consume_cb_);
 			}
 		}
-	}
-
-	if(consumer_ != NULL)
-	{
-		for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
+		catch(std::exception& e)
 		{
-			it->second->Consume(&consume_cb_);
+			TRACE_ERROR("Connection error![" << e.what() << "]");	
 		}
 	}
 	else
 	{
-		if (consumer_retry_timeout_.RemainTime() == 0)
+		if (auto_connection_ && !broker_connected_)
 		{
-			TRACE_INFO("Create consumer")
-				consumer_	= RdKafka::Consumer::create(conf_global_, error_string_);
-			if (consumer_ == NULL)
-			{
-				TRACE_ERROR("Failed to create consumer!");
-				Date date = Date::GetCurrent() + connection_retry_interval_;
-				consumer_retry_timeout_.Set(date);
-			}
-			else
-			{
-				TRACE_INFO("Down Link Count : " << down_link_map_.size());
-				for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
-				{
-					TRACE_INFO("Down Link : " << it->second);
-					it->second->Start();
-				}
-			}
+			InternalConnect();
 		}
 	}
 
+	uint64_t	current = uint64_t(Date::GetCurrent().GetMicroSecond());
+
+	if (request_map_.upper_bound(current) != request_map_.begin())
+	{
+		for(auto it = request_map_.begin(); it != request_map_.upper_bound(current) ; it++)
+		{
+			if (it->second->GetMessage().GetMsgType() != MSG_STR_KEEP_ALIVE)
+			{
+				TRACE_ERROR("Requst Timeout : " <<  it->second->GetMessage().GetMsgID());
+				TRACE_ERROR("Msg Type : " <<  it->second->GetMessage().GetMsgType());
+			}
+			delete it->second;
+			request_map_.erase(it);
+		}
+	}
 
 	ActiveObject::Process();
 }
 
 void	ServerLinker::Postprocess()
 {
+	Disconnect();
+
+	ActiveObject::Preprocess();
+
+}
+
+bool	ServerLinker::Start()
+{
+	if (broker_.length() == 0)
+	{
+		return	false;	
+	}
+
+	return	ActiveObject::Start();
+}
+
+bool	ServerLinker::IsConnected()
+{
+	return	broker_connected_;
+}
+
+bool	ServerLinker::Connect(uint32_t _delay_sec)
+{
+	if (!auto_connection_)
+	{
+		auto_connection_ = true;
+
+		if (!IsConnected())
+		{
+			InternalConnect(_delay_sec);
+		}
+	}
+
+	return	true;
+}
+
+bool	ServerLinker::InternalConnect(uint32_t _delay_sec)
+{
+	try
+	{
+		if (_delay_sec != 0)
+		{
+			Date date = Date::GetCurrent() + Time(_delay_sec * TIME_SECOND);
+			broker_retry_timeout_.Set(date);
+		}
+		else if (broker_retry_timeout_.RemainTime() == 0)
+		{
+			TRACE_INFO("Create producer")
+			producer_ 	= RdKafka::Producer::create(conf_global_, error_string_);
+			if (producer_ == NULL)
+			{
+				TRACE_ERROR("Failed to create producer!");
+				throw std::logic_error("Connection timeout to broker");
+			}
+
+			TRACE_INFO("Create consumer")
+			consumer_	= RdKafka::Consumer::create(conf_global_, error_string_);
+			if (consumer_ == NULL)
+			{
+				TRACE_ERROR("Failed to create consumer!");
+				throw std::logic_error("Connection timeout to broker");
+			}
+		
+			TRACE_INFO("Up Link Count : " << up_link_map_.size());
+			for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
+			{
+				it->second->Start();
+			}
+
+			TRACE_INFO("Down Link Count : " << down_link_map_.size());
+			for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
+			{
+				it->second->Start();
+			}
+
+			TRACE_INFO("Connected to broker.")
+			broker_connected_ = true;
+		}
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR(e.what());
+		Date date = Date::GetCurrent() + broker_retry_interval_;
+		broker_retry_timeout_.Set(date);
+
+		InternalDisconnect();
+	}
+
+	auto_connection_ = true;
+	return	true;
+}
+
+bool	ServerLinker::Disconnect()
+{
+	if (auto_connection_)
+	{
+		if (broker_connected_)
+		{
+			InternalDisconnect();
+		}
+
+		auto_connection_ = false;
+	}
+
+	return	true;
+}
+
+bool	ServerLinker::InternalDisconnect()
+{
+	broker_connected_ = false;
+
 	for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
 		it->second->Stop();
@@ -703,120 +969,697 @@ void	ServerLinker::Postprocess()
 		consumer_ = NULL;
 	}
 
-	ActiveObject::Preprocess();
 
+	return	true;
 }
 
-void	ServerLinker::OnMessage(Message* _base)
-{
-	switch(_base->type)
-	{
-	case	MSG_TYPE_SERVER_LINKER_PRODUCE2:
-		{
-			if (producer_ != NULL)
-			{
-				MessageProduce2*	message = dynamic_cast<MessageProduce2*>(_base);
-				if (message != NULL)
-				{
-					message->payload.push_back(JSONNode(TITLE_NAME_MSG_ID, std::to_string(Date::GetCurrent().GetMicroSecond())));
-			
-					std::string	payload = message->payload.write();
-
-					RdKafka::ErrorCode error_code = producer_->produce(const_cast<char *>(message->topic.c_str()), 0, 
-							RdKafka::Producer::RK_MSG_COPY, const_cast<char *>(payload.c_str()), payload.size(), NULL, 0, 0, NULL);
-					if (error_code != RdKafka::ERR_NO_ERROR)
-					{
-						TRACE_ERROR("Failed to produce : " << RdKafka::err2str(error_code));
-					}
-					else
-					{
-						TRACE_INFO_JSON(payload);
-					}
-				}
-				else
-				{
-					TRACE_ERROR("Invalid message!");
-				}
-			}
-		}
-		break;
-
-	case	MSG_TYPE_SERVER_LINKER_PRODUCE:
-		{
-			if (producer_ != NULL)
-			{
-				MessageProduce*	message = dynamic_cast<MessageProduce*>(_base);
-				if (message != NULL)
-				{
-					RdKafka::ErrorCode error_code = producer_->produce(const_cast<char *>(message->topic.c_str()), message->partition, 
-							RdKafka::Producer::RK_MSG_COPY, const_cast<char *>(message->payload.c_str()), message->payload.size(), NULL, 0, 0, NULL);
-					if (error_code != RdKafka::ERR_NO_ERROR)
-					{
-						TRACE_ERROR("Failed to produce : " << RdKafka::err2str(error_code));
-					}
-					else
-					{
-						TRACE_INFO("Message : " << message->topic << ":" << message->partition );
-						TRACE_INFO_JSON(message->payload);
-					}
-				}
-				else
-				{
-					TRACE_ERROR("Invalid message!");
-				}
-			}
-			else
-			{
-				TRACE_ERROR("Failed to produce because producer not exist!");		
-			}
-		}
-		break;
-
-	case	MSG_TYPE_SERVER_LINKER_CONSUME:
-		{
-			MessageConsume* message_consume = dynamic_cast<MessageConsume*>(_base);
-			if (message_consume != NULL)
-			{
-				std::string	topic;
-				JSONNode	payload;
-			}
-		}
-		break;
-
-	default:
-		{
-			TRACE_ERROR("Unknown message[" << _base->type << "]");	
-		}
-
-	}
-}
-
-bool	ServerLinker::Start()
-{
-	if (broker_list_.size() == 0)
-	{
-		return	false;	
-	}
-
-	return	ActiveObject::Start();
-}
-
-bool	ServerLinker::Produce(JSONNode const& _payload)
-{
-	MessageProduce2 *message = new MessageProduce2(this->GetID(), "v1_server_1", _payload);
-
-	Post(message);
-}
-
-bool	ServerLinker::Produce(std::string const& _topic_name, int32_t _partition, std::string const& _payload)
+bool	ServerLinker::Send(RCSMessage const& _message)
 {
 	try
 	{
-		Post(new MessageProduce(id_, _topic_name, _partition, _payload));
+		Post(new Produce(global_up_topic_, _message));
 	}
 	catch(std::exception& e)
 	{
-		TRACE_ERROR("Exception : " << e.what());	
+		TRACE_ERROR("Failed to produce![" << e.what() << "]");
+		return	false;	
+	}
+
+	return	true;
+}
+
+#if 0
+bool	ServerLinker::Produce(std::string const& _payload)
+{
+	try
+	{
+		std::string msg_id = std::to_string(Date::GetCurrent().GetMicroSecond());
+		std::string secret_code = secret_code_hash_(secret_code_ + msg_id);
+
+		RCSProduce *message = new RCSProduce(this->GetID(), msg_id, secret_code, global_up_topic_, libjson::parse(_payload));
+
+		Post(message);
+		return	true;
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR("Failed to produce![" << e.what() << "]");
+		return	false;	
 	}
 }
 
+bool	ServerLinker::Produce(std::string const& _type, JSONNode& _payload)
+{
+	JSONNode	body;
+
+	RequestInit(_type, body);
+
+	for(auto it = _payload.begin() ; it != _payload.end() ; it++)
+	{
+		body.push_back(*it);
+	}
+	return	Produce(body);
+}
+#endif
+
+bool	ServerLinker::KeepAliveEnable(bool _enable)
+{
+	keep_alive_enable_ = _enable;
+
+	return	true;
+}
+
+bool	ServerLinker::ReportEPData(Endpoint* _ep)
+{
+	RCSMessage	message(MSG_STR_REPORT);
+
+	Endpoint::ValueList	value_list;
+	_ep->GetUnreportedValueList(value_list);
+
+	JSONNode	node;
+
+	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
+	node.push_back(JSONNode(TITLE_NAME_COUNT, value_list.size()));
+
+	JSONNode	array(JSON_ARRAY);
+
+	for(auto it = value_list.begin(); it != value_list.end() ; it++)
+	{
+		JSONNode	item;
+
+		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t((*it)->GetDate()))));
+		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
+
+		array.push_back(item);
+	}
+	array.set_name(TITLE_NAME_VALUE);
+	node.push_back(array);
+
+	message.AddEPData(node);
+
+	return	Send(message);
+}
+
+bool	ServerLinker::RequestInit(std::string const& _type, JSONNode& _payload)
+{
+	JSONNode	payload;
+
+	payload.push_back(JSONNode(TITLE_NAME_MSG_TYPE, _type));
+	payload.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(Date::GetCurrent()))));
+
+	_payload = payload;
+
+	return	true;
+}
+
+bool	ServerLinker::ReplyInit(std::string const& _type, std::string const& _req_id, JSONNode& _payload)
+{
+	JSONNode	payload;
+
+	payload.push_back(JSONNode(TITLE_NAME_MSG_TYPE, _type));
+	payload.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(Date::GetCurrent()))));
+	payload.push_back(JSONNode(TITLE_NAME_REQ_ID, _req_id));
+
+	_payload = payload;
+
+	return	true;
+}
+
+bool	ServerLinker::AddGateway(JSONNode& _payload, Gateway* _gateway, Properties::Fields const& _fields)
+{
+	auto it = _payload.find(TITLE_NAME_GATEWAY);
+	if (it != _payload.end())
+	{
+		if (it->type() == JSON_NODE)
+		{
+			JSONNode	gateway_array(JSON_ARRAY);		
+
+			gateway_array.set_name(TITLE_NAME_GATEWAY);
+			gateway_array.push_back(*it);
+
+			JSONNode	properties;
+			_gateway->GetProperties(properties, _fields);
+
+			gateway_array.push_back(properties);
+
+			_payload.erase(it);
+
+			_payload.push_back(gateway_array);
+		}
+		else if (it->type() == JSON_ARRAY)
+		{
+			JSONNode	properties;
+
+			_gateway->GetProperties(properties, _fields);
+			it->push_back(properties);
+		}
+	}
+	else
+	{
+		JSONNode	properties;
+		_gateway->GetProperties(properties, _fields);
+
+		properties.set_name(TITLE_NAME_GATEWAY);
+		_payload.push_back(properties);
+	}
+
+	return	true;
+}
+
+bool	ServerLinker::AddGateway(JSONNode& _payload, std::string const& _id)
+{
+	auto it = _payload.find(TITLE_NAME_GATEWAY);
+	if (it != _payload.end())
+	{
+		if (it->type() == JSON_NODE)
+		{
+			JSONNode	gateway_array(JSON_ARRAY);		
+
+			gateway_array.set_name(TITLE_NAME_GATEWAY);
+			gateway_array.push_back(*it);
+
+			JSONNode	node;
+			node.push_back(JSONNode(TITLE_NAME_ID, _id));
+			gateway_array.push_back(node);
+
+			_payload.erase(it);
+
+			_payload.push_back(gateway_array);
+		}
+		else if (it->type() == JSON_ARRAY)
+		{
+			JSONNode	node;
+
+			node.push_back(JSONNode(TITLE_NAME_ID, _id));
+			it->push_back(node);
+		}
+	}
+	else
+	{
+		JSONNode	node;
+		
+		node.push_back(JSONNode(TITLE_NAME_ID, _id));	
+		node.set_name(TITLE_NAME_GATEWAY);
+		_payload.push_back(JSONNode(node));
+	}
+
+	return	true;
+}
+
+bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Properties::Fields const& _fields)
+{
+	auto it = _payload.find(TITLE_NAME_DEVICE);
+	if (it != _payload.end())
+	{
+		if (it->type() == JSON_NODE)
+		{
+			JSONNode	device_array(JSON_ARRAY);		
+
+			device_array.set_name(TITLE_NAME_DEVICE);
+			device_array.push_back(*it);
+
+			JSONNode	properties;
+			_device->GetProperties(properties, _fields);
+
+			device_array.push_back(properties);
+
+			_payload.erase(it);
+
+			_payload.push_back(device_array);
+		}
+		else if (it->type() == JSON_ARRAY)
+		{
+			JSONNode	properties;
+			_device->GetProperties(properties, _fields);
+
+			it->push_back(properties);
+		}
+	}
+	else
+	{
+		JSONNode	properties;
+		_device->GetProperties(properties, _fields);
+		properties.set_name(TITLE_NAME_DEVICE);
+		_payload.push_back(properties);
+	}
+
+	return	true;
+}
+
+bool	ServerLinker::AddDevice(JSONNode& _payload, std::string const& _id)
+{
+	auto it = _payload.find(TITLE_NAME_DEVICE);
+	if (it != _payload.end())
+	{
+		if (it->type() == JSON_NODE)
+		{
+			JSONNode	device_array(JSON_ARRAY);		
+
+			device_array.set_name(TITLE_NAME_DEVICE);
+			device_array.push_back(*it);
+
+			JSONNode	node;
+			node.push_back(JSONNode(TITLE_NAME_ID, _id));
+			device_array.push_back(node);
+
+			_payload.erase(it);
+
+			_payload.push_back(device_array);
+		}
+		else if (it->type() == JSON_ARRAY)
+		{
+			JSONNode	node;
+			node.push_back(JSONNode(TITLE_NAME_ID, _id));
+			it->push_back(node);
+		}
+	}
+	else
+	{
+		JSONNode	node;
+		
+		node.push_back(JSONNode(TITLE_NAME_ID, _id));	
+		node.set_name(TITLE_NAME_DEVICE);
+		_payload.push_back(node);
+	}
+
+	return	true;
+}
+
+bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Properties::Fields const& _fields)
+{
+	auto it = _payload.find(TITLE_NAME_ENDPOINT);
+	if (it != _payload.end())
+	{
+		if (it->type() == JSON_NODE)
+		{
+			JSONNode	endpoint_array(JSON_ARRAY);		
+			endpoint_array.set_name(TITLE_NAME_ENDPOINT);
+			endpoint_array.push_back(*it);
+
+			JSONNode	properties;
+			_endpoint->GetProperties(properties, _fields);
+			endpoint_array.push_back(properties);
+
+			_payload.erase(it);
+
+			_payload.push_back(endpoint_array);
+		}
+		else if (it->type() == JSON_ARRAY)
+		{
+			JSONNode	properties;
+			_endpoint->GetProperties(properties, _fields);
+
+			it->push_back(properties);
+		}
+	}
+	else
+	{
+		JSONNode	properties;
+		_endpoint->GetProperties(properties, _fields);
+
+		properties.set_name(TITLE_NAME_ENDPOINT);
+		_payload.push_back(properties);
+	}
+
+	return	true;
+}
+
+bool	ServerLinker::AddEndpoint(JSONNode& _payload, std::string const& _id)
+{
+	auto it = _payload.find(TITLE_NAME_ENDPOINT);
+	if (it != _payload.end())
+	{
+		if (it->type() == JSON_NODE)
+		{
+			JSONNode	endpoint_array(JSON_ARRAY);		
+
+			endpoint_array.set_name(TITLE_NAME_ENDPOINT);
+			endpoint_array.push_back(*it);
+
+			JSONNode	node;
+
+			node.push_back(JSONNode(TITLE_NAME_ID, _id));
+			endpoint_array.push_back(node);
+
+			_payload.erase(it);
+
+			_payload.push_back(endpoint_array);
+		}
+		else if (it->type() == JSON_ARRAY)
+		{
+			JSONNode node;
+			
+			node.push_back(JSONNode(TITLE_NAME_ID, _id));
+			it->push_back(node);
+		}
+	}
+	else
+	{
+		JSONNode	node;
+		
+		node.push_back(JSONNode(TITLE_NAME_ID, _id));	
+		node.set_name(TITLE_NAME_ENDPOINT);
+		_payload.push_back(node);
+	}
+
+	return	true;
+}
+
+bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
+{
+	JSONNode	node;
+
+	Endpoint::ValueList value_list;
+
+	TRACE_INFO("Add EP Data!");
+	if (!_ep->GetUnreportedValueList(value_list))
+	{
+		TRACE_WARN("Failed to get unreported value list.");
+		return	false;
+	}
+
+	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
+	node.push_back(JSONNode(TITLE_NAME_COUNT, value_list.size()));
+
+	JSONNode	array(JSON_ARRAY);
+	for(auto it = value_list.begin(); it != value_list.end() ; it++)
+	{
+		JSONNode	item;
+		
+		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t((*it)->GetDate()))));
+		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
+
+		array.push_back(item);
+	}
+
+	array.set_name(TITLE_NAME_VALUE);
+	node.push_back(array);
+
+	auto it = _payload.find(TITLE_NAME_DATA);
+	if (it != _payload.end())
+	{
+		if (it->type() == JSON_NODE)
+		{
+			JSONNode	endpoint_array(JSON_ARRAY);		
+
+			endpoint_array.set_name(TITLE_NAME_DATA);
+			endpoint_array.push_back(*it);
+			endpoint_array.push_back(node);
+
+			_payload.erase(it);
+
+			_payload.push_back(endpoint_array);
+		}
+		else if (it->type() == JSON_ARRAY)
+		{
+			it->push_back(node);
+		}
+	}
+	else
+	{
+		node.set_name(TITLE_NAME_DATA);
+		_payload.push_back(node);
+	}
+
+	return	true;	
+}
+
+bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound)
+{
+	JSONNode	node;
+	Endpoint::ValueList value_list;
+
+	if (!_ep->GetUnreportedValueList(value_list))
+	{
+		TRACE_WARN("Failed to get unreported value list.");
+		return	false;
+	}
+
+	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
+	node.push_back(JSONNode(TITLE_NAME_COUNT, value_list.size()));
+
+	JSONNode	array(JSON_ARRAY);
+	for(auto it = value_list.begin(); it != value_list.end() ; it++)
+	{
+		JSONNode	item;
+		
+		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t((*it)->GetDate()))));
+		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
+
+		array.push_back(item);
+	}
+	array.set_name(TITLE_NAME_VALUE);
+
+	node.push_back(array);
+
+	auto it = _payload.find(TITLE_NAME_DATA);
+	if (it != _payload.end())
+	{
+		if (it->type() == JSON_NODE)
+		{
+			JSONNode	endpoint_array(JSON_ARRAY);		
+
+			endpoint_array.set_name(TITLE_NAME_DATA);
+			endpoint_array.push_back(*it);
+			endpoint_array.push_back(node);
+
+			_payload.erase(it);
+
+			_payload.push_back(endpoint_array);
+		}
+		else if (it->type() == JSON_ARRAY)
+		{
+			it->push_back(node);
+		}
+	}
+	else
+	{
+		node.set_name(TITLE_NAME_DATA);
+		_payload.push_back(node);
+	}
+
+	return	true;
+
+}
+
+bool	ServerLinker::GetEPDataInfo(Endpoint* _ep)
+{
+#if 0
+	JSONNode	payload;
+
+	Endpoint::ValueList value_list;
+
+	payload.push_back(JSONNode(TITLE_NAME_MSG_TYPE, MSG_STR_GET_EP_DATA_INFO));
+	payload.push_back(JSONNode(TITLE_NAME_TIME, time_t(Date::GetCurrent())));
+	payload.push_back(JSONNode(TITLE_NAME_ENDPOINT_ID, _ep->GetID()));
+
+	return	Produce(payload, true);
+#endif
+	return	false;
+}
+
+bool	ServerLinker::ConfirmEPDataInfo(Endpoint* _ep)
+{
+#if 0
+	JSONNode	payload;
+
+	Endpoint::ValueList value_list;
+
+	payload.push_back(JSONNode(TITLE_NAME_MSG_TYPE, MSG_STR_CONFIRM_EP_DATA_INFO));
+	payload.push_back(JSONNode(TITLE_NAME_TIME, time_t(Date::GetCurrent())));
+	payload.push_back(JSONNode(TITLE_NAME_ENDPOINT_ID, _ep->GetID()));
+	payload.push_back(JSONNode(TITLE_NAME_COUNT, _ep->GetDataCount()));
+	if (_ep->GetDataCount() != 0)
+	{
+		payload.push_back(JSONNode(TITLE_NAME_LAST_TIME, time_t(_ep->GetDateOfLastData())));
+	}
+
+	return	Produce(payload);
+#endif
+	return	false;
+}
+
+bool	ServerLinker::Error(std::string const& _req_id ,std::string const& _err_msg)
+{
+	RCSMessage	message(MSG_STR_ERROR);
+	
+	message.SetReqID(_req_id);
+
+	return	Send(message);
+}
+
+bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception)
+{
+	for(auto it = request_map_.begin() ; it != request_map_.end() ; it++)
+	{
+		Produce*	produce = it->second;
+		RCSMessage&	message = produce->GetMessage();
+
+		if (message.GetMsgID() == _reply->GetReqID())
+		{
+			GetValue(message.GetPayload(), TITLE_NAME_MSG_TYPE, _req_type);
+		
+			delete produce;
+
+			request_map_.erase(it);
+
+			return	true;
+		}
+	}
+
+	if (_exception)
+	{
+		throw SLMRequestTimeout(_reply);
+	}
+
+	return	false;
+}
+
+
+bool	ServerLinker::OnMessage(Message* _message)
+{
+	std::string	msg_id;
+	try
+	{
+		switch(_message->GetType())
+		{
+		case	MSG_TYPE_SL_PRODUCE:
+			{
+				Produce*	produce = dynamic_cast<Produce*>(_message);
+
+				return	OnProduce(produce);
+			}
+			break;
+		
+		case	MSG_TYPE_SL_CONSUME:
+			{
+				Consume*	consume = dynamic_cast<Consume*>(_message);
+
+				OnConsume(consume);
+			}
+			break;
+		}
+	}
+	catch(SLMObjectNotFound& e)
+	{
+		TRACE_ERROR(e.what());
+		Error(msg_id, e.what());
+	}
+	catch(SLMRequestTimeout& e)
+	{
+		TRACE_ERROR(e.what());
+		Error(msg_id, e.what());
+	}
+	catch(SLMInvalidArgument& e)
+	{
+		TRACE_ERROR(e.what());
+		Error(msg_id, e.what());
+	}
+	catch(SLMNotInitialized& e)
+	{
+		TRACE_ERROR(e.what());
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR(e.what());
+	}
+
+	return	true;
+}
+
+void	ServerLinker::OnConsume(Consume* _consume)
+{
+	RCSMessage&	message = _consume->GetMessage();	
+
+	TRACE_INFO("Paylod : " << message.GetPayload().write_formatted());
+
+	if (message.GetMsgType() == MSG_STR_ADD)
+	{
+		RCSMessage	reply;
+
+		manager_->GetRCSServer().Add(message, reply);	
+
+		Send(reply);
+	}
+	else if (message.GetMsgType() == MSG_STR_DEL)
+	{
+		RCSMessage	reply;
+
+		manager_->GetRCSServer().Del(message, reply);	
+
+		Send(reply);
+	}
+	else if (message.GetMsgType() == MSG_STR_GET)
+	{
+		RCSMessage	reply;
+
+		manager_->GetRCSServer().Get(message, reply);	
+
+		Send(reply);
+	}
+	else if (message.GetMsgType() == MSG_STR_SET)
+	{
+		RCSMessage	reply;
+
+		manager_->GetRCSServer().Set(message, reply);	
+
+		Send(reply);
+	}
+	else if (message.GetMsgType() == MSG_STR_CONFIRM)
+	{
+		std::string	req_type;
+
+		if (!ConfirmRequest(&message, req_type))
+		{
+			throw SLMRequestTimeout(&message);
+		}
+
+		manager_->GetRCSServer().Confirm(message, req_type);	
+	}
+	else if (message.GetMsgType() == MSG_STR_ERROR)
+	{
+		std::string	req_type;
+
+		if (!ConfirmRequest(&message, req_type))
+		{
+			manager_->GetRCSServer().Error(message);	
+		}
+		else
+		{
+			manager_->GetRCSServer().Error(message, req_type);	
+		}
+	}
+}
+
+bool	ServerLinker::OnProduce(Produce* _produce)
+{
+	std::string topic	= _produce->GetTopic();
+	RCSMessage&	message = _produce->GetMessage();	
+
+	message.Make();
+
+	UpLink* link = GetUpLink(topic);
+	if (link != NULL)
+	{
+		std::string	payload = message.GetPayload().write();
+
+		RdKafka::ErrorCode error_code = producer_->produce(const_cast<char *>(topic.c_str()), 0, 
+				RdKafka::Producer::RK_MSG_COPY, const_cast<char *>(payload.c_str()), payload.size(), NULL, 0, 0, _produce);
+		if (error_code != RdKafka::ERR_NO_ERROR)
+		{
+			link->IncreaseNumberOfErrorMessages();
+			TRACE_ERROR("Failed to produce : " << RdKafka::err2str(error_code));
+			return	true;
+		}
+
+		message_map_.insert(std::pair<std::string, Produce*>(message.GetMsgID(), _produce));
+
+		link->IncreaseNumberOfOutGoingMessages();
+		link->Touch();
+
+		TRACE_INFO("  Topic : " << topic);
+		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
+	}
+
+	return	false;
+}

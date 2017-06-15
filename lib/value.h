@@ -21,6 +21,7 @@ public:
 		UINT32,
 		UINT64,
 		FLOAT,
+		SCALE,
 		STRING,
 		LIMITED_STRING,
 		NAME,
@@ -199,6 +200,20 @@ public:
 protected:
 	float		value_;
 	uint32_t	precision_;
+};
+
+///////////////////////////////////////////////////////////////
+// Class ValueScale
+///////////////////////////////////////////////////////////////
+class	ValueScale : public ValueFloat
+{
+public:
+	ValueScale(float _value = 0);
+	ValueScale(float _value, Date const& _date);
+
+			Type		GetType() const	{	return	SCALE;	};
+
+			Value*		Duplicate() const;
 };
 
 ///////////////////////////////////////////////////////////////

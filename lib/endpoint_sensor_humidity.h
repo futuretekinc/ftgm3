@@ -10,8 +10,9 @@ public:
 	EndpointSensorHumidity(ObjectManager& _manager, Properties const& _properties);
 
 			std::string	GetClassName();
-			Type		GetType()		const {	return	S_HUMIDITY;	}
 			bool		SetProperty(Property const& _property);
+
+	const 	ValueType 	Type();
 };
 
 #endif

@@ -39,6 +39,15 @@ TCPClient::Frame::~Frame()
 	}
 }
 
+TCPClient::TCPClient()
+:ActiveObject(), server_ip_(DEFAULT_CONST_RCS_SERVER_IP), server_port_(DEFAULT_CONST_RCS_SERVER_PORT), socket_(0)
+{
+	trace.SetClassName(GetClassName());
+	enable_	= true;
+	
+	TRACE_INFO("TCP Client created");
+}
+
 TCPClient::TCPClient(std::string const& _ip, uint16_t _port)
 :ActiveObject(), server_ip_(_ip), server_port_(_port), socket_(0)
 {
@@ -65,14 +74,11 @@ TCPClient::~TCPClient()
 
 }
 
-bool	TCPClient::Connect(const string&	_server_ip, uint16_t		_server_port)
+bool	TCPClient::Connect()
 {
 	int		ret_value;
 	int		client_socket;
 	struct sockaddr_in	server;
-
-	server_ip_ 	= _server_ip;
-	server_port_= _server_port;
 
 	client_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (client_socket == -1)
@@ -106,6 +112,15 @@ bool	TCPClient::Connect(const string&	_server_ip, uint16_t		_server_port)
 	return	true;
 }
 
+bool	TCPClient::Connect(const string&	_server_ip, uint16_t		_server_port)
+{
+
+	server_ip_ 	= _server_ip;
+	server_port_= _server_port;
+
+	return	Connect();
+}
+
 bool	TCPClient::Disconnect()
 {
 	if (socket_ > 0)
@@ -115,6 +130,11 @@ bool	TCPClient::Disconnect()
 	}
 
 	return	false;
+}
+
+bool	TCPClient::IsConnected()
+{
+	return	(socket_ != 0);
 }
 
 bool	TCPClient::Send(std::string const& _message)
@@ -223,6 +243,11 @@ void	TCPClient::SetMessageProcessID(ValueID const& _process_id)
 	message_process_id_ = _process_id;
 }
 
+void	TCPClient::Preprocess()
+{
+	TRACE_INFO("TCP client started!");
+}
+
 void	TCPClient::Process()
 {
 	bool	ret_value;
@@ -283,7 +308,7 @@ void	TCPClient::Process()
 	}
 }
 
-void	TCPClient::PostProcess()
+void	TCPClient::Postprocess()
 {
 	for(auto it = receive_packet_list_.begin(); it != receive_packet_list_.end() ; it++)
 	{

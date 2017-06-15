@@ -23,38 +23,41 @@ public:
 		MessageSessionDisconnected(uint16_t _port) : Message(MSG_TYPE_SESSION_DISCONNECTED), port(_port) {};
 	};
 
-	TCPServer(ObjectManager* _manager);
-	~TCPServer();
+						TCPServer(ObjectManager* _manager);
+						~TCPServer();
 
-	bool		Load(JSONNode const& _json);
+			bool		Load(JSONNode const& _json);
 
-				operator JSONNode() const;
+						operator JSONNode() const;
 
-	TCPSession*	CreateSession(TCPServer *_server, int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout);
-	bool		SessionDisconnected(uint16_t _port);
-	bool		PacketReceived(uint16_t _port, void* _data, uint32_t _length);
+			ObjectManager*	GetManager()	{	return	manager_;	};
 
-	uint32_t	GetSessionCount();
-	bool		GetSessionInformationList(std::list<TCPSession::Information>& _information_list);
+			bool		SetProperty(Property const& _property, Properties::Fields const& _fields);
 
-	void		OnMessage(Message *_message);
+	virtual	TCPSession*	CreateSession(int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout);
+			bool		SessionDisconnected(uint16_t _port);
+			bool		PacketReceived(uint16_t _port, void* _data, uint32_t _length);
+
+			uint32_t	GetSessionCount();
+			bool		GetSessionInformationList(std::list<TCPSession::Information>& _information_list);
+
+			bool		OnMessage(Message *_message);
 protected:
-	bool		SetPropertyInternal(Property const& _property, bool create = false);
 
-	void		Preprocess();
-	void		Process();
-	void		Postprocess();
+			void		Preprocess();
+			void		Process();
+			void		Postprocess();
 
-	uint16_t	port_;
-	uint32_t	max_session_count_;
-	uint32_t	timeout_;
+			uint16_t	port_;
+			uint32_t	max_session_count_;
+			uint32_t	timeout_;
 
-	ObjectManager*	manager_;
-	int			socket_;	
-	
-	bool		(*onMessageCallback_)(void*, Message*);
-	Locker		session_map_locker_;
-	std::map<uint16_t, TCPSession*>	session_map_;
+			ObjectManager*	manager_;
+			int			socket_;	
+
+			bool		(*onMessageCallback_)(void*, Message*);
+			Locker		session_map_locker_;
+			std::map<uint16_t, TCPSession*>	session_map_;
 };
 
 #endif

@@ -11,7 +11,7 @@ public:
 	EndpointSensorTemperature(ObjectManager& _manager, Properties const& _properties);
 
 			std::string		GetClassName();
-			Type			GetType()	const 		{	return	S_TEMPERATURE;	}
+	const 	ValueType 		Type();
 };
 
 #endif

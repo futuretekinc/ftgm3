@@ -13,7 +13,7 @@ protected:
 		void		Process();
 		void		Postprocess();
 
-		void		OnMessage(Message* _message);
+		bool		OnMessage(Message* _message);
 
 		Timer		timer_;
 		uint32_t	interval_;

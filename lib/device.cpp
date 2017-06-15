@@ -9,10 +9,22 @@
 #include "device_fte.h"
 #include "device_sim.h"
 #include "endpoint.h"
+#include "endpoint_sensor.h"
+
+DeviceInfo::DeviceInfo()
+:	NodeInfo()
+{
+	
+}
+
+DeviceInfo::DeviceInfo(JSONNode const& _json)
+: NodeInfo(_json)
+{
+}
 
 
 Device::Device(ObjectManager& _manager, ValueType const& _type)
-:	ActiveObject(&_manager), manager_(_manager), type_(_type), keep_alive_interval_(OBJECT_KEEP_ALIVE_INTERVAL_SEC * TIME_SECOND)
+:	Node(_manager, _type)
 {
 }
 
@@ -20,133 +32,57 @@ Device::~Device()
 {
 }
 
-bool	Device::SetKeepAliveInterval(int _interval, bool _store)
+bool	Device::GetProperties(Properties& _properties, Properties::Fields const& _fields) 
 {
-	if ((_interval < OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN) || (OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX	< _interval))
+	if (Node::GetProperties(_properties, _fields))
 	{
-		return	false;	
-	}
+#if 0
+		if (_child)
+		{
+			PropertiesList	endpoint_properties_list;
 
-	keep_alive_interval_ = _interval * TIME_SECOND;
+			for(auto it = endpoint_id_list_.begin() ; it != endpoint_id_list_.end() ; it++)
+			{
+				Properties	endpoint_properties;
 
-	updated_properties_.AppendKeepAliveInterval(keep_alive_interval_);
-	if (_store)
-	{
-		ApplyChanges();
-	}
+				Endpoint*endpoint = manager_.GetEndpoint(*it);
+				if (endpoint != NULL)
+				{
+					endpoint->GetProperties(endpoint_properties, _fields, _child);	
+					endpoint_properties_list.Append(endpoint_properties);	
+				}
+			}
 
-	return	true;
-}
-
-bool	Device::SetKeepAliveInterval(Time const& _interval, bool _store)
-{
-	if ((uint64_t(_interval) < OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN * TIME_SECOND) || (OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX * TIME_SECOND	< uint64_t(_interval)))
-	{
-		return	false;	
-	}
-
-	keep_alive_interval_ = _interval;
-
-	updated_properties_.AppendKeepAliveInterval(keep_alive_interval_);
-	if (_store)
-	{
-		ApplyChanges();
-	}
-
-	return	true;
-}
-
-bool	Device::GetProperties(Properties& _properties) const
-{
-	if (ActiveObject::GetProperties(_properties))
-	{
-		_properties.AppendDeviceType(GetType());
-		_properties.AppendKeepAliveInterval(keep_alive_interval_ / TIME_SECOND);
-
+			if (endpoint_properties_list.size() != 0)
+			{
+				_properties.Append(Property(TITLE_NAME_ENDPOINT, endpoint_properties_list));
+			}
+		}
+#endif
 		return	true;	
 	}
 
 	return	false;
 }
 
-bool	Device::SetPropertyInternal(Property const& _property, bool create)
+bool	Device::GetProperties(JSONNode& _properties, Properties::Fields const& _fields)
+{
+	return	Node::GetProperties(_properties, _fields);
+}
+
+bool	Device::SetProperty(Property const& _property, Properties::Fields const& _fields)
 {
 	bool	ret_value = true;
 
-	if (_property.GetName() == TITLE_NAME_ID)
-	{
-		if (create)
-		{
-			ValueID	old_id = id_;
-
-			const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-			if (value != NULL)
-			{
-				if (!id_.Set(value->Get()))
-				{
-					TRACE_ERROR("Failed to set id!");
-					ret_value = false;
-				}
-				else
-				{
-					TRACE_INFO("The id set to " << id_);
-
-					ret_value = manager_.IDChanged(this, old_id);
-				}
-			}
-			else
-			{
-				TRACE_INFO("Property id value type is incorrect!");
-				ret_value = false;
-			}
-		}
-	}
-	else if (_property.GetName() == TITLE_NAME_KEEP_ALIVE_INTERVAL)
-	{
-		const ValueInt*	int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
-		if (int_value != NULL)
-		{
-			ret_value = SetKeepAliveInterval(int_value->Get(), !create);
-		}
-		else
-		{
-			const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
-			if (string_value != NULL)
-			{
-				uint32_t	value = strtoul(string_value->Get().c_str(), NULL, 10);
-				ret_value = SetKeepAliveInterval(value, !create);
-			}
-			else
-			{
-				const ValueTime *time_value = dynamic_cast<const ValueTime*>(_property.GetValue());
-				if (time_value != NULL)
-				{
-					ret_value = SetKeepAliveInterval(time_value->Get(), !create);
-				}
-				else
-				{	
-					TRACE_INFO("Property keep_alive_interval value type is incorrect!");
-					ret_value = false;
-				}
-			}
-
-		}
-	}
-	else if (_property.GetName() == TITLE_NAME_ENDPOINT)
+	if (_property.GetName() == TITLE_NAME_ENDPOINT)
 	{
 	}
 	else
 	{
-		ret_value = ActiveObject::SetPropertyInternal(_property, create);
+		ret_value = Node::SetProperty(_property, _fields);
 	}
 
 	return	ret_value;
-}
-
-
-bool	Device::ApplyChanges()
-{
-	return	manager_.UpdateProperties(this);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,15 +165,30 @@ bool		Device::GetEndpointList(std::list<ValueID>& _endpoint_id_list)
 
 	return	true;
 }
+
+bool		Device::GetEndpointMap(std::map<std::string, Endpoint*>& _map)
+{
+	for(auto it = endpoint_id_list_.begin(); it != endpoint_id_list_.end(); it++)
+	{
+		Endpoint* endpoint = manager_.GetEndpoint(*it);
+		if (endpoint != NULL)
+		{
+			_map[*it] = endpoint;
+		}
+	}
+
+	return	true;
+}
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Utility
 
 Device::operator JSONNode()
 {
-	Properties	properties;
+	JSONNode	properties;
 
-	GetProperties(properties);
+	Object::GetProperties(properties);
 
+#if 0
 	PropertiesList	properties_list;
 
 	for(auto it = endpoint_id_list_.begin(); it != endpoint_id_list_.end() ; it++)
@@ -251,16 +202,16 @@ Device::operator JSONNode()
 		}
 	}
 
-	properties.Append(Property("endpoints", properties_list));
-
-	return	ToJSON(properties);
+	properties.Append(Property(TITLE_NAME_ENDPOINT, properties_list));
+#endif
+	return	properties;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Ineternal operation
 void	Device::Preprocess()
 {
-	ActiveObject::Preprocess();
+	Node::Preprocess();
 
 	for(auto it = endpoint_id_list_.begin(); it != endpoint_id_list_.end(); it++)
 	{
@@ -274,10 +225,6 @@ void	Device::Preprocess()
 			TRACE_ERROR("Endpoint[" << (*it) << "] not found!");	
 		}
 	}
-
-	Date date = Date::GetCurrent() + keep_alive_interval_;
-	keep_alive_timer_.Set(date);
-	TRACE_INFO("live checker start [" << date << "]");
 }
 
 void	Device::Process()
@@ -304,19 +251,19 @@ void	Device::Process()
 		Endpoint*	endpoint = manager_.GetEndpoint(std::string(id));
 		if (endpoint != NULL)
 		{
-			endpoint->UpdateProcess();
+			EndpointSensor*	sensor = dynamic_cast<EndpointSensor*>(endpoint);
+			if (sensor != NULL)
+			{
+				sensor->CorrectionProcess();
 
-			timer += endpoint->GetUpdateInterval();	
+				timer += Time(sensor->GetCorrectionInterval() * TIME_SECOND);	
 
-			AddSchedule(id, timer);
+				AddSchedule(id, timer);
+			}
 		}
 	}
 
-	if (keep_alive_timer_.RemainTime() == 0)
-	{
-		manager_.KeepAlive(this);
-		keep_alive_timer_ += keep_alive_interval_;	
-	}
+	Node::Process();
 }
 
 void	Device::Postprocess()
@@ -330,7 +277,7 @@ void	Device::Postprocess()
 		}
 	}
 
-	ActiveObject::Postprocess();
+	Node::Postprocess();
 
 }
 
@@ -390,7 +337,7 @@ bool	Device::RemoveSchedule(ValueID const& _id)
 	return	removed;
 }
 
-bool	Device::IsValidType(std::string const& _type)
+bool	Device::IsValidType(ValueType const& _type)
 {
 	return	(std::string(_type) == std::string(DeviceSNMP::Type())) 
 			|| (std::string(_type) == std::string(DeviceFTE::Type()))
@@ -441,73 +388,17 @@ Device*	Device::Create(ObjectManager& _manager, Properties const& _properties)
 	return	device;
 }
 
-#if 0
-Device*	Device::Create(JSONNode const& _node)
-{
-	if (_node.type() != JSON_NODE)
-	{
-		return	NULL;
-	}
-
-	JSONNode	node = _node;
-	JSONNode	endpoint_array(JSON_ARRAY);
-	auto it = node.find("endpoints");
-	if (it != node.end())
-	{
-		JSONNode	array = it->as_array();
-		for(auto it2 = array.begin(); it2 != array.end() ; it2++)
-		{
-			endpoint_array.push_back(it2->as_node());
-		}
-
-		node.erase(it);
-	}
-
-			else if (std::string(*type_value) == std::string(DeviceFTE::Type()))
-			{
-				device = new DeviceFTE(_manager, properties);
-			}
-			else
-			{
-				TRACE_ERROR2(NULL, "Failed to create device. Device type[" << type_value->Get() << "] is not supported!");
-			}
-		}
-		else
-		{
-			TRACE_ERROR2(NULL, "Failed to create device. Device type is invalid!");
-		}
-	}
-	else
-	{
-		TRACE_ERROR2(NULL, "Failed to create device. Device type unknown!");
-	}
-
-	return	device;
-}
-#endif
-
-
-const	ValueType&	Device::Type()
-{
-	static	ValueType	type_("device");
-
-	return	type_;
-}
 
 bool	Device::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
-	_field_list.push_back(TITLE_NAME_ID);
-	_field_list.push_back(TITLE_NAME_NAME);
-	_field_list.push_back(TITLE_NAME_TYPE);
-	_field_list.push_back(TITLE_NAME_DATE);
-	_field_list.push_back(TITLE_NAME_ENABLE);
-	_field_list.push_back(TITLE_NAME_DEVICE_ID);
-	_field_list.push_back(TITLE_NAME_KEEP_ALIVE_INTERVAL);
-	_field_list.push_back(TITLE_NAME_LOOP_INTERVAL);
-	_field_list.push_back(TITLE_NAME_IP);
-	_field_list.push_back(TITLE_NAME_MODULE);
-	_field_list.push_back(TITLE_NAME_COMMUNITY);
-	_field_list.push_back(TITLE_NAME_TIMEOUT);
+	if (Node::GetPropertyFieldList(_field_list))
+	{
+		_field_list.push_back(TITLE_NAME_IP);
+		_field_list.push_back(TITLE_NAME_MODULE);
+		_field_list.push_back(TITLE_NAME_COMMUNITY);
+		_field_list.push_back(TITLE_NAME_TIMEOUT);
+	}
+
 	return	true;
 }
 

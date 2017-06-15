@@ -175,21 +175,39 @@ DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
 	return	oid_map_[_id];
 }
 
-DeviceSNMP::OID DeviceFTE::GetOID(Endpoint::Type _type, uint32_t _index)
+DeviceSNMP::OID DeviceFTE::GetOID(ValueType const& _type, uint32_t _index)
 {
 	OID oid;
 	uint32_t	type_index = 0;
 
-	switch(_type)
+	if (_type == NODE_TYPE_EP_S_TEMPERATURE)
 	{
-	case	Endpoint::S_TEMPERATURE: 	type_index = 1; break;
-	case	Endpoint::S_HUMIDITY:		type_index = 2; break;
-	case	Endpoint::S_VOLTAGE:		type_index = 3; break;
-	case	Endpoint::S_CURRENT:		type_index = 4; break;
-	case	Endpoint::S_DI:				type_index = 5; break;
-	case	Endpoint::A_DO:				type_index = 6; break;
-	case	Endpoint::S_PRESSURE:		type_index = 7; break;
-	};
+		type_index = 1;
+	}
+	else if (_type == NODE_TYPE_EP_S_HUMIDITY)
+	{
+		type_index = 2;
+	}
+	else if (_type == NODE_TYPE_EP_S_VOLTAGE)
+	{
+		type_index = 3;
+	}
+	else if (_type == NODE_TYPE_EP_S_CURRENT)
+	{
+		type_index = 4;
+	}
+	else if (_type == NODE_TYPE_EP_S_DI)
+	{
+		type_index = 5;
+	}
+	else if (_type == NODE_TYPE_EP_A_DO)
+	{
+		type_index = 6;
+	}
+	else if (_type == NODE_TYPE_EP_S_PRESSURE)
+	{
+		type_index = 7;
+	}
 
 	oid.id[oid.length++] = 1;
 	oid.id[oid.length++] = 3;
@@ -212,7 +230,7 @@ DeviceSNMP::OID DeviceFTE::GetOID(Endpoint::Type _type, uint32_t _index)
 
 const	ValueType&	DeviceFTE::Type()
 {
-	static	ValueType	type_("d_fte");
+	static	ValueType	type_(NODE_TYPE_DEV_FTE);
 
 	return	type_;
 }

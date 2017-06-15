@@ -6,6 +6,8 @@
 #include "object_manager.h"
 
 
+bool	ShellCommandDeviceList(ObjectManager* object_manager);
+
 RetValue	ShellCommandDevice
 (
 	std::string*	_arguments,
@@ -22,62 +24,29 @@ RetValue	ShellCommandDevice
 	}
 	else if (_count < 2)
 	{
-		uint32_t	id_len 	= 32;
-		uint32_t	name_len= 16;
-		uint32_t	type_len= 16;
-		uint32_t	stat_len= 16;
-		uint32_t	ip_len= 16;
-		uint32_t	module_len= 16;
-		uint32_t	community_len= 16;
-
-		std::cout << "Device count : " << object_manager->GetDeviceCount() << std::endl;
-		
-		std::list<Device*>	snmp_list;
-		if (object_manager->GetDeviceList(DeviceSNMP::Type(), snmp_list) != 0)
+		ShellCommandDeviceList(object_manager);
+	}
+	else if (_arguments[1] == "keep_alive")
+	{
+		if (_count < 3)
 		{
-			std::cout << "* SNMP Device" << std::endl;
-			std::cout << std::setw(id_len) << "ID";
-			std::cout << " " << std::setw(name_len) << "Name";
-			std::cout << " " << std::setw(type_len) << "Type";
-			std::cout << " " << std::setw(stat_len) << "Stat";
-			std::cout << " " << std::setw(ip_len) << "IP";
-			std::cout << " " << std::setw(module_len) << "Module";
-			std::cout << " " << std::setw(community_len) << "Community";
-			std::cout << std::endl;
-
-			for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+		}
+		else
+		{
+			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				DeviceSNMP *device = dynamic_cast<DeviceSNMP*>(*it);
-
-				std::cout << std::setw(id_len) << device->GetID();
-				std::cout << " " << std::setw(name_len) << device->GetName();
-				std::cout << " " << std::setw(type_len) << device->GetType();
-				std::cout << " " << std::setw(stat_len) << Object::ToString(device->GetStat());
-				std::cout << " " << std::setw(ip_len) << device->GetIP();
-				std::cout << " " << std::setw(module_len) << device->GetModule();
-				std::cout << " " << std::setw(community_len) << device->GetCommunity();
-				std::cout << std::endl;	
+				Device*	device = object_manager->GetDevice(_arguments[i]);
+				if (device == NULL)
+				{
+					std::cout << "Failed to get device[" << _arguments[i] << "]." << std::endl;
+				}
+				else
+				{
+					
+				}
 			}
 		}
-
-		std::list<Device*>	mbtcp_list;
-		if (object_manager->GetDeviceList(ValueType("d_mbtcp"), mbtcp_list) != 0)
-		{
-			std::cout << "* MBTCP Device" << std::endl;
-			std::cout << std::setw(id_len) << "ID";
-			std::cout << " " << std::setw(name_len) << "Name";
-			std::cout << " " << std::setw(type_len) << "Type";
-			std::cout << std::endl;
-
-			for(auto it = mbtcp_list.begin() ; it != mbtcp_list.end() ; it++)
-			{
-				std::cout << std::setw(id_len) << (*it)->GetID();
-				std::cout << " " << std::setw(name_len) << (*it)->GetName();
-				std::cout << " " << std::setw(type_len) << (*it)->GetType();
-				std::cout << std::endl;	
-			}
-		}
-
 	}
 	else if (_arguments[1] == "create")
 	{
@@ -89,7 +58,7 @@ RetValue	ShellCommandDevice
 		}
 		else
 		{
-			if (!properties.AppendDeviceType(_arguments[2]))
+			if (!properties.AppendType(_arguments[2]))
 			{
 				ret_value = RET_VALUE_INVALID_ARGUMENTS;
 			}
@@ -365,3 +334,65 @@ Shell::Command	shell_ftgm_command_device =
 	.short_help	=	"Management of device",
 	.function	=	ShellCommandDevice
 };
+
+bool	ShellCommandDeviceList(ObjectManager* object_manager)
+{
+	uint32_t	id_len 	= 32;
+	uint32_t	name_len= 16;
+	uint32_t	type_len= 16;
+	uint32_t	stat_len= 16;
+	uint32_t	ip_len= 16;
+	uint32_t	module_len= 16;
+	uint32_t	community_len= 16;
+
+	std::cout << "Device count : " << object_manager->GetDeviceCount() << std::endl;
+
+	std::list<Device*>	snmp_list;
+	if (object_manager->GetDeviceList(DeviceSNMP::Type(), snmp_list) != 0)
+	{
+		std::cout << "* SNMP Device" << std::endl;
+		std::cout << std::setw(id_len) << "ID";
+		std::cout << " " << std::setw(name_len) << "Name";
+		std::cout << " " << std::setw(type_len) << "Type";
+		std::cout << " " << std::setw(stat_len) << "Stat";
+		std::cout << " " << std::setw(ip_len) << "IP";
+		std::cout << " " << std::setw(module_len) << "Module";
+		std::cout << " " << std::setw(community_len) << "Community";
+		std::cout << std::endl;
+
+		for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+		{
+			DeviceSNMP *device = dynamic_cast<DeviceSNMP*>(*it);
+
+			std::cout << std::setw(id_len) << device->GetID();
+			std::cout << " " << std::setw(name_len) << device->GetName();
+			std::cout << " " << std::setw(type_len) << device->GetType();
+			std::cout << " " << std::setw(stat_len) << Object::ToString(device->GetStat());
+			std::cout << " " << std::setw(ip_len) << device->GetIP();
+			std::cout << " " << std::setw(module_len) << device->GetModule();
+			std::cout << " " << std::setw(community_len) << device->GetCommunity();
+			std::cout << std::endl;	
+		}
+	}
+
+	std::list<Device*>	mbtcp_list;
+	if (object_manager->GetDeviceList(ValueType("d_mbtcp"), mbtcp_list) != 0)
+	{
+		std::cout << "* MBTCP Device" << std::endl;
+		std::cout << std::setw(id_len) << "ID";
+		std::cout << " " << std::setw(name_len) << "Name";
+		std::cout << " " << std::setw(type_len) << "Type";
+		std::cout << std::endl;
+
+		for(auto it = mbtcp_list.begin() ; it != mbtcp_list.end() ; it++)
+		{
+			std::cout << std::setw(id_len) << (*it)->GetID();
+			std::cout << " " << std::setw(name_len) << (*it)->GetName();
+			std::cout << " " << std::setw(type_len) << (*it)->GetType();
+			std::cout << std::endl;	
+		}
+	}
+
+	return	true;
+}
+

@@ -61,6 +61,45 @@ RetValue	ShellCommandLoad
 			}
 
 		}
+		else if (_arguments[1] == "gateway")
+		{
+			for(uint32_t i = 2 ; i < _count ; i++)
+			{
+				JSONNode	json;
+				std::fstream	fs(_arguments[i], std::fstream::in);
+				if (fs)
+				{
+					fs.seekg (0, fs.end);
+					int length = fs.tellg();
+					fs.seekg (0, fs.beg);
+
+					char * buffer = new char [length + 1];
+					fs.read(buffer, length);
+					buffer[length] = 0;
+					fs.close();
+
+					if (libjson::is_valid(buffer))
+					{
+						json = libjson::parse(buffer);
+
+						Gateway *gateway = manager->CreateGateway(json);
+						if (gateway != NULL)
+						{
+							std::cout << "Gateway[" << gateway->GetTraceName() << "] created"  << std::endl;	
+						}
+						else
+						{
+							std::cout << "Failed to create device!" << std::endl;	
+						}
+					}
+					else
+					{
+						std::cout << "Invalid json format" << std::endl;	
+					}
+					delete buffer;
+				}
+			}
+		}	
 		else if (_arguments[1] == "device")
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)

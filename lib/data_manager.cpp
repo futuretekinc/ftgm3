@@ -177,15 +177,16 @@ bool	DataManager::IsTableExist
 }
 
 DataManager::Table::Table(DataManager* _manager, std::string const& _name)
-: Object(_manager), manager_(_manager)
+: Object(), manager_(_manager)
 {
 	name_ = _name;
 	trace.SetClassName(GetClassName());
+	SetParentID(_manager->GetID());
 }
 
 bool	DataManager::Table::Add(Properties const& _properties)
 {
-	const Property*	property = _properties.Get("id");
+	const Property*	property = _properties.Get(TITLE_NAME_ID);
 	if (property == NULL)
 	{
 		TRACE_ERROR2(NULL, "Failed to add object to DB.");
@@ -531,10 +532,11 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 }
 
 DataManager::ValueTable::ValueTable(DataManager* _manager, std::string const& _name)
-: Object(_manager), manager_(_manager)
+: Object(), manager_(_manager)
 {
 	name_ = _name;
 	trace.SetClassName(GetClassName());
+	SetParentID(_manager->GetID());
 }
 
 bool	DataManager::ValueTable::Add(Value const* _value)
@@ -561,6 +563,7 @@ bool	DataManager::ValueTable::Add(Value const* _value)
 	try
 	{
 		statement->SqlStatement(query.str());
+		TRACE_INFO("Done");
 	}
 	catch(Kompex::SQLiteException& e)
 	{
@@ -638,6 +641,44 @@ bool	DataManager::AddValue(std::string const& _endpoint_id, Value const* _value)
 	return	_value_table->Add(_value);
 }
 
+bool	DataManager::AddGateway(Gateway *_gateway)
+{
+	Properties	properties;
+
+	_gateway->GetProperties(properties);
+
+	return	gateway_table_->Add(properties);
+}
+
+bool	DataManager::DeleteGateway(std::string const& _id)
+{
+	return	gateway_table_->Delete(_id);
+}
+
+bool	DataManager::IsGatewayExist(std::string const& _id)
+{
+	return	gateway_table_->IsExist(_id);
+}
+
+uint32_t	DataManager::GetGatewayCount()
+{
+	return	gateway_table_->GetCount();
+}
+
+bool	DataManager::GetGatewayProperties(uint32_t _index, uint32_t _count, std::list<Properties>& _properties_list)
+{
+	return	gateway_table_->GetProperties(_index, _count, _properties_list);
+}
+
+bool	DataManager::GetGatewayProperties(std::string const& _id, Properties& _properties)
+{
+	return	gateway_table_->GetProperties(_id, _properties);
+}
+
+bool	DataManager::SetGatewayProperties(std::string const& _id, Properties& _properties)
+{
+	return	gateway_table_->SetProperties(_id, _properties);
+}
 
 bool	DataManager::AddDevice(Device *_device)
 {
@@ -684,8 +725,9 @@ bool	DataManager::AddEndpoint(Endpoint *_endpoint)
 
 	_endpoint->GetProperties(properties);
 
-	if (endpoint_table_->Add(properties) == false)
+	if (!endpoint_table_->Add(properties))
 	{
+		TRACE_ERROR("Failed to add properties to table");
 		return	false;
 	}
 
@@ -738,6 +780,11 @@ void	DataManager::Preprocess()
 		TRACE_INFO(std::setw(16) << "DB Name : " << file_name_);
 		database_ = new Kompex::SQLiteDatabase(file_name_, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
 		TRACE_INFO(std::setw(16) << "SQLite Version : " << database_->GetLibVersionNumber());
+
+		std::list<std::string>	gateway_field_list;
+		Gateway::GetPropertyFieldList(gateway_field_list);
+		gateway_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_GATEWAY, gateway_field_list);	
+		gateway_table_->SetTrace(trace.GetEnable());
 
 		std::list<std::string>	device_field_list;
 		Device::GetPropertyFieldList(device_field_list);

@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#define	PROPERTY_VALUE_STRING_ONLY			1
+
 #ifdef	MAKE_BODY
 #define	DEFAULT_CONST(name, value)			const char* 	DEFAULT_CONST_##name=value
 #define	TITLE_NAME(name, value)				const char* 	TITLE_NAME_##name=value
@@ -11,6 +13,7 @@
 #define	MSG_REQ(name, value)				const char* 	MSG_REQ_##name=value
 #define	MSG_RES(name, value)				const char* 	MSG_RES_##name=value
 #define	MSG_STR(name, value)				const char* 	MSG_STR_##name=value
+#define	MSG_TYPE_RCS(name, value)			const char* 	MSG_TYPE_RCS_##name=value
 #define	RET_CONST(name, value)				const char* 	RET_CONST_##name=value
 #else
 #define	DEFAULT_CONST(name, value)			extern	const char* 	DEFAULT_CONST_##name
@@ -20,11 +23,13 @@
 #define	MSG_REQ(name, value)				extern	const char* 	MSG_REQ_##name
 #define	MSG_RES(name, value)				extern	const char* 	MSG_RES_##name
 #define	MSG_STR(name, value)				extern	const char* 	MSG_STR_##name
+#define	MSG_TYPE_RCS(name, value)			extern	const char* 	MSG_TYPE_RCS_##name
 #define	RET_CONST(name, value)				extern	const char* 	RET_CONST_##name
 #endif
 
 #define	ID_LENGTH_MAX		32
 #define	NAME_LENGTH_MAX		64
+#define	CLASS_LENGTH_MAX	32
 #define	IP_LENGTH_MAX		16
 
 extern	uint64_t	TIME_MILLISECOND;
@@ -36,6 +41,19 @@ extern	uint32_t	ACTIVE_OBJECT_LOOP_INTERVAL;
 extern	uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC;
 extern	uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN;
 extern	uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX;
+
+extern	const char*	NODE_TYPE_GW_GEN;
+
+extern	const char*	NODE_TYPE_DEV_SNMP;
+extern	const char*	NODE_TYPE_DEV_FTE;
+
+extern	const char*	NODE_TYPE_EP_S_TEMPERATURE;
+extern	const char*	NODE_TYPE_EP_S_HUMIDITY;
+extern	const char*	NODE_TYPE_EP_S_VOLTAGE;
+extern	const char*	NODE_TYPE_EP_S_CURRENT;
+extern	const char*	NODE_TYPE_EP_S_DI;
+extern	const char*	NODE_TYPE_EP_A_DO;
+extern	const char*	NODE_TYPE_EP_S_PRESSURE;
 
 extern	uint32_t	ENDPOINT_REPORT_INTERVAL;
 extern	uint32_t	ENDPOINT_UPDATE_INTERVAL;
@@ -49,6 +67,11 @@ extern	const char*	ENDPOINT_SENSOR_TEMPERATURE_UNIT;
 extern	uint32_t	ENDPOINT_SENSOR_HUMIDITY_MAX;
 extern	uint32_t	ENDPOINT_SENSOR_HUMIDITY_MIN;
 extern	const char*	ENDPOINT_SENSOR_HUMIDITY_UNIT;
+
+extern	uint32_t	SERVER_LINKER_CONNECTION_RETRY_INTERVAL_SEC;
+extern	uint32_t	SERVER_LINKER_KEEP_ALIVE_INTERVAL_SEC;
+extern	uint32_t	SERVER_LINKER_REQUEST_TIMEOUT_SEC;
+extern	bool		SERVER_LNKER_REPORT_LATE_ARRIVE_MESSAGE;
 
 DEFAULT_CONST(LOCAL_IP, "127.0.0.1");
 
@@ -72,11 +95,15 @@ enum	RetValue
 DEFAULT_CONST(SERVER_LINKER_BROKER,"localhost:9092");
 
 DEFAULT_CONST(DB_FILE, "./ftgm.db");
+DEFAULT_CONST(DB_TABLE_NAME_GATEWAY, "gateways");
 DEFAULT_CONST(DB_TABLE_NAME_DEVICE, "devices");
 DEFAULT_CONST(DB_TABLE_NAME_ENDPOINT, "endpoints");
 
 RET_CONST(OK, "ok");
 RET_CONST(FAILED, "failed");
+RET_CONST(INVALID_ARGUMENTS, "Invalid arguments");
+RET_CONST(OBJECT_NOT_FOUND, "Object not found.");
+RET_CONST(PERMISSION_DENY, "Permission deny.");
 
 TITLE_NAME(AUTO_START, "auto_start");
 TITLE_NAME(BROKER, "broker");
@@ -84,6 +111,7 @@ TITLE_NAME(RCS_SERVER, "rcs_server");
 TITLE_NAME(CMD, "cmd");
 TITLE_NAME(COMMAND, "command");
 TITLE_NAME(COMMUNITY, "community");
+TITLE_NAME(CORRECTION_INTERVAL, "correction_interval");
 TITLE_NAME(COUNT, "count");
 TITLE_NAME(DATA, "data");
 TITLE_NAME(DATA_FILE, "data file");
@@ -91,30 +119,52 @@ TITLE_NAME(DATA_MANAGER, "database");
 TITLE_NAME(DATE, "date");
 TITLE_NAME(DEV_NAME, "dev_name");
 TITLE_NAME(DEVICE, "device");
-TITLE_NAME(DEVICE_ID, "device_id");
+TITLE_NAME(DEV_ID, "dev_id");
+TITLE_NAME(DEVICE_ID, "dev_id");
 TITLE_NAME(ENABLE, "enable");
 TITLE_NAME(ENDPOINT, "endpoint");
+TITLE_NAME(END_TIME, "end_time");
+TITLE_NAME(EP_ID, "ep_id");
 TITLE_NAME(ENDPOINT_ID, "ep_id");
 TITLE_NAME(ENDPOINT_REPORT_INTERVAL,"endpoint_report_interval");
 TITLE_NAME(ERROR, "error");
+TITLE_NAME(ERROR_MSG, "error_msg");
+TITLE_NAME(FIRST_TIME, "first_time");
+TITLE_NAME(FILE_NAME, "file_name");
+TITLE_NAME(FILE_PATH, "file_path");
+TITLE_NAME(FILE_SIZE, "file_size");
+TITLE_NAME(GW_ID, "gw_id");
+TITLE_NAME(GATEWAY, "gateway");
+TITLE_NAME(GATEWAY_ID, "gw_id");
+TITLE_NAME(HASH, "hash");
 TITLE_NAME(ID, "id");
 TITLE_NAME(IP, "ip");
 TITLE_NAME(KEEP_ALIVE_INTERVAL, "keep_alive_interval");
+TITLE_NAME(LOCATION, "location");
+TITLE_NAME(LAST_TIME, "last_time");
 TITLE_NAME(LOOP_INTERVAL, "loop_interval");
+TITLE_NAME(MAX_SESSION, "max_session");
 TITLE_NAME(MODULE, "module");
 TITLE_NAME(MSG_ID, "msg_id");
+TITLE_NAME(MSG_TYPE, "msg_type");
 TITLE_NAME(NAME, "name");
 TITLE_NAME(OBJECT_MANAGER, "object_manager");
+TITLE_NAME(PARENT_ID, "parent_id");
 TITLE_NAME(PATH, "path");
 TITLE_NAME(PORT, "port");
+TITLE_NAME(REGISTERED,  "registered");
+TITLE_NAME(REQ_ID,  "req_id");
 TITLE_NAME(RESULT,  "result");
 TITLE_NAME(SCALE, "scale");
 TITLE_NAME(SECTION, "section");
+TITLE_NAME(SECRET, "secret_code");
 TITLE_NAME(SENSOR_ID, "sensor_id");
 TITLE_NAME(SERVER_LINKER, "server_linker");
 TITLE_NAME(SIZE, "size");
+TITLE_NAME(START_TIME, "start_time");
 TITLE_NAME(TCP_SERVER, "tcp_server");
 TITLE_NAME(TIME, "time");
+TITLE_NAME(TIME_OF_EXPIRE, "time_of_expire");
 TITLE_NAME(TIMEOUT, "timeout");
 TITLE_NAME(TRACE, "trace");
 TITLE_NAME(TYPE, "type");
@@ -123,11 +173,32 @@ TITLE_NAME(UPDATE_INTERVAL, "update_interval");
 TITLE_NAME(VALUE, "value");
 TITLE_NAME(VALUE_MAX, "value_max");
 TITLE_NAME(VALUE_MIN, "value_min");
+TITLE_NAME(VERSION, "version");
+TITLE_NAME(WITH_DEVICE, "width_device");
+TITLE_NAME(WITH_ENDPOINT, "width_endpoint");
 
 DEFAULT_CONST(MSG_VERSION, "v1");
 #define	DEFAULT_CONST_MSG_PARTITION	0
 //#define	DEFAULT_CONST_MSG_PARTITION RdKafka::Topic::PARTITION_UA
 MSG_STR(KEEP_ALIVE,"keep_alive");
-MSG_STR(ENDPOINT_REPORT, "endpoint_report");
+MSG_STR(REPORT, "report");
+MSG_STR(ADD, "add");
+MSG_STR(DEL, "del");
+MSG_STR(GET, "get");
+MSG_STR(SET, "set");
+MSG_STR(LIST, "list");
+MSG_STR(CONFIRM,"confirm");
+MSG_STR(ERROR, 	"error");
+
+MSG_TYPE_RCS(KEEP_ALIVE,"keep_alive");
+MSG_TYPE_RCS(REPORT, 	"report");
+MSG_TYPE_RCS(ADD, 		"add");
+MSG_TYPE_RCS(DEL, 		"del");
+MSG_TYPE_RCS(GET, 		"get");
+MSG_TYPE_RCS(SET, 		"set");
+MSG_TYPE_RCS(LIST, 		"list");
+MSG_TYPE_RCS(CONFIRM,	"confirm");
+MSG_TYPE_RCS(ERROR, 	"error");
+
 #endif
 

@@ -30,13 +30,15 @@ public:
 			bool	IsIncludedIn(ValueType const& _type);
 
 	const	std::string&	GetModule();
-			bool			SetModule(std::string const& _module, bool _store = true);
+			bool			SetModule(std::string const& _module);
 	const	std::string&	GetCommunity();
-			bool			SetCommunity(std::string const& _community, bool _store = true);
+			bool			SetCommunity(std::string const& _community);
 			uint32_t		GetTimeout();
-			bool			SetTimeout(uint32_t _timeout, bool _store = true);
+			bool			SetTimeout(uint32_t _timeout);
 
-	virtual	bool	GetProperties(Properties& _properties) const;
+	virtual	bool	SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+
+	virtual	bool	GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL) ;
 
 	virtual	Endpoint*	CreateEndpoint(Properties const& _properties);
 
@@ -51,7 +53,6 @@ public:
 	static	bool	ReadMIB(std::string const& _file_name);
 
 protected:
-	virtual	bool	SetPropertyInternal(Property const& _property, bool create = false);
 
 			void	Preprocess();
 			void	Postprocess();

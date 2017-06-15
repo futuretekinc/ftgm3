@@ -45,14 +45,14 @@ DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, Properti
 : DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
-	SetProperties(_properties, true);
+	SetProperties(_properties, PROPERTY_ALL, true);
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, Properties const& _properties)
 : DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
-	SetProperties(_properties, true);
+	SetProperties(_properties, PROPERTY_ALL, true);
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module)
@@ -179,15 +179,17 @@ const	std::string&	DeviceSNMP::GetModule()
 	return	module_;
 }
 
-bool	DeviceSNMP::SetModule(std::string const& _module, bool _store)
+bool	DeviceSNMP::SetModule(std::string const& _module)
 {
 	module_ = _module;
 
 	updated_properties_.AppendSNMPModule(module_);
-	if (_store)
+
+	if (!lazy_store_)
 	{
 		ApplyChanges();	
 	}
+
 	return	true;
 }
 
@@ -196,12 +198,13 @@ const	std::string&	DeviceSNMP::GetCommunity()
 	return	community_;
 }
 
-bool	DeviceSNMP::SetCommunity(std::string const& _community, bool _store)
+bool	DeviceSNMP::SetCommunity(std::string const& _community)
 {
 	community_ = _community;
 	
 	updated_properties_.AppendSNMPCommunity(community_);
-	if (_store)
+
+	if (!lazy_store_)
 	{
 		ApplyChanges();	
 	}
@@ -214,12 +217,13 @@ uint32_t	DeviceSNMP::GetTimeout()
 	return	timeout_;
 }
 
-bool	DeviceSNMP::SetTimeout(uint32_t _timeout, bool _store)
+bool	DeviceSNMP::SetTimeout(uint32_t _timeout)
 {
 	timeout_ = _timeout;
 	
 	updated_properties_.AppendTimeout(timeout_);
-	if (_store)
+
+	if (!lazy_store_)
 	{
 		ApplyChanges();	
 	}
@@ -227,13 +231,24 @@ bool	DeviceSNMP::SetTimeout(uint32_t _timeout, bool _store)
 	return	true;
 }
 
-bool	DeviceSNMP::GetProperties(Properties& _properties) const
+bool	DeviceSNMP::GetProperties(Properties& _properties, Properties::Fields const& _fields)
 {
-	if (DeviceIP::GetProperties(_properties))
+	if (DeviceIP::GetProperties(_properties, _fields))
 	{
-		_properties.AppendSNMPModule(module_);
-		_properties.AppendSNMPCommunity(community_);
-		_properties.AppendTimeout(timeout_);
+		if (_fields.snmp_module)
+		{
+			_properties.AppendSNMPModule(module_);
+		}
+
+		if (_fields.snmp_community)
+		{
+			_properties.AppendSNMPCommunity(community_);
+		}
+
+		if (_fields.timeout)
+		{
+			_properties.AppendTimeout(timeout_);
+		}
 
 		return	true;	
 	}
@@ -241,14 +256,14 @@ bool	DeviceSNMP::GetProperties(Properties& _properties) const
 	return	false;
 }
 
-bool	DeviceSNMP::SetPropertyInternal(Property const& _property, bool create)
+bool	DeviceSNMP::SetProperty(Property const& _property, Properties::Fields const& _fields)
 {
 	if (_property.GetName() == TITLE_NAME_MODULE)
 	{
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
-			return	SetModule(value->Get(), !create);
+			return	SetModule(value->Get());
 		}
 	}
 	else if (_property.GetName() == TITLE_NAME_COMMUNITY)
@@ -256,7 +271,7 @@ bool	DeviceSNMP::SetPropertyInternal(Property const& _property, bool create)
 		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 		if (value != NULL)
 		{
-			return	SetCommunity(value->Get(), !create);
+			return	SetCommunity(value->Get());
 		}
 	}
 	else if (_property.GetName() == TITLE_NAME_TIMEOUT)
@@ -264,12 +279,12 @@ bool	DeviceSNMP::SetPropertyInternal(Property const& _property, bool create)
 		const ValueUInt32*	value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (value != NULL)
 		{
-			return	SetTimeout(value->Get(), !create);
+			return	SetTimeout(value->Get());
 		}
 	}
 	else
 	{
-		return	DeviceIP::SetPropertyInternal(_property, create);
+		return	DeviceIP::SetProperty(_property, _fields);
 	}
 
 	return	false;
@@ -593,7 +608,7 @@ bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
 
 const	ValueType&	DeviceSNMP::Type()
 {
-	static	ValueType	type_("d_snmp");
+	static	ValueType	type_(NODE_TYPE_DEV_SNMP);
 
 	return	type_;
 }

@@ -7,7 +7,7 @@
 #include "endpoint.h"
 #include "property.h"
 #include "rcs_session.h"
-
+#if 0
 bool	RCSSession::DeviceMessageService::Service(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
@@ -93,12 +93,11 @@ bool	RCSSession::DeviceMessageService::Add(RCSSession& _rms, JSONNode& _request,
 				throw std::invalid_argument("Failed to add device because device properties is invalid");
 			}
 
-			Properties	new_properties;
+			JSONNode	new_properties;
 
 			new_device->GetProperties(new_properties);
-			JSONNode	new_device_node = ToJSON(new_properties);
-			new_device_node.set_name(TITLE_NAME_DEVICE);
-			_response.push_back(new_device_node);
+			new_properties.set_name(TITLE_NAME_DEVICE);
+			_response.push_back(new_properties);
 		}
 		catch(std::out_of_range)
 		{
@@ -150,12 +149,10 @@ bool	RCSSession::DeviceMessageService::ArrayAdd(RCSSession& _rms, JSONNode& _req
 					throw std::invalid_argument("Failed to add device because device properties is invalid");
 				}
 
-				Properties	new_properties;
+				JSONNode new_properties;
 
 				new_device->GetProperties(new_properties);
-				JSONNode	new_device_node = ToJSON(new_properties);
-
-				new_device_array_node.push_back(new_device_node);
+				new_device_array_node.push_back(new_properties);
 			}
 
 			new_device_array_node.set_name(TITLE_NAME_DEVICE);
@@ -301,13 +298,12 @@ bool	RCSSession::DeviceMessageService::Get(RCSSession& _rms, JSONNode& _request,
 			Device*	device = _rms.object_manager_->GetDevice(id);
 			if (device != NULL)
 			{
-				Properties	properties;
+				JSONNode	properties;
 
 				device->GetProperties(properties);				
 
-				JSONNode	properties_node = ToJSON(properties);
-				properties_node.set_name(TITLE_NAME_DEVICE);
-				_response.push_back(properties_node);
+				properties.set_name(TITLE_NAME_DEVICE);
+				_response.push_back(properties);
 			}
 			else
 			{
@@ -352,12 +348,11 @@ bool	RCSSession::DeviceMessageService::ArrayGet(RCSSession& _rms, JSONNode& _req
 				Device*	device = _rms.object_manager_->GetDevice(id);
 				if (device != NULL)
 				{
-					Properties	properties;
+					JSONNode	properties;
 
 					device->GetProperties(properties);				
 
-					JSONNode	properties_node = ToJSON(properties);
-					device_array.push_back(properties_node);
+					device_array.push_back(properties);
 				}
 			}
 
@@ -795,3 +790,4 @@ bool	RCSSession::DeviceMessageService::ArrayDisable(RCSSession& _rms, JSONNode& 
 	return	result;
 }
 
+#endif

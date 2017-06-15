@@ -3,15 +3,21 @@
 
 #include <list>
 #include <mutex>
-#include "active_object.h"
+#include "node.h"
 #include "timer.h"
 #include "property.h"
 #include "KompexSQLiteStatement.h"
 
+struct	DeviceInfo : NodeInfo
+{
+	DeviceInfo();
+	DeviceInfo(JSONNode const& _json);
+};
+
 class	Endpoint;
 class	ObjectManager;
 
-class	Device : public ActiveObject
+class	Device : public Node
 {
 	friend class	Endpoint;
 	friend class	ObjectManager;
@@ -22,35 +28,28 @@ public:
 	~Device();
 
 	// Properties operation
-	ValueType const& 	GetType() const	{	return	type_;};	
-	virtual	bool		IsIncludedIn(ValueType const& _type) 	{	return	(type_ == _type);};
+	virtual	bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
 
-			bool		SetKeepAliveInterval(int _interval, bool _store = true);
-			bool		SetKeepAliveInterval(Time const& _interval, bool _store = true);
-
-	virtual	bool		GetProperties(Properties& _properties) const;
-
-			bool		ApplyChanges();	
+	virtual	bool		GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		GetProperties(JSONNode& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
 
 	virtual	Endpoint*	CreateEndpoint(Properties const& _properties) = 0;
 
 			uint32_t	GetEndpointCount();
 	const 	ValueID&	GetEndpointAt(int index);
-			bool		GetEndpointList(std::list<ValueID>& _endpoinst_id_list);
+			bool		GetEndpointList(std::list<ValueID>& _list);
+			bool		GetEndpointMap(std::map<std::string, Endpoint*>& _map);
 
 	// Utility
 	virtual				operator JSONNode();
 
-	static	const	ValueType&	Type();
-	static	bool		IsValidType(std::string const& _type);
-
+	static	bool		IsValidType(ValueType const& _type);
 	static	Device*		Create(ObjectManager& _manager, Properties const& _properties);
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 
 	virtual	bool		ReadValue(std::string const& _endpoint_id, Value* _value) = 0;
 
 protected:
-	virtual	bool		SetPropertyInternal(Property const& _property, bool create = false);
 
 			void		Preprocess();
 			void		Process();
@@ -64,13 +63,6 @@ protected:
 
 			bool		AddSchedule(ValueID const& _id, Timer const& _timer);
 			bool		RemoveSchedule(ValueID const& _id);
-
-	ObjectManager&	manager_;
-	ValueType	type_;
-	ValueID		parent_id_;
-	Time		keep_alive_interval_;
-
-	Timer		keep_alive_timer_;
 
 	std::list<ValueID>	endpoint_id_list_;
 

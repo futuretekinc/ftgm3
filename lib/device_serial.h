@@ -12,7 +12,7 @@ public:
 	DeviceSerial(ObjectManager& _manager, ValueType const& _type);
 	DeviceSerial(ObjectManager& _manager, ValueType const& _type, std::string const& _port);
 
-	virtual	bool	GetProperties(Properties& _properties) const;
+	virtual	bool	GetProperties(Properties& _properties);
 
 	const 	std::string&	GetPort();
 			bool		SetPort(const std::string& _port, bool _store = true);

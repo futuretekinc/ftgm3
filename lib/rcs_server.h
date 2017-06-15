@@ -9,8 +9,9 @@
 #include "active_object.h"
 #include "message.h"
 #include "locker.h"
-#include "rcs_session.h"
 #include "tcp_server.h"
+#include "rcs_session.h"
+#include "rcs_message.h"
 
 class	RCSSession;
 
@@ -22,11 +23,39 @@ public:
 
 	bool		Load(JSONNode const& _json);
 
+	bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+
 				operator JSONNode() const;
 
+	bool		ServiceCall(RCSMessage& _request, RCSMessage& _response);
+
+	bool		Add(RCSMessage& _request, RCSMessage& _response);
+	bool		Del(RCSMessage& _request, RCSMessage& _response);
+	bool		Get(RCSMessage& _request, RCSMessage& _response);
+	bool		Set(RCSMessage& _request, RCSMessage& _response);
+	bool		List(RCSMessage& _request, RCSMessage& _response);
+
+	bool		Confirm(RCSMessage& _reply, std::string& _req_type);
+	bool		Error(RCSMessage& _reply);
+	bool		Error(RCSMessage& _reply, std::string& _req_type);
+
+
 protected:
-	TCPSession*	CreateSession(TCPServer *_server, int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout);
-	bool		SetPropertyInternal(Property const& _property, bool create = false);
+	TCPSession*	CreateSession(int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout);
+
+	bool		SetGateway(JSONNode& _node, JSONNode& _result);
+	bool		GetGateway(JSONNode& _node, JSONNode& _result);
+	bool		ConfirmGateway(JSONNode& _node, std::string& _req_type);
+
+	bool		SetDevice(JSONNode& _node, JSONNode& _result);
+	bool		GetDevice(JSONNode& _node, JSONNode& _result);
+	bool		ConfirmDevice(JSONNode& _node, std::string& _req_type);
+
+	bool		SetEndpoint(JSONNode& _node, JSONNode& _result);
+	bool		GetEndpoint(JSONNode& _node, JSONNode& _result);
+	bool		ConfirmEndpoint(JSONNode& _node, std::string& _req_type);
+	bool		ConfirmData(JSONNode& _node, std::string& _req_type);
+
 };
 
 #endif

@@ -1,25 +1,25 @@
 #ifndef	ACTIVE_OBJECT_H_
 #define	ACTIVE_OBJECT_H_
 
-#include "object.h"
 #include <thread>
+#include "object.h"
 #include "message_queue.h"
 
 class	ActiveObject : public Object
 {
 public:
-	ActiveObject(Object* _parent = NULL);
-	ActiveObject(ValueID const& _id, Object* _parent = NULL);
+	ActiveObject();
+	ActiveObject(ValueID const& _id);
 	~ActiveObject();
 
 			bool	Load(JSONNode const& _json);
 					operator JSONNode() const;
 
-	virtual	bool	SetEnable(bool _enable, bool _store = true);
+	virtual	bool	SetEnable(bool _enable);
 
 			Stat	GetStat() const;
 			
-			bool	SetLoopInterval(Time const& _interval, bool _store = true);
+			bool	SetLoopInterval(Time const& _interval);
 
 	virtual	bool	Start();
 	virtual	bool	Stop(bool _wait = false);
@@ -27,14 +27,16 @@ public:
 
 	virtual	bool	IsRunning();
 
-	virtual	bool	GetProperties(Properties& _properties) const;
+	virtual	bool	GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool	GetProperties(JSONNode& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+
+			bool	SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
 
 	virtual	bool	Post(Message* _message);
 
-	virtual	void	OnMessage(Message* _message);
+	virtual	bool	OnMessage(Message* _message);
 
 protected:
-	virtual	bool	SetPropertyInternal(Property const& _property, bool create = false);
 
 	virtual	void	Preprocess();
 	virtual	void	Process();

@@ -8,7 +8,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include "tcp_session.h"
+#include "rcs_message.h"
 #include "tcp_server.h"
+#include "object_manager.h"
 #include "trace.h"
 
 
@@ -58,9 +60,9 @@ bool	TCPSession::Disconnect()
 	return	true;
 }
 
-void	TCPSession::OnMessage(Message* _base_message)
+bool		TCPSession::OnMessage(Message* _base_message)
 {
-	switch(_base_message->type)
+	switch(_base_message->GetType())
 	{
 	case	MSG_TYPE_PACKET:
 		{
@@ -68,11 +70,11 @@ void	TCPSession::OnMessage(Message* _base_message)
 			if (message_packet != NULL)
 			{
 				bool	printable = true;
-				for(uint32_t i = 0 ; i < message_packet->length; i++)
+				for(uint32_t i = 0 ; i < message_packet->GetSize(); i++)
 				{
-					if (!isprint(message_packet->data[i]))
+					if (!isprint(message_packet->GetData(i)))
 					{
-						TRACE_INFO("Not printable character : " << message_packet->data[i]);
+						TRACE_INFO("Not printable character : " << message_packet->GetData(i));
 						printable = false;
 						break;
 					}
@@ -80,8 +82,8 @@ void	TCPSession::OnMessage(Message* _base_message)
 
 				if(printable)
 				{
-					TRACE_INFO("Received Packet : " << message_packet->length);
-					TRACE_INFO((char*)message_packet->data);
+					TRACE_INFO("Received Packet : " << message_packet->GetSize());
+					TRACE_INFO((char*)message_packet->GetData());
 				}
 				else
 				{
@@ -90,15 +92,15 @@ void	TCPSession::OnMessage(Message* _base_message)
 
 				if (socket_)
 				{
-					int	send_len = send(socket_, message_packet->data, message_packet->length, MSG_DONTWAIT);
+					int	send_len = send(socket_, message_packet->GetData(), message_packet->GetSize(), MSG_DONTWAIT);
 					if (send_len <= 0)
 					{
 						Disconnect();
 						TRACE_ERROR("The socket has terminated.");
 					}
-					else if (send_len != message_packet->length)
+					else if (send_len != message_packet->GetSize())
 					{
-						TRACE_ERROR("Failed to send packet.[ packet_size = " << message_packet->length << ", send_size = " << send_len << " ]");
+						TRACE_ERROR("Failed to send packet.[ packet_size = " << message_packet->GetSize() << ", send_size = " << send_len << " ]");
 					}
 					else
 					{
@@ -115,14 +117,15 @@ void	TCPSession::OnMessage(Message* _base_message)
 
 	default:
 		{
-			TRACE_ERROR("Not supported message received!");	
+			return	ActiveObject::OnMessage(_base_message);
 		}
 	}
+
+	return	true;
 }
 
 void	TCPSession::Preprocess()
 {
-	TRACE_INFO("TCP Session preprocess!");
 	ActiveObject::Preprocess();
 }
 
@@ -130,7 +133,7 @@ void	TCPSession::Process()
 {
 	if (socket_)
 	{
-		receive_len_ = recv(socket_, receive_buffer_, receive_buffer_len_, MSG_DONTWAIT);
+		receive_len_ = recv(socket_, receive_buffer_, receive_buffer_len_ - 1, MSG_DONTWAIT);
 		if (receive_len_ < 0)
 		{
 			if (errno != EAGAIN)
@@ -146,8 +149,9 @@ void	TCPSession::Process()
 		}
 		else
 		{
-			TRACE_INFO("Received packet send to [ " << id_ << " -> " << process_id_ << " ]");
-			Message::SendPacket(process_id_, id_, receive_buffer_, receive_len_);
+			receive_buffer_[receive_len_] = 0;
+
+			OnReceive(receive_buffer_, receive_len_);
 		}
 	}
 
@@ -170,6 +174,8 @@ bool	TCPSession::Send(std::string const& _message)
 		TRACE_ERROR("The socket failed to send data.");
 		return	false;
 	}
+	TRACE_INFO("Packet Sent : " << _message.size());
+	TRACE_INFO(_message);
 
 	return	true;
 }
@@ -196,4 +202,9 @@ const
 TCPSession::Information&	TCPSession::GetInformation()
 {
 	return	information_;
+}
+
+bool	TCPSession::OnReceive(void *_data, uint32_t _len)
+{
+	return	true;
 }

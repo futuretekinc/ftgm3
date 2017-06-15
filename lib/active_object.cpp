@@ -10,15 +10,14 @@
 
 using namespace	std;
 
-
-ActiveObject::ActiveObject(Object* _parent)
-: Object(_parent), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
+ActiveObject::ActiveObject()
+: Object(), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
 {
 	Message::RegisterRecipient(id_, this);
 }
 
-ActiveObject::ActiveObject(ValueID const& _id, Object* _parent)
-: Object(_id, _parent), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
+ActiveObject::ActiveObject(ValueID const& _id)
+: Object(_id), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
 {
 	Message::RegisterRecipient(id_, this);
 }
@@ -56,21 +55,25 @@ ActiveObject::operator JSONNode() const
 	return	root;
 }
 
-bool	ActiveObject::SetEnable(bool _enable, bool _store)
+bool	ActiveObject::SetEnable(bool _enable)
 {
 	if (enable_ != _enable)
 	{	
-		return	Object::SetEnable(_enable, _store);
-#if 0
-		if (enable_)
+		if (Object::SetEnable(_enable))
 		{
-			Start();	
+			if (enable_)
+			{
+				Start();	
+			}
+			else
+			{
+				Stop();	
+			}
 		}
 		else
 		{
-			Stop();	
+				
 		}
-#endif	
 	}
 
 	return	true;
@@ -172,11 +175,13 @@ void	ActiveObject::Run()
 	thread_.join();
 }
 
-bool	ActiveObject::SetLoopInterval(Time const& _interval, bool _store)
+bool	ActiveObject::SetLoopInterval(Time const& _interval)
 {
 	loop_interval_ = _interval;
 
-	if (_store)
+	updated_properties_.AppendLoopInterval(loop_interval_);
+
+	if (!lazy_store_)
 	{
 		ApplyChanges();	
 	}
@@ -184,39 +189,74 @@ bool	ActiveObject::SetLoopInterval(Time const& _interval, bool _store)
 	return	true;
 }
 
-bool	ActiveObject::GetProperties(Properties& _properties) const
+bool	ActiveObject::GetProperties(Properties& _properties, Properties::Fields const& _fields)
 {
-	if (Object::GetProperties(_properties))
+	if (!Object::GetProperties(_properties, _fields))
 	{
-		_properties.AppendLoopInterval(loop_interval_);	
-
-		return	true;
+		return	false;
 	}
 
-	return	false;
+	if (_fields.loop_interval)
+	{
+		_properties.AppendLoopInterval(loop_interval_);
+	}
+
+	return	true;
 }
 
-bool	ActiveObject::SetPropertyInternal(Property const& _property, bool create)
+bool	ActiveObject::GetProperties(JSONNode& _properties, Properties::Fields const& _fields)
 {
-	if (_property.GetName() == TITLE_NAME_LOOP_INTERVAL)
+	if (!Object::GetProperties(_properties, _fields))
 	{
-		const ValueInt* value = dynamic_cast<const ValueInt*>(_property.GetValue());
-		if (value != NULL)
-		{
-			return	SetLoopInterval(value->Get(), !create);
-		}
-
-		const ValueString* value2 = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value2 != NULL)
-		{
-			return	SetLoopInterval(strtoul(value2->Get().c_str(), 0, 10), !create);
-		}
-
-		TRACE_INFO("Property loop interval value type is incorrect!");
+		return	false;	
 	}
-	else
+
+	if (_fields.loop_interval)
 	{
-		return	Object::SetPropertyInternal(_property, create);
+		_properties.push_back(JSONNode(TITLE_NAME_LOOP_INTERVAL, loop_interval_));
+	}
+
+	return	true;
+}
+
+
+bool	ActiveObject::SetProperty(Property const& _property, Properties::Fields const& _fields)
+{
+	try
+	{
+		if (_property.GetName() == TITLE_NAME_LOOP_INTERVAL)
+		{
+			if (_fields.loop_interval)
+			{
+				uint32_t	loop_interval = 0;
+
+				const ValueInt* value = dynamic_cast<const ValueInt*>(_property.GetValue());
+				if (value == NULL)
+				{
+					const ValueString* value2 = dynamic_cast<const ValueString*>(_property.GetValue());
+					if (value2 == NULL)
+					{
+						throw std::invalid_argument("Loop interval value invalid");
+					}
+
+					loop_interval = strtoul(value2->Get().c_str(), 0, 10);
+				}
+				else
+				{
+					loop_interval =  value->Get();
+				}
+
+				return	SetLoopInterval(loop_interval);
+			}
+		}
+		else
+		{
+			return	Object::SetProperty(_property);
+		}
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR(e.what());
 	}
 
 	return	false;
@@ -235,8 +275,10 @@ bool	ActiveObject::Post(Message* _message)
 	return	true;
 }
 
-void	ActiveObject::OnMessage(Message* _message)
+bool	ActiveObject::OnMessage(Message* _base)
 {
+	TRACE_ERROR("Unknown message[" << _base->GetType() << "]");	
+	return	true;
 }
 
 void	ActiveObject::Preprocess()
@@ -249,9 +291,10 @@ void	ActiveObject::Process()
 	{
 		Message*	message = message_queue_.Pop();
 
-		OnMessage(message);
-
-		delete message;
+		if (OnMessage(message))
+		{
+			delete message;
+		}
 	}
 }
 

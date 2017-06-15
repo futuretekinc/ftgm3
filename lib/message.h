@@ -23,18 +23,18 @@
 
 class	ActiveObject;
 
-struct	Message
+class	Message
 {
 public:
-
-	uint32_t	type;
-	uint64_t	id;
-	std::string	sender;
 
 					Message(const Message& _message);
 					Message(uint32_t	_type = MSG_TYPE_UNKNOWN);
 					Message(uint32_t	_type, const std::string& _sender);
-
+			
+			uint32_t	GetType()		{	return	type_;	}
+			uint64_t	GetID()			{	return	id_;	}
+			std::string	GetSendoer()	{	return	sender_;	}
+			Date		GetTime()		{	return	time_;	}
 
 	virtual	void	Dump(std::ostream& os) const;
 
@@ -50,77 +50,100 @@ public:
 
 	friend	const std::string&	ToString(Message* _message);
 	friend	std::ostream& ::operator<<(std::ostream& os, Message const& _message);
+
+protected:
+	uint32_t	type_;
+	uint64_t	id_;
+	Date		time_;
+	std::string	sender_;
+
 };
 
 
-struct	MessageStart : Message
+class	MessageStart : Message
 {
+public:
 
 	MessageStart() : Message(MSG_TYPE_START) {};
 	MessageStart(const std::string& _sender) : Message(MSG_TYPE_START, _sender) {};
 };
 
-struct	MessageStarted : Message
+class	MessageStarted : Message
 {
+public:
 
 	MessageStarted() : Message(MSG_TYPE_STARTED) {};
 	MessageStarted(const std::string& _sender) : Message(MSG_TYPE_STARTED, _sender) {};
 };
 
-struct	MessageStop : Message
+class	MessageStop : Message
 {
+public:
 
 	MessageStop() : Message(MSG_TYPE_STOP) {};
 	MessageStop(const std::string& _sender) : Message(MSG_TYPE_STOP, _sender) {};
 };
 
-struct	MessageStopped : Message
+class	MessageStopped : Message
 {
+public:
 
 	MessageStopped() : Message(MSG_TYPE_STOPPED) {};
 	MessageStopped(const std::string& _sender) : Message(MSG_TYPE_STOPPED, _sender) {};
 };
 
-struct	MessageTest : Message
+class	MessageTest : Message
 {
+public:
 
 	std::string	message;
 
 	MessageTest(const std::string& _message);
 };
 
-struct	MessageActivated : Message
+class	MessageActivated : Message
 {
+public:
 
 	MessageActivated();
 };
 
-struct	MessageDeactivated : Message
+class	MessageDeactivated : Message
 {
+public:
 
 	MessageDeactivated();
 };
 
-struct	MessageQuit : Message
+class	MessageQuit : Message
 {
+public:
 	MessageQuit();
 };
 
-struct MessagePacket : Message	
+class	MessagePacket : public Message	
 {
-	uint8_t*	data;
-	uint32_t	length;
-
+public:
 	MessagePacket(std::string const& _sender, void const* _pdata, uint32_t _length);
 	~MessagePacket();
 
+			uint32_t	GetSize()	{	return	length_; }
+			uint8_t*	GetData()	{	return	data_;	}
+			uint8_t		GetData(int n)	{	return	data_[n];	}
+
 	virtual	void	Dump(std::ostream& os) const;
+
+protected:
+	uint8_t*	data_;
+	uint32_t	length_;
 };
 
-struct MessageKeepAlive : Message	
+class	MessageKeepAlive : Message	
 {
+public:
 	MessageKeepAlive(std::string const& _sender, std::string const& _object_id);
 
+protected:
 	std::string	object_id;
 };
 

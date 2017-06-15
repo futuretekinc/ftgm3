@@ -5,6 +5,7 @@
 #include <list>
 #include "KompexSQLiteDatabase.h"
 #include "KompexSQLiteStatement.h"
+#include "gateway.h"
 #include "device.h"
 
 class	DataManager : public ActiveObject
@@ -46,6 +47,14 @@ public:
 	bool		Load(JSONNode const& _json);
 	virtual		operator JSONNode() const;
 
+	bool		AddGateway(Gateway* _device);
+	bool		DeleteGateway(std::string const& _id);
+	bool		IsGatewayExist(std::string const& _id);
+	uint32_t	GetGatewayCount();
+	bool		GetGatewayProperties(uint32_t _index, uint32_t _count, std::list<Properties>& _list);
+	bool		GetGatewayProperties(std::string const& _id, Properties& _properties);
+	bool		SetGatewayProperties(std::string const& _id, Properties& _properties);
+
 	bool		AddDevice(Device* _device);
 	bool		DeleteDevice(std::string const& _id);
 	bool		IsDeviceExist(std::string const& _id);
@@ -80,6 +89,7 @@ private:
 	bool						temp_db_;
 	std::string					file_name_;
 	Kompex::SQLiteDatabase*		database_;
+	Table*						gateway_table_;
 	Table*						device_table_;
 	Table*						endpoint_table_;
 	std::map<std::string, ValueTable*>	value_table_map_;

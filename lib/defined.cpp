@@ -12,9 +12,23 @@ uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC	=	(10);
 uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN=	(10);
 uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX=	(60 * 60);
 
-uint32_t	ENDPOINT_REPORT_INTERVAL		=	(10 * TIME_SECOND);
-uint32_t	ENDPOINT_UPDATE_INTERVAL		=	(1 * TIME_SECOND);
-uint32_t	ENDPOINT_VALUE_COUNT_MAX		=	(7*24*60);
+const char*	NODE_TYPE_GW_GEN				=	"gw_gen";
+
+const char*	NODE_TYPE_DEV_SNMP				=	"dev_snmp";
+const char*	NODE_TYPE_DEV_FTE				=	"dev_fte";
+
+const char*	NODE_TYPE_EP_S_TEMPERATURE		=	"ep_s_temperature";
+const char*	NODE_TYPE_EP_S_HUMIDITY			=	"ep_s_humidity";
+const char*	NODE_TYPE_EP_S_VOLTAGE			=	"ep_s_voltage";
+const char*	NODE_TYPE_EP_S_CURRENT			=	"ep_s_current";
+const char*	NODE_TYPE_EP_S_DI				=	"ep_s_di";
+const char*	NODE_TYPE_EP_A_DO				=	"ep_a_do";
+const char*	NODE_TYPE_EP_S_PRESSURE			=	"ep_s_pressure";
+
+uint32_t	ENDPOINT_REPORT_INTERVAL		=	(30);
+uint32_t	ENDPOINT_UPDATE_INTERVAL		=	(5);
+uint32_t	ENDPOINT_VALUE_COUNT			=	(24*60*10);
+uint32_t	ENDPOINT_VALUE_COUNT_MAX		=	(7*24*60*10);
 double		ENDPOINT_VALUE_SCALE			=	(1);
 
 int			ENDPOINT_SENSOR_TEMPERATURE_MAX	=	(100);
@@ -27,3 +41,7 @@ const char*	ENDPOINT_SENSOR_HUMIDITY_UNIT	= 	"%RH";
 
 int			SNMP_COMMUNITY_LENGTH_MAX		=	128;
 
+uint32_t	SERVER_LINKER_CONNECTION_RETRY_INTERVAL_SEC = (10);
+uint32_t	SERVER_LINKER_KEEP_ALIVE_INTERVAL_SEC 	= (60);
+uint32_t	SERVER_LINKER_REQUEST_TIMEOUT_SEC		= (30);
+bool		SERVER_LNKER_REPORT_LATE_ARRIVE_MESSAGE	= false;

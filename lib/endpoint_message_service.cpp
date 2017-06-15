@@ -7,7 +7,7 @@
 #include "endpoint.h"
 #include "property.h"
 #include "rcs_session.h"
-
+#if 0
 bool	RCSSession::EndpointMessageService::Service(RCSSession& _rms, JSONNode& _request, JSONNode& _response, std::ostringstream& _error_message)
 {
 	bool	result = true;
@@ -93,12 +93,11 @@ bool	RCSSession::EndpointMessageService::Add(RCSSession& _rms, JSONNode& _reques
 				throw std::invalid_argument("Failed to add endpoint because endpoint properties is invalid");
 			}
 
-			Properties	new_properties;
+			JSONNode	new_properties;
 
 			new_endpoint->GetProperties(new_properties);
-			JSONNode	new_endpoint_node = ToJSON(new_properties);
-			new_endpoint_node.set_name(TITLE_NAME_DEVICE);
-			_response.push_back(new_endpoint_node);
+			new_properties.set_name(TITLE_NAME_DEVICE);
+			_response.push_back(new_properties);
 		}
 		catch(std::out_of_range)
 		{
@@ -150,12 +149,10 @@ bool	RCSSession::EndpointMessageService::ArrayAdd(RCSSession& _rms, JSONNode& _r
 					throw std::invalid_argument("Failed to add endpoint because endpoint properties is invalid");
 				}
 
-				Properties	new_properties;
+				JSONNode	new_properties;
 
 				new_endpoint->GetProperties(new_properties);
-				JSONNode	new_endpoint_node = ToJSON(new_properties);
-
-				new_endpoint_array_node.push_back(new_endpoint_node);
+				new_endpoint_array_node.push_back(new_properties);
 			}
 
 			new_endpoint_array_node.set_name(TITLE_NAME_DEVICE);
@@ -302,13 +299,12 @@ bool	RCSSession::EndpointMessageService::Get(RCSSession& _rms, JSONNode& _reques
 			Endpoint*	endpoint = _rms.object_manager_->GetEndpoint(id);
 			if (endpoint != NULL)
 			{
-				Properties	properties;
+				JSONNode	properties;
 
 				endpoint->GetProperties(properties);				
 
-				JSONNode	properties_node = ToJSON(properties);
-				properties_node.set_name(TITLE_NAME_DEVICE);
-				_response.push_back(properties_node);
+				properties.set_name(TITLE_NAME_DEVICE);
+				_response.push_back(properties);
 			}
 			else
 			{
@@ -353,12 +349,11 @@ bool	RCSSession::EndpointMessageService::ArrayGet(RCSSession& _rms, JSONNode& _r
 				Endpoint*	endpoint = _rms.object_manager_->GetEndpoint(id);
 				if (endpoint != NULL)
 				{
-					Properties	properties;
+					JSONNode	properties;
 
 					endpoint->GetProperties(properties);				
 
-					JSONNode	properties_node = ToJSON(properties);
-					endpoint_array.push_back(properties_node);
+					endpoint_array.push_back(properties);
 				}
 			}
 
@@ -782,4 +777,4 @@ bool	RCSSession::EndpointMessageService::ArrayDisable(RCSSession& _rms, JSONNode
 
 	return	result;
 }
-
+#endif

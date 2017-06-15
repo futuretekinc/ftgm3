@@ -5,6 +5,8 @@
 #include "object_manager.h"
 
 
+bool	ShellCommandEndpointList(ObjectManager* object_manager);
+
 RetValue	ShellCommandEndpoint
 (
 	std::string*	_arguments,
@@ -49,7 +51,7 @@ RetValue	ShellCommandEndpoint
 					name_len  = len;
 				}
 
-				len = Endpoint::ToString(endpoint->GetType()).size();
+				len = std::string(endpoint->GetType()).size();
 				if (type_len < len)
 				{
 					type_len  = len;
@@ -76,9 +78,9 @@ RetValue	ShellCommandEndpoint
 
 				std::cout << std::setw(id_len) << endpoint->GetID();
 				std::cout << " " << std::setw(name_len+1) << endpoint->GetName();
-				std::cout << " " << std::setw(type_len+1) << Endpoint::ToString(endpoint->GetType());
+				std::cout << " " << std::setw(type_len+1) << endpoint->GetType();
 				std::cout << " " << std::setw(stat_len+1) << Object::ToString(endpoint->GetStat());
-				std::cout << " " << std::setw(id_len) << endpoint->GetDeviceID();
+				std::cout << " " << std::setw(id_len) << endpoint->GetParentID();
 				std::cout << std::endl;	
 			}
 		}
@@ -98,7 +100,7 @@ RetValue	ShellCommandEndpoint
 			{
 				ret_value = RET_VALUE_INVALID_ARGUMENTS;
 			} 
-			else if (!properties.AppendEndpointType(_arguments[3]))
+			else if (!properties.AppendType(_arguments[3]))
 			{
 				ret_value = RET_VALUE_INVALID_ARGUMENTS;
 			}
@@ -396,3 +398,70 @@ Shell::Command	shell_ftgm_command_endpoint =
 	.short_help	=	"Management of endpoint",
 	.function	=	ShellCommandEndpoint
 };
+
+bool	ShellCommandEndpointList(ObjectManager* object_manager)
+{
+	std::cout << "Endpoint count : " << object_manager->GetEndpointCount() << std::endl;
+
+	std::list<Endpoint*>	snmp_list;
+	if (object_manager->GetEndpointList(snmp_list) != 0)
+	{
+		uint32_t	id_len = 32;
+		uint32_t	name_len = 16;
+		uint32_t	type_len = 16;
+		uint32_t	stat_len = 16;
+
+		for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+		{
+			uint32_t	len;
+
+			Endpoint *endpoint = dynamic_cast<Endpoint*>(*it);
+
+			len = std::string(endpoint->GetID()).size();
+			if (id_len < len)
+			{
+				id_len  = len;
+			}
+
+			len = std::string(endpoint->GetName()).size();
+			if (name_len < len)
+			{
+				name_len  = len;
+			}
+
+			len = std::string(endpoint->GetType()).size();
+			if (type_len < len)
+			{
+				type_len  = len;
+			}
+
+			len = Object::ToString(endpoint->GetStat()).size();
+			if (stat_len < len)
+			{
+				stat_len  = len;
+			}
+		}
+
+		std::cout << "* SNMP Endpoint" << std::endl;
+		std::cout << std::setw(id_len) << "ID";
+		std::cout << " " << std::setw(name_len+1) << "Name";
+		std::cout << " " << std::setw(type_len+1) << "Type";
+		std::cout << " " << std::setw(stat_len+1) << "Stat";
+		std::cout << " " << std::setw(id_len) << "Device ID";
+		std::cout << std::endl;
+
+		for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+		{
+			Endpoint *endpoint = dynamic_cast<Endpoint*>(*it);
+
+			std::cout << std::setw(id_len) << endpoint->GetID();
+			std::cout << " " << std::setw(name_len+1) << endpoint->GetName();
+			std::cout << " " << std::setw(type_len+1) << endpoint->GetType();
+			std::cout << " " << std::setw(stat_len+1) << Object::ToString(endpoint->GetStat());
+			std::cout << " " << std::setw(id_len) << endpoint->GetParentID();
+			std::cout << std::endl;	
+		}
+	}
+
+	return	true;
+}

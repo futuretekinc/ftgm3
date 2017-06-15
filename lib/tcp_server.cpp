@@ -20,7 +20,7 @@
 //
 ///////////////////////////////////////////////////////
 TCPServer::TCPServer(ObjectManager* _manager)
-: manager_(_manager), port_(8888), max_session_count_(10), timeout_(60 * TIME_SECOND), onMessageCallback_(NULL)
+: ActiveObject(), manager_(_manager), port_(8888), max_session_count_(10), timeout_(60 * TIME_SECOND), onMessageCallback_(NULL)
 {
 	trace.SetClassName(GetClassName());
 	enable_	= true;
@@ -101,10 +101,10 @@ TCPServer::operator JSONNode() const
 	return	root;
 }
 
-bool	TCPServer::SetPropertyInternal(Property const& _property, bool create)
+bool	TCPServer::SetProperty(Property const& _property, Properties::Fields const& _fields)
 {
 
-	if (_property.GetName() == "port")
+	if (_property.GetName() == TITLE_NAME_PORT)
 	{
 		const ValueUInt32* value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (value == NULL)
@@ -115,7 +115,7 @@ bool	TCPServer::SetPropertyInternal(Property const& _property, bool create)
 
 		port_ = value->Get();
 	}
-	else if (_property.GetName() == "max_session")
+	else if (_property.GetName() == TITLE_NAME_MAX_SESSION)
 	{
 		const ValueUInt32* value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (value == NULL)
@@ -126,7 +126,7 @@ bool	TCPServer::SetPropertyInternal(Property const& _property, bool create)
 
 		max_session_count_ = value->Get();
 	}
-	else if (_property.GetName() == "timeout")
+	else if (_property.GetName() == TITLE_NAME_TIMEOUT)
 	{
 		const ValueUInt32* value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
 		if (value == NULL)
@@ -139,7 +139,7 @@ bool	TCPServer::SetPropertyInternal(Property const& _property, bool create)
 	}
 	else 
 	{
-		return	ActiveObject::SetPropertyInternal(_property, create);
+		return	ActiveObject::SetProperty(_property, _fields);
 	}
 
 	return	true;
@@ -196,11 +196,14 @@ void	TCPServer::Process()
 		{
 			try
 			{
-				TCPSession* session = CreateSession(this, client_socket, &client, timeout_);
+				TCPSession* session = CreateSession(client_socket, &client, timeout_);
 
 				session_map_locker_.Lock();
 				session_map_[ntohs(client.sin_port)] = session;
 				session_map_locker_.Unlock();
+
+
+				session->Start();	
 
 				TRACE_INFO("New session created[" << inet_ntoa(client.sin_addr) << ":" << ntohs(client.sin_port) << "]");
 			}
@@ -224,9 +227,9 @@ void	TCPServer::Postprocess()
 	session_map_locker_.Unlock();
 }
 
-TCPSession*	TCPServer::CreateSession(TCPServer *_server, int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout)
+TCPSession*	TCPServer::CreateSession(int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout)
 {
-	return	new TCPSession(_server, _socket, _addr_info, _timeout);
+	return	new TCPSession(this, _socket, _addr_info, _timeout);
 }
 
 bool	TCPServer::SessionDisconnected
@@ -271,12 +274,12 @@ bool	TCPServer::GetSessionInformationList
 	return	true;
 }
 
-void	TCPServer::OnMessage
+bool	TCPServer::OnMessage
 (
 	Message *_base_message
 )
 {
-	switch(_base_message->type)
+	switch(_base_message->GetType())
 	{
 	case	MSG_TYPE_SESSION_DISCONNECTED:
 		{
@@ -298,6 +301,11 @@ void	TCPServer::OnMessage
 			}
 		}
 		break;
+
+	default:
+		return	ActiveObject::OnMessage(_base_message);
 	}
+
+	return	true;
 }
 

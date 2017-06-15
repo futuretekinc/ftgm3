@@ -6,7 +6,8 @@
 #include "data_manager.h"
 #include "device.h"
 #include "time2.h"
-#include "tcp_client.h"
+#include "rcs_client.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -17,93 +18,134 @@ RetValue	ShellCommandDevice
 	Shell* _shell
 )
 {
-	TCPClient*	client = dynamic_cast<TCPClient*>(_shell->GetObject());
+	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 
-	if (_count == 1)
+	try
 	{
-		
-	}
-	else 
-	{
-		JSONNode	request_node;
-		std::string	response;
-
-		request_node.push_back(JSONNode(RMC_FIELD_SECTION, "device"));
-
-		if (_arguments[1] == "list")
+		if (_count == 1)
 		{
-			request_node.push_back(JSONNode(RMC_FIELD_COMMAND, _arguments[1]));
+
 		}
-		else if ((_arguments[1] == "get") || (_arguments[1] == "start") || (_arguments[1] == "stop") || (_arguments[1] == "del") || (_arguments[1] == "enable") || (_arguments[1] == "disable"))
+		else if (_arguments[1] == MSG_TYPE_RCS_ADD)
 		{
-			if (_count < 3)
+			JSONNode	properties;
+
+			if ((_count < 4) || (_count % 2 != 0))
 			{
-				return		RET_VALUE_INVALID_ARGUMENTS;
+				throw InvalidArgument("Invalid argument");	
 			}
 
-			request_node.push_back(JSONNode(RMC_FIELD_COMMAND, _arguments[1]));
-			if (_count == 3)
+			for(uint32_t i = 2 ; i+1 < _count ; i+=2)
 			{
-				request_node.push_back(JSONNode(RMC_FIELD_ID, _arguments[2]));
+				if (_arguments[i].substr(0, 2) != "--")
+				{
+					throw InvalidArgument("Invalid argument");	
+				}
+
+				properties.push_back(JSONNode(_arguments[i].substr(2, _arguments[i].length() - 2), _arguments[i+1]));
+			}
+
+			if (client->AddDevice(properties))
+			{
+				_shell->Out() << "The device has been added." << std::endl;		
 			}
 			else
 			{
-				JSONNode	id_array(JSON_ARRAY);
-				id_array.set_name(RMC_FIELD_ID_ARRAY);
-				for(uint32_t i = 2 ; i < _count ; i++)
-				{
-					id_array.push_back(JSONNode("", _arguments[i]));
-				}
-
-				request_node.push_back(id_array);
+				_shell->Out() << "Failed to add device device." << std::endl;		
 			}
 		}
-		else if ((_arguments[1] == "add") && (_count >= 3))
+		else if (_arguments[1] == MSG_TYPE_RCS_DEL)
 		{
-			JSONNode	device_node;
-			request_node.push_back(JSONNode(RMC_FIELD_COMMAND, _arguments[1]));
+			if (_count < 3)
+			{
+				throw InvalidArgument("Invalid argument");	
+			}
 
-			device_node.push_back(JSONNode(RMC_FIELD_TYPE, _arguments[2]));
+			for(uint32_t i = 2 ; i < _count ; i++)
+			{
+				if (client->DelDevice(_arguments[i]))
+				{
+					_shell->Out() << "The device[" << _arguments[i] << "] has been deleted." << std::endl;		
+				}
+				else
+				{
+					_shell->Out() << "Faild to delete device[" << _arguments[i] << "]" << std::endl;		
+				}
+			}
+		}
+		else if (_arguments[1] == MSG_TYPE_RCS_GET)
+		{
+			if (_count < 3)
+			{
+				throw InvalidArgument("Invalid argument");	
+			}
+
+			for(uint32_t i = 2 ; i < _count ; i++)
+			{
+				JSONNode	properties;
+
+				if (client->GetDevice(_arguments[i], properties))
+				{
+					_shell->Out() << properties.write_formatted() << std::endl;
+				}
+				else
+				{
+					_shell->Out() << "Failed to get device[" << _arguments[i] <<" properties." << std::endl;
+				}
+
+			}
+		}
+		else if (_arguments[1] == MSG_TYPE_RCS_SET)
+		{
+			JSONNode	properties;
+
+			if ((_count < 5) || (_count % 2 != 1))
+			{
+				throw InvalidArgument("Invalid argument");	
+			}
+
+			properties.push_back(JSONNode(TITLE_NAME_ID, _arguments[2]));
+
 			for(uint32_t i = 3 ; i+1 < _count ; i+=2)
 			{
-				if (_arguments[i].substr(0,2) != "--")
+				if (_arguments[i].substr(0, 2) != "--")
 				{
-					return		RET_VALUE_INVALID_ARGUMENTS;
+					throw InvalidArgument("Invalid argument");	
 				}
 
-				std::string	options = _arguments[i].substr(2, _arguments[i].size());
-				device_node.push_back(JSONNode(options, _arguments[i+1]));
+				properties.push_back(JSONNode(_arguments[i].substr(2, _arguments[i].length() - 2), _arguments[i+1]));
 			}
 
-			device_node.set_name(RMC_FIELD_DEVICE);
-			request_node.push_back(device_node);
-		}
-		else if (_count == 2)
-		{
-			request_node.push_back(JSONNode(RMC_FIELD_COMMAND, _arguments[1]));
-		}
-		else
-		{
-			return		RET_VALUE_INVALID_ARGUMENTS;
-		}
-
-		if (client->RequestAndReply(request_node.write(), response))
-		{
-			try
+			if (client->SetDevice(properties))
 			{
-				JSONNode	json = libjson::parse(response);
-
-				_shell->Out() << json.write_formatted() << std::endl;
+				_shell->Out() << "The device[" << _arguments[2] << "] properties changed." << std::endl;	
+			
 			}
-			catch(std::invalid_argument)
+			else
 			{
-				_shell->Out() << response << std::endl;
+				_shell->Out() << "Failed to set device[" << _arguments[2] << "] properties." << std::endl;	
 			}
 		}
-		else
+		else if (_arguments[1] == MSG_TYPE_RCS_LIST)
 		{
-			_shell->Out() << "Failed to send message!" << std::endl;
+			std::vector<JSONNode>	_vector;
+
+			if (client->GetDevice(_vector))
+			{
+				for(uint32_t i = 0 ; i < _vector.size() ; i++)
+				{
+					_shell->Out() << _vector[i].write_formatted() << std::endl;
+				}
+			}
+			else
+			{
+				_shell->Out() << "Failed to get device list." << std::endl;
+			}
 		}
+	}
+	catch(InvalidArgument& e)
+	{
+		_shell->Out() << "Invalid argument" << std::endl;	
 	}
 
 	return	RET_VALUE_OK;

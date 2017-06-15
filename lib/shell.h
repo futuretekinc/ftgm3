@@ -5,6 +5,7 @@
 #include <string>
 #include <strings.h>
 #include <map>
+#include <vector>
 #include <thread>
 #include <unistd.h>
 #include <iostream>
@@ -18,11 +19,14 @@ public:
 		std::string	name;
 		std::string	short_help;
 		std::string	help;	
-
 		RetValue	(*function)(std::string _arguments[], uint32_t _count, Shell* _shell);
+
+		std::vector<Command*>	sub;
 
 		Command(const Command& _command);
 		Command(const std::string&  _name, const std::string&  _help, const std::string& _short_help, RetValue	(*_function)(std::string [], uint32_t, Shell*));
+		Command(const std::string&  _name, const std::string&  _help, const std::string& _short_help, RetValue	(*_function)(std::string [], uint32_t, Shell*), Command* _sub_command_list, uint32_t _sub_command_count);
+		~Command();
 	};
 
 	Shell(Command* _commands[], int 	_command_count, Object* _object);
@@ -37,17 +41,19 @@ public:
 		Command*	GetCommand(const std::string& _name);
 		uint32_t	GetCommandWidth();
 
-			void	OnMessage(Message* _message);
+			bool	OnMessage(Message* _message);
 protected:
 	static int		Parser(const std::string& _command_line, std::string* _arguments, int _max_count);
 			void 	Process();
 			void	Postprocess();
+			
+			int		GetLine(std::string& _line);
 
 	Object*			object_;
 	bool			sync_;
 	std::string		prompt_;
 	std::string		command_line_;
-	std::map<const std::string, Command*>	command_map_;
+	std::map<std::string, Command *>	command_map_;
 	std::ostream	*out_;
 	uint32_t		max_command_width_;
 

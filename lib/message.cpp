@@ -31,27 +31,27 @@ static std::mutex							active_object_map_lock;
 static std::map<std::string,ActiveObject*>	active_object_map;
 
 Message::Message(const Message& _message)
-: type(_message.type), sender(_message.sender) 
+: type_(_message.type_), sender_(_message.sender_) 
 {
-	Date	date;
+	time_ = Date::GetCurrent();
 
-	id = date.GetMicroSecond();
+	id_ = time_.GetMicroSecond();
 }
 
 Message::Message(uint32_t	_type)
-: type(_type), sender("") 
+: type_(_type), sender_("") 
 {
-	Date	date;
+	time_ = Date::GetCurrent();
 
-	id = date.GetMicroSecond();
+	id_ = time_.GetMicroSecond();
 }
 
 Message::Message(uint32_t	_type, const std::string& _sender)
-: type(_type), sender(_sender) 
+: type_(_type), sender_(_sender) 
 {
-	Date	date;
+	time_ = Date::GetCurrent();
 
-	id = date.GetMicroSecond();
+	id_ = time_.GetMicroSecond();
 }
 
 void	Message::RegisterRecipient(std::string const& _id, ActiveObject* _object)
@@ -123,7 +123,7 @@ string&	ToString
 
 	for(int i = 0 ; sizeof(message_type_string) / sizeof(MessageTypeString) ; i++)
 	{
-	 	if (_message->type == message_type_string[i].type)
+	 	if (_message->GetType() == message_type_string[i].type)
 		{
 			return	message_type_string[i].name;
 		}
@@ -202,26 +202,26 @@ MessageQuit::MessageQuit()
 }
 
 MessagePacket::MessagePacket(std::string const& _sender, void const* _data, uint32_t _length)
-: Message(MSG_TYPE_PACKET, _sender), length(_length)
+: Message(MSG_TYPE_PACKET, _sender), length_(_length)
 {
 	if (_length == 0)
 	{
-		data = NULL;
+		data_ = NULL;
 	}
 	else
 	{
-		data = new uint8_t[_length + 1];
+		data_ = new uint8_t[_length + 1];
 
-		memset(data, 0, _length + 1);
-		memcpy(data, _data, _length);
+		memset(data_, 0, _length + 1);
+		memcpy(data_, _data, _length);
 	}
 }
 
 MessagePacket::~MessagePacket()
 {
-	if(data != NULL)
+	if(data_ != NULL)
 	{
-		delete data;	
+		delete data_;	
 	}
 }
 
@@ -231,14 +231,14 @@ void	MessagePacket::Dump(ostream& os) const
 	uint32_t	i;
 
 	os << "Type : PACKET" << std::endl;
-	for(i = 0 ; i < length ; i++)
+	for(i = 0 ; i < length_ ; i++)
 	{
 		if ((i % 16) == 0)
 		{
 			os << std::hex << std::setw(4) << std::setfill('0') << i << " : ";
 		}
 
-		os << std::hex << std::setw(2) << std::setfill('0') << (int)((uint8_t *)data)[i] << " ";
+		os << std::hex << std::setw(2) << std::setfill('0') << (int)((uint8_t *)data_)[i] << " ";
 		if ((i + 1) % 16 == 0)
 		{
 			os<< std::endl;	

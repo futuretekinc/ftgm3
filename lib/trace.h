@@ -29,11 +29,14 @@ public:
 	TraceMaster();
 	~TraceMaster();
 
-	bool	GetEnable()	{	return	enable_;	};
-	void	SetEnable(bool on);
+	bool		GetEnable()	{	return	enable_;	};
+	void		SetEnable(bool on);
 
-	bool	Load(JSONNode const& _json);
-			operator JSONNode() const;
+	uint32_t	GetFileSize()	{	return	file_size_;	}
+	bool		SetFileSize(uint32_t _size);
+
+	bool		Load(JSONNode const& _json);
+				operator JSONNode() const;
 
 	uint32_t	GetFunctionNameSize()	{	return	function_name_len_;	};
 	uint32_t	GetFunctionLineSize()	{	return	function_line_len_;	};
@@ -51,6 +54,8 @@ protected:
 	std::ostream*	out_;
 	bool			enable_;
 	TraceMode		mode_;
+	std::string		file_path_;
+	std::string		file_prefix_;
 	std::string		file_name_;
 	uint32_t		file_size_;
 	TraceLevel		level_;

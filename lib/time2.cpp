@@ -111,9 +111,9 @@ Date::Date(Date const& _date)
 {
 }
 
-Date::Date(uint32_t _seconds)
+Date::Date(time_t _time)
 {
-	value_ = _seconds * TIME_SECOND;
+	value_ = _time * TIME_SECOND;
 }
 
 Date::Date(std::string const& _date)
@@ -210,11 +210,18 @@ const	Date&	Date::operator=(std::string const& _date)
 {
 	struct tm	tm;
 
-	strptime(_date.c_str(), "%Y-%m-%d %H:%M:%S", &tm);
+	if (_date.find('-') != std::string::npos)
+	{
+		strptime(_date.c_str(), "%Y-%m-%d %H:%M:%S", &tm);
+		time_t time = mktime(&tm); 
+		value_ = time * TIME_SECOND;
+	}
+	else
+	{
+		value_ = strtoul(_date.c_str(), 0, 10) * TIME_SECOND;
+	}
 
-	time_t time = mktime(&tm); 
 
-	value_ = time * TIME_SECOND;
 
 	return	*this;
 }
@@ -227,7 +234,7 @@ Date::operator time_t() const
 	return	time;
 }
 
-uint64_t	Date::GetMicroSecond()
+uint64_t	Date::GetMicroSecond() const
 {
 	return	value_;
 }
