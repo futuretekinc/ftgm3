@@ -3,17 +3,13 @@
 Endpoint::ValueMap::ValueMap(uint32_t _limit)
 :	limit_(_limit)
 {
-	for(auto it = begin() ; it != end() ; it++)
-	{
-		delete it->second;	
-	}
 }
 
 Endpoint::ValueMap::~ValueMap()
 {
 }
 
-bool Endpoint::ValueMap::Add(Date const& _date, Value const* _value)
+bool Endpoint::ValueMap::Add(Date const& _date, std::string const& _value)
 {
 	if (_date.IsValid())
 	{ 
@@ -22,7 +18,7 @@ bool Endpoint::ValueMap::Add(Date const& _date, Value const* _value)
 			erase(begin());
 		}
 
-		insert(std::make_pair(_date, _value->Duplicate()));
+		insert(std::make_pair(_date, _value));
 		return	true;
 	}
 
@@ -32,21 +28,17 @@ bool Endpoint::ValueMap::Add(Date const& _date, Value const* _value)
 Endpoint::ValueList::ValueList(uint32_t _limit)
 :	limit_(_limit)
 {
-	for(auto it = begin() ; it != end() ; it++)
-	{
-		delete (*it);	
-	}
 }
 
 Endpoint::ValueList::~ValueList()
 {
 }
 
-bool Endpoint::ValueList::Add(Value const* _value)
+bool Endpoint::ValueList::Add(std::string const& _value)
 {
 	if (size() < limit_)
 	{
-		push_back(_value->Duplicate());
+		push_back(_value);
 		return	true;
 	}
 

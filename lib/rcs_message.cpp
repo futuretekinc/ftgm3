@@ -1,8 +1,8 @@
-#include <exception>
 #include <list>
 #include <string>
 #include <iomanip>
 #include "defined.h"
+#include "exception.h"
 #include "endpoint.h"
 #include "server_linker.h"
 #include "object_manager.h"
@@ -12,7 +12,6 @@
 #include "md5.h"
 #include "sha256.h"
 #include "utils.h"
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //	Class RCSMessage
@@ -182,6 +181,10 @@ bool	RCSMessage::Make()
 		payload_.push_back(JSONNode(TITLE_NAME_MSG_TYPE, msg_type_));
 		payload_.push_back(JSONNode(TITLE_NAME_SECRET, secret_code_));
 		payload_.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(time_))));
+		if (req_id_.size() != 0)
+		{
+			payload_.push_back(JSONNode(TITLE_NAME_REQ_ID, req_id_));
+		}
 
 		if (gateway_is_null_)
 		{
@@ -417,5 +420,15 @@ uint32_t	RCSMessage::GetEndpointCount()
 JSONNode	RCSMessage::GetEndpoint(uint32_t index)
 {
 	return	endpoint_vector_[index];
+}
+
+uint32_t	RCSMessage::GetEPDataCount()
+{
+	return	epdata_vector_.size();
+}
+
+JSONNode	RCSMessage::GetEPData(uint32_t index)
+{
+	return	epdata_vector_[index];
 }
 

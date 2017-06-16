@@ -8,21 +8,24 @@ DeviceFTE::DeviceFTE(ObjectManager& _manager)
 : DeviceSNMP(_manager, DeviceFTE::Type(), "FTE-E")
 {
 	trace.SetClassName(GetClassName());
-	TRACE_CREATE;
 }
 
 DeviceFTE::DeviceFTE(ObjectManager& _manager, Properties const& _properties)
 : DeviceSNMP(_manager, DeviceFTE::Type(), _properties)
 {
 	trace.SetClassName(GetClassName());
-	TRACE_CREATE;
+}
+
+DeviceFTE::DeviceFTE(ObjectManager& _manager, JSONNode const& _properties)
+: DeviceSNMP(_manager, DeviceFTE::Type(), _properties)
+{
+	trace.SetClassName(GetClassName());
 }
 
 DeviceFTE::DeviceFTE(ObjectManager& _manager, ValueIP const& _ip)
 : DeviceSNMP(_manager, DeviceFTE::Type(), "FTE-E",  _ip)
 {
 	trace.SetClassName(GetClassName());
-	TRACE_CREATE;
 }
 
 bool		DeviceFTE::IsIncludedIn(ValueType const& _type)

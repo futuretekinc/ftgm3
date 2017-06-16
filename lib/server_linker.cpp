@@ -416,16 +416,18 @@ ServerLinker::ServerLinker(ObjectManager* _manager)
 	broker_connected_(false),
 	auto_connection_(true),
 	keep_alive_enable_(true),
-	report_late_arrive_message_(SERVER_LNKER_REPORT_LATE_ARRIVE_MESSAGE),
+	secret_key_(""),
+	global_up_topic_(DEFAULT_CONST_GLOBAL_UP_TOPIC),
+	global_down_topic_(DEFAULT_CONST_GLOBAL_DOWN_TOPIC),
+	report_late_arrive_message_(SERVER_LINKER_REPORT_LATE_ARRIVE_MESSAGE),
 	request_timeout_(SERVER_LINKER_REQUEST_TIMEOUT_SEC),
 	broker_retry_interval_(SERVER_LINKER_CONNECTION_RETRY_INTERVAL_SEC * TIME_SECOND)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "linker";
 	enable_ = true;
-	global_up_topic_  = "v1_server_1";
-	global_down_topic_  = "v1_client_1";
-	secret_code_hash_ = sha1;
+
+	SetHashAlg(DEFAULT_CONST_SERVER_LINKER_HASH);
 
 	conf_global_= RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
 	conf_topic_ = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
@@ -451,11 +453,11 @@ bool	ServerLinker::Load(JSONNode const& _json)
 {
 	bool	ret_value = true;
 
-	if (_json.name() == TITLE_NAME_SECRET)
+	if (_json.name() == TITLE_NAME_SECRET_KEY)
 	{
 		if (_json.type() == JSON_STRING)
 		{
-			secret_code_ = _json.as_string();	
+			secret_key_ = _json.as_string();	
 		}
 		else
 		{
@@ -466,28 +468,49 @@ bool	ServerLinker::Load(JSONNode const& _json)
 	{
 		if (_json.type() == JSON_STRING)
 		{
-			if (_json.as_string() == "md5")
-			{
-				secret_code_hash_ = md5;	
-			}
-			else if (_json.as_string() == "sha1")
-			{
-				secret_code_hash_ = sha1;	
-			}
-			else if (_json.as_string() == "sha256")
-			{
-				secret_code_hash_ = sha256;	
-			}
-			else
-			{
-				TRACE_ERROR("Not supported hash algorithm[" << _json.as_string() << "]");
-			}
+			SetHashAlg(_json.as_string());
 		}
 		else
 		{
 			TRACE_ERROR("Invalid secure code!");
 		}
 	
+	}
+	else if (_json.name() == TITLE_NAME_BROKER)
+	{
+		if (_json.type() == JSON_STRING)
+		{
+			SetBroker(_json.as_string());
+		}
+		else
+		{
+			TRACE_ERROR("Invalid json format");
+			ret_value = false;	
+		}
+	}
+	else if (_json.name() == TITLE_NAME_GLOBAL_UP_TOPIC)
+	{
+		if (_json.type() == JSON_STRING)
+		{
+			SetGlobalUpTopic(_json.as_string());
+		}
+		else
+		{
+			TRACE_ERROR("Invalid json format");
+			ret_value = false;	
+		}
+	}
+	else if (_json.name() == TITLE_NAME_GLOBAL_DOWN_TOPIC)
+	{
+		if (_json.type() == JSON_STRING)
+		{
+			SetGlobalDownTopic(_json.as_string());
+		}
+		else
+		{
+			TRACE_ERROR("Invalid json format");
+			ret_value = false;	
+		}
 	}
 	else if ((_json.name() == TITLE_NAME_SERVER_LINKER) || (_json.name().size() == 0))
 	{
@@ -503,18 +526,6 @@ bool	ServerLinker::Load(JSONNode const& _json)
 			}
 		}
 	}
-	else if (_json.name() == TITLE_NAME_BROKER)
-	{
-		if (_json.type() == JSON_STRING)
-		{
-			SetBroker(_json.as_string());
-		}
-		else
-		{
-			TRACE_ERROR("Invalid json format");
-			ret_value = false;	
-		}
-	}
 	else
 	{
 		ret_value = ActiveObject::Load(_json);	
@@ -527,7 +538,11 @@ ServerLinker::operator JSONNode() const
 {
 	JSONNode	root;
 
+	root.push_back(JSONNode(TITLE_NAME_HASH_ALG, hash_alg_name_));
+	root.push_back(JSONNode(TITLE_NAME_SECRET_KEY, secret_key_));
 	root.push_back(JSONNode(TITLE_NAME_BROKER, broker_));
+	root.push_back(JSONNode(TITLE_NAME_GLOBAL_UP_TOPIC, global_up_topic_));
+	root.push_back(JSONNode(TITLE_NAME_GLOBAL_DOWN_TOPIC, global_down_topic_));
 
 	JSONNode	trace_config = trace;
 	trace_config.set_name(TITLE_NAME_TRACE);
@@ -537,16 +552,68 @@ ServerLinker::operator JSONNode() const
 	return	root;
 }
 
-bool	ServerLinker::SetSecureCode(std::string const& _secret_code)
+bool	ServerLinker::SetHashAlg(std::string const& _name)
 {
-	secret_code_=  _secret_code;
+	if (_name == "sha1")
+	{
+		hash_alg_name_ = _name;
+		secret_code_hash_ = sha1;
+	}
+	else if (_name == "md5")
+	{
+		hash_alg_name_ = _name;
+		secret_code_hash_ = md5;
+	}
+	else if (_name == "sha256")
+	{
+		hash_alg_name_ = _name;
+		secret_code_hash_ = sha256;	
+	}
+	else
+	{
+		TRACE_ERROR("Not supported hash algorithm[" << _name << "]");
+		hash_alg_name_ = "sha1";
+		secret_code_hash_ = sha1;
+		return	false;
+	}
 
 	return	true;
 }
 
-bool	ServerLinker::GetSecureCode(std::string & _secret_code)
+bool	ServerLinker::SetGlobalUpTopic(std::string const& _topic)
 {
-	_secret_code = secret_code_;
+	global_up_topic_ = _topic;
+
+	return	true;
+}
+
+const std::string&	ServerLinker::GetGlobalUpTopic()
+{
+	return	global_up_topic_;
+}
+
+bool	ServerLinker::SetGlobalDownTopic(std::string const& _topic)
+{
+	global_down_topic_ = _topic;
+
+	return	false;
+}
+
+const std::string&	ServerLinker::GetGlobalDownTopic()
+{
+	return	global_down_topic_;
+}
+
+bool	ServerLinker::SetSecretKey(std::string const& _secret_key)
+{
+	secret_key_=  _secret_key;
+
+	return	true;
+}
+
+bool	ServerLinker::GetSecretKey(std::string & _secret_key)
+{
+	_secret_key = secret_key_;
 
 	return	true;
 }
@@ -721,6 +788,7 @@ ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic_name
 
 			down_link_map_[_topic_name] = link;
 			TRACE_INFO("Downlink added : " << _topic_name << "[" << link << "]");
+			TRACE_INFO("Downlink Count : " << down_link_map_.size());
 
 			if (IsConnected())
 			{
@@ -988,40 +1056,6 @@ bool	ServerLinker::Send(RCSMessage const& _message)
 	return	true;
 }
 
-#if 0
-bool	ServerLinker::Produce(std::string const& _payload)
-{
-	try
-	{
-		std::string msg_id = std::to_string(Date::GetCurrent().GetMicroSecond());
-		std::string secret_code = secret_code_hash_(secret_code_ + msg_id);
-
-		RCSProduce *message = new RCSProduce(this->GetID(), msg_id, secret_code, global_up_topic_, libjson::parse(_payload));
-
-		Post(message);
-		return	true;
-	}
-	catch(std::exception& e)
-	{
-		TRACE_ERROR("Failed to produce![" << e.what() << "]");
-		return	false;	
-	}
-}
-
-bool	ServerLinker::Produce(std::string const& _type, JSONNode& _payload)
-{
-	JSONNode	body;
-
-	RequestInit(_type, body);
-
-	for(auto it = _payload.begin() ; it != _payload.end() ; it++)
-	{
-		body.push_back(*it);
-	}
-	return	Produce(body);
-}
-#endif
-
 bool	ServerLinker::KeepAliveEnable(bool _enable)
 {
 	keep_alive_enable_ = _enable;
@@ -1033,31 +1067,52 @@ bool	ServerLinker::ReportEPData(Endpoint* _ep)
 {
 	RCSMessage	message(MSG_STR_REPORT);
 
-	Endpoint::ValueList	value_list;
-	_ep->GetUnreportedValueList(value_list);
+	time_t	last_time = 0;
+
+	Endpoint::ValueMap value_map;
+	_ep->GetUnreportedValueMap(value_map);
+
+	if (value_map.size() == 0)
+	{
+		return	true;
+	}
 
 	JSONNode	node;
 
 	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
-	node.push_back(JSONNode(TITLE_NAME_COUNT, value_list.size()));
+	node.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
 
 	JSONNode	array(JSON_ARRAY);
 
-	for(auto it = value_list.begin(); it != value_list.end() ; it++)
+	for(auto it = value_map.begin(); it != value_map.end() ; it++)
 	{
 		JSONNode	item;
+		time_t		time = time_t(it->first);
 
-		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t((*it)->GetDate()))));
-		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
+		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time)));
+		item.push_back(JSONNode(TITLE_NAME_VALUE, it->second));
 
 		array.push_back(item);
+
+		if (last_time < time)
+		{
+			last_time = time;	
+		}
 	}
 	array.set_name(TITLE_NAME_VALUE);
 	node.push_back(array);
 
 	message.AddEPData(node);
 
-	return	Send(message);
+	if (!Send(message))
+	{
+		return	false;
+	}
+
+
+	_ep->SetLastReportTime(last_time);
+
+	return	true;
 }
 
 bool	ServerLinker::RequestInit(std::string const& _type, JSONNode& _payload)
@@ -1329,25 +1384,25 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
 {
 	JSONNode	node;
 
-	Endpoint::ValueList value_list;
+	Endpoint::ValueMap value_map;
 
 	TRACE_INFO("Add EP Data!");
-	if (!_ep->GetUnreportedValueList(value_list))
+	if (!_ep->GetUnreportedValueMap(value_map))
 	{
 		TRACE_WARN("Failed to get unreported value list.");
 		return	false;
 	}
 
 	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
-	node.push_back(JSONNode(TITLE_NAME_COUNT, value_list.size()));
+	node.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
 
 	JSONNode	array(JSON_ARRAY);
-	for(auto it = value_list.begin(); it != value_list.end() ; it++)
+	for(auto it = value_map.begin(); it != value_map.end() ; it++)
 	{
 		JSONNode	item;
 		
-		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t((*it)->GetDate()))));
-		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
+		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(it->first))));
+		item.push_back(JSONNode(TITLE_NAME_VALUE, it->second));
 
 		array.push_back(item);
 	}
@@ -1387,24 +1442,24 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
 bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound)
 {
 	JSONNode	node;
-	Endpoint::ValueList value_list;
+	Endpoint::ValueMap	value_map;
 
-	if (!_ep->GetUnreportedValueList(value_list))
+	if (!_ep->GetUnreportedValueMap(value_map))
 	{
 		TRACE_WARN("Failed to get unreported value list.");
 		return	false;
 	}
 
 	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
-	node.push_back(JSONNode(TITLE_NAME_COUNT, value_list.size()));
+	node.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
 
 	JSONNode	array(JSON_ARRAY);
-	for(auto it = value_list.begin(); it != value_list.end() ; it++)
+	for(auto it = value_map.begin(); it != value_map.end() ; it++)
 	{
 		JSONNode	item;
 		
-		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t((*it)->GetDate()))));
-		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
+		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(it->first))));
+		item.push_back(JSONNode(TITLE_NAME_VALUE, it->second));
 
 		array.push_back(item);
 	}
@@ -1440,43 +1495,6 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_
 
 	return	true;
 
-}
-
-bool	ServerLinker::GetEPDataInfo(Endpoint* _ep)
-{
-#if 0
-	JSONNode	payload;
-
-	Endpoint::ValueList value_list;
-
-	payload.push_back(JSONNode(TITLE_NAME_MSG_TYPE, MSG_STR_GET_EP_DATA_INFO));
-	payload.push_back(JSONNode(TITLE_NAME_TIME, time_t(Date::GetCurrent())));
-	payload.push_back(JSONNode(TITLE_NAME_ENDPOINT_ID, _ep->GetID()));
-
-	return	Produce(payload, true);
-#endif
-	return	false;
-}
-
-bool	ServerLinker::ConfirmEPDataInfo(Endpoint* _ep)
-{
-#if 0
-	JSONNode	payload;
-
-	Endpoint::ValueList value_list;
-
-	payload.push_back(JSONNode(TITLE_NAME_MSG_TYPE, MSG_STR_CONFIRM_EP_DATA_INFO));
-	payload.push_back(JSONNode(TITLE_NAME_TIME, time_t(Date::GetCurrent())));
-	payload.push_back(JSONNode(TITLE_NAME_ENDPOINT_ID, _ep->GetID()));
-	payload.push_back(JSONNode(TITLE_NAME_COUNT, _ep->GetDataCount()));
-	if (_ep->GetDataCount() != 0)
-	{
-		payload.push_back(JSONNode(TITLE_NAME_LAST_TIME, time_t(_ep->GetDateOfLastData())));
-	}
-
-	return	Produce(payload);
-#endif
-	return	false;
 }
 
 bool	ServerLinker::Error(std::string const& _req_id ,std::string const& _err_msg)
@@ -1652,7 +1670,10 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 			return	true;
 		}
 
-		message_map_.insert(std::pair<std::string, Produce*>(message.GetMsgID(), _produce));
+		if (message.GetMsgType() != MSG_TYPE_RCS_CONFIRM)
+		{
+			message_map_.insert(std::pair<std::string, Produce*>(message.GetMsgID(), _produce));
+		}
 
 		link->IncreaseNumberOfOutGoingMessages();
 		link->Touch();

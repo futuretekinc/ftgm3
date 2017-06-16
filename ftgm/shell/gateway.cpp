@@ -5,9 +5,11 @@
 #include "gateway_gen.h"
 #include "object_manager.h"
 
-bool	ShellCommandGatewayList(ObjectManager* object_manager)
+bool	ShellCommandGatewayList(Shell* _shell)
 {
 	std::list<Gateway*>	gen_list;
+	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
+
 	if (object_manager->GetGatewayList(GatewayGen::Type(), gen_list) != 0)
 	{
 		uint32_t	id_len = 8;
@@ -83,7 +85,7 @@ RetValue	ShellCommandGateway
 		}
 		else if (_count < 2)
 		{
-			ShellCommandGatewayList(object_manager);
+			ShellCommandGatewayList(_shell);
 		}
 		else if (_arguments[1] == "destroy")
 		{

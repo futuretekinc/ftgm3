@@ -48,7 +48,21 @@ DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, Properti
 	SetProperties(_properties, PROPERTY_ALL, true);
 }
 
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties)
+: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+{
+	trace.SetClassName(GetClassName());
+	SetProperties(_properties, PROPERTY_ALL, true);
+}
+
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, Properties const& _properties)
+: DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+{
+	trace.SetClassName(GetClassName());
+	SetProperties(_properties, PROPERTY_ALL, true);
+}
+
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, JSONNode const& _properties)
 : DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
@@ -350,7 +364,7 @@ DeviceSNMP::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 	return	oid;
 }
 
-bool	DeviceSNMP::ReadValue(string const& _id, Value *_value)
+bool	DeviceSNMP::ReadValue(string const& _id, std::string& _value)
 {
 	Open();
 
@@ -516,6 +530,56 @@ bool	DeviceSNMP::Convert
 				buffer[_variable->val_len] = 0;
 
 				_value->Set(buffer);	
+			}   
+		}   
+		break;
+	
+	default:
+		TRACE_ERROR2(NULL, "Failed to convert[" << (int)_variable->type << "]");
+		return	false;
+	}   
+
+	return  true;
+}
+
+bool	DeviceSNMP::Convert
+(
+	struct variable_list *_variable,
+	std::string& _value
+)
+{
+	if (_variable == NULL) 
+	{   
+		TRACE_ERROR2(NULL, "Failed to convert!");
+		return	false;
+	}
+
+	switch(_variable->type)
+	{   
+	case    ASN_INTEGER:
+		{   
+			int	value = 0;
+			switch (_variable->val_len)
+			{   
+				case    1:  value = (*(int8_t *)_variable->val.integer); break;
+				case    2:  value = (*(int16_t *)_variable->val.integer); break;
+				case    4:  value = (*(int32_t *)_variable->val.integer); break;
+			}   
+
+			_value = std::to_string(value);
+		}   
+		break;
+
+	case    ASN_OCTET_STR:
+		{   
+			if (_variable->val_len != 0)
+			{   
+				char* buffer = new char [_variable->val_len + 1]; 
+
+				memcpy(buffer, _variable->val.string, _variable->val_len);
+				buffer[_variable->val_len] = 0;
+
+				_value = buffer;
 			}   
 		}   
 		break;

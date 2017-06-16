@@ -66,6 +66,7 @@ public:
 	static	const	ValueType&	Type();
 	static	bool		IsValidType(std::string const& _type);
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
+	static	bool		IsIncludeIn(Object* _object);
 
 protected:
 	ObjectManager&	manager_;

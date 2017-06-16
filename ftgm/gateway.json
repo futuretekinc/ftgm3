@@ -14,62 +14,26 @@
 				{
 					"type": "ep_s_temperature",
 					"name" : "temp01",
-					"correction_interval" : 1,
+					"correction_interval" : 5,
 					"sensor_id" : "01000001"
 				},
 				{
 					"type": "ep_s_temperature",
 					"name" : "temp02",
-					"correction_interval" : 2,
+					"correction_interval" : 10,
 					"sensor_id" : "01000002"
 				},
 				{
-					"type": "ep_s_temperature",
-					"name" : "temp03",
-					"correction_interval" : 3,
-					"sensor_id" : "01000003"
-				},
-				{
-					"type": "ep_s_temperature",
-					"name" : "temp04",
-					"correction_interval" : 4,
-					"sensor_id" : "01000004"
-				},
-				{
-					"type": "ep_s_temperature",
-					"name" : "temp05",
+					"type": "ep_s_humidity",
+					"name" : "humi01",
 					"correction_interval" : 5,
-					"sensor_id" : "01000005"
+					"sensor_id" : "02000001"
 				},
 				{
-					"type": "ep_s_temperature",
-					"name" : "temp06",
+					"type": "ep_a_do",
+					"name" : "do01",
 					"correction_interval" : 5,
-					"sensor_id" : "01000006"
-				},
-				{
-					"type": "ep_s_temperature",
-					"name" : "temp07",
-					"correction_interval" : 4,
-					"sensor_id" : "01000007"
-				},
-				{
-					"type": "ep_s_temperature",
-					"name" : "temp08",
-					"correction_interval" : 3,
-					"sensor_id" : "01000008"
-				},
-				{
-					"type": "ep_s_temperature",
-					"name" : "temp09",
-					"correction_interval" : 2,
-					"sensor_id" : "01000009"
-				},
-				{
-					"type": "ep_s_temperature",
-					"name" : "temp10",
-					"correction_interval" : 1,
-					"sensor_id" : "0100000A"
+					"sensor_id" : "06000001"
 				}
 			]
 		}

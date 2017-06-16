@@ -8,6 +8,7 @@
 #include "object_manager.h"
 #include "utils.h"
 #include <hashlib++/hashlibpp.h>
+#include "exception.h"
 
 static std::map<std::string, Object*>	object_map;
 
@@ -48,6 +49,7 @@ Object::~Object()
 	object_map.erase(name_);
 	TRACE_INFO("Object[" << GetTraceName() << "] destroy");
 }
+
 
 std::string		Object::GetClassName()
 {
@@ -299,7 +301,7 @@ bool	Object::SetProperty(Property const& _property, Properties::Fields const& _f
 				const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 				if (!value)
 				{
-					throw InvalidArgument(_property.GetName(), _property.GetValue());
+					throw InvalidArgument(_property.GetName());
 				}
 
 				ret_value = SetID(value->Get());
@@ -312,7 +314,7 @@ bool	Object::SetProperty(Property const& _property, Properties::Fields const& _f
 				const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 				if (!value)
 				{
-					throw InvalidArgument(_property.GetName(), _property.GetValue());
+					throw InvalidArgument(_property.GetName());
 				}
 
 				ret_value = SetName(value->Get());
@@ -329,7 +331,7 @@ bool	Object::SetProperty(Property const& _property, Properties::Fields const& _f
 					const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
 					if (!string_value)
 					{
-						throw InvalidArgument(_property.GetName(), _property.GetValue());
+						throw InvalidArgument(_property.GetName());
 					}
 
 					time = string_value->Get();
@@ -348,7 +350,7 @@ bool	Object::SetProperty(Property const& _property, Properties::Fields const& _f
 			const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
 			if (!value)
 			{
-				throw InvalidArgument(_property.GetName(), _property.GetValue());
+				throw InvalidArgument(_property.GetName());
 			}
 
 			ret_value = SetParentID(value->Get());
@@ -371,7 +373,7 @@ bool	Object::SetProperty(Property const& _property, Properties::Fields const& _f
 			}
 			else	
 			{
-				throw InvalidArgument(_property.GetName(), _property.GetValue());
+				throw InvalidArgument(_property.GetName());
 			}
 		}
 		else
@@ -518,4 +520,9 @@ Object*	Object::Get(std::string const& _id)
 	}
 
 	return	it->second;
+}
+
+bool	Object::IsIncludeIn(Object *_object)
+{
+	return	dynamic_cast<Object*>(_object) != NULL;
 }

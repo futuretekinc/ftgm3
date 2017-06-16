@@ -67,6 +67,8 @@ public:
 	
 	virtual				operator JSONNode();
 
+	static	bool		IsIncludeIn(Object *_object);
+
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 	static	std::string ToString(Stat _stat);
 

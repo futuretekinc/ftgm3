@@ -39,8 +39,11 @@ public:
 	virtual				operator JSONNode();
 
 	static	const	ValueType&	Type();
+	static	bool		IsIncludeIn(Object *_object);
 	static	bool		IsValidType(std::string const& _type);
+
 	static	Gateway*	Create(ObjectManager& _manager, Properties const& _properties);
+	static	Gateway*	Create(ObjectManager& _manager, JSONNode const& _properties);
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 
 protected:

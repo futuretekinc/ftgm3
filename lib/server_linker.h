@@ -209,8 +209,15 @@ const	std::string&	GetTopic()	{ return	topic_name_;	};
 			bool		Load(JSONNode const& _json); 
 			virtual		operator JSONNode() const;
 
-			bool		SetSecureCode(std::string const& _secret_code);
-			bool		GetSecureCode(std::string & _secret_code);
+			bool		SetGlobalUpTopic(std::string const& _topic);
+	const std::string&	GetGlobalUpTopic();		
+			bool		SetGlobalDownTopic(std::string const& _topic);
+	const std::string&	GetGlobalDownTopic();		
+
+			bool		SetHashAlg(std::string const& _name);
+
+			bool		SetSecretKey(std::string const& _secret_key);
+			bool		GetSecretKey(std::string & _secret_key);
 
 			bool		SetBroker(std::string const& _broker);
 	const std::string&	GetBroker();
@@ -317,7 +324,7 @@ protected:
 			bool		ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception = true);
 
 	ObjectManager*		manager_;
-	std::string			secret_code_;
+	std::string			secret_key_;
 	std::string			broker_;
 	std::string			global_up_topic_;
 	std::string			global_down_topic_;
@@ -342,6 +349,8 @@ protected:
 
 	RdKafka::Consumer*	consumer_;
 	std::map<std::string, DownLink*>	down_link_map_;
+
+	std::string			hash_alg_name_;
 
 	std::string			error_string_;
 

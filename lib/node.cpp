@@ -195,11 +195,11 @@ const	std::string&	Node::GetLocation()
 
 bool	Node::SetRegistered(std::string const& _registered)
 {
-	if ((_registered == "yes") || (_registered == "on") || (_registered == "true"))
+	if ((_registered == "yes") || (_registered == "on") || (_registered == "true") || (_registered == "1"))
 	{
 		registered_ = true;
 	}
-	else if ((_registered == "no") || (_registered == "off") || (_registered == "false"))
+	else if ((_registered == "no") || (_registered == "off") || (_registered == "false") || (_registered == "0"))
 	{
 		registered_ = false;
 	}
@@ -528,3 +528,7 @@ bool	Node::GetPropertyFieldList(std::list<std::string>& _field_list)
 	return	true;
 }
 
+bool	Node::IsIncludeIn(Object *_object)
+{
+	return	dynamic_cast<Node*>(_object) != NULL;
+}

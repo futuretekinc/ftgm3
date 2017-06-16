@@ -1,5 +1,6 @@
 #include "defined.h"
 #include "utils.h"
+#include "exception.h"
 
 Asserted::Asserted(std::string const& _argument)
 {
@@ -32,11 +33,11 @@ InvalidArgument::InvalidArgument(std::string const& _argument)
 	message_ = oss.str();
 }
 
-InvalidArgument::InvalidArgument(std::string const& _name, Value const* _value)
+InvalidArgument::InvalidArgument(std::string const& _name, std::string const& _value)
 {
 	std::ostringstream	oss;
 
-	oss << "The value type of the " << _name << " is invalid.[" << _value->GetTypeString() << "]";
+	oss << "The value type of the " << _name << " is invalid.[" << _value << "]";
 
 	message_ = oss.str();
 }

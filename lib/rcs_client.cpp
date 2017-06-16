@@ -3,6 +3,8 @@
 #include "rcs_message.h"
 #include "gateway.h"
 #include "md5.h"
+#include "json_utils.h"
+#include "exception.h"
 
 RCSClient::RCSClient()
 : tcp_client_(DEFAULT_CONST_RCS_SERVER_IP, DEFAULT_CONST_RCS_SERVER_PORT), secret_code_(""), dump_packet_(false)
@@ -541,6 +543,184 @@ bool	RCSClient::SetEndpoint(JSONNode const& _properties)
 	return	false;
 }
 
+
+bool	RCSClient::DelEPData(std::string const& _id, uint32_t _count)
+{
+	RCSMessage	request(MSG_TYPE_RCS_DEL);
+	RCSMessage	response;
+
+	JSONNode	data;
+	data.push_back(JSONNode(TITLE_NAME_ID, _id));
+	data.push_back(JSONNode(TITLE_NAME_COUNT, std::to_string(_count)));
+
+	request.AddEPData(data);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::DelEPData(std::string const& _id, time_t _start, time_t _end)
+{
+	RCSMessage	request(MSG_TYPE_RCS_DEL);
+	RCSMessage	response;
+
+	JSONNode	data;
+	data.push_back(JSONNode(TITLE_NAME_ID, _id));
+	data.push_back(JSONNode(TITLE_NAME_START_TIME, std::to_string(_start)));
+	data.push_back(JSONNode(TITLE_NAME_END_TIME, std::to_string(_end)));
+
+	request.AddEPData(data);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::GetEPData(std::string const& _id, uint32_t _count, std::multimap<time_t, std::string>& _value_map)
+{
+	RCSMessage	request(MSG_TYPE_RCS_GET);
+	RCSMessage	response;
+
+	JSONNode	data;
+	data.push_back(JSONNode(TITLE_NAME_ID, _id));
+	data.push_back(JSONNode(TITLE_NAME_COUNT, std::to_string(_count)));
+
+	request.AddEPData(data);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	try
+	{
+		if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+		{
+			if (response.GetEPDataCount() > 0)
+			{
+				JSONNode	data = response.GetEPData(0);	
+
+				JSONNode	value_node = JSONNodeGetValueNode(data);
+				if (value_node.type() == JSON_NODE)
+				{
+				}
+				else if (value_node.type() == JSON_ARRAY)
+				{
+					for(auto it = value_node.begin(); it != value_node.end() ; it++)
+					{
+						time_t		time = JSONNodeGetTime(*it);
+						std::string	value = JSONNodeGetValue(*it);
+
+						_value_map.emplace(time, value);
+					}	
+				}
+			}
+			return	true;
+		}
+	}
+	catch(InvalidArgument& e)
+	{
+		TRACE_ERROR(e.what());
+	}
+	return	false;
+}
+
+bool	RCSClient::GetEPData(std::string const& _id, time_t _start, time_t _end, std::multimap<time_t, std::string>& _value_map)
+{
+	RCSMessage	request(MSG_TYPE_RCS_GET);
+	RCSMessage	response;
+
+	JSONNode	data;
+	data.push_back(JSONNode(TITLE_NAME_ID, _id));
+	data.push_back(JSONNode(TITLE_NAME_START_TIME, std::to_string(_start)));
+	data.push_back(JSONNode(TITLE_NAME_END_TIME, std::to_string(_end)));
+
+	request.AddEPData(data);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	try
+	{
+		if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+		{
+			if (response.GetEPDataCount() > 0)
+			{
+				JSONNode	data = response.GetEPData(0);	
+
+				JSONNode	value_node = JSONNodeGetValueNode(data);
+				if (value_node.type() == JSON_NODE)
+				{
+				}
+				else if (value_node.type() == JSON_ARRAY)
+				{
+					for(auto it = value_node.begin(); it != value_node.end() ; it++)
+					{
+						time_t		time = JSONNodeGetTime(*it);
+						std::string	value = JSONNodeGetValue(*it);
+
+						_value_map.emplace(time, value);
+					}	
+				}
+			}
+			return	true;
+		}
+	}
+	catch(InvalidArgument& e)
+	{
+		TRACE_ERROR(e.what());
+	}
+	return	false;
+}
+
+bool	RCSClient::SetEPData(std::string const& _id, time_t _time_of_expire, std::string& _value )
+{
+	RCSMessage	request(MSG_TYPE_RCS_SET);
+	RCSMessage	response;
+
+	JSONNode	data;
+	data.push_back(JSONNode(TITLE_NAME_ID, _id));
+	data.push_back(JSONNode(TITLE_NAME_TIME_OF_EXPIRE, _time_of_expire));
+	data.push_back(JSONNode(TITLE_NAME_VALUE, _value));
+
+	request.AddEndpoint(data);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
 
 bool	RCSClient::RemoteCall(JSONNode& _request, JSONNode& _response)
 {

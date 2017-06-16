@@ -531,6 +531,63 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::li
 	return	true;
 }
 
+bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, JSONNode& _array)
+{
+	std::ostringstream	query;
+	JSONNode			array(JSON_ARRAY);
+
+	query << "SELECT * FROM " << name_ << " ORDER BY _id DESC LIMIT " << _count << " OFFSET " << _index <<";";
+	TRACE_INFO("Query : " << query.str());
+
+	try 
+	{
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
+		if (statement == NULL)
+		{
+			TRACE_ERROR("Failed to create SQLite statement!");
+			return	false;
+		}
+
+		statement->Sql(query.str());
+		while(statement->FetchRow())
+		{
+			JSONNode	properties(JSON_NODE);
+
+			TRACE_INFO("Fetch Row : " << statement->GetColumnCount());
+
+			for(int i = 0 ; i < statement->GetColumnCount() ; i++)
+			{
+				std::string name = statement->GetColumnName(i);
+
+				if ((statement->GetColumnType(i) == SQLITE_TEXT) || (statement->GetColumnType(i) == SQLITE3_TEXT))
+				{
+					std::string	value = statement->GetColumnString(name);
+
+					TRACE_INFO(name.substr(1, name.size()) << " : " << value);
+
+					properties.push_back(JSONNode(name.substr(1, name.size() - 1), value));
+				}
+			}
+
+			if (properties.size() != 0)
+			{
+				array.push_back(properties);	
+			}
+		}
+		statement->FreeQuery();
+
+		delete statement;
+	}
+	catch(Kompex::SQLiteException &exception)
+	{
+		TRACE_ERROR("Failed to get object properties");
+	}
+
+	_array = array;
+
+	return	true;
+}
+
 DataManager::ValueTable::ValueTable(DataManager* _manager, std::string const& _name)
 : Object(), manager_(_manager)
 {
@@ -556,6 +613,43 @@ bool	DataManager::ValueTable::Add(Value const* _value)
 	std::ostringstream	query;
 
 	query << "INSERT INTO " << name_ << "(_time, _value) values(\"" << time_t(_value->GetDate()) << "\", \"" << std::string(*_value) << "\");";
+
+	TRACE_INFO("Query : " << query.str());
+
+	Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(manager_->database_);
+	try
+	{
+		statement->SqlStatement(query.str());
+		TRACE_INFO("Done");
+	}
+	catch(Kompex::SQLiteException& e)
+	{
+		TRACE_ERROR("SQLite error! - " << e.GetString());
+	}
+
+	delete statement;
+
+
+	return	true;
+}
+
+bool	DataManager::ValueTable::Add(time_t _time, std::string const& _value)
+{
+	if (manager_ == NULL)
+	{
+		TRACE_ERROR("Value table manager is not assigned!");
+		return	false;
+	}
+
+	if (!manager_->IsTableExist(name_))
+	{
+		TRACE_ERROR("Value table[" << name_ << "] not exist!");
+		return	false;	
+	}
+
+	std::ostringstream	query;
+
+	query << "INSERT INTO " << name_ << "(_time, _value) values(\"" << _time << "\", \"" << _value << "\");";
 
 	TRACE_INFO("Query : " << query.str());
 
@@ -641,6 +735,18 @@ bool	DataManager::AddValue(std::string const& _endpoint_id, Value const* _value)
 	return	_value_table->Add(_value);
 }
 
+bool	DataManager::AddValue(std::string const& _endpoint_id, time_t _time, std::string const& _value)
+{
+	ValueTable*	_value_table = value_table_map_[_endpoint_id];
+	if (!_value_table)
+	{
+		TRACE_ERROR("Endpoint[" << _endpoint_id << "] value table not exist!");
+		return	false;
+	}
+
+	return	_value_table->Add(_time, _value);
+}
+
 bool	DataManager::AddGateway(Gateway *_gateway)
 {
 	Properties	properties;
@@ -668,6 +774,11 @@ uint32_t	DataManager::GetGatewayCount()
 bool	DataManager::GetGatewayProperties(uint32_t _index, uint32_t _count, std::list<Properties>& _properties_list)
 {
 	return	gateway_table_->GetProperties(_index, _count, _properties_list);
+}
+
+bool	DataManager::GetGatewayProperties(uint32_t _index, uint32_t _count, JSONNode& _properties_array)
+{
+	return	gateway_table_->GetProperties(_index, _count, _properties_array);
 }
 
 bool	DataManager::GetGatewayProperties(std::string const& _id, Properties& _properties)

@@ -10,6 +10,7 @@ using namespace std;
 extern	Shell::Command	object_manager_command_connect;
 extern	Shell::Command	object_manager_command_disconnect;
 extern	Shell::Command	object_manager_command_device;
+extern	Shell::Command	object_manager_command_data;
 extern	Shell::Command	object_manager_command_endpoint;
 extern	Shell::Command	object_manager_command_gateway;
 extern	Shell::Command	object_manager_command_send;
@@ -20,6 +21,7 @@ Shell::Command*	object_manager_shell_commands[] =
 {
 	&object_manager_command_connect,
 	&object_manager_command_disconnect,
+	&object_manager_command_data,
 	&object_manager_command_device,
 	&object_manager_command_endpoint,
 	&object_manager_command_gateway,

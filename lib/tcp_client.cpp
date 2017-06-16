@@ -164,10 +164,33 @@ bool	TCPClient::Send
 	return	true;
 }
 
-uint32_t	TCPClient::Receive
+bool	TCPClient::Receive
 (
-	void*	_frame, 
-	uint32_t	_frame_len
+	uint32_t&	_buffer_len
+)
+{
+	locker_.Lock();
+
+	if (receive_packet_list_.size() != 0)
+	{
+		Frame* frame = receive_packet_list_.front()	;
+
+		_buffer_len = frame->len;
+
+		locker_.Unlock();
+
+		return	true;
+	}
+
+	locker_.Unlock();
+
+	return	false;
+}
+
+bool	TCPClient::Receive
+(
+	void*		_buffer, 
+	uint32_t&	_buffer_len
 )
 {
 	uint32_t	received_len = 0;
@@ -178,27 +201,38 @@ uint32_t	TCPClient::Receive
 	{
 		Frame* frame = receive_packet_list_.front()	;
 
-		if (frame->len < _frame_len)
+		if (frame->len <= _buffer_len)
 		{
-			memcpy(_frame, frame->data, frame->len);	
-			received_len = frame->len;
+			memcpy(_buffer, frame->data, frame->len);	
+			_buffer_len = frame->len;
 
 			delete frame;
 
 
 			receive_packet_list_.pop_front();
+
+			locker_.Unlock();
+
+			return	true;
 		}
+		else
+		{
+			TRACE_ERROR("Buffer too small[ < " << frame->len << "]");
+			_buffer_len = frame->len;	
+		}
+	}
+	else
+	{
+		_buffer_len  = 0;	
 	}
 
 	locker_.Unlock();
 
-	return	received_len;
+	return	false;
 }
 
 bool		TCPClient::RequestAndReply(std::string const& _request, std::string& _reply, uint32_t _timeout)
 {
-	bool	result = false;
-
 	if (_request.size() == 0)
 	{
 		TRACE_ERROR("Failed to send because content is null!");
@@ -212,15 +246,30 @@ bool		TCPClient::RequestAndReply(std::string const& _request, std::string& _repl
 		{   
 			if (GetReceivedPacketCount() > 0)
 			{   
-				char    frame[2048];
+				uint32_t	frame_len = 0;
+				
+				TRACE_ENTRY;
+				if (Receive(frame_len))
+				{
+					char *frame = new char[frame_len + 1];
+				
+					if (Receive(frame, frame_len))
+					{   
+						frame[frame_len] = 0;
 
-				memset(frame, 0, sizeof(frame));
-				if (Receive(frame, sizeof(frame)))
-				{   
-					_reply = frame;
-					result = true;
-					break;
-				}   
+						_reply = frame;
+
+						delete frame;
+
+						return	true;
+					}   
+
+					delete frame;
+				}
+				else
+				{
+					TRACE_ERROR("Failed to get receive buffer size!");	
+				}
 			}   
 			usleep(TIME_MILLISECOND);
 		}   
@@ -230,7 +279,7 @@ bool		TCPClient::RequestAndReply(std::string const& _request, std::string& _repl
 		TRACE_ERROR("Failed to send request!");
 	}   
 
-	return	result;
+	return	false;
 }
 
 uint32_t	TCPClient::GetReceivedPacketCount()

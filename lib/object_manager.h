@@ -43,7 +43,7 @@ public:
 
 			bool		Attach(Gateway* _device);
 			bool		Detach(Gateway* _device);
-			Gateway*	CreateGateway(JSONNode const& _json);
+			Gateway*	CreateGateway(JSONNode const& _properties, bool from_db = false);
 			Gateway*	CreateGateway(Properties const& _properties, bool from_db = false);
 			bool		DestroyGateway(std::string const& _id);
 			uint32_t	GetGatewayCount();
@@ -53,7 +53,7 @@ public:
 
 			bool		Attach(Device* _device);
 			bool		Detach(Device* _device);
-			Device*		CreateDevice(JSONNode const& _json);
+			Device*		CreateDevice(JSONNode const& _properties, bool from_db = false);
 			Device*		CreateDevice(Properties const& _properties, bool from_db = false);
 			bool		DestroyDevice(std::string const& _id);
 			uint32_t	GetDeviceCount();
@@ -87,34 +87,6 @@ public:
 			ServerLinker&	GetServerLinker()	{	return	server_linker_;	};
 			RCSServer&		GetRCSServer()		{	return	rcs_server_;	};
 
-#if 0
-			bool		RemoteServiceCall(RCSMessage& _request, RCSMessage& _response);
-
-			bool		RCSAdd(RCSMessage& _request, RCSMessage& _response);
-			bool		RCSDel(RCSMessage& _request, RCSMessage& _response);
-			bool		RCSGet(RCSMessage& _request, RCSMessage& _response);
-			bool		RCSSet(RCSMessage& _request, RCSMessage& _response);
-			bool		RCSList(RCSMessage& _request, RCSMessage& _response);
-			bool		RCSConfirm(RCSMessage& _response, std::string& _req_type);
-			bool		RCSError(RCSMessage& _response);
-			bool		RCSError(RCSMessage& _response, std::string& _req_type);
-
-			bool		RCSGetGateway(JSONNode& _node, JSONNode& _response);
-			bool		RCSSetGateway(JSONNode& _node, JSONNode& _response);
-			bool		RCSConfirmGateway(JSONNode& _node, std::string& _req_type);
-
-			bool		RCSGetDevice(JSONNode& _node, JSONNode& _response);
-			bool		RCSSetDevice(JSONNode& _node, JSONNode& _response);
-			bool		RCSConfirmDevice(JSONNode& _node, std::string& _req_type);
-
-			bool		RCSGetEndpoint(JSONNode& _node, JSONNode& _response);
-			bool		RCSSetEndpoint(JSONNode& _node, JSONNode& _response);
-			bool		RCSConfirmEndpoint(JSONNode& _node, std::string& _req_type);
-
-			bool		RCSGetData(JSONNode& _node, JSONNode& _response);
-			bool		RCSSetData(JSONNode& _node, JSONNode& _response);
-			bool		RCSConfirmData(JSONNode& _node, std::string& _req_type);
-#endif
 protected:
 	
 			bool		OnMessage(Message* _message);
@@ -134,16 +106,6 @@ protected:
 			bool		UpdateProperties(Gateway* _gateway);
 			bool		UpdateProperties(Device* _device);
 			bool		UpdateProperties(Endpoint* _endpoint);
-
-			bool		AddNodeToMessage(JSONNode& _payload, Node* _node, Properties::Fields const& _fields);
-			bool		AddGatewayToMessage(JSONNode& _payload, Gateway* 	_gateway, 	Properties::Fields const& _fields);
-			bool		AddGatewayToMessage(JSONNode& _payload, std::string const& _id);
-			bool		AddDeviceToMessage(JSONNode& _payload, 	Device* 	_device, 	Properties::Fields const& _fields);
-			bool		AddDeviceToMessage(JSONNode& _payload, std::string const& _id);
-			bool		AddEndpointToMessage(JSONNode& _payload,Endpoint* 	_endpoint, 	Properties::Fields const& _fields);
-			bool		AddEndpointToMessage(JSONNode& _payload, std::string const& _id);
-			bool		AddEPDataToMessage(JSONNode& _payload, Endpoint* _ep);
-			bool		AddEPDataToMessage(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound);
 
 	virtual	void		Preprocess();
 	virtual	void		Process();

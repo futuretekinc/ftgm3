@@ -11,6 +11,7 @@ class	DeviceFTE : public DeviceSNMP
 public:
 	DeviceFTE(ObjectManager& _manager);
 	DeviceFTE(ObjectManager& _manager, Properties const& _properties);
+	DeviceFTE(ObjectManager& _manager, JSONNode const& _properties);
 	DeviceFTE(ObjectManager& _manager, ValueIP const& _ip);
 
 			bool		IsIncludedIn(ValueType const& _type);

@@ -638,12 +638,12 @@ bool	Properties::AppendTimeout(uint32_t	_timeout)
 	return	Append(Property(TITLE_NAME_TIMEOUT, _timeout));
 }
 
-bool	Properties::AppendValueMin(ValueFloat const& _value)
+bool	Properties::AppendValueMin(std::string const& _value)
 {
 	return	Append(Property(TITLE_NAME_VALUE_MIN, _value));
 }
 
-bool	Properties::AppendValueMax(ValueFloat const& _value)
+bool	Properties::AppendValueMax(std::string const& _value)
 {
 	return	Append(Property(TITLE_NAME_VALUE_MAX, _value));
 }

@@ -8,13 +8,13 @@
 #include "device_snmp.h"
 #include "object_manager.h"
 
-bool	ShellCommandGatewayList(ObjectManager* object_manager);
-bool	ShellCommandDeviceList(ObjectManager* object_manager);;
-bool	ShellCommandEndpointList(ObjectManager* object_manager);
+bool	ShellCommandGatewayList(Shell*_shell);
+bool	ShellCommandDeviceList(Shell* _shell);;
+bool	ShellCommandEndpointList(Shell* _shell);
 
-bool	ShellCommandNode_showNodeList(ObjectManager* object_manager);
-bool	ShellCommandNode_nodeEnable(ObjectManager* object_manager, std::string const& id, bool enable);
-bool	ShellCommandNode_nodeStart(ObjectManager* object_manager, std::string const& id, bool start);
+bool	ShellCommandNode_showNodeList(Shell* _shell);
+bool	ShellCommandNode_nodeEnable(Shell* _shell, std::string const& id, bool enable);
+bool	ShellCommandNode_nodeStart(Shell* _shell, std::string const& id, bool start);
 
 RetValue	ShellCommandNode
 (
@@ -34,13 +34,13 @@ RetValue	ShellCommandNode
 		}
 		if (_count < 2)
 		{
-			ShellCommandNode_showNodeList(object_manager);
+			ShellCommandNode_showNodeList(_shell);
 		}
 		else if (_count == 2)
 		{
 			if (_arguments[1] == "list") 
 			{
-				ShellCommandNode_showNodeList(object_manager);
+				ShellCommandNode_showNodeList(_shell);
 			}
 			else
 			{
@@ -55,7 +55,7 @@ RetValue	ShellCommandNode
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				ShellCommandNode_nodeEnable(object_manager, _arguments[i], true);
+				ShellCommandNode_nodeEnable(_shell, _arguments[i], true);
 			}
 		}
 		else if (_arguments[1] == "disable")
@@ -64,7 +64,7 @@ RetValue	ShellCommandNode
 			{
 				for(uint32_t i = 2 ; i < _count ; i++)
 				{
-					ShellCommandNode_nodeEnable(object_manager, _arguments[i], false);
+					ShellCommandNode_nodeEnable(_shell, _arguments[i], false);
 				}
 			}
 		}
@@ -72,14 +72,14 @@ RetValue	ShellCommandNode
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				ShellCommandNode_nodeStart(object_manager, _arguments[i], true);
+				ShellCommandNode_nodeStart(_shell, _arguments[i], true);
 			}
 		}
 		else if (_arguments[1] == "stop")
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				ShellCommandNode_nodeStart(object_manager, _arguments[i], false);
+				ShellCommandNode_nodeStart(_shell, _arguments[i], false);
 			}
 		}
 		else if (_arguments[1] == "set")
@@ -149,17 +149,19 @@ RetValue	ShellCommandNode
 	return	ret_value;
 }
 
-bool	ShellCommandNode_showNodeList(ObjectManager* object_manager)
+bool	ShellCommandNode_showNodeList(Shell* _shell)
 {
-	ShellCommandGatewayList(object_manager);
-	ShellCommandDeviceList(object_manager);
-	ShellCommandEndpointList(object_manager);
+	ShellCommandGatewayList(_shell);
+	ShellCommandDeviceList(_shell);
+	ShellCommandEndpointList(_shell);
 
 	return	true;
 }
 
-bool	ShellCommandNode_nodeEnable(ObjectManager* object_manager, std::string const& id, bool enable)
+bool	ShellCommandNode_nodeEnable(Shell* _shell, std::string const& id, bool enable)
 {
+	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
+
 	if (id == "all")
 	{
 		std::list<Node*>	node_list;
@@ -190,8 +192,10 @@ bool	ShellCommandNode_nodeEnable(ObjectManager* object_manager, std::string cons
 	return	true;
 }
 
-bool	ShellCommandNode_nodeStart(ObjectManager* object_manager, std::string const& id, bool start)
+bool	ShellCommandNode_nodeStart(Shell* _shell, std::string const& id, bool start)
 {
+	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
+
 	if (id == "all")
 	{
 		std::list<Node*>	node_list;

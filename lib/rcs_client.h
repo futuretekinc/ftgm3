@@ -1,6 +1,7 @@
 #ifndef	RCS_CLIENT_H_
 #define	RCS_CLIENT_H_
 
+#include <map>
 #include "tcp_client.h"
 #include "rcs_message.h"
 
@@ -49,8 +50,11 @@ public:
 			bool	GetEndpoint(std::list<std::string>& _fields, std::vector<JSONNode>& _vector);
 			bool	SetEndpoint(JSONNode const& _properties);
 
-
-
+			bool	DelEPData(std::string const& _id, uint32_t _count);
+			bool	DelEPData(std::string const& _id, time_t _start, time_t _end);
+			bool	GetEPData(std::string const& _id, uint32_t _count, std::multimap<time_t, std::string>& _value_map);
+			bool	GetEPData(std::string const& _id, time_t _start, time_t _end, std::multimap<time_t, std::string>& _value_map);
+			bool	SetEPData(std::string const& _id, time_t _time_of_expire, std::string& _value );
 
 	virtual	bool	OnMessage(Message* _message);
 

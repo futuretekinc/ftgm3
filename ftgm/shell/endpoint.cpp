@@ -5,7 +5,7 @@
 #include "object_manager.h"
 
 
-bool	ShellCommandEndpointList(ObjectManager* object_manager);
+bool	ShellCommandEndpointList(Shell* _shell);
 
 RetValue	ShellCommandEndpoint
 (
@@ -19,11 +19,11 @@ RetValue	ShellCommandEndpoint
 
 	if (object_manager == NULL)
 	{
-		std::cout << "Object manager not attached!" << std::endl;
+		_shell->Out() << "Object manager not attached!" << std::endl;
 	}
 	else	if (_count < 2)
 	{
-		std::cout << "Endpoint count : " << object_manager->GetEndpointCount() << std::endl;
+		_shell->Out() << "Endpoint count : " << object_manager->GetEndpointCount() << std::endl;
 		
 		std::list<Endpoint*>	snmp_list;
 		if (object_manager->GetEndpointList(snmp_list) != 0)
@@ -32,6 +32,7 @@ RetValue	ShellCommandEndpoint
 			uint32_t	name_len = 16;
 			uint32_t	type_len = 16;
 			uint32_t	stat_len = 16;
+			uint32_t	value_len = 8;
 
 			for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
 			{
@@ -64,24 +65,26 @@ RetValue	ShellCommandEndpoint
 				}
 			}
 
-			std::cout << "* SNMP Endpoint" << std::endl;
-			std::cout << std::setw(id_len) << "ID";
-			std::cout << " " << std::setw(name_len+1) << "Name";
-			std::cout << " " << std::setw(type_len+1) << "Type";
-			std::cout << " " << std::setw(stat_len+1) << "Stat";
-			std::cout << " " << std::setw(id_len) << "Device ID";
-			std::cout << std::endl;
+			_shell->Out() << "* SNMP Endpoint" << std::endl;
+			_shell->Out() << std::setw(id_len) << "ID";
+			_shell->Out() << " " << std::setw(name_len+1) << "Name";
+			_shell->Out() << " " << std::setw(type_len+1) << "Type";
+			_shell->Out() << " " << std::setw(stat_len+1) << "Stat";
+			_shell->Out() << " " << std::setw(id_len) << "Device ID";
+			_shell->Out() << " " << std::setw(value_len) << "Value";
+			_shell->Out() << std::endl;
 
 			for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
 			{
 				Endpoint *endpoint = dynamic_cast<Endpoint*>(*it);
 
-				std::cout << std::setw(id_len) << endpoint->GetID();
-				std::cout << " " << std::setw(name_len+1) << endpoint->GetName();
-				std::cout << " " << std::setw(type_len+1) << endpoint->GetType();
-				std::cout << " " << std::setw(stat_len+1) << Object::ToString(endpoint->GetStat());
-				std::cout << " " << std::setw(id_len) << endpoint->GetParentID();
-				std::cout << std::endl;	
+				_shell->Out() << std::setw(id_len) << endpoint->GetID();
+				_shell->Out() << " " << std::setw(name_len+1) << endpoint->GetName();
+				_shell->Out() << " " << std::setw(type_len+1) << endpoint->GetType();
+				_shell->Out() << " " << std::setw(stat_len+1) << Object::ToString(endpoint->GetStat());
+				_shell->Out() << " " << std::setw(id_len) << endpoint->GetParentID();
+				_shell->Out() << " " << std::setw(value_len) << endpoint->GetValue();
+				_shell->Out() << std::endl;	
 			}
 		}
 	}
@@ -133,8 +136,8 @@ RetValue	ShellCommandEndpoint
 					}
 					else
 					{
-						std::cout << "Endpoint created." << std::endl;		
-						std::cout << *endpoint << std::endl;
+						_shell->Out() << "Endpoint created." << std::endl;		
+						_shell->Out() << *endpoint << std::endl;
 					}
 				}
 			}
@@ -154,12 +157,12 @@ RetValue	ShellCommandEndpoint
 				Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
 				if (endpoint == NULL)
 				{
-					std::cout << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
+					_shell->Out() << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
 				}
 				else
 				{
 					delete endpoint;
-					std::cout << "The endpoint[" << _arguments[i] << "] has been deleted!" << std::endl;
+					_shell->Out() << "The endpoint[" << _arguments[i] << "] has been deleted!" << std::endl;
 				}
 			}
 		}
@@ -179,7 +182,7 @@ RetValue	ShellCommandEndpoint
 			for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 			{
 				(*it)->Start();
-				std::cout << "The endpoint[" << (*it)->GetTraceName() << "] is started!" << std::endl;
+				_shell->Out() << "The endpoint[" << (*it)->GetTraceName() << "] is started!" << std::endl;
 			}
 		}
 		else
@@ -190,13 +193,13 @@ RetValue	ShellCommandEndpoint
 				Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
 				if (endpoint == NULL)
 				{
-					std::cout << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
+					_shell->Out() << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
 				}
 				else
 				{
-					std::cout << "The endpoint[" << _arguments[i] << "] has started!" << std::endl;
+					_shell->Out() << "The endpoint[" << _arguments[i] << "] has started!" << std::endl;
 					endpoint->Start();
-					std::cout << "The endpoint[" << _arguments[i] << "] has started!" << std::endl;
+					_shell->Out() << "The endpoint[" << _arguments[i] << "] has started!" << std::endl;
 				}
 			}
 		}
@@ -216,7 +219,7 @@ RetValue	ShellCommandEndpoint
 			for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 			{
 				(*it)->Stop();
-				std::cout << "The endpoint[" << (*it)->GetTraceName() << "] is stopped!" << std::endl;
+				_shell->Out() << "The endpoint[" << (*it)->GetTraceName() << "] is stopped!" << std::endl;
 			}
 		}
 		else
@@ -226,12 +229,12 @@ RetValue	ShellCommandEndpoint
 				Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
 				if (endpoint == NULL)
 				{
-					std::cout << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
+					_shell->Out() << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
 				}
 				else
 				{
 					endpoint->Stop();
-					std::cout << "The endpoint[" << _arguments[i] << "] has stopped!" << std::endl;
+					_shell->Out() << "The endpoint[" << _arguments[i] << "] has stopped!" << std::endl;
 				}
 			}
 		}
@@ -251,7 +254,7 @@ RetValue	ShellCommandEndpoint
 			for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 			{
 				(*it)->SetEnable(true);
-				std::cout << "The endpoint[" << (*it)->GetTraceName() << "] is enabled!" << std::endl;
+				_shell->Out() << "The endpoint[" << (*it)->GetTraceName() << "] is enabled!" << std::endl;
 			}
 		}
 		else
@@ -261,12 +264,12 @@ RetValue	ShellCommandEndpoint
 				Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
 				if (endpoint == NULL)
 				{
-					std::cout << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
+					_shell->Out() << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
 				}
 				else
 				{
 					endpoint->SetEnable(true);
-					std::cout << "The endpoint[" << _arguments[i] << "] is enabled!" << std::endl;
+					_shell->Out() << "The endpoint[" << _arguments[i] << "] is enabled!" << std::endl;
 				}
 			}
 		}
@@ -286,7 +289,7 @@ RetValue	ShellCommandEndpoint
 			for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 			{
 				(*it)->SetEnable(false);
-				std::cout << "The endpoint[" << (*it)->GetTraceName() << "] is disabled!" << std::endl;
+				_shell->Out() << "The endpoint[" << (*it)->GetTraceName() << "] is disabled!" << std::endl;
 			}
 		}
 		else
@@ -296,12 +299,12 @@ RetValue	ShellCommandEndpoint
 				Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
 				if (endpoint == NULL)
 				{
-					std::cout << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
+					_shell->Out() << "Endpoint[" << _arguments[i] << "] not found!" << std::endl;
 				}
 				else
 				{
 					endpoint->SetEnable(false);
-					std::cout << "The endpoint[" << _arguments[i] << "] is disabled!" << std::endl;
+					_shell->Out() << "The endpoint[" << _arguments[i] << "] is disabled!" << std::endl;
 				}
 			}
 		}
@@ -319,7 +322,7 @@ RetValue	ShellCommandEndpoint
 			Endpoint*	endpoint = object_manager->GetEndpoint(_arguments[2]);
 			if (endpoint == NULL)
 			{
-				std::cout << "Endpoint[" << _arguments[2] << " not found!" << std::endl;
+				_shell->Out() << "Endpoint[" << _arguments[2] << " not found!" << std::endl;
 				ret_value = RET_VALUE_INVALID_ARGUMENTS;
 			}
 			else
@@ -328,12 +331,12 @@ RetValue	ShellCommandEndpoint
 				{
 					if ((_arguments[i].size() <= 2) || (_arguments[i].substr(0,2) != "--"))
 					{
-						std::cout << "Invalid argument options(" << _arguments[i] << ")" << std::endl;
+						_shell->Out() << "Invalid argument options(" << _arguments[i] << ")" << std::endl;
 						ret_value = RET_VALUE_INVALID_ARGUMENTS;
 					}
 					else if (!properties.Append(Property(_arguments[i].substr(2, _arguments[i].size() - 2), _arguments[i+1])))
 					{
-						std::cout << "properties.Append(" << _arguments[i].substr(2,_arguments[i].size() - 2)<< ", " << _arguments[i+1] << ")" << std::endl;
+						_shell->Out() << "properties.Append(" << _arguments[i].substr(2,_arguments[i].size() - 2)<< ", " << _arguments[i+1] << ")" << std::endl;
 						ret_value = RET_VALUE_INVALID_ARGUMENTS;
 					}
 				}
@@ -345,33 +348,84 @@ RetValue	ShellCommandEndpoint
 			}
 		}
 	}
+	else if (_arguments[1] == "data")
+	{
+		Properties	properties;
+		
+		if ((_count < 2) || (_count > 4))
+		{
+			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+		}
+		else
+		{
+			uint32_t	count = 100;
+			if (_count == 4)
+			{
+				count = strtoul(_arguments[3].c_str(), 0, 10);	
+			}
+
+			Endpoint*	endpoint = object_manager->GetEndpoint(_arguments[2]);
+			if (endpoint == NULL)
+			{
+				_shell->Out() << "Endpoint[" << _arguments[2] << " not found!" << std::endl;
+				ret_value = RET_VALUE_INVALID_ARGUMENTS;
+			}
+			else
+			{
+				Endpoint::ValueMap	value_map(count);
+
+				endpoint->GetData(count, value_map);
+
+				for(auto it = value_map.begin() ; it != value_map.end() ; it++)
+				{
+					_shell->Out() << it->first << " : " << it->second << std::endl;	
+				}
+			}
+
+		}
+	}
 	else
 	{
 		Endpoint*	endpoint = object_manager->GetEndpoint(_arguments[1]);
 		if (endpoint == NULL)
 		{
-			std::cout << "Endpoint[" << _arguments[1] << " not found!" << std::endl;
+			_shell->Out() << "Endpoint[" << _arguments[1] << " not found!" << std::endl;
 			ret_value = RET_VALUE_INVALID_ARGUMENTS;
 		}
 		else
 		{
-			Properties	properties;
+			JSONNode	properties;
+			uint32_t	title_len = 16;
 
 			endpoint->GetProperties(properties);
 			for(auto it = properties.begin() ; it != properties.end() ; it++)
 			{
-				std::string		name = it->GetName();
-				const Value*	value = it->GetValue();
-
-				std::cout << std::setw(16) << name << " : " <<  std::string(*value) << std::endl;
+				if (title_len < it->name().length())
+				{
+					title_len = it->name().length();
+				}
 			}
+
+			title_len = (title_len + 3) / 4 * 4;
+
+			for(auto it = properties.begin() ; it != properties.end() ; it++)
+			{
+				_shell->Out() << std::setw(title_len) << it->name() << " : " <<  it->as_string() << std::endl;
+			}
+
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_COUNT << " : " << endpoint->GetDataCount() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_START_TIME << " : " << endpoint->GetDateOfFirstData() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_END_TIME << " : " << endpoint->GetDateOfLastData() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_REPORT_TIME << " : " << endpoint->GetLastReportTime() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_CONFIRM_TIME << " : " << endpoint->GetLastConfirmTime() << std::endl;
+
 		}
 	
 	}
 
 	switch(ret_value)
 	{
-	case	RET_VALUE_INVALID_ARGUMENTS: std::cout << "Invalid arguments!" << std::endl;	break;
+	case	RET_VALUE_INVALID_ARGUMENTS: _shell->Out() << "Invalid arguments!" << std::endl;	break;
 	}
 
 	return	ret_value;
@@ -399,9 +453,11 @@ Shell::Command	shell_ftgm_command_endpoint =
 	.function	=	ShellCommandEndpoint
 };
 
-bool	ShellCommandEndpointList(ObjectManager* object_manager)
+bool	ShellCommandEndpointList(Shell* _shell)
 {
-	std::cout << "Endpoint count : " << object_manager->GetEndpointCount() << std::endl;
+	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
+
+	_shell->Out() << "Endpoint count : " << object_manager->GetEndpointCount() << std::endl;
 
 	std::list<Endpoint*>	snmp_list;
 	if (object_manager->GetEndpointList(snmp_list) != 0)
@@ -442,24 +498,24 @@ bool	ShellCommandEndpointList(ObjectManager* object_manager)
 			}
 		}
 
-		std::cout << "* SNMP Endpoint" << std::endl;
-		std::cout << std::setw(id_len) << "ID";
-		std::cout << " " << std::setw(name_len+1) << "Name";
-		std::cout << " " << std::setw(type_len+1) << "Type";
-		std::cout << " " << std::setw(stat_len+1) << "Stat";
-		std::cout << " " << std::setw(id_len) << "Device ID";
-		std::cout << std::endl;
+		_shell->Out() << "* SNMP Endpoint" << std::endl;
+		_shell->Out() << std::setw(id_len) << "ID";
+		_shell->Out() << " " << std::setw(name_len+1) << "Name";
+		_shell->Out() << " " << std::setw(type_len+1) << "Type";
+		_shell->Out() << " " << std::setw(stat_len+1) << "Stat";
+		_shell->Out() << " " << std::setw(id_len) << "Device ID";
+		_shell->Out() << std::endl;
 
 		for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
 		{
 			Endpoint *endpoint = dynamic_cast<Endpoint*>(*it);
 
-			std::cout << std::setw(id_len) << endpoint->GetID();
-			std::cout << " " << std::setw(name_len+1) << endpoint->GetName();
-			std::cout << " " << std::setw(type_len+1) << endpoint->GetType();
-			std::cout << " " << std::setw(stat_len+1) << Object::ToString(endpoint->GetStat());
-			std::cout << " " << std::setw(id_len) << endpoint->GetParentID();
-			std::cout << std::endl;	
+			_shell->Out() << std::setw(id_len) << endpoint->GetID();
+			_shell->Out() << " " << std::setw(name_len+1) << endpoint->GetName();
+			_shell->Out() << " " << std::setw(type_len+1) << endpoint->GetType();
+			_shell->Out() << " " << std::setw(stat_len+1) << Object::ToString(endpoint->GetStat());
+			_shell->Out() << " " << std::setw(id_len) << endpoint->GetParentID();
+			_shell->Out() << std::endl;	
 		}
 	}
 

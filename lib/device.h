@@ -8,12 +8,6 @@
 #include "property.h"
 #include "KompexSQLiteStatement.h"
 
-struct	DeviceInfo : NodeInfo
-{
-	DeviceInfo();
-	DeviceInfo(JSONNode const& _json);
-};
-
 class	Endpoint;
 class	ObjectManager;
 
@@ -44,10 +38,14 @@ public:
 	virtual				operator JSONNode();
 
 	static	bool		IsValidType(ValueType const& _type);
+
 	static	Device*		Create(ObjectManager& _manager, Properties const& _properties);
+	static	Device*		Create(ObjectManager& _manager, JSONNode const& _properties);
+
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 
-	virtual	bool		ReadValue(std::string const& _endpoint_id, Value* _value) = 0;
+	virtual	bool		ReadValue(std::string const& _endpoint_id, std::string& _value) = 0;
+	virtual	bool		WriteValue(std::string const& _endpoint_id, std::string const& _value);
 
 protected:
 

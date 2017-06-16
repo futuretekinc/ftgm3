@@ -10,18 +10,6 @@
 #define	MSG_TYPE_ENDPOINT_UPDATED		(MSG_TYPE_ENDPOINT + 1)
 #define	MSG_TYPE_ENDPOINT_REPORT		(MSG_TYPE_ENDPOINT + 2)
 
-struct	EndpointInfo : NodeInfo
-{
-	EndpointInfo();
-	EndpointInfo(JSONNode const& _json);
-
-	bool	GetProperties(JSONNode& _properties, Properties::Fields const& _fields);
-
-	std::string	sensor_id;
-	ValueUnit	unit;
-	ValueFloat	scale;
-};
-
 class	ObjectManager;
 
 class	Endpoint : public Node
@@ -30,31 +18,32 @@ class	Endpoint : public Node
 	friend	class	ObjectManager;
 public:
 
-	class	ValueMap : public std::multimap<Date, Value *>
+	class	ValueMap : public std::multimap<Date, std::string>
 	{
 	public:
-		ValueMap(uint32_t _limit);
+		ValueMap(uint32_t _limit = 100);
 		~ValueMap();
 
-		bool		Add(Date const& _date, Value const* _value);
+		bool		Add(Date const& _date, std::string const& _value);
 		uint32_t	GetMaxCount()	{	return	limit_;	};
 	protected:
 		uint32_t	limit_;
 	};
 
-	class	ValueList : public std::list<Value *>
+	class	ValueList : public std::list<std::string>
 	{
 	public:
 		ValueList(uint32_t _limit = 100);
 		~ValueList();
 
-		bool	Add(Value const* _value);
+		bool	Add(std::string const& _value);
 
 	protected:
 		uint32_t	limit_;
 	};
 
 						Endpoint(ObjectManager& _manager, ValueType const& _type);
+						Endpoint(ObjectManager& _manager, ValueType const& _type, std::string const& _unit);
 	virtual				~Endpoint();	
 
 			bool		SetUnit(std::string const& _unit);
@@ -67,6 +56,20 @@ public:
 			std::string	GetSensorID() const;
 			bool		SetSensorID(std::string const& _sensor_id);
 
+			uint32_t	GetCorrectionInterval();
+			bool		SetCorrectionInterval(Time const& _interval);
+			bool		SetCorrectionInterval(uint32_t _interval);
+			bool		SetCorrectionInterval(std::string const& _scale);
+
+	virtual	std::string	GetValue()	=	0;
+	virtual	bool		SetValue(std::string const& _value) = 0;
+
+	virtual	std::string	GetValueMin() = 0;
+	virtual	bool		SetValueMin(std::string const& _min) = 0;
+
+	virtual	std::string	GetValueMax() = 0;
+	virtual	bool		SetValueMax(std::string const& _max) = 0;
+
 	virtual	bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
 
 	virtual	bool		GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
@@ -74,17 +77,21 @@ public:
 
 	virtual				operator JSONNode();
 
-	virtual	bool		IsValid(const ValueFloat& _value);
+	virtual	bool		IsValid(std::string const& _value);
 
 			uint32_t	GetDataCount();
 			Date		GetDateOfFirstData();
 			Date		GetDateOfLastData();
 			
-			bool		GetUnreportedValueList(ValueList& value_list);
+			bool		GetUnreportedValueMap(ValueMap& value_list);
+			Date		GetLastReportTime()	{	return	last_report_date_;	};
 			bool		SetLastReportTime(Date const& _time);
+			Date		GetLastConfirmTime(){	return	last_confirm_date_;	};
+			bool		SetLastConfirmTime(Date const& _time);
 
 			bool		GetDataForPeriod(Date const& _begin, Date const& _end, ValueMap& _value_map);
 			bool		GetDataForPeriod(Date const& _begin, Date const& _end, ValueList& _value_list);
+			uint32_t	GetData(uint32_t _count, ValueMap& _value_map);
 			bool		DelDataForPeriod(Date const& _begin, Date const& _end);
 
 			bool		Attach(ValueID const& _parent_id);
@@ -95,6 +102,7 @@ public:
 	virtual	bool		Stop(bool _wait = false);
 
 	virtual	bool		IsRunning();
+	static	bool		IsIncludeIn(Object *_object);
 	static	bool		IsValidType(std::string const& _type);
 
 	static	Endpoint*	Create(ObjectManager& _manager, Properties const& _properties);
@@ -105,15 +113,20 @@ protected:
 			void		Preprocess();
 			void		Process();
 			void		Postprocess();
+	virtual	void		CorrectionProcess();
 
-	virtual	bool		Add(Value const* _value);
+	virtual	bool		Add(std::string const& _value);
 
 			bool		active_;
 			std::string	sensor_id_;
 			ValueUnit	unit_;
 			ValueFloat	scale_;
-			ValueFloat	value_;
+
+			uint32_t	correction_interval_;
+			Timer		correction_timer_;
+
 			Date		last_report_date_;
+			Date		last_confirm_date_;
 			ValueMap	value_map_;
 };
 
@@ -127,18 +140,17 @@ extern	const	char*	ENDPOINT_TYPE_NAME_DO;
 
 struct	MessageEndpointUpdated : Message
 {
-	MessageEndpointUpdated(std::string const& _sender, std::string const& _endpoint_id, Value const *_value) 
-	: Message(MSG_TYPE_ENDPOINT_UPDATED, _sender), endpoint_id(_endpoint_id)
+	MessageEndpointUpdated(std::string const& _sender, std::string const& _endpoint_id, time_t _time, std::string const& _value) 
+	: Message(MSG_TYPE_ENDPOINT_UPDATED, _sender), endpoint_id(_endpoint_id), value(_value)
 	{
-		value = _value->Duplicate();
 	};
 	~MessageEndpointUpdated()
 	{
-		delete value;
 	};
 
 	ValueID		endpoint_id;
-	Value*		value;
+	time_t		time;
+	std::string	value;
 };
 
 struct	MessageEndpointReport : Message

@@ -159,9 +159,9 @@ Trace& Trace::Begin(TraceLevel _level, std::string const& _pretty_function, uint
 	switch(level_)
 	{
 	case	INFO:	os << "[INFO]"; break;
-	case	WARNING:os << "[WARN]"; break;
-	case	ERROR:	os << "[\033[1;31mERRO\033[0m]"; break;
-	case	CRITICAL:os << "[CRIT]"; break;
+	case	WARNING:os << "[\033[1;33mWARN\033[0m]"; break;
+	case	ERROR:	os << "[\033[0;31mERRO\033[0m]"; break;
+	case	CRITICAL:os <<"[\033[1;31mCRIT\033[0m]"; break;
 	}
 
 	os << " : ";

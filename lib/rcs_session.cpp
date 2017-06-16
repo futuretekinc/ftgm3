@@ -57,7 +57,6 @@ void	RCSSession::Process()
 		}
 		else
 		{
-			TRACE_ENTRY;
 			receive_buffer_[receive_len_] = 0;
 
 

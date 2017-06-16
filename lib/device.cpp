@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <list>
 #include "defined.h"
+#include "exception.h"
+#include "json.h"
 #include "trace.h"
 #include "device.h"
 #include "object_manager.h"
@@ -10,18 +12,6 @@
 #include "device_sim.h"
 #include "endpoint.h"
 #include "endpoint_sensor.h"
-
-DeviceInfo::DeviceInfo()
-:	NodeInfo()
-{
-	
-}
-
-DeviceInfo::DeviceInfo(JSONNode const& _json)
-: NodeInfo(_json)
-{
-}
-
 
 Device::Device(ObjectManager& _manager, ValueType const& _type)
 :	Node(_manager, _type)
@@ -251,15 +241,11 @@ void	Device::Process()
 		Endpoint*	endpoint = manager_.GetEndpoint(std::string(id));
 		if (endpoint != NULL)
 		{
-			EndpointSensor*	sensor = dynamic_cast<EndpointSensor*>(endpoint);
-			if (sensor != NULL)
-			{
-				sensor->CorrectionProcess();
+			endpoint->CorrectionProcess();
 
-				timer += Time(sensor->GetCorrectionInterval() * TIME_SECOND);	
+			timer += Time(endpoint->GetCorrectionInterval() * TIME_SECOND);	
 
-				AddSchedule(id, timer);
-			}
+			AddSchedule(id, timer);
 		}
 	}
 
@@ -388,6 +374,38 @@ Device*	Device::Create(ObjectManager& _manager, Properties const& _properties)
 	return	device;
 }
 
+Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
+{
+	Device*	device = NULL;
+	try
+	{
+		std::string	type = JSONNodeGetType(_properties);
+
+		if (type == std::string(DeviceSNMP::Type()))
+		{
+			device = new DeviceSNMP(_manager, _properties);
+		}
+		else if (type == std::string(DeviceFTE::Type()))
+		{
+			device = new DeviceFTE(_manager, _properties);
+		}
+		else if (type == std::string(DeviceSIM::Type()))
+		{
+			device = new DeviceSIM(_manager, _properties);
+		}
+		else
+		{
+			TRACE_ERROR2(NULL, "Failed to create device. Device type[" << type << "] is not supported!");
+		}
+	}
+	catch(ObjectNotFound& e)
+	{
+		TRACE_ERROR2(NULL, "Failed to create device. Device type unknown!");
+	}
+
+	return	device;
+}
+
 
 bool	Device::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
@@ -402,3 +420,7 @@ bool	Device::GetPropertyFieldList(std::list<std::string>& _field_list)
 	return	true;
 }
 
+bool	Device::WriteValue(std::string const& _endpoint_id, std::string const& _value)
+{
+	return	false;	
+}

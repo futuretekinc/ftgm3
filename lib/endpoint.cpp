@@ -8,71 +8,35 @@
 #include "object_manager.h"
 #include "endpoint_sensor_temperature.h"
 #include "endpoint_sensor_humidity.h"
+#include "endpoint_sensor_voltage.h"
+#include "endpoint_sensor_current.h"
+#include "endpoint_sensor_di.h"
+#include "endpoint_actuator_do.h"
 #include "utils.h"
-
-EndpointInfo::EndpointInfo()
-: NodeInfo(), sensor_id(""), unit(""), scale(ENDPOINT_VALUE_SCALE)
-{
-}
-
-EndpointInfo::EndpointInfo(JSONNode const& _json)
-: NodeInfo(_json), sensor_id(""), unit(""), scale(ENDPOINT_VALUE_SCALE)
-{
-	std::string	value;
-
-	if (GetValue(_json, TITLE_NAME_SENSOR_ID, value, false))
-	{
-		sensor_id = value;
-		fields.sensor_id = true;
-	}
-
-	if (GetValue(_json, TITLE_NAME_UNIT, value, false))
-	{
-		id = value;
-		fields.unit = true;
-	}
-
-	if (GetValue(_json, TITLE_NAME_SCALE, scale, false))
-	{
-		fields.scale= true;
-	}
-}
-
-bool	EndpointInfo::GetProperties(JSONNode& _properties, Properties::Fields const& _fields)
-{
-	if (!NodeInfo::GetProperties(_properties, _fields))
-	{
-		return	false;
-	}
-
-	if (_fields.sensor_id)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_SENSOR_ID, sensor_id));
-	}
-
-	if (_fields.unit)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_UNIT, unit));
-	}
-
-	if (_fields.scale)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_SCALE, float(scale)));
-	}
-
-	return	true;
-}
 
 Endpoint::Endpoint(ObjectManager& _manager, ValueType const& _type)
 :	Node(_manager, _type),
 	active_(false), 
 	unit_(""), 
 	scale_(ENDPOINT_VALUE_SCALE), 
-	value_(0), 
+	correction_interval_(ENDPOINT_UPDATE_INTERVAL),
 	value_map_(ENDPOINT_VALUE_COUNT_MAX),
-	last_report_date_()
+	last_report_date_(),
+	last_confirm_date_()
 {
 	keep_alive_interval_ = 0;
+}
+
+Endpoint::Endpoint(ObjectManager& _manager, ValueType const& _type, std::string const& _unit)
+: Node(_manager, _type),
+	active_(false), 
+	scale_(ENDPOINT_VALUE_SCALE), 
+	correction_interval_(ENDPOINT_UPDATE_INTERVAL),
+	value_map_(ENDPOINT_VALUE_COUNT_MAX),
+	last_report_date_(),
+	last_confirm_date_(),
+	unit_(_unit)
+{
 }
 
 Endpoint::~Endpoint()
@@ -150,6 +114,53 @@ bool	Endpoint::SetSensorID(std::string const& _sensor_id)
 	return	true;
 }
 
+bool	Endpoint::SetCorrectionInterval(Time const& _interval)
+{
+	correction_interval_ = _interval;
+
+	updated_properties_.AppendCorrectionInterval(correction_interval_);
+
+	if (!lazy_store_)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
+}
+
+bool	Endpoint::SetCorrectionInterval(uint32_t _interval)
+{
+	correction_interval_ = _interval;
+
+	updated_properties_.AppendCorrectionInterval(correction_interval_);
+
+	if (!lazy_store_)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
+}
+
+bool	Endpoint::SetCorrectionInterval(std::string const& _interval)
+{
+	correction_interval_ = strtoul(_interval.c_str(), NULL, 10);
+	
+	updated_properties_.AppendCorrectionInterval(correction_interval_);
+
+	if (!lazy_store_)
+	{
+		ApplyChanges();	
+	}
+
+	return	true;
+}
+
+uint32_t	Endpoint::GetCorrectionInterval()
+{
+	return	correction_interval_;
+}
+
 bool	Endpoint::GetProperties(Properties& _properties, Properties::Fields const& _fields)
 {
 	if (Node::GetProperties(_properties, _fields))
@@ -169,6 +180,10 @@ bool	Endpoint::GetProperties(Properties& _properties, Properties::Fields const& 
 			_properties.AppendScale(float(scale_));
 		}
 
+		if (_fields.correction_interval)
+		{
+			_properties.AppendCorrectionInterval(correction_interval_);
+		}
 		return	true;	
 	}
 
@@ -184,50 +199,87 @@ bool	Endpoint::SetProperty(Property const& _property, Properties::Fields const& 
 {
 	if (_property.GetName() == TITLE_NAME_UNIT)
 	{
-		const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (string_value != NULL)
+		if (_fields.unit)
 		{
-			TRACE_INFO("The unit set to " << string_value->Get());
-			return	SetUnit(string_value->Get());
-		}
+			const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
+			if (string_value != NULL)
+			{
+				TRACE_INFO("The unit set to " << string_value->Get());
+				return	SetUnit(string_value->Get());
+			}
 
-		TRACE_ERROR("Property[" << id_ << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
+			TRACE_ERROR("Property[" << id_ << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
+		}
 	}
 	else if (_property.GetName() == TITLE_NAME_SCALE)
 	{
-		const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (string_value != NULL)
+		if (_fields.scale)
 		{
-			TRACE_INFO("The scale set to " << string_value->Get());
-			return	SetScale(string_value->Get());
-		}
+			const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
+			if (string_value != NULL)
+			{
+				TRACE_INFO("The scale set to " << string_value->Get());
+				return	SetScale(string_value->Get());
+			}
 
-		const ValueFloat *float_value = dynamic_cast<const ValueFloat*>(_property.GetValue());
-		if (float_value != NULL)
-		{
-			TRACE_INFO("The scale set to " << float_value->Get());
-			return	SetScale(float_value->Get());
-		}
+			const ValueFloat *float_value = dynamic_cast<const ValueFloat*>(_property.GetValue());
+			if (float_value != NULL)
+			{
+				TRACE_INFO("The scale set to " << float_value->Get());
+				return	SetScale(float_value->Get());
+			}
 
-		const ValueInt *int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
-		if (float_value != NULL)
-		{
-			TRACE_INFO("The scale set to " << int_value->Get());
-			return	SetScale(int_value->Get());
-		}
+			const ValueInt *int_value = dynamic_cast<const ValueInt*>(_property.GetValue());
+			if (float_value != NULL)
+			{
+				TRACE_INFO("The scale set to " << int_value->Get());
+				return	SetScale(int_value->Get());
+			}
 
-		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
+			TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
+		}
 	}
 	else if (_property.GetName() == TITLE_NAME_SENSOR_ID)
 	{
-		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value != NULL)
+		if (_fields.sensor_id)
 		{
-			TRACE_INFO("The sensor id set to " << value->Get());
-			return	SetSensorID(value->Get());
-		}
+			const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
+			if (value != NULL)
+			{
+				TRACE_INFO("The sensor id set to " << value->Get());
+				return	SetSensorID(value->Get());
+			}
 
-		TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
+			TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
+		}
+	}
+	else if (_property.GetName() == TITLE_NAME_CORRECTION_INTERVAL)
+	{
+		if (_fields.correction_interval)
+		{
+			const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
+			if (string_value != NULL)
+			{
+				TRACE_INFO("The correction interval set to " << string_value->Get());
+				return	SetCorrectionInterval(string_value->Get());
+			}
+
+			const ValueFloat *float_value = dynamic_cast<const ValueFloat*>(_property.GetValue());
+			if (float_value != NULL)
+			{
+				TRACE_INFO("The correction interval set to " << float_value->Get());
+				return	SetCorrectionInterval(float_value->Get());
+			}
+
+			const ValueUInt32 *int_value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
+			if (int_value != NULL)
+			{
+				TRACE_INFO("The correction interval set to " << int_value->Get());
+				return	SetCorrectionInterval(int_value->Get());
+			}
+
+			TRACE_ERROR("Property[" << _property.GetName() << "] value type[" << _property.GetValue()->GetTypeString() << "] invalid!");
+		}
 	}
 
 	return	Node::SetProperty(_property, _fields);
@@ -362,21 +414,50 @@ void	Endpoint::Postprocess()
 	Node::Postprocess();
 }
 
-bool		Endpoint::IsValid(const ValueFloat& _value)
+bool		Endpoint::IsValid(std::string const& _value)
 {
 	return	true;
 }
+
+void	Endpoint::CorrectionProcess()
+{
+	std::string	value;
+
+	Device* device = manager_.GetDevice(parent_id_);
+	if(device != NULL)
+	{
+		if (device->ReadValue(GetID(), value))
+		{
+			if (IsValid(value))
+			{
+				if (!Add(value))
+				{
+					TRACE_ERROR("Failed to add data");	
+				}
+			}
+			else
+			{
+				TRACE_ERROR("Data[" << value << "] is invalid!");
+			}
+		}
+		else
+		{
+			TRACE_ERROR("Failed to read data from device[" << device->GetTraceName() << "]");	
+		}
+	}
+}
+
 
 uint32_t	Endpoint::GetDataCount()
 {
 	return	value_map_.size();
 }
 
-bool	Endpoint::GetUnreportedValueList(ValueList& value_list)
+bool	Endpoint::GetUnreportedValueMap(ValueMap& value_map)
 {
 	Date		current;
 
-	if (GetDataForPeriod(last_report_date_, current, value_list) == false)
+	if (GetDataForPeriod(last_report_date_, current, value_map) == false)
 	{
 		TRACE_ERROR("Failed to get data!");
 		return	false;
@@ -389,7 +470,20 @@ bool	Endpoint::GetUnreportedValueList(ValueList& value_list)
 
 bool	Endpoint::SetLastReportTime(Date const& _time)
 {
-	last_report_date_ = _time;
+	if (time_t(last_report_date_) < time_t(_time))
+	{
+		last_report_date_ = _time;
+	}
+
+	return	0;
+}
+
+bool	Endpoint::SetLastConfirmTime(Date const& _time)
+{
+	if (time_t(last_confirm_date_) < time_t(_time))
+	{
+		last_confirm_date_ = _time;
+	}
 
 	return	0;
 }
@@ -459,16 +553,27 @@ bool	Endpoint::DelDataForPeriod(Date const& _begin, Date const& _end)
 	return	true;
 }
 
-bool	Endpoint::Add(Value const* _value)
+uint32_t	Endpoint::GetData(uint32_t _count, ValueMap& _value_map)
+{
+	for(auto it = value_map_.rbegin() ; _count > 0 && it != value_map_.rend() ; _count--, it++)
+	{
+		_value_map.Add(it->first, it->second);	
+	}
+
+	return	_value_map.size();
+}
+
+bool	Endpoint::Add(std::string const& _value)
 {
 	bool	ret_value = false;
+	time_t	time = Date::GetCurrent();
 
-	ret_value = value_map_.Add(_value->GetDate(), _value);
+	ret_value = value_map_.Add(time, _value);
 	if (ret_value == true)
 	{
 		try
 		{
-			Message *message = new MessageEndpointUpdated(id_, id_, _value);
+			Message *message = new MessageEndpointUpdated(id_, id_, time, _value);
 
 			if (manager_.Post(message) == false)
 			{
@@ -524,6 +629,26 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, Properties const& _propertie
 				endpoint = new EndpointSensorHumidity(_manager, properties);
 				TRACE_INFO2(NULL, "The humidity endpoint[" << endpoint->GetID() <<"] created");
 			}
+			else if (strcasecmp(type_value->Get().c_str(), NODE_TYPE_EP_S_VOLTAGE) == 0)
+			{
+				endpoint = new EndpointSensorVoltage(_manager, properties);
+				TRACE_INFO2(NULL, "The voltage endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (strcasecmp(type_value->Get().c_str(), NODE_TYPE_EP_S_CURRENT) == 0)
+			{
+				endpoint = new EndpointSensorCurrent(_manager, properties);
+				TRACE_INFO2(NULL, "The current endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (strcasecmp(type_value->Get().c_str(), NODE_TYPE_EP_S_DI) == 0)
+			{
+				endpoint = new EndpointSensorDI(_manager, properties);
+				TRACE_INFO2(NULL, "The DI endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (strcasecmp(type_value->Get().c_str(), NODE_TYPE_EP_A_DO) == 0)
+			{
+				endpoint = new EndpointActuatorDO(_manager, properties);
+				TRACE_INFO2(NULL, "The DO endpoint[" << endpoint->GetID() <<"] created");
+			}
 			else
 			{
 				TRACE_ERROR2(NULL, "Failed to create endpoint because type[" << type_value->Get().c_str() <<"] is not supported.");
@@ -556,3 +681,8 @@ bool	Endpoint::GetPropertyFieldList(std::list<std::string>& _field_list)
 	return	true;
 }
 
+
+bool	Endpoint::IsIncludeIn(Object *_object)
+{
+	return	dynamic_cast<Endpoint *>(_object) != NULL;
+}

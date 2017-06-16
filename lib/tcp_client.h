@@ -32,7 +32,8 @@ public:
 
 	bool		Send(std::string const& _message);
 	bool		Send(const void*	_frame, uint32_t	_frame_len);
-	uint32_t	Receive(void*	_frame, uint32_t	_frame_len);
+	bool		Receive(uint32_t&	_buffer_len);
+	bool		Receive(void*	_frame, uint32_t&	_frame_len);
 	bool		RequestAndReply(std::string const& _request, std::string& _reply, uint32_t _timeout = 5 * TIME_SECOND);
 	uint32_t	GetReceivedPacketCount();
 

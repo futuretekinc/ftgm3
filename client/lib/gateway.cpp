@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <libjson/libjson.h>
+#include <exception.h>
 #include "shell.h"
 #include "object_manager.h"
 #include "data_manager.h"
@@ -8,6 +9,7 @@
 #include "time2.h"
 #include "rcs_client.h"
 #include "utils.h"
+#include "json.h"
 
 using namespace std;
 
@@ -134,7 +136,14 @@ RetValue	ShellCommandGateway
 			{
 				for(uint32_t i = 0 ; i < _vector.size() ; i++)
 				{
-					_shell->Out() << _vector[i].write_formatted() << std::endl;
+					try
+					{
+						_shell->Out() << std::setw(4) << i + 1 << " : " << JSONNodeGetID(_vector[i]) << std::endl;
+					}
+					catch(ObjectNotFound& e)
+					{
+							
+					}
 				}
 			}
 			else

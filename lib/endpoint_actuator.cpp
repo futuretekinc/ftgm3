@@ -5,7 +5,7 @@ EndpointActuator::EndpointActuator(ObjectManager& _manager, ValueType const& _ty
 {
 }
 
-bool	EndpointActuator::Set(std::string const& _value)
+bool	EndpointActuator::IsIncludeIn(Object *_object)
 {
-	return	true;
+	return	dynamic_cast<EndpointActuator*>(_object) != NULL;
 }

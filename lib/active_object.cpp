@@ -61,18 +61,10 @@ bool	ActiveObject::SetEnable(bool _enable)
 	{	
 		if (Object::SetEnable(_enable))
 		{
-			if (enable_)
-			{
-				Start();	
-			}
-			else
+			if (!enable_)
 			{
 				Stop();	
 			}
-		}
-		else
-		{
-				
 		}
 	}
 
@@ -98,14 +90,14 @@ Object::Stat	ActiveObject::GetStat() const
 	}
 }
 
-bool	ActiveObject::Start()
+bool	ActiveObject::Start(uint32_t _wait_for_init_time)
 {
 	bool	ret_value = true;
 	Timer	timer;
 
 	if (enable_)
 	{
-		timer += 1000 * TIME_MILLISECOND;
+		timer += _wait_for_init_time * TIME_MILLISECOND;
 
 		if (!thread_.joinable())
 		{
@@ -323,4 +315,9 @@ void	ActiveObject::ThreadMain(ActiveObject* _object)
 	}
 
 	_object->Postprocess();
+}
+
+bool	ActiveObject::IsIncludeIn(Object *_object)
+{
+	return	dynamic_cast<ActiveObject*>(_object) != NULL;
 }

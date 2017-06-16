@@ -8,7 +8,7 @@ class	EndpointActuator : public Endpoint
 public:
 	EndpointActuator(ObjectManager& _manager, ValueType const& _type);
 
-	bool	Set(std::string const& _value);
+	static	bool	IsIncludeIn(Object *_object);
 };
 
 #endif

@@ -21,7 +21,7 @@ public:
 			
 			bool	SetLoopInterval(Time const& _interval);
 
-	virtual	bool	Start();
+	virtual	bool	Start(uint32_t _wait_for_init_time = 1000);	// ms
 	virtual	bool	Stop(bool _wait = false);
 	virtual	void	Run();
 
@@ -36,6 +36,7 @@ public:
 
 	virtual	bool	OnMessage(Message* _message);
 
+	static	bool	IsIncludeIn(Object *_object);
 protected:
 
 	virtual	void	Preprocess();

@@ -56,6 +56,7 @@ protected:
 	bool		ConfirmEndpoint(JSONNode& _node, std::string& _req_type);
 	bool		ConfirmData(JSONNode& _node, std::string& _req_type);
 
+	uint32_t	max_data_get_count_;	
 };
 
 #endif

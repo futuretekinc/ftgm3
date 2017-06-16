@@ -15,17 +15,20 @@ public:
 
 			bool		IsValid(const ValueFloat& _value);
 
-			uint32_t	GetCorrectionInterval();
-			bool		SetCorrectionInterval(Time const& _interval);
-			bool		SetCorrectionInterval(uint32_t _interval);
-			bool		SetCorrectionInterval(std::string const& _scale);
+			std::string	GetValue();
+			bool		SetValue(std::string const& _value);
 
-	virtual	bool		SetValueMin(ValueFloat const& _value_min);
-	virtual	bool		SetValueMax(ValueFloat const& _value_max);
+			std::string	GetValueMin();
+			bool		SetValueMin(std::string const& _min);
+
+			std::string	GetValueMax();
+			bool		SetValueMax(std::string const& _max);
 
 			bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
 
 			bool		GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+
+	static	bool		IsIncludeIn(Object *_object);
 protected:
 
 
@@ -33,13 +36,9 @@ protected:
 			void		Process();
 			void		Postprocess();
 
-	virtual	void		CorrectionProcess();
-
-			uint32_t	correction_interval_;
-			Timer		correction_timer_;
-
-			ValueFloat	value_max_;
-			ValueFloat	value_min_;
+			float		value_;
+			float		value_min_;
+			float		value_max_;
 };
 
 #endif

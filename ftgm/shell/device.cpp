@@ -6,7 +6,7 @@
 #include "object_manager.h"
 
 
-bool	ShellCommandDeviceList(ObjectManager* object_manager);
+bool	ShellCommandDeviceList(Shell* _shell);
 
 RetValue	ShellCommandDevice
 (
@@ -24,7 +24,7 @@ RetValue	ShellCommandDevice
 	}
 	else if (_count < 2)
 	{
-		ShellCommandDeviceList(object_manager);
+		ShellCommandDeviceList(_shell);
 	}
 	else if (_arguments[1] == "keep_alive")
 	{
@@ -335,8 +335,10 @@ Shell::Command	shell_ftgm_command_device =
 	.function	=	ShellCommandDevice
 };
 
-bool	ShellCommandDeviceList(ObjectManager* object_manager)
+bool	ShellCommandDeviceList(Shell* _shell)
 {
+	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
+
 	uint32_t	id_len 	= 32;
 	uint32_t	name_len= 16;
 	uint32_t	type_len= 16;

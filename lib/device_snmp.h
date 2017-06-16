@@ -22,7 +22,9 @@ public:
 
 	DeviceSNMP(ObjectManager& _manager, ValueType const& _type);
 	DeviceSNMP(ObjectManager& _manager, Properties const& _properties);
+	DeviceSNMP(ObjectManager& _manager, JSONNode const& _properties);
 	DeviceSNMP(ObjectManager& _manager, ValueType const& _type, Properties const& _properties);
+	DeviceSNMP(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties);
 	DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module);
 	DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module, ValueIP const& _ip);
 	~DeviceSNMP();
@@ -62,9 +64,10 @@ protected:
 
 			bool	IsOpened();
 
-			bool	ReadValue(std::string const& _endpoint_id, Value* _value);
+			bool	ReadValue(std::string const& _endpoint_id, std::string& _value);
 			bool	ReadValue(OID const& _oid, Value* _value);
 	static	bool	Convert(struct variable_list *_variable, Value* _value);
+	static	bool	Convert(struct variable_list *_variable, std::string& _value);
 
 	std::string		module_;
 	std::string		community_;

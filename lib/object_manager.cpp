@@ -212,8 +212,10 @@ ObjectManager::operator JSONNode() const
 {
 	JSONNode	root, item;
 
-	root.push_back(JSONNode(TITLE_NAME_ENDPOINT_REPORT_INTERVAL, endpoint_report_interval_));
+	root.push_back(JSONNode(TITLE_NAME_ID, id_));
+	root.push_back(JSONNode(TITLE_NAME_NAME, name_));
 	root.push_back(JSONNode(TITLE_NAME_AUTO_START, (auto_start_)?"yes":"no"));
+	root.push_back(JSONNode(TITLE_NAME_ENDPOINT_REPORT_INTERVAL, endpoint_report_interval_));
 
 	item = JSONNode(data_manager_);
 	item.set_name(TITLE_NAME_DATA_MANAGER);
@@ -276,22 +278,27 @@ Node*		ObjectManager::GetNode(std::string const& _id)
 	return	dynamic_cast<Node*>(object);
 }
 
-Gateway*	ObjectManager::CreateGateway(JSONNode const& _json)
+Gateway*		ObjectManager::CreateGateway(JSONNode const& _properties, bool from_db)
 {
-	Gateway*	gateway = NULL;
+	Gateway*		gateway = NULL;
 
-	if (_json.type() == JSON_NODE)
+	gateway = Gateway::Create(*this, _properties);
+	if (gateway != NULL)
 	{
-		Properties	properties;
-
-		properties.Append(_json);
-
-		TRACE_INFO(properties);
-		gateway = CreateGateway(properties);
-		if (gateway == NULL)
+		if (!Attach(gateway))
 		{
-			TRACE_ERROR("Failed to create gateway!");
+			delete gateway;	
+			return	NULL;
 		}
+
+		if (!from_db)
+		{
+			data_manager_.AddGateway(gateway);
+		}
+
+		gateway->ClearUpdatedProperties();
+
+		TRACE_INFO("The gateway[" << gateway->GetID() << "] created!");
 	}
 
 	return	gateway;
@@ -406,21 +413,31 @@ Gateway*		ObjectManager::GetGateway(std::string const& _id)
 	return	NULL;
 }
 
-Device*	ObjectManager::CreateDevice(JSONNode const& _json)
+Device*	ObjectManager::CreateDevice(JSONNode const& _properties, bool from_db)
 {
-	Device*	device = NULL;
+	Device*		device = NULL;
 
-	if (_json.type() == JSON_NODE)
+	device = Device::Create(*this, _properties);
+	if (device != NULL)
 	{
-		Properties	properties;
+		Attach(device);	
 
-		properties.Append(_json);
-
-		TRACE_INFO(properties);
-		device = CreateDevice(properties);
-		if (device == NULL)
+		if (!from_db)
 		{
-			TRACE_ERROR("Failed to create device!");
+			data_manager_.AddDevice(device);
+		}
+
+		device->ClearUpdatedProperties();
+
+		TRACE_INFO("The device[" << device->GetID() << "] crated!");
+
+		Gateway*	gateway = GetGateway(device->GetParentID());
+		if (gateway != NULL)
+		{
+			if (!gateway->Attach(device->GetID()))
+			{
+				TRACE_ERROR("Failed to attach device[" << device->GetTraceName() << "]");
+			}
 		}
 	}
 
@@ -791,101 +808,111 @@ bool	ObjectManager::UpdateProperties(Endpoint* _endpoint)
 
 void	ObjectManager::Preprocess()
 {
-	data_manager_.Start();
-
-	while(!data_manager_.IsRunning())
-	{
-		usleep(TIME_MILLISECOND);
-	}
-
-	rcs_server_.Start();
-	while(!rcs_server_.IsRunning())
-	{
-		usleep(TIME_MILLISECOND);
-	}
-
+	data_manager_.Start(1000);
+	rcs_server_.Start(1000);
 
 	uint32_t count = data_manager_.GetGatewayCount();
 	TRACE_INFO("Gateway Count : " << count);
 
-	for(uint32_t i = 0 ; i < count ; i++)
+	if (count == 0)
 	{
-		std::list<Properties> properties_list;
+		JSONNode	properties;
 
-		if (data_manager_.GetGatewayProperties(i, 1, properties_list))
+		properties.push_back(JSONNode(TITLE_NAME_ID, id_));
+		properties.push_back(JSONNode(TITLE_NAME_NAME, name_));
+		properties.push_back(JSONNode(TITLE_NAME_TYPE, "gw_gen"));
+
+		Gateway*	gateway = CreateGateway(properties);
+		if (gateway == NULL)
 		{
-			for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
-			{
-				Gateway*	gateway = CreateGateway(*it, true);
-				if (gateway == NULL)
-				{
-					TRACE_ERROR("Failed to create gateway!");	
-				}
-				else
-				{
-					TRACE_INFO("The gateway[" << gateway->GetTraceName() << "] created");	
-				}
-			}
+			TRACE_ERROR("Failed to create gateway!");	
+		}
+		else
+		{
+			TRACE_INFO("The gateway[" << gateway->GetTraceName() << "] created");	
 		}
 	}
-
-	count = data_manager_.GetDeviceCount();
-	TRACE_INFO("Device Count : " << count);
-
-	for(uint32_t i = 0 ; i < count ; i++)
+	else
 	{
-		std::list<Properties> properties_list;
-
-		if (data_manager_.GetDeviceProperties(i, 1, properties_list))
+		for(uint32_t i = 0 ; i < count ; i++)
 		{
-			for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
+			JSONNode	properties_array;
+
+			if (data_manager_.GetGatewayProperties(i, 1, properties_array))
 			{
-				Device*	device = CreateDevice(*it, true);
-				if (device == NULL)
+				for(auto it = properties_array.begin() ; it != properties_array.end() ; it++)
 				{
-					TRACE_ERROR("Failed to create device!");	
-				}
-				else
-				{
-					TRACE_INFO("The device[" << device->GetTraceName() << "] created");	
-				}
-			}
-		}
-	}
-
-	count = data_manager_.GetEndpointCount();
-	TRACE_INFO("Endpoint Count : " << count);
-
-	for(uint32_t i = 0 ; i < count ; i++)
-	{
-		std::list<Properties> properties_list;
-
-		if (data_manager_.GetEndpointProperties(i, 1, properties_list))
-		{
-			for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
-			{
-				const Property*	id_property = it->Get(TITLE_NAME_ID);
-				if (id_property != NULL)
-				{
-					Endpoint* endpoint = CreateEndpoint(*it, true);						
-					if (endpoint == NULL)
+					Gateway*	gateway = CreateGateway(*it, true);
+					if (gateway == NULL)
 					{
-						TRACE_ERROR("Failed to create endpoint!");	
+						TRACE_ERROR("Failed to create gateway!");	
 					}
 					else
 					{
-						TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] created");	
+						TRACE_INFO("The gateway[" << gateway->GetTraceName() << "] created");	
+					}
+				}
+			}
+		}
 
-						Device* device = GetDevice(endpoint->GetParentID());
-						if (device != NULL)
+		count = data_manager_.GetDeviceCount();
+		TRACE_INFO("Device Count : " << count);
+
+		for(uint32_t i = 0 ; i < count ; i++)
+		{
+			std::list<Properties> properties_list;
+
+			if (data_manager_.GetDeviceProperties(i, 1, properties_list))
+			{
+				for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
+				{
+					Device*	device = CreateDevice(*it, true);
+					if (device == NULL)
+					{
+						TRACE_ERROR("Failed to create device!");	
+					}
+					else
+					{
+						TRACE_INFO("The device[" << device->GetTraceName() << "] created");	
+					}
+				}
+			}
+		}
+
+		count = data_manager_.GetEndpointCount();
+		TRACE_INFO("Endpoint Count : " << count);
+
+		for(uint32_t i = 0 ; i < count ; i++)
+		{
+			std::list<Properties> properties_list;
+
+			if (data_manager_.GetEndpointProperties(i, 1, properties_list))
+			{
+				for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
+				{
+					const Property*	id_property = it->Get(TITLE_NAME_ID);
+					if (id_property != NULL)
+					{
+						Endpoint* endpoint = CreateEndpoint(*it, true);						
+						if (endpoint == NULL)
 						{
-							if (device->Attach(endpoint->GetID()))
-							{
-								TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] attached to [" << endpoint->GetParentID() << "]");
-							
-							}
+							TRACE_ERROR("Failed to create endpoint!");	
 						}
+						else
+						{
+							TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] created");	
 
+							Device* device = GetDevice(endpoint->GetParentID());
+							if (device != NULL)
+							{
+								if (device->Attach(endpoint->GetID()))
+								{
+									TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] attached to [" << endpoint->GetParentID() << "]");
+
+								}
+							}
+
+						}
 					}
 				}
 			}
@@ -1100,7 +1127,7 @@ bool	ObjectManager::OnMessage(Message* _base_message)
 		{	
 			MessageEndpointUpdated* message = dynamic_cast<MessageEndpointUpdated*>(_base_message);
 
-			if (!data_manager_.AddValue(message->endpoint_id, message->value))
+			if (!data_manager_.AddValue(message->endpoint_id, message->time, message->value))
 			{
 				TRACE_ERROR("Failed to add value!");	
 			}
@@ -1207,1436 +1234,3 @@ std::string	ObjectManager::GetTopicNameEndpoint(std::string const& _id)
 }
 
 
-#if 0
-bool	ObjectManager::RemoteServiceCall(RCSMessage& _request, RCSMessage& _response)
-{
-	bool	result = false;
-
-	try
-	{
-		if (_request.GetMsgType() == MSG_TYPE_RCS_ADD)
-		{
-			result = RCSAdd(_request, _response);	
-		}
-		else if (_request.GetMsgType() == MSG_TYPE_RCS_DEL)
-		{
-			result = RCSDel(_request, _response);	
-		}
-		else if (_request.GetMsgType() == MSG_TYPE_RCS_GET)
-		{
-			result = RCSGet(_request, _response);	
-		}
-		else if (_request.GetMsgType() == MSG_TYPE_RCS_SET)
-		{
-			result = RCSSet(_request, _response);	
-		}
-		else if (_request.GetMsgType() == MSG_TYPE_RCS_LIST)
-		{
-			result = RCSList(_request, _response);	
-		}
-	}
-	catch(ObjectNotFound& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-	catch(InvalidArgument& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-	catch(std::exception& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-
-	return	result;	
-}
-
-bool	ObjectManager::RCSAdd(RCSMessage& _request, RCSMessage& _response)
-{
-	JSONNode	payload  = _request.GetPayload();
-	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
-
-	for(auto it = payload.begin(); it != payload.end() ; it++)
-	{
-		if (it->name() == TITLE_NAME_GATEWAY)
-		{
-			JSONNode	result(JSON_NODE);
-
-			Gateway*	gateway = CreateGateway(*it);
-			if (gateway == NULL)
-			{
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
-			}
-			else
-			{
-				gateway->GetProperties(result, PROPERTY_ALL);
-			}
-
-			response.AddGateway(result);	
-		}
-		else if (it->name() == TITLE_NAME_DEVICE)
-		{
-			JSONNode	result(JSON_NODE);
-
-			Device*	device = CreateDevice(*it);
-			if (device == NULL)
-			{
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
-			}
-			else
-			{
-				device->GetProperties(result, PROPERTY_ALL);
-			}
-
-			response.AddDevice(result);	
-		}
-		else if (it->name() == TITLE_NAME_ENDPOINT)
-		{
-			JSONNode	result(JSON_NODE);
-
-			Endpoint*	endpoint = CreateEndpoint(*it);
-			if (endpoint == NULL)
-			{
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
-			}
-			else
-			{
-				endpoint->GetProperties(result, PROPERTY_ALL);
-			}
-
-			response.AddEndpoint(result);	
-		}
-	}	
-
-	_response = response;
-
-	return	true;
-}
-
-bool	ObjectManager::RCSDel(RCSMessage& _request, RCSMessage& _response)
-{
-	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
-	JSONNode	payload  = _request.GetPayload();
-
-	for(auto it = payload.begin(); it != payload.end() ; it++)
-	{
-		if (it->name() == TITLE_NAME_GATEWAY)
-		{
-			JSONNode	result(JSON_NODE);
-			std::string id = JSONNodeGetID(*it);
-			
-			if (DestroyGateway(id))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));	
-			}
-			else
-			{
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
-			}
-
-			response.AddGateway(result);
-		}
-		else if (it->name() == TITLE_NAME_DEVICE)
-		{
-			JSONNode	result(JSON_NODE);
-			std::string id = JSONNodeGetID(*it);
-
-			if (DestroyDevice(id))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));	
-			}
-			else
-			{
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
-			}
-
-			response.AddDevice(result);
-		}
-		else if (it->name() == TITLE_NAME_ENDPOINT)
-		{
-			JSONNode	result(JSON_NODE);
-			std::string id = JSONNodeGetID(*it);
-
-			if (DestroyEndpoint(id))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));	
-			}
-			else
-			{
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
-			}
-
-			response.AddEndpoint(result);
-		}
-		else if (it->name() == TITLE_NAME_DATA)
-		{
-			JSONNode	result;
-			std::string	id;
-
-			time_t	start_time;
-			time_t	end_time;
-			try
-			{
-				start_time = JSONNodeGetStartTime(*it, 0);
-				end_time   = JSONNodeGetEndTime(*it, time_t(Date::GetCurrent()));
-
-				id = JSONNodeGetID(*it);
-				Endpoint*	endpoint = GetEndpoint(id);
-				if (endpoint == NULL)
-				{
-					throw ObjectNotFound(id);
-				}
-
-
-				endpoint->DelDataForPeriod(Date(start_time), Date(end_time));
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_START_TIME, start_time));
-				result.push_back(JSONNode(TITLE_NAME_END_TIME, end_time));
-			}
-			catch(ObjectNotFound& e)
-			{
-				TRACE_ERROR("Object[" << id << "] not found!");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			catch(InvalidArgument& e)
-			{
-				TRACE_ERROR("Invalid message fromat!");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
-			}
-
-			response.AddEPData(result);
-		}
-	}	
-
-	_response = response;
-	
-	return	true;
-}
-
-bool	ObjectManager::RCSSet(RCSMessage& _request, RCSMessage& _response)
-{
-	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
-	JSONNode	payload  = _request.GetPayload();
-
-	for(auto it = payload.begin(); it != payload.end() ; it++)
-	{
-		if (it->name() == TITLE_NAME_GATEWAY)
-		{
-			JSONNode	result;
-			std::string	id;
-
-			id = JSONNodeGetID(*it);
-			Gateway*	gateway = GetGateway(id);
-			if (gateway == NULL)
-			{
-				TRACE_ERROR("Object[" << id << "not found!");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else if (!gateway->SetProperties(*it))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
-			}
-			else
-			{
-				gateway->GetProperties(result, PROPERTY_ALL);
-			}
-
-			response.AddGateway(result);
-		}
-		else if (it->name() == TITLE_NAME_DEVICE)
-		{
-			JSONNode	result;
-			std::string	id;
-
-			id = JSONNodeGetID(*it);
-			Device*	device = GetDevice(id);
-			if (device == NULL)
-			{
-				TRACE_ERROR("Object[" << id << "not found!");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else if (!device->SetProperties(*it))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
-			}
-			else
-			{
-				device->GetProperties(result, PROPERTY_ALL);
-			}
-
-			response.AddDevice(result);
-		}
-		else if (it->name() == TITLE_NAME_ENDPOINT)
-		{
-			JSONNode	result;
-			std::string	id;
-
-			id = JSONNodeGetID(*it);
-			Endpoint*	endpoint= GetEndpoint(id);
-			if (endpoint == NULL)
-			{
-				TRACE_ERROR("Object[" << id << "not found!");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else if (!endpoint->SetProperties(*it))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
-			}
-			else
-			{
-				endpoint->GetProperties(result, PROPERTY_ALL);
-			}
-
-			response.AddEndpoint(result);
-		}
-		else if (it->name() == TITLE_NAME_DATA)
-		{
-			JSONNode	result;
-			std::string	id;
-			std::string	value;
-			time_t	time_of_expire;
-
-			try
-			{
-				id = JSONNodeGetID(*it);
-				time_of_expire = JSONNodeGetTimeOfExpire(*it);
-				value = JSONNodeGetValue(*it);
-
-				Endpoint*	endpoint = GetEndpoint(id);
-				if (endpoint == NULL)
-				{
-					TRACE_ERROR("Object[" << id << "not found!");
-					result.push_back(JSONNode(TITLE_NAME_ID, id));
-					result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-				}
-				else
-				{
-					EndpointActuator* actuator = dynamic_cast<EndpointActuator*>(endpoint);
-					if (actuator == NULL)
-					{
-						TRACE_ERROR("Endpoint[" << id << "] is not actuator!");
-						result.push_back(JSONNode(TITLE_NAME_ID, id));
-						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_PERMISSION_DENY));
-					}
-					else
-					{
-						if (actuator->Set(value))
-						{
-							result.push_back(JSONNode(TITLE_NAME_ID, id));
-							result.push_back(JSONNode(TITLE_NAME_VALUE, value));
-						}
-						else
-						{
-							TRACE_ERROR("Failed to set value!");
-							result.push_back(JSONNode(TITLE_NAME_ID, id));
-							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
-						}
-					}
-				}
-			}
-			catch(ObjectNotFound& e)
-			{
-				TRACE_ERROR("Property[" << e.what() << "] not found!");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-
-			response.AddEPData(result);
-		}
-	}
-
-	_response = response;
-
-	return	true;
-}
-
-bool	ObjectManager::RCSGet(RCSMessage& _request, RCSMessage& _response)
-{
-	JSONNode	payload  = _request.GetPayload();
-	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
-
-	for(auto it = payload.begin(); it != payload.end() ; it++)
-	{
-		if (it->name() == TITLE_NAME_GATEWAY)
-		{
-			JSONNode	result;
-			std::string	id = JSONNodeGetID(*it);
-
-			Gateway*	gateway = GetGateway(id);
-			if (gateway == NULL)
-			{
-				TRACE_ERROR("The gateway[" << id << "] not found.");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else
-			{
-				gateway->GetProperties(result, PROPERTY_ALL);
-			}
-
-			response.AddGateway(result);
-		}
-		else if (it->name() == TITLE_NAME_DEVICE)
-		{
-			JSONNode	result;
-			std::string	id = JSONNodeGetID(*it);
-
-			Device*	device = GetDevice(id);
-			if (device == NULL)
-			{
-				TRACE_ERROR("The device[" << id << "] not found.");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else
-			{
-				device->GetProperties(result, PROPERTY_ALL);
-			}
-
-			response.AddDevice(result);
-		}
-		else if (it->name() == TITLE_NAME_ENDPOINT)
-		{
-			JSONNode	result;
-			std::string	id = JSONNodeGetID(*it);
-
-			Endpoint*	endpoint= GetEndpoint(id);
-			if (endpoint == NULL)
-			{
-				TRACE_ERROR("The endpoint[" << id << "] not found.");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else
-			{
-				endpoint->GetProperties(result, PROPERTY_ALL);
-			}
-
-			response.AddEndpoint(result);
-		}
-	}
-
-	_response = response;
-
-	return	true;
-}
-
-bool	ObjectManager::RCSList(RCSMessage& _request, RCSMessage& _response)
-{
-	JSONNode	payload  = _request.GetPayload();
-	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
-
-	for(auto it = payload.begin(); it != payload.end() ; it++)
-	{
-		if (it->name() == TITLE_NAME_GATEWAY)
-		{
-			if (gateway_map_.size() != 0)
-			{
-				for(auto gateway = gateway_map_.begin(); gateway != gateway_map_.end() ; gateway++)
-				{
-					JSONNode	result;
-
-					gateway->second->GetProperties(result, PROPERTY_ALL);
-
-					response.AddGateway(result);
-				}
-			}
-			else
-			{
-				response.AddGatewayNull();
-			}
-		}
-		else if (it->name() == TITLE_NAME_DEVICE)
-		{
-			if (device_map_.size() != 0)
-			{
-				for(auto device = device_map_.begin(); device != device_map_.end() ; device++)
-				{
-					JSONNode	result;
-
-					device->second->GetProperties(result, PROPERTY_ALL);
-
-					response.AddDevice(result);
-				}
-			}
-			else
-			{
-				response.AddDeviceNull();
-			}
-		}
-		else if (it->name() == TITLE_NAME_ENDPOINT)
-		{
-			if (endpoint_map_.size() != 0)
-			{
-				for(auto endpoint = endpoint_map_.begin(); endpoint != endpoint_map_.end() ; endpoint++)
-				{
-					JSONNode	result;
-
-					endpoint->second->GetProperties(result, PROPERTY_ALL);
-
-					response.AddEndpoint(result);
-				}
-			}
-			else
-			{
-				response.AddEndpointNull();
-			}
-		}
-	}
-
-	_response = response;
-
-	return	true;
-}
-
-bool	ObjectManager::RCSConfirm(RCSMessage& _reply, std::string& _req_type)
-{
-	bool		ret_value = false;
-	JSONNode	reply_payload  = _reply.GetPayload();
-
-	try
-	{
-		for(auto it = reply_payload.begin(); it != reply_payload.end() ; it++)
-		{
-			if (it->name() == TITLE_NAME_GATEWAY)
-			{
-				RCSConfirmGateway(*it, _req_type);
-			}
-			else if (it->name() == TITLE_NAME_DEVICE)
-			{
-				RCSConfirmDevice(*it, _req_type);
-			}
-			else if (it->name() == TITLE_NAME_ENDPOINT)
-			{
-				RCSConfirmEndpoint(*it, _req_type);
-			}
-			else if (it->name() == TITLE_NAME_DATA)
-			{
-				RCSConfirmData(*it, _req_type);
-			}
-		}	
-	}
-	catch(ObjectNotFound& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-	catch(InvalidArgument& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-	catch(std::exception& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-
-	return	ret_value;
-}
-
-bool	ObjectManager::RCSError(RCSMessage& _reply)
-{
-	bool		ret_value = false;
-	JSONNode	reply_payload  = _reply.GetPayload();
-
-	try
-	{
-		for(auto it = reply_payload.begin(); it != reply_payload.end() ; it++)
-		{
-			if (it->name() == TITLE_NAME_GATEWAY)
-			{
-				TRACE_ERROR("Gateway Error");
-			}
-			else if (it->name() == TITLE_NAME_DEVICE)
-			{
-				TRACE_ERROR("Device Error");
-			}
-			else if (it->name() == TITLE_NAME_ENDPOINT)
-			{
-				TRACE_ERROR("Endpoint Error");
-			}
-			else if (it->name() == TITLE_NAME_DATA)
-			{
-				TRACE_ERROR("Data Error");
-			}
-		}	
-	}
-	catch(ObjectNotFound& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-	catch(InvalidArgument& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-	catch(std::exception& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-
-	return	ret_value;
-}
-
-bool	ObjectManager::RCSError(RCSMessage& _reply, std::string& _req_type)
-{
-	bool		ret_value = false;
-	JSONNode	reply_payload  = _reply.GetPayload();
-
-	try
-	{
-		for(auto it = reply_payload.begin(); it != reply_payload.end() ; it++)
-		{
-			if (it->name() == TITLE_NAME_GATEWAY)
-			{
-				RCSConfirmGateway(*it, _req_type);
-			}
-			else if (it->name() == TITLE_NAME_DEVICE)
-			{
-				RCSConfirmDevice(*it, _req_type);
-			}
-			else if (it->name() == TITLE_NAME_ENDPOINT)
-			{
-				RCSConfirmEndpoint(*it, _req_type);
-			}
-			else if (it->name() == TITLE_NAME_DATA)
-			{
-				RCSConfirmData(*it, _req_type);
-			}
-		}	
-	}
-	catch(ObjectNotFound& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-	catch(InvalidArgument& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-	catch(std::exception& e)
-	{
-		TRACE_ERROR(e.what());
-	}
-
-	return	ret_value;
-}
-
-bool	ObjectManager::RCSSetGateway(JSONNode& _node, JSONNode& _result)
-{
-	TRACE_ENTRY;
-	if (_node.type() == JSON_NODE)
-	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
-
-		Gateway*	gateway = GetGateway(id);
-		if (gateway == NULL)
-		{
-			TRACE_ERROR("Object[" << id << "not found!");
-			return	false;
-		}
-
-		if (!gateway->SetProperties(_node))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
-
-		AddGatewayToMessage(_result, gateway, PROPERTY_ALL);
-	}
-	else if (_node.type() == JSON_ARRAY)
-	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
-		{
-			RCSSetGateway(*it, _result);
-		}
-	}
-	else
-	{
-		TRACE_ERROR("Invalid _message fromat!");
-		return	false;
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::RCSConfirmGateway(JSONNode& _node, std::string& _req_type)
-{
-	if (_node.type() == JSON_NODE)
-	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			throw InvalidArgument("Invalid _message fromat!");
-		}
-
-		if (_req_type == MSG_TYPE_RCS_ADD)
-		{
-			Gateway*	gateway = GetGateway(id);
-			if (gateway == NULL)
-			{
-				throw ObjectNotFound(id);
-			}
-
-			gateway->SetRegistered(true);
-			gateway->SetProperties(_node, PROPERTY_ADD_CONFIRM);
-			TRACE_INFO("The gateway[" << id << "] registeration confirmed.");
-		}
-		else if (_req_type == MSG_TYPE_RCS_DEL)
-		{
-			TRACE_INFO("The gateway[" << id << "] updated.");
-		}
-		else if (_req_type == MSG_TYPE_RCS_GET)
-		{
-			TRACE_INFO("The gateway[" << id << "] updated.");
-		}
-		else if (_req_type == MSG_TYPE_RCS_SET)
-		{
-			TRACE_INFO("The gateway[" << id << "] updated.");
-		}
-	}
-	else if (_node.type() == JSON_ARRAY)
-	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
-		{
-			RCSConfirmGateway(*it, _req_type);
-		}
-	}
-	else
-	{
-		throw InvalidArgument("Invalid _message fromat!");
-	}
-}
-
-bool	ObjectManager::RCSSetDevice(JSONNode& _node, JSONNode& _reply)
-{
-	if (_node.type() == JSON_NODE)
-	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid message fromat!");
-			return	false;
-		}
-
-		Device*	device =GetDevice(id);
-		if (device == NULL)
-		{
-			TRACE_ERROR("Object[" << id << "not found!");
-			return	false;
-		}
-
-		if (!device->SetProperties(_node))
-		{
-			TRACE_ERROR("Invalid message fromat!");
-			return	false;
-		}
-
-		AddDeviceToMessage(_reply, device, PROPERTY_ALL);
-	}
-	else if (_node.type() == JSON_ARRAY)
-	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
-		{
-			RCSSetDevice(*it, _reply);
-		}
-	}
-	else
-	{
-		TRACE_ERROR("Invalid message fromat!");
-		return	false;
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::RCSConfirmDevice(JSONNode& _node, std::string& _req_type)
-{
-	if (_node.type() == JSON_NODE)
-	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
-
-		if (_req_type == MSG_TYPE_RCS_ADD)
-		{
-			Device*	device = GetDevice(id);
-			if (device == NULL)
-			{
-				TRACE_ERROR("Object[" << id << "] not found!");
-				return	false;
-			}
-
-			device->SetRegistered(true);
-			device->SetProperties(_node);
-			TRACE_INFO("The device[" << id << "] registeration confirmed.");
-		}
-		else if (_req_type == MSG_TYPE_RCS_DEL)
-		{
-			TRACE_INFO("The device[" << id << "] updated.");
-		}
-		else if (_req_type == MSG_TYPE_RCS_GET)
-		{
-			TRACE_INFO("The device[" << id << "] updated.");
-		}
-		else if (_req_type == MSG_TYPE_RCS_SET)
-		{
-			TRACE_INFO("The device[" << id << "] updated.");
-		}
-	}
-	else if (_node.type() == JSON_ARRAY)
-	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
-		{
-			RCSConfirmDevice(*it, _req_type);
-		}
-	}
-	else
-	{
-		TRACE_ERROR("Invalid _message fromat!");
-		return	false;
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::RCSSetEndpoint(JSONNode& _node, JSONNode& _reply)
-{
-	if (_node.type() == JSON_NODE)
-	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid message fromat!");
-			return	false;
-		}
-
-		Endpoint*	endpoint = GetEndpoint(id);
-		if (endpoint == NULL)
-		{
-			TRACE_ERROR("Object[" << id << "] not found!");
-			return	false;
-		}
-
-		if (!endpoint->SetProperties(_node))
-		{
-			throw InvalidArgument("Invalid argument!");
-		}
-
-		AddEndpointToMessage(_reply, endpoint, PROPERTY_ALL);
-	}
-	else if (_node.type() == JSON_ARRAY)
-	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
-		{
-			RCSSetEndpoint(*it, _reply);
-		}
-	}
-	else
-	{
-		TRACE_ERROR("Invalid _message fromat!");
-		return	false;
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::RCSConfirmEndpoint(JSONNode& _node, std::string& _req_type)
-{
-	if (_node.type() == JSON_NODE)
-	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
-
-		if (_req_type == MSG_TYPE_RCS_ADD)
-		{
-			Endpoint*	endpoint = GetEndpoint(id);
-			if (endpoint == NULL)
-			{
-				TRACE_ERROR("Object[" << id << "] not found!");
-				return	false;
-			}
-
-			endpoint->SetRegistered(true);
-			endpoint->SetProperties(_node);
-			TRACE_INFO("The endpoint[" << id << "] registeration confirmed.");
-		}
-		else if (_req_type == MSG_TYPE_RCS_DEL)
-		{
-			TRACE_INFO("The endpoint[" << id << "] updated.");
-		}
-		else if (_req_type == MSG_TYPE_RCS_GET)
-		{
-			TRACE_INFO("The endpoint[" << id << "] updated.");
-		}
-		else if (_req_type == MSG_TYPE_RCS_SET)
-		{
-			TRACE_INFO("The endpoint[" << id << "] updated.");
-		}
-	}
-	else if (_node.type() == JSON_ARRAY)
-	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
-		{
-			RCSConfirmEndpoint(*it, _req_type);
-		}
-	}
-	else
-	{
-		TRACE_ERROR("Invalid _message fromat!");
-		return	false;
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::RCSGetData(JSONNode& _node, JSONNode& _reply)
-{
-	if (_node.type() == JSON_NODE)
-	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
-
-		Endpoint*	endpoint = GetEndpoint(id);
-		if (endpoint == NULL)
-		{
-			TRACE_ERROR("Object[" << id << "] not found!");
-			return	false;
-		}
-
-		uint32_t	start_time = 0;
-		if (!GetValue(_node, TITLE_NAME_START_TIME, start_time, true))
-		{
-			throw InvalidArgument("Invalid message fromat!");
-		}
-
-		uint32_t	end_time = 0;
-		if (!GetValue(_node, TITLE_NAME_END_TIME, end_time, true))
-		{
-			throw InvalidArgument("Invalid message fromat!");
-		}
-
-		AddEPDataToMessage(_reply, endpoint, start_time, end_time);
-	}
-	else if (_node.type() == JSON_ARRAY)
-	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
-		{
-			RCSGetData(*it, _reply);
-		}
-	}
-	else
-	{
-		TRACE_ERROR("Invalid _message fromat!");
-		return	false;
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::RCSSetData(JSONNode& _node, JSONNode& _reply)
-{
-	if (_node.type() == JSON_NODE)
-	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
-
-		Endpoint*	endpoint = GetEndpoint(id);
-		if (endpoint == NULL)
-		{
-			TRACE_ERROR("Object[" << id << "] not found!");
-			return	false;
-		}
-
-		EndpointActuator* actuator = dynamic_cast<EndpointActuator*>(endpoint);
-		if (actuator == NULL)
-		{
-			TRACE_ERROR("It is not an actuator!");
-			return	false;
-		}
-
-		Date	time_of_expire = 0;
-		if (!GetValue(_node, TITLE_NAME_TIME_OF_EXPIRE, time_of_expire, true))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
-
-		std::string	value = 0;
-		if (!GetValue(_node, TITLE_NAME_VALUE, value))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
-	
-		if (actuator->Set(value))
-		{
-			AddEPDataToMessage(_reply, endpoint);	
-		}
-	}
-	else if (_node.type() == JSON_ARRAY)
-	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
-		{
-			RCSSetData(*it, _reply);
-		}
-	}
-	else
-	{
-		TRACE_ERROR("Invalid _message fromat!");
-		return	false;
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::RCSConfirmData(JSONNode& _node, std::string& _req_type)
-{
-	if (_node.type() == JSON_NODE)
-	{
-		std::string	id;
-
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
-
-		if (_req_type == MSG_TYPE_RCS_REPORT)
-		{
-			time_t		last_time;
-			Endpoint*	endpoint = GetEndpoint(id);
-			if (endpoint == NULL)
-			{
-				TRACE_ERROR("Object[" << id << "] not found!");
-				return	false;
-			}
-
-			if (!GetValue(_node, TITLE_NAME_LAST_TIME, last_time))
-			{
-				TRACE_ERROR("Invalid _message fromat!");
-				TRACE_ERROR("Node : " << _node.write_formatted());
-				return	false;
-			}
-
-			endpoint->SetLastReportTime(Date(last_time));
-			TRACE_INFO("The data for the endpoint[" << id << "] has been transferred.");
-		}
-	}
-	else if (_node.type() == JSON_ARRAY)
-	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
-		{
-			RCSConfirmEndpoint(*it, _req_type);
-		}
-	}
-	else
-	{
-		TRACE_ERROR("Invalid _message fromat!");
-		return	false;
-	}
-
-	return	false;
-}
-
-bool	ObjectManager::AddNodeToMessage(JSONNode& _payload, Node* _node, Properties::Fields const& _fields)
-{
-	if (dynamic_cast<Gateway *>(_node))
-	{
-		return	AddGatewayToMessage(_payload, dynamic_cast<Gateway*>(_node), _fields);
-	}
-	else if (dynamic_cast<Device *>(_node))
-	{
-		return	AddDeviceToMessage(_payload, dynamic_cast<Device*>(_node), _fields);
-	}
-	else if (dynamic_cast<Endpoint*>(_node))
-	{
-		return	AddEndpointToMessage(_payload, dynamic_cast<Endpoint*>(_node), _fields);
-	}
-	
-	TRACE_ERROR("Invalid node");
-
-	return	false;
-}
-
-bool	ObjectManager::AddGatewayToMessage(JSONNode& _payload, Gateway* _gateway, Properties::Fields const& _fields)
-{
-	auto it = _payload.find(TITLE_NAME_GATEWAY);
-	if (it != _payload.end())
-	{
-		if (it->type() == JSON_NODE)
-		{
-			JSONNode	gateway_array(JSON_ARRAY);		
-
-			gateway_array.set_name(TITLE_NAME_GATEWAY);
-			gateway_array.push_back(*it);
-
-			JSONNode	properties;
-			_gateway->GetProperties(properties, _fields);
-
-			gateway_array.push_back(properties);
-
-			_payload.erase(it);
-
-			_payload.push_back(gateway_array);
-		}
-		else if (it->type() == JSON_ARRAY)
-		{
-			JSONNode	properties;
-
-			_gateway->GetProperties(properties, _fields);
-			it->push_back(properties);
-		}
-	}
-	else
-	{
-		JSONNode	properties;
-		_gateway->GetProperties(properties, _fields);
-
-		properties.set_name(TITLE_NAME_GATEWAY);
-		_payload.push_back(properties);
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::AddGatewayToMessage(JSONNode& _payload, std::string const& _id)
-{
-	auto it = _payload.find(TITLE_NAME_GATEWAY);
-	if (it != _payload.end())
-	{
-		if (it->type() == JSON_NODE)
-		{
-			JSONNode	gateway_array(JSON_ARRAY);		
-
-			gateway_array.set_name(TITLE_NAME_GATEWAY);
-			gateway_array.push_back(*it);
-
-			JSONNode	node;
-			node.push_back(JSONNode(TITLE_NAME_ID, _id));
-			gateway_array.push_back(node);
-
-			_payload.erase(it);
-
-			_payload.push_back(gateway_array);
-		}
-		else if (it->type() == JSON_ARRAY)
-		{
-			JSONNode	node;
-
-			node.push_back(JSONNode(TITLE_NAME_ID, _id));
-			it->push_back(node);
-		}
-	}
-	else
-	{
-		JSONNode	node;
-		
-		node.push_back(JSONNode(TITLE_NAME_ID, _id));	
-		node.set_name(TITLE_NAME_GATEWAY);
-		_payload.push_back(JSONNode(node));
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::AddDeviceToMessage(JSONNode& _payload, Device* _device, Properties::Fields const& _fields)
-{
-	auto it = _payload.find(TITLE_NAME_DEVICE);
-	if (it != _payload.end())
-	{
-		if (it->type() == JSON_NODE)
-		{
-			JSONNode	device_array(JSON_ARRAY);		
-
-			device_array.set_name(TITLE_NAME_DEVICE);
-			device_array.push_back(*it);
-
-			JSONNode	properties;
-			_device->GetProperties(properties, _fields);
-
-			device_array.push_back(properties);
-
-			_payload.erase(it);
-
-			_payload.push_back(device_array);
-		}
-		else if (it->type() == JSON_ARRAY)
-		{
-			JSONNode	properties;
-			_device->GetProperties(properties, _fields);
-
-			it->push_back(properties);
-		}
-	}
-	else
-	{
-		JSONNode	properties;
-		_device->GetProperties(properties, _fields);
-		properties.set_name(TITLE_NAME_DEVICE);
-		_payload.push_back(properties);
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::AddDeviceToMessage(JSONNode& _payload, std::string const& _id)
-{
-	auto it = _payload.find(TITLE_NAME_DEVICE);
-	if (it != _payload.end())
-	{
-		if (it->type() == JSON_NODE)
-		{
-			JSONNode	device_array(JSON_ARRAY);		
-
-			device_array.set_name(TITLE_NAME_DEVICE);
-			device_array.push_back(*it);
-
-			JSONNode	node;
-			node.push_back(JSONNode(TITLE_NAME_ID, _id));
-			device_array.push_back(node);
-
-			_payload.erase(it);
-
-			_payload.push_back(device_array);
-		}
-		else if (it->type() == JSON_ARRAY)
-		{
-			JSONNode	node;
-			node.push_back(JSONNode(TITLE_NAME_ID, _id));
-			it->push_back(node);
-		}
-	}
-	else
-	{
-		JSONNode	node;
-		
-		node.push_back(JSONNode(TITLE_NAME_ID, _id));	
-		node.set_name(TITLE_NAME_DEVICE);
-		_payload.push_back(node);
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::AddEndpointToMessage(JSONNode& _payload, Endpoint* _endpoint, Properties::Fields const& _fields)
-{
-	auto it = _payload.find(TITLE_NAME_ENDPOINT);
-	if (it != _payload.end())
-	{
-		if (it->type() == JSON_NODE)
-		{
-			JSONNode	endpoint_array(JSON_ARRAY);		
-			endpoint_array.set_name(TITLE_NAME_ENDPOINT);
-			endpoint_array.push_back(*it);
-
-			JSONNode	properties;
-			_endpoint->GetProperties(properties, _fields);
-			endpoint_array.push_back(properties);
-
-			_payload.erase(it);
-
-			_payload.push_back(endpoint_array);
-		}
-		else if (it->type() == JSON_ARRAY)
-		{
-			JSONNode	properties;
-			_endpoint->GetProperties(properties, _fields);
-
-			it->push_back(properties);
-		}
-	}
-	else
-	{
-		JSONNode	properties;
-		_endpoint->GetProperties(properties, _fields);
-
-		properties.set_name(TITLE_NAME_ENDPOINT);
-		_payload.push_back(properties);
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::AddEndpointToMessage(JSONNode& _payload, std::string const& _id)
-{
-	auto it = _payload.find(TITLE_NAME_ENDPOINT);
-	if (it != _payload.end())
-	{
-		if (it->type() == JSON_NODE)
-		{
-			JSONNode	endpoint_array(JSON_ARRAY);		
-
-			endpoint_array.set_name(TITLE_NAME_ENDPOINT);
-			endpoint_array.push_back(*it);
-
-			JSONNode	node;
-
-			node.push_back(JSONNode(TITLE_NAME_ID, _id));
-			endpoint_array.push_back(node);
-
-			_payload.erase(it);
-
-			_payload.push_back(endpoint_array);
-		}
-		else if (it->type() == JSON_ARRAY)
-		{
-			JSONNode node;
-			
-			node.push_back(JSONNode(TITLE_NAME_ID, _id));
-			it->push_back(node);
-		}
-	}
-	else
-	{
-		JSONNode	node;
-		
-		node.push_back(JSONNode(TITLE_NAME_ID, _id));	
-		node.set_name(TITLE_NAME_ENDPOINT);
-		_payload.push_back(node);
-	}
-
-	return	true;
-}
-
-bool	ObjectManager::AddEPDataToMessage(JSONNode& _payload, Endpoint* _ep)
-{
-	JSONNode	node;
-
-	Endpoint::ValueList value_list;
-
-	TRACE_INFO("Add EP Data!");
-	if (!_ep->GetUnreportedValueList(value_list))
-	{
-		TRACE_WARN("Failed to get unreported value list.");
-		return	false;
-	}
-
-	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
-	node.push_back(JSONNode(TITLE_NAME_COUNT, value_list.size()));
-
-	JSONNode	array(JSON_ARRAY);
-	for(auto it = value_list.begin(); it != value_list.end() ; it++)
-	{
-		JSONNode	item;
-		
-		item.push_back(JSONNode(TITLE_NAME_TIME, time_t((*it)->GetDate())));
-		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
-
-		array.push_back(item);
-	}
-
-	array.set_name(TITLE_NAME_VALUE);
-	node.push_back(array);
-
-	auto it = _payload.find(TITLE_NAME_DATA);
-	if (it != _payload.end())
-	{
-		if (it->type() == JSON_NODE)
-		{
-			JSONNode	endpoint_array(JSON_ARRAY);		
-
-			endpoint_array.set_name(TITLE_NAME_DATA);
-			endpoint_array.push_back(*it);
-			endpoint_array.push_back(node);
-
-			_payload.erase(it);
-
-			_payload.push_back(endpoint_array);
-		}
-		else if (it->type() == JSON_ARRAY)
-		{
-			it->push_back(node);
-		}
-	}
-	else
-	{
-		node.set_name(TITLE_NAME_DATA);
-		_payload.push_back(node);
-	}
-
-	return	true;	
-}
-
-bool	ObjectManager::AddEPDataToMessage(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound)
-{
-	JSONNode	node;
-	Endpoint::ValueList value_list;
-
-	if (!_ep->GetUnreportedValueList(value_list))
-	{
-		TRACE_WARN("Failed to get unreported value list.");
-		return	false;
-	}
-
-	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
-	node.push_back(JSONNode(TITLE_NAME_COUNT, value_list.size()));
-
-	JSONNode	array(JSON_ARRAY);
-	for(auto it = value_list.begin(); it != value_list.end() ; it++)
-	{
-		JSONNode	item;
-		
-		item.push_back(JSONNode(TITLE_NAME_TIME, time_t((*it)->GetDate())));
-		item.push_back(JSONNode(TITLE_NAME_VALUE, std::string(*(*it))));
-
-		array.push_back(item);
-	}
-	array.set_name(TITLE_NAME_VALUE);
-
-	node.push_back(array);
-
-	auto it = _payload.find(TITLE_NAME_DATA);
-	if (it != _payload.end())
-	{
-		if (it->type() == JSON_NODE)
-		{
-			JSONNode	endpoint_array(JSON_ARRAY);		
-
-			endpoint_array.set_name(TITLE_NAME_DATA);
-			endpoint_array.push_back(*it);
-			endpoint_array.push_back(node);
-
-			_payload.erase(it);
-
-			_payload.push_back(endpoint_array);
-		}
-		else if (it->type() == JSON_ARRAY)
-		{
-			it->push_back(node);
-		}
-	}
-	else
-	{
-		node.set_name(TITLE_NAME_DATA);
-		_payload.push_back(node);
-	}
-
-	return	true;
-
-}
-#endif

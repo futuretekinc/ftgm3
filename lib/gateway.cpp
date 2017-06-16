@@ -9,6 +9,8 @@
 #include "gateway_gen.h"
 #include "object_manager.h"
 #include "utils.h"
+#include "json.h"
+#include "exception.h"
 
 Gateway::Gateway(ObjectManager& _manager, ValueType const& _type)
 :	Node(_manager, _type)
@@ -19,53 +21,6 @@ Gateway::~Gateway()
 {
 }
 
-#if 0
-bool	Gateway::GetProperties(Properties& _properties, Properties::Fields const& _fields) 
-{
-	if (Node::GetProperties(_properties, _fields))
-	{
-#if 0
-		if(_fields.child)
-		{
-			PropertiesList	device_properties_list;
-
-			for(auto it = device_id_list_.begin() ; it != device_id_list_.end() ; it++)
-			{
-				Properties	device_properties;
-
-				Device *device = manager_.GetDevice(*it);
-				if (device != NULL)
-				{
-					device->GetProperties(device_properties, _fields);	
-					device_properties_list.Append(device_properties);	
-				}
-				else
-				{
-					TRACE_INFO("Device[" << *it << "] not found!");	
-				}
-			}
-
-			if (device_properties_list.size() != 0)
-			{
-				_properties.Append(Property(TITLE_NAME_DEVICE, device_properties_list));
-			}
-			else
-			{
-				TRACE_INFO("Device list is null!");	
-			}
-		}
-#endif
-		return	true;
-	}
-
-	return	false;
-}
-
-bool	Gateway::GetProperties(JSONNode& _properties, Properties::Fields const& _fields)
-{
-	return	Node::GetProperties(_properties, _fields);
-}
-#endif
 bool	Gateway::SetProperty(Property const& _property, Properties::Fields const& _fields)
 {
 	bool	ret_value = true;
@@ -185,22 +140,7 @@ Gateway::operator JSONNode()
 	JSONNode	properties;
 
 	Object::GetProperties(properties);
-#if 0
-	PropertiesList	properties_list;
 
-	for(auto it = device_id_list_.begin(); it != device_id_list_.end() ; it++)
-	{
-		Properties	device_properties;
-		Device*	device = manager_.GetDevice(std::string(*it));
-		if (device != NULL)
-		{
-			device->GetProperties(device_properties);
-			properties_list.Append(device_properties);
-		}
-	}
-
-	properties.Append(Property(TITLE_NAME_DEVICE, properties_list));
-#endif
 	return	properties;
 }
 
@@ -280,6 +220,30 @@ Gateway*	Gateway::Create(ObjectManager& _manager, Properties const& _properties)
 	return	gateway;
 }
 
+Gateway*	Gateway::Create(ObjectManager& _manager, JSONNode const& _properties)
+{
+	Gateway*	gateway = NULL;
+
+	try
+	{
+		std::string	type = JSONNodeGetType(_properties);
+
+		if (type == std::string(GatewayGen::Type()))
+		{
+			gateway = new GatewayGen(_manager, _properties);
+		}
+		else
+		{
+			TRACE_ERROR2(NULL, "Failed to create gateway. Gateway type[" << type << "] is not supported!");
+		}
+	}
+	catch(ObjectNotFound& e)
+	{
+		TRACE_ERROR2(NULL, "Failed to create gateway. Gateway type is invalid!");
+	}
+	return	gateway;
+}
+
 const	ValueType&	Gateway::Type()
 {
 	static	ValueType	type_("gateway");
@@ -308,3 +272,8 @@ bool	Gateway::GetPropertyFieldList(std::list<std::string>& _field_list)
 	return	true;
 }
 
+
+bool	Gateway::IsIncludeIn(Object *_object)
+{
+	return	dynamic_cast<Gateway*>(_object) != NULL;
+}

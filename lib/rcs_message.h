@@ -48,6 +48,8 @@ public:
 			JSONNode		GetEndpoint(uint32_t index);
 
 			bool			AddEPData(JSONNode const& _epdata);
+			uint32_t		GetEPDataCount();
+			JSONNode		GetEPData(uint32_t index);
 
 
 

@@ -175,7 +175,7 @@ bool	TCPSession::Send(std::string const& _message)
 		return	false;
 	}
 	TRACE_INFO("Packet Sent : " << _message.size());
-	TRACE_INFO(_message);
+//	TRACE_INFO(_message);
 
 	return	true;
 }

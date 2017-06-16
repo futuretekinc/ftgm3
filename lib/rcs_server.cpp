@@ -16,12 +16,13 @@
 #include "endpoint_actuator.h"
 #include "utils.h"
 #include "json.h"
+#include "exception.h"
 
 /////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////
 RCSServer::RCSServer(ObjectManager* _manager)
-: TCPServer(_manager)
+: TCPServer(_manager), max_data_get_count_(DEFAULT_CONST_MAX_DATA_GET_COUNT)
 {
 	trace.SetClassName(GetClassName());
 	enable_	= true;
@@ -359,21 +360,61 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 			std::string	id;
 
 			id = JSONNodeGetID(*it);
+
+			result.push_back(JSONNode(TITLE_NAME_ID, id));
+
 			Endpoint*	endpoint= manager_->GetEndpoint(id);
 			if (endpoint == NULL)
 			{
 				TRACE_ERROR("Object[" << id << "not found!");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else if (!endpoint->SetProperties(*it))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 			}
 			else
 			{
-				endpoint->GetProperties(result, PROPERTY_ALL);
+				try
+				{
+					std::string	value = JSONNodeGetValue(*it);
+					time_t	expire_time	= JSONNodeGetTimeOfExpire(*it);
+					time_t	current_time= time_t(Date::GetCurrent());	
+
+					if (current_time > expire_time)
+					{
+						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_TIME_EXPIRED));
+					}
+					else
+					{
+						EndpointActuator*	actuator = dynamic_cast<EndpointActuator*>(endpoint);
+
+						if (actuator == NULL)
+						{
+							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
+						}
+						else
+						{
+							TRACE_ENTRY;
+							if (actuator->SetValue(value))
+							{
+								result.push_back(JSONNode(TITLE_NAME_VALUE, actuator->GetValue()));
+							}
+							else
+							{
+								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
+							}
+						}
+					}
+
+				}
+				catch(ObjectNotFound& e)
+				{
+					if (!endpoint->SetProperties(*it))
+					{
+						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
+					}
+					else
+					{
+						endpoint->GetProperties(result, PROPERTY_ALL);
+					}
+				}
 			}
 
 			response.AddEndpoint(result);
@@ -385,6 +426,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 			std::string	value;
 			time_t	time_of_expire;
 
+			TRACE_ENTRY;
 			try
 			{
 				id = JSONNodeGetID(*it);
@@ -400,6 +442,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				}
 				else
 				{
+					TRACE_ENTRY;
 					EndpointActuator* actuator = dynamic_cast<EndpointActuator*>(endpoint);
 					if (actuator == NULL)
 					{
@@ -409,7 +452,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 					}
 					else
 					{
-						if (actuator->Set(value))
+						if (actuator->SetValue(value))
 						{
 							result.push_back(JSONNode(TITLE_NAME_ID, id));
 							result.push_back(JSONNode(TITLE_NAME_VALUE, value));
@@ -503,6 +546,60 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 
 			response.AddEndpoint(result);
 		}
+		else if (it->name() == TITLE_NAME_DATA)
+		{
+			JSONNode	result;
+			std::string	id = JSONNodeGetID(*it);
+
+			Endpoint*	endpoint = manager_->GetEndpoint(id);
+			if (endpoint == NULL)
+			{
+				TRACE_ERROR("The endpoint[" << id << "] not found.");
+				result.push_back(JSONNode(TITLE_NAME_ID, id));
+				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
+			}
+			else
+			{	
+				uint32_t	count = JSONNodeGetCount(*it, 0);
+				time_t		start_time = JSONNodeGetStartTime(*it, 0);
+				time_t		end_time = JSONNodeGetEndTime(*it, time_t(Date::GetCurrent()));
+
+				if (count > max_data_get_count_)
+				{
+					count = max_data_get_count_;	
+				}
+
+				Endpoint::ValueMap value_map(count);
+
+				if (count == 0)
+				{
+					endpoint->GetDataForPeriod(start_time, end_time, value_map);
+				}
+				else
+				{
+					endpoint->GetData(count, value_map);
+				}
+
+				JSONNode	array(JSON_ARRAY);
+				for(auto value_it = value_map.begin() ; value_it != value_map.end() ; value_it++)
+				{
+					JSONNode	value;
+
+					value.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(value_it->first))));
+					value.push_back(JSONNode(TITLE_NAME_VALUE, value_it->second));
+
+					array.push_back(value);
+				}
+
+				result.push_back(JSONNode(TITLE_NAME_ID, id));
+				result.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
+				array.set_name(TITLE_NAME_VALUE);
+				result.push_back(array);
+
+				response.AddEPData(result);
+			}
+
+		}
 	}
 
 	_response = response;
@@ -529,7 +626,7 @@ bool	RCSServer::List(RCSMessage& _request, RCSMessage& _response)
 				{
 					JSONNode	result;
 
-					(*gateway)->GetProperties(result, PROPERTY_ALL);
+					(*gateway)->GetProperties(result, PROPERTY_ID);
 
 					response.AddGateway(result);
 				}
@@ -551,7 +648,7 @@ bool	RCSServer::List(RCSMessage& _request, RCSMessage& _response)
 				{
 					JSONNode	result;
 
-					(*device)->GetProperties(result, PROPERTY_ALL);
+					(*device)->GetProperties(result, PROPERTY_ID);
 
 					response.AddDevice(result);
 				}
@@ -573,7 +670,7 @@ bool	RCSServer::List(RCSMessage& _request, RCSMessage& _response)
 				{
 					JSONNode	result;
 
-					(*endpoint)->GetProperties(result, PROPERTY_ALL);
+					(*endpoint)->GetProperties(result, PROPERTY_ID);
 
 					response.AddEndpoint(result);
 				}
@@ -901,7 +998,7 @@ bool	RCSServer::ConfirmData(JSONNode& _node, std::string& _req_type)
 			return	false;
 		}
 
-		endpoint->SetLastReportTime(Date(last_time));
+		endpoint->SetLastConfirmTime(Date(last_time));
 		TRACE_INFO("The data for the endpoint[" << id << "] has been transferred.");
 	}
 

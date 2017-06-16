@@ -24,3 +24,4 @@ const 	ValueType 	EndpointSensorTemperature::Type()
 {
 	return	ValueType(NODE_TYPE_EP_S_TEMPERATURE);
 }
+

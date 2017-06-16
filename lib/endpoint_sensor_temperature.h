@@ -12,6 +12,10 @@ public:
 
 			std::string		GetClassName();
 	const 	ValueType 		Type();
+
+
+protected:
+
 };
 
 #endif

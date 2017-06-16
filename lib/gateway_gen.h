@@ -7,6 +7,7 @@ class	GatewayGen : public Gateway
 {
 public:
 	GatewayGen(ObjectManager& _manager, Properties const& _properties);
+	GatewayGen(ObjectManager& _manager, JSONNode const& _properties);
 
 	virtual	bool		IsIncludedIn(ValueType const& _type);
 

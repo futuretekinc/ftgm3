@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 #include <cstring>
 #include <mutex>
 #include <unistd.h>
@@ -17,6 +18,8 @@ using namespace std;
 
 extern	Shell::Command*	object_manager_shell_commands[];
 extern	int	object_manager_shell_command_count;
+
+void	LoadConfig(std::string _file_name);
 
 int main
 (
@@ -34,6 +37,8 @@ int main
 	Date	date;
 
 	trace_master.SetEnable(true);
+
+	LoadConfig(config_file_name);
 
 	TRACE_INFO(setw(80) << std::setfill('#') << "");
 	TRACE_INFO("Start : " << program_invocation_short_name << " - " << date);
@@ -66,3 +71,34 @@ int main
 }
 
 
+void	LoadConfig(std::string _file_name)
+{
+	std::fstream	fs(_file_name.c_str(), std::fstream::in);
+	if (fs)
+	{
+		fs.seekg (0, fs.end);
+		int length = fs.tellg();
+		fs.seekg (0, fs.beg);
+
+		char * buffer = new char [length + 1];
+		fs.read(buffer, length);
+		buffer[length] = 0;
+		fs.close();
+
+		if (libjson::is_valid(buffer))
+		{
+			JSONNode	json = libjson::parse(buffer);
+
+
+			for(auto it = json.begin() ; it != json.end() ; it++)
+			{
+				if (it->name() == TITLE_NAME_TRACE)
+				{
+					trace_master.Load(*it);
+				}
+			}
+		}
+		delete buffer;
+	}
+
+}

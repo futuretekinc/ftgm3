@@ -3,6 +3,8 @@
 #include "device_sim.h"
 #include "device_snmp.h"
 #include "trace.h"
+#include "endpoint_sensor.h"
+#include "endpoint_actuator.h"
 
 DeviceSIM::DeviceSIM(ObjectManager& _manager)
 : DeviceSNMP(_manager, DeviceSIM::Type(), "SIM-E")
@@ -16,10 +18,23 @@ DeviceSIM::DeviceSIM(ObjectManager& _manager, Properties const& _properties)
 	trace.SetClassName(GetClassName());
 }
 
+DeviceSIM::DeviceSIM(ObjectManager& _manager, JSONNode const& _properties)
+: DeviceSNMP(_manager, DeviceSIM::Type(), _properties)
+{
+	trace.SetClassName(GetClassName());
+}
+
 DeviceSIM::DeviceSIM(ObjectManager& _manager, ValueIP const& _ip)
 : DeviceSNMP(_manager, DeviceSIM::Type(), "SIM-E",  _ip)
 {
 	trace.SetClassName(GetClassName());
+}
+
+const	ValueType&	DeviceSIM::Type()
+{
+	static	ValueType	type_("d_sim");
+
+	return	type_;
 }
 
 bool		DeviceSIM::IsIncludedIn(ValueType const& _type)
@@ -66,10 +81,21 @@ bool	DeviceSIM::Attach(ValueID const& _endpoint_id)
 		return	false;
 	}
 
-	auto endpoint_it = endpoint_table_.find(_endpoint_id);
-	if (endpoint_it == endpoint_table_.end())
+	if (dynamic_cast<EndpointSensor*>(endpoint))
 	{
-		endpoint_table_[_endpoint_id] = index;
+		auto it = endpoint_sensor_value_table_.find(_endpoint_id);
+		if (it == endpoint_sensor_value_table_.end())
+		{
+			endpoint_sensor_value_table_[_endpoint_id] = index * 10;
+		}
+	}
+	else if (dynamic_cast<EndpointActuator*>(endpoint))
+	{
+		auto it = endpoint_actuator_value_table_.find(_endpoint_id);
+		if (it == endpoint_actuator_value_table_.end())
+		{
+			endpoint_actuator_value_table_[_endpoint_id] = ENDPOINT_ACTUATOR_DO_OFF;
+		}
 	}
 
 	return	Device::Attach(_endpoint_id);
@@ -98,47 +124,110 @@ bool	DeviceSIM::Detach(ValueID const& _endpoint_id)
 		return	false;
 	}
 
-	auto endpoint_it = endpoint_table_.find(_endpoint_id);
-	if (endpoint_it == endpoint_table_.end())
+	auto it = endpoint_sensor_value_table_.find(_endpoint_id);
+	if (it != endpoint_sensor_value_table_.end())
 	{
-		TRACE_INFO("The device[" << _endpoint_id << "] is not attached.");
-		return	false;
+		endpoint_sensor_value_table_.erase(it);
+	}
+	else 
+	{
+		auto it = endpoint_actuator_value_table_.find(_endpoint_id);
+		if (it != endpoint_actuator_value_table_.end())
+		{
+			endpoint_actuator_value_table_.erase(it);
+		}
+		else
+		{
+			TRACE_INFO("The device[" << _endpoint_id << "] is not attached.");
+			return	false;
+		}
 	}
 
-	endpoint_table_.erase(endpoint_it);
 
 	return	Device::Detach(_endpoint_id);
 }
 
-bool	DeviceSIM::ReadValue(std::string const& _endpoint_id, Value* _value)
+bool	DeviceSIM::ReadValue(std::string const& _endpoint_id, std::string& _value)
 {
-	Endpoint*	endpoint = manager_.GetEndpoint(_endpoint_id);
-	if (endpoint == NULL)
+	try
 	{
-		TRACE_ERROR("The endpoint[" << _endpoint_id << "] is not attached");
-		return	false;	
-	}
+		Endpoint*	endpoint = manager_.GetEndpoint(_endpoint_id);
+		if (endpoint == NULL)
+		{
+			TRACE_ERROR("The endpoint[" << _endpoint_id << "] is not attached");
+			return	false;	
+		}
 
-	auto it = endpoint_table_.find(_endpoint_id);
-	if (it == endpoint_table_.end())
+		if (dynamic_cast<EndpointSensor*>(endpoint))
+		{
+			auto it = endpoint_sensor_value_table_.find(_endpoint_id);
+			if (it == endpoint_sensor_value_table_.end())
+			{
+				TRACE_ERROR("The endpoint[" << _endpoint_id << "] has been abnormally attached");
+				return	false;	
+			}
+
+			it->second = it->second + ((rand() % 20000) - 10000) / 10000.0;
+
+			_value = std::to_string(it->second);
+		}
+		else if (dynamic_cast<EndpointActuator*>(endpoint))
+		{
+			auto it = endpoint_actuator_value_table_.find(_endpoint_id);
+			if (it == endpoint_actuator_value_table_.end())
+			{
+				TRACE_ERROR("The endpoint[" << _endpoint_id << "] has been abnormally attached");
+				return	false;	
+			}
+
+			_value = it->second;
+		}
+		else
+		{
+			TRACE_ERROR("Invalid endpoint type!");
+			return	false;	
+		}
+	}
+	catch(std::exception& e)
 	{
-		TRACE_ERROR("The endpoint[" << _endpoint_id << "] has been abnormally attached");
-		return	false;	
+		TRACE_ERROR("Exception : " << e.what());	
 	}
-
-	ValueFloat	*value_float = dynamic_cast<ValueFloat*>(_value);
-	if (value_float != NULL)
-	{
-		value_float->Set((rand() % 10000) / 100.0);
-	}
-
 	return	true;
 }
 
-const	ValueType&	DeviceSIM::Type()
+bool	DeviceSIM::WriteValue(std::string const& _endpoint_id, std::string const& _value)
 {
-	static	ValueType	type_("d_sim");
+	try
+	{
+		Endpoint*	endpoint = manager_.GetEndpoint(_endpoint_id);
+		if (endpoint == NULL)
+		{
+			TRACE_ERROR("The endpoint[" << _endpoint_id << "] is not attached");
+			return	false;	
+		}
 
-	return	type_;
+		if (dynamic_cast<EndpointActuator*>(endpoint))
+		{
+			auto it = endpoint_actuator_value_table_.find(_endpoint_id);
+			if (it == endpoint_actuator_value_table_.end())
+			{
+				TRACE_ERROR("The endpoint[" << _endpoint_id << "] has been abnormally attached");
+				return	false;	
+			}
+
+			TRACE_INFO("The endpoint[" << _endpoint_id << "] is set to " << _value);
+			it->second = _value;
+		}
+		else
+		{
+			TRACE_ERROR("Endpoint Sensor is not supported to set!");
+		}
+
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR("Exception : " << e.what());	
+	}
+	return	true;
 }
 

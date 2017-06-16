@@ -9,6 +9,13 @@ GatewayGen::GatewayGen(ObjectManager& _manager, Properties const& _properties)
 	SetProperties(_properties, PROPERTY_ALL, true);
 }
 
+GatewayGen::GatewayGen(ObjectManager& _manager, JSONNode const& _properties)
+:	Gateway(_manager, GatewayGen::Type())
+{
+	trace.SetClassName(GetClassName());
+	SetProperties(_properties, PROPERTY_ALL, true);
+}
+
 bool	GatewayGen::IsIncludedIn(ValueType const& _type)
 {
 	if (_type == Type())

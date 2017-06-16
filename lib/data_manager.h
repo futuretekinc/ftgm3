@@ -22,6 +22,7 @@ public:
 			bool		IsExist(std::string const& _id);
 			uint32_t	GetCount();
 			bool		GetProperties(uint32_t _index, uint32_t _count, std::list<Properties>& _properties_list);
+			bool		GetProperties(uint32_t _index, uint32_t _count, JSONNode& _array);
 			bool		GetProperties(std::string const& _id, Properties& _properties);
 			bool		SetProperties(std::string const& _id, Properties& _properties);
 
@@ -35,6 +36,7 @@ public:
 			ValueTable(DataManager* _manager, std::string const& _endpoint_id);
 
 			bool	Add(Value const* _value);
+			bool	Add(time_t _time, std::string const& _value);
 
 		protected:
 			DataManager*	manager_;
@@ -52,6 +54,7 @@ public:
 	bool		IsGatewayExist(std::string const& _id);
 	uint32_t	GetGatewayCount();
 	bool		GetGatewayProperties(uint32_t _index, uint32_t _count, std::list<Properties>& _list);
+	bool		GetGatewayProperties(uint32_t _index, uint32_t _count, JSONNode& _list);
 	bool		GetGatewayProperties(std::string const& _id, Properties& _properties);
 	bool		SetGatewayProperties(std::string const& _id, Properties& _properties);
 
@@ -73,6 +76,7 @@ public:
 
 	ValueTable*	GetValueTable(std::string const& _endpoint_id);
 	bool		AddValue(std::string const& _endpoint_id, Value const* _value);
+	bool		AddValue(std::string const& _endpoint_id, time_t _time, std::string const& _value);
 
 private:
 	Table*		CreateTable(std::string const& _table_name, std::list<std::string>& field_list);

@@ -162,8 +162,8 @@ public:
 
 	bool	AppendType(std::string const& _type);
 
-	bool	AppendValueMin(ValueFloat const& _value);
-	bool	AppendValueMax(ValueFloat const& _value);
+	bool	AppendValueMin(std::string const& _value);
+	bool	AppendValueMax(std::string const& _value);
 
 	bool	AppendUnit(std::string const& _unit);
 	bool	AppendUpdateInterval(uint32_t _interval);
