@@ -1,6 +1,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "defined.h"
+#include "exception.h"
 #include "trace.h"
 #include "object_manager.h"
 #include "device.h"
@@ -11,7 +12,7 @@
 #include "json.h"
 
 ObjectManager::ObjectManager()
-: 	ActiveObject(), 
+: 	ProcessObject(), 
 	server_linker_(this), 
 	rcs_server_(this),
 	data_manager_(DEFAULT_CONST_DB_FILE),
@@ -24,8 +25,8 @@ ObjectManager::ObjectManager()
 	trace.SetClassName(GetClassName());
 }
 
-ObjectManager::ObjectManager(ValueID const& _id)
-: 	ActiveObject(_id), 
+ObjectManager::ObjectManager(std::string const& _id)
+: 	ProcessObject(_id), 
 	server_linker_(this), 
 	rcs_server_(this),
 	data_manager_(DEFAULT_CONST_DB_FILE),
@@ -75,134 +76,104 @@ bool	ObjectManager::	SetEndpointReportInterval(Time const& _time)
 	return	true;
 }
 
-bool ObjectManager::LoadFromFile(std::string const&  _file_name)
-{
-	bool	ret_value = false;
-
-	std::fstream	fs(_file_name, std::fstream::in);
-	if (fs)
-	{
-		fs.seekg (0, fs.end);
-		int length = fs.tellg();
-		fs.seekg (0, fs.beg);
-
-		char * buffer = new char [length + 1];
-		fs.read(buffer, length);
-		buffer[length] = 0;
-		fs.close();
-
-		ret_value = Load(buffer);
-
-		delete buffer;
-	}
-
-	return	ret_value;
-}
-
-bool ObjectManager::Load(const char *_buffer)
-{
-	if (!libjson::is_valid(_buffer))
-	{
-		TRACE_ERROR("Invalid json format");
-		TRACE_ERROR(_buffer);
-		return	false;
-	}
-
-	JSONNode	json = libjson::parse(_buffer);
-
-	return	Load(json);
-}
-
-bool	ObjectManager::Load(JSONNode const& _json)
+bool	ObjectManager::SetProperty(JSONNode const& _property, bool _check)
 {
 	bool	ret_value = true;
-
-	if ((_json.name() == TITLE_NAME_OBJECT_MANAGER) || (_json.name().size() == 0))
+	
+	if (_property.name() == TITLE_NAME_ID)
 	{
-		if (_json.type() == JSON_NODE)
+		if (!_check)
 		{
-			for(auto it = _json.begin(); it != _json.end() ; it++)
+			id_ = _property.as_string();
+		}
+	}
+	else if (_property.name() == TITLE_NAME_NAME)
+	{
+		if (!_check)
+		{
+			name_ = _property.as_string();
+		}
+	}
+	else if (_property.name() == TITLE_NAME_AUTO_START)
+	{
+		if ((_property.as_string() == "yes") ||  (_property.as_string() == "on"))
+		{
+			if (!_check)
 			{
-				ret_value = Load(*it);
-				if(ret_value == false)
-				{
-					TRACE_ERROR("Failed to load field[" << it->name() << "]");
-					break;
-				}
+				auto_start_ = true;
 			}
 		}
-		else
+		else if ((_property.as_string() == "no") ||  (_property.as_string() == "off"))
 		{
-			TRACE_ERROR("Failed to load because json format is invalid.");
-			ret_value = false;	
-		}
-	}
-	else if (_json.name() == TITLE_NAME_ID)
-	{
-		id_ = _json.as_string();
-	}
-	else if (_json.name() == TITLE_NAME_NAME)
-	{
-		name_ = _json.as_string();
-	}
-	else if (_json.name() == TITLE_NAME_AUTO_START)
-	{
-		if ((_json.as_string() == "yes") ||  (_json.as_string() == "on"))
-		{
-			auto_start_ = true;
-		}
-		else if ((_json.as_string() == "no") ||  (_json.as_string() == "off"))
-		{
-			auto_start_ = false;
-		}
-	}
-	else if (_json.name() == TITLE_NAME_ENDPOINT_REPORT_INTERVAL)
-	{
-		endpoint_report_interval_ = _json.as_int();
-	}
-	else if (_json.name() == TITLE_NAME_DEVICE)
-	{
-		if (_json.type() == JSON_ARRAY)
-		{
-			for(auto it = _json.begin(); it != _json.end() ; it++)
+			if (!_check)
 			{
-				Device* device = CreateDevice(*it);
+				auto_start_ = false;
+			}
+		}
+	}
+	else if (_property.name() == TITLE_NAME_ENDPOINT_REPORT_INTERVAL)
+	{
+		if (!_check)
+		{
+			endpoint_report_interval_ = _property.as_int();
+		}
+	}
+	else if (_property.name() == TITLE_NAME_DEVICE)
+	{
+		if (!_check)
+		{
+			if (_property.type() == JSON_ARRAY)
+			{
+				for(auto it = _property.begin(); it != _property.end() ; it++)
+				{
+					Device* device = CreateDevice(*it);
+					if (device == NULL)
+					{
+						ret_value = false;
+						break;
+					}
+				}
+			}
+			else if (_property.type() == JSON_NODE)
+			{
+				Device* device = CreateDevice(_property);
 				if (device == NULL)
 				{
 					ret_value = false;
-					break;
 				}
 			}
 		}
-		else if (_json.type() == JSON_NODE)
+	}
+	else if (_property.name() == TITLE_NAME_DATA_MANAGER)
+	{
+		if (_property.type() != JSON_NODE)
 		{
-			Device* device = CreateDevice(_json);
-			if (device == NULL)
-			{
-				ret_value = false;
-			}
+			THROW_INVALID_ARGUMENT("The " << _property.name() << " type must have node!");
 		}
+
+		ret_value = data_manager_.SetProperties(_property, _check, false);
 	}
-	else if (_json.name() == TITLE_NAME_DATA_MANAGER)
+	else if (_property.name() == TITLE_NAME_SERVER_LINKER)
 	{
-		ret_value = data_manager_.Load(_json);
+		if (_property.type() != JSON_NODE)
+		{
+			THROW_INVALID_ARGUMENT("The " << _property.name() << " type must have node!");
+		}
+
+		ret_value = server_linker_.SetProperties(_property, _check, false);
 	}
-	else if (_json.name() == TITLE_NAME_SERVER_LINKER)
+	else if (_property.name() == TITLE_NAME_RCS_SERVER)
 	{
-		ret_value = server_linker_.Load(_json);
-	}
-	else if (_json.name() == TITLE_NAME_RCS_SERVER)
-	{
-		ret_value = rcs_server_.Load(_json);
-	}
-	else if (_json.name() == TITLE_NAME_TRACE)
-	{
-		ret_value = trace_master.Load(_json);
+		if (_property.type() != JSON_NODE)
+		{
+			THROW_INVALID_ARGUMENT("The " << _property.name() << " type must have node!");
+		}
+
+		ret_value = rcs_server_.SetProperties(_property, _check, false);
 	}
 	else
 	{
-		TRACE_ERROR("Undefined field[" << _json.name() << "]");
-		ret_value = false;
+		ret_value = ProcessObject::SetProperty(_property, _check);
 	}
 
 	return	ret_value;
@@ -304,59 +275,6 @@ Gateway*		ObjectManager::CreateGateway(JSONNode const& _properties, bool from_db
 	return	gateway;
 }
 
-Gateway*		ObjectManager::CreateGateway(Properties const& _properties, bool from_db)
-{
-	Gateway*		gateway = NULL;
-
-	gateway = Gateway::Create(*this, _properties);
-	if (gateway != NULL)
-	{
-		if (!Attach(gateway))
-		{
-			delete gateway;	
-			return	NULL;
-		}
-
-		if (!from_db)
-		{
-			data_manager_.AddGateway(gateway);
-		}
-
-		gateway->ClearUpdatedProperties();
-
-		const Property*	device_property = _properties.Get(TITLE_NAME_DEVICE);
-		if (device_property)
-		{
-			const ValuePropertiesList* properties_list_value = dynamic_cast<const ValuePropertiesList*>(device_property->GetValue());
-			if (properties_list_value != NULL)
-			{
-				const PropertiesList& 	properties_list = properties_list_value->Get();
-				for(auto it = properties_list.begin(); it != properties_list.end() ; it++)
-				{
-					Properties properties(*it);
-
-					properties.Delete(TITLE_NAME_PARENT_ID);
-
-					properties.AppendParentID(gateway->GetID());
-
-					TRACE_INFO(properties);
-					Device* device = CreateDevice(properties);
-					if (device == NULL)
-					{
-						TRACE_ERROR("Failed to create device!");
-						break;
-					}
-				}
-			}
-
-		}
-
-		TRACE_INFO("The gateway[" << gateway->GetID() << "] created!");
-	}
-
-	return	gateway;
-}
-
 bool		ObjectManager::DestroyGateway(std::string const& _id)
 {
 	Gateway* gateway = GetGateway(_id);
@@ -388,7 +306,7 @@ uint32_t	ObjectManager::GetGatewayList(std::list<Gateway*>& _gateway_list)
 	return	_gateway_list.size();
 }
 
-uint32_t	ObjectManager::GetGatewayList(ValueType const& _type, std::list<Gateway*>& _gateway_list)
+uint32_t	ObjectManager::GetGatewayList(std::string const& _type, std::list<Gateway*>& _gateway_list)
 {
 	for(auto it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
 	{
@@ -444,61 +362,6 @@ Device*	ObjectManager::CreateDevice(JSONNode const& _properties, bool from_db)
 	return	device;
 }
 
-Device*		ObjectManager::CreateDevice(Properties const& _properties, bool from_db)
-{
-	Device*		device = NULL;
-
-	device = Device::Create(*this, _properties);
-	if (device != NULL)
-	{
-		Attach(device);	
-
-		if (!from_db)
-		{
-			data_manager_.AddDevice(device);
-		}
-
-		device->ClearUpdatedProperties();
-
-		const Property*	endpoint_property = _properties.Get(TITLE_NAME_ENDPOINT);
-		if (endpoint_property)
-		{
-			const ValuePropertiesList* properties_list_value = dynamic_cast<const ValuePropertiesList*>(endpoint_property->GetValue());
-			if (properties_list_value != NULL)
-			{
-				const PropertiesList& 	properties_list = properties_list_value->Get();
-				for(auto it = properties_list.begin(); it != properties_list.end() ; it++)
-				{
-					Properties properties(*it);
-
-					properties.Delete(TITLE_NAME_PARENT_ID);
-
-					properties.AppendParentID(device->GetID());
-
-					Endpoint* endpoint = CreateEndpoint(properties);
-					if (endpoint == NULL)
-					{
-						TRACE_ERROR("Failed to create endpoint!");
-						break;
-					}
-				}
-			}
-		}
-		TRACE_INFO("The device[" << device->GetID() << "] crated!");
-
-		Gateway*	gateway = GetGateway(device->GetParentID());
-		if (gateway != NULL)
-		{
-			if (!gateway->Attach(device->GetID()))
-			{
-				TRACE_ERROR("Failed to attach device[" << device->GetTraceName() << "]");
-			}
-		}
-	}
-
-	return	device;
-}
-
 bool		ObjectManager::DestroyDevice(std::string const& _id)
 {
 	Device* device = GetDevice(_id);
@@ -530,7 +393,7 @@ uint32_t	ObjectManager::GetDeviceList(std::list<Device*>& _device_list)
 	return	_device_list.size();
 }
 
-uint32_t	ObjectManager::GetDeviceList(ValueType const& _type, std::list<Device*>& _device_list)
+uint32_t	ObjectManager::GetDeviceList(std::string const& _type, std::list<Device*>& _device_list)
 {
 	for(auto it = device_map_.begin(); it != device_map_.end() ; it++)
 	{
@@ -557,17 +420,6 @@ Device*		ObjectManager::GetDevice(std::string const& _id)
 
 Endpoint*	ObjectManager::CreateEndpoint(JSONNode const& _properties, bool from_db)
 {
-	Properties	properties;
-
-	properties.Append(_properties);
-
-	return	CreateEndpoint(properties, from_db);
-}
-
-Endpoint*	ObjectManager::CreateEndpoint(Properties const& _properties, bool from_db)
-{
-	TRACE_INFO(_properties);
-
 	Endpoint*	endpoint = Endpoint::Create(*this, _properties);		
 	if (endpoint != NULL)
 	{
@@ -651,7 +503,7 @@ Endpoint*		ObjectManager::GetEndpoint(std::string const& _id)
 	return	NULL;
 }
 
-bool	ObjectManager::IDChanged(Node* _node, ValueID const& _old_id)
+bool	ObjectManager::IDChanged(Node* _node, std::string const& _old_id)
 {
 	if (dynamic_cast<Gateway*>(_node))
 	{
@@ -669,7 +521,7 @@ bool	ObjectManager::IDChanged(Node* _node, ValueID const& _old_id)
 	return	false;
 }
 
-bool	ObjectManager::IDChanged(Gateway* _gateway, ValueID const& _old_id)
+bool	ObjectManager::IDChanged(Gateway* _gateway, std::string const& _old_id)
 {
 	auto it = gateway_map_.find(std::string(_old_id));
 	if (it != gateway_map_.end())
@@ -683,7 +535,7 @@ bool	ObjectManager::IDChanged(Gateway* _gateway, ValueID const& _old_id)
 	return	false;
 }
 
-bool	ObjectManager::IDChanged(Device* _device, ValueID const& _old_id)
+bool	ObjectManager::IDChanged(Device* _device, std::string const& _old_id)
 {
 	auto it = device_map_.find(std::string(_old_id));
 	if (it != device_map_.end())
@@ -697,7 +549,7 @@ bool	ObjectManager::IDChanged(Device* _device, ValueID const& _old_id)
 	return	false;
 }
 
-bool	ObjectManager::IDChanged(Endpoint* _endpoint, ValueID const& _old_id)
+bool	ObjectManager::IDChanged(Endpoint* _endpoint, std::string const& _old_id)
 {
 	auto it = endpoint_map_.find(std::string(_old_id));
 	if (it != endpoint_map_.end())
@@ -736,11 +588,10 @@ bool	ObjectManager::UpdateProperties(Object* _object)
 
 bool	ObjectManager::UpdateProperties(Gateway* _gateway)
 {
-	Properties	properties;
+	JSONNode	properties;
+
 	if (_gateway->GetUpdatedProperties(properties))
 	{
-		properties.Delete(TITLE_NAME_ID);
-
 		if (!data_manager_.SetGatewayProperties(_gateway->GetID(), properties))
 		{
 			TRACE_ERROR("Failed to set gateway[" << _gateway->GetTraceName() << "] properties!");	
@@ -760,11 +611,10 @@ bool	ObjectManager::UpdateProperties(Gateway* _gateway)
 
 bool	ObjectManager::UpdateProperties(Device* _device)
 {
-	Properties	properties;
+	JSONNode	properties;
+
 	if (_device->GetUpdatedProperties(properties))
 	{
-		properties.Delete(TITLE_NAME_ID);
-
 		if (!data_manager_.SetDeviceProperties(_device->GetID(), properties))
 		{
 			TRACE_ERROR("Failed to set device[" << _device->GetTraceName() << "] properties!");	
@@ -784,11 +634,10 @@ bool	ObjectManager::UpdateProperties(Device* _device)
 
 bool	ObjectManager::UpdateProperties(Endpoint* _endpoint)
 {
-	Properties	properties;
+	JSONNode	properties;
+
 	if (_endpoint->GetUpdatedProperties(properties))
 	{
-		properties.Delete(TITLE_NAME_ID);
-
 		if (!data_manager_.SetEndpointProperties(_endpoint->GetID(), properties))
 		{
 			TRACE_ERROR("Failed to set endpoint[" << _endpoint->GetTraceName() << "] properties!");	
@@ -860,11 +709,11 @@ void	ObjectManager::Preprocess()
 
 		for(uint32_t i = 0 ; i < count ; i++)
 		{
-			std::list<Properties> properties_list;
+			JSONNode	properties_array;
 
-			if (data_manager_.GetDeviceProperties(i, 1, properties_list))
+			if (data_manager_.GetDeviceProperties(i, 1, properties_array))
 			{
-				for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
+				for(auto it = properties_array.begin() ; it != properties_array.end() ; it++)
 				{
 					Device*	device = CreateDevice(*it, true);
 					if (device == NULL)
@@ -884,35 +733,31 @@ void	ObjectManager::Preprocess()
 
 		for(uint32_t i = 0 ; i < count ; i++)
 		{
-			std::list<Properties> properties_list;
+			JSONNode properties_list;
 
 			if (data_manager_.GetEndpointProperties(i, 1, properties_list))
 			{
 				for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
 				{
-					const Property*	id_property = it->Get(TITLE_NAME_ID);
-					if (id_property != NULL)
+					Endpoint* endpoint = CreateEndpoint(*it, true);						
+					if (endpoint == NULL)
 					{
-						Endpoint* endpoint = CreateEndpoint(*it, true);						
-						if (endpoint == NULL)
-						{
-							TRACE_ERROR("Failed to create endpoint!");	
-						}
-						else
-						{
-							TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] created");	
+						TRACE_ERROR("Failed to create endpoint!");	
+					}
+					else
+					{
+						TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] created");	
 
-							Device* device = GetDevice(endpoint->GetParentID());
-							if (device != NULL)
+						Device* device = GetDevice(endpoint->GetParentID());
+						if (device != NULL)
+						{
+							if (device->Attach(endpoint->GetID()))
 							{
-								if (device->Attach(endpoint->GetID()))
-								{
-									TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] attached to [" << endpoint->GetParentID() << "]");
+								TRACE_INFO("The endpoint[" << endpoint->GetTraceName() << "] attached to [" << endpoint->GetParentID() << "]");
 
-								}
 							}
-
 						}
+
 					}
 				}
 			}
@@ -969,14 +814,14 @@ void	ObjectManager::Process()
 
 	}
 
-	ActiveObject::Process();
+	ProcessObject::Process();
 }
 
 void	ObjectManager::Postprocess()
 {
 	rcs_server_.Stop(true);
 	server_linker_.Stop();
-	ActiveObject::Postprocess();
+	ProcessObject::Postprocess();
 }
 
 bool	ObjectManager::Attach(Gateway* _gateway)
@@ -1150,7 +995,7 @@ bool	ObjectManager::OnMessage(Message* _base_message)
 
 	default:
 		{
-			return	ActiveObject::OnMessage(_base_message);
+			return	ProcessObject::OnMessage(_base_message);
 		}
 
 	}

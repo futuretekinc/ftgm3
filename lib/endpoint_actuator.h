@@ -6,7 +6,7 @@
 class	EndpointActuator : public Endpoint
 {
 public:
-	EndpointActuator(ObjectManager& _manager, ValueType const& _type);
+	EndpointActuator(ObjectManager& _manager, std::string const& _type);
 
 	static	bool	IsIncludeIn(Object *_object);
 };

@@ -3,16 +3,16 @@
 #include "endpoint_sensor_di.h"
 
 EndpointSensorDI::EndpointSensorDI(ObjectManager& _manager)
-: EndpointSensor(_manager, EndpointSensorDI::Type(), ENDPOINT_SENSOR_DI_UNIT, ENDPOINT_SENSOR_DI_MIN, ENDPOINT_SENSOR_DI_MAX)
+: EndpointSensorDiscrete(_manager, EndpointSensorDI::Type())
 {
 	trace.SetClassName(GetClassName());
 }
 
-EndpointSensorDI::EndpointSensorDI(ObjectManager& _manager, Properties const& _properties)
-: EndpointSensor(_manager, EndpointSensorDI::Type(), ENDPOINT_SENSOR_DI_UNIT, ENDPOINT_SENSOR_DI_MIN, ENDPOINT_SENSOR_DI_MAX)
+EndpointSensorDI::EndpointSensorDI(ObjectManager& _manager, JSONNode const& _properties)
+: EndpointSensorDiscrete(_manager, EndpointSensorDI::Type())
 {
 	trace.SetClassName(GetClassName());
-	SetProperties(_properties , PROPERTY_ALL, true);
+	SetProperties(_properties , false, true);
 }
 
 std::string	EndpointSensorDI::GetClassName()
@@ -20,7 +20,7 @@ std::string	EndpointSensorDI::GetClassName()
 	return	"EP_S_DI";
 }
 
-const ValueType EndpointSensorDI::Type()
+const std::string EndpointSensorDI::Type()
 {
-	return	ValueType(NODE_TYPE_EP_S_DI);
+	return	std::string(NODE_TYPE_EP_S_DI);
 }

@@ -18,34 +18,34 @@ class	Device : public Node
 
 public:
 
-	Device(ObjectManager& _manager, ValueType const& _type);
+	Device(ObjectManager& _manager, std::string const& _type);
 	~Device();
 
 	// Properties operation
-	virtual	bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
 
-	virtual	bool		GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
-	virtual	bool		GetProperties(JSONNode& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
 
-	virtual	Endpoint*	CreateEndpoint(Properties const& _properties) = 0;
+	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties) = 0;
 
 			uint32_t	GetEndpointCount();
-	const 	ValueID&	GetEndpointAt(int index);
-			bool		GetEndpointList(std::list<ValueID>& _list);
+	const std::string&	GetEndpointAt(int index);
+			bool		GetEndpointList(std::list<std::string>& _list);
 			bool		GetEndpointMap(std::map<std::string, Endpoint*>& _map);
 
 	// Utility
 	virtual				operator JSONNode();
 
-	static	bool		IsValidType(ValueType const& _type);
+	static	bool		IsValidType(std::string const& _type);
 
-	static	Device*		Create(ObjectManager& _manager, Properties const& _properties);
 	static	Device*		Create(ObjectManager& _manager, JSONNode const& _properties);
 
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 
-	virtual	bool		ReadValue(std::string const& _endpoint_id, std::string& _value) = 0;
-	virtual	bool		WriteValue(std::string const& _endpoint_id, std::string const& _value);
+	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, std::string& _value) = 0;
+	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, bool& _value) = 0;
+	virtual	bool		WriteValue(std::string const& _epid, std::string const& _value);
+	virtual	bool		WriteValue(std::string const& _epid, bool _value);
 
 protected:
 
@@ -54,18 +54,18 @@ protected:
 			void		Postprocess();
 
 	// Endpoint operation
-			bool		IsAttached(ValueID const& _endpoint_id);
-	virtual	bool		Attach(ValueID const& _endpoint_id);
-			bool		Detach(ValueID const& _endpiont_id);
+			bool		IsAttached(std::string const& _epid);
+	virtual	bool		Attach(std::string const& _epid);
+			bool		Detach(std::string const& _epid);
 			bool		Detach();
 
-			bool		AddSchedule(ValueID const& _id, Timer const& _timer);
-			bool		RemoveSchedule(ValueID const& _id);
+			bool		AddSchedule(std::string const& _id, Timer const& _timer);
+			bool		RemoveSchedule(std::string const& _id);
 
-	std::list<ValueID>	endpoint_id_list_;
+	std::list<std::string>	epid_list_;
 
 	std::mutex	endpoint_schedule_list_lock_;
-	std::list<std::pair<ValueID, Timer>>	endpoint_schedule_list_;
+	std::list<std::pair<std::string, Timer>>	endpoint_schedule_list_;
 };
 
 #endif

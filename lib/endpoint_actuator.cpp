@@ -1,6 +1,6 @@
 #include "endpoint_actuator.h"
 
-EndpointActuator::EndpointActuator(ObjectManager& _manager, ValueType const& _type)
+EndpointActuator::EndpointActuator(ObjectManager& _manager, std::string const& _type)
 :Endpoint(_manager, _type)
 {
 }

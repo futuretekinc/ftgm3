@@ -9,18 +9,19 @@
 class	DeviceSerial : public Device
 {
 public:
-	DeviceSerial(ObjectManager& _manager, ValueType const& _type);
-	DeviceSerial(ObjectManager& _manager, ValueType const& _type, std::string const& _port);
+	DeviceSerial(ObjectManager& _manager, std::string const& _type);
+	DeviceSerial(ObjectManager& _manager, std::string const& _type, std::string const& _port);
 
-	virtual	bool	GetProperties(Properties& _properties);
+	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields) ;
 
-	const 	std::string&	GetPort();
-			bool		SetPort(const std::string& _port, bool _store = true);
+	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
+
+	const std::string&	GetPort();
+			bool		SetPort(const std::string& _port, bool _check = true);
 
 			bool		Write(uint8_t *buffer, uint32_t buffer_len);
 			bool		Read(uint8_t *buffer, uint32_t buffer_len, uint32_t& read_len);
 protected:
-	virtual	bool		SetPropertyInternal(Property const& _property, bool create = false);
  	static	void 		SignalHandler(int status, siginfo_t *ioinfo, void *context );
 
 			bool		Open();

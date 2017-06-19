@@ -6,6 +6,7 @@
 #include "trace.h"
 #include "object.h"
 #include "object_manager.h"
+#include "json.h"
 #include "utils.h"
 #include <hashlib++/hashlibpp.h>
 #include "exception.h"
@@ -29,7 +30,7 @@ Object::Object()
 	object_map[id_] = this;
 }
 
-Object::Object(ValueID const& _id)
+Object::Object(std::string const& _id)
 : parent_id_(""), id_(_id), enable_(false), trace(this)
 {
 	md5wrapper*	md5 = new md5wrapper;
@@ -72,42 +73,83 @@ std::string		Object::GetClassName()
 	return	class_name_;
 }
 
-const	ValueID&	Object::GetID() const
+const	std::string&	Object::GetID() const
 {
 	return	id_;
 }
 
-bool	Object::SetID(ValueID const& _id)
+bool	Object::SetID(std::string const& _id, bool _check)
 {
-	id_ = _id;
+	bool	ret_value = true;
 	
-	updated_properties_.AppendID(id_);
-
-	if (!lazy_store_)
+	try
 	{
-		ApplyChanges();	
+		if ((_id.size() == 0)  || (_id.size() > ID_LENGTH_MAX))
+		{
+			THROW_INVALID_ARGUMENT("The ID length is (0 < length && length <= " << ID_LENGTH_MAX << ").");
+		}
+
+		if (!_check)
+		{
+			if (id_ != _id)
+			{
+				id_ = _id;
+
+				JSONNodeUpdate(updated_properties_, TITLE_NAME_ID, id_);
+
+				if (!lazy_store_)
+				{
+					ApplyChanges();	
+				}
+			}
+		}
+	}
+	catch(InvalidArgument& e)
+	{
+		TRACE_ERROR(e.what());
+		ret_value = false;	
 	}
 
-	return	true;
+	return	ret_value;
 }
 
-const	ValueName&	Object::GetName() const
+const std::string&	Object::GetName() const
 {
 	return	name_;
 }
 
-bool	Object::SetName(ValueName const& _name)
+bool	Object::SetName(std::string const& _name, bool _check)
 {
-	name_ = _name;
-
-	updated_properties_.AppendName(name_);
-
-	if (!lazy_store_)
+	bool	ret_value = true;
+	try
 	{
-		ApplyChanges();	
+		if ((_name.size() == 0)  || (_name.size() > NAME_LENGTH_MAX))
+		{
+			THROW_INVALID_ARGUMENT("The ID length is (0 < length && length <= " << NAME_LENGTH_MAX << ").");
+		}
+
+		if (!_check)
+		{
+			if (name_ != _name)
+			{
+				name_ = _name;
+
+				JSONNodeUpdate(updated_properties_, TITLE_NAME_NAME, name_);
+
+				if (!lazy_store_)
+				{
+					ApplyChanges();	
+				}
+			}
+		}
+	}
+	catch(InvalidArgument& e)
+	{
+		TRACE_ERROR(e.what());
+		ret_value = false;
 	}
 
-	return	true;
+	return	ret_value;
 }
 
 bool	Object::GetEnable() const
@@ -117,16 +159,53 @@ bool	Object::GetEnable() const
 
 bool	Object::SetEnable(bool _enable)
 {
-	enable_ = _enable;
-
-	updated_properties_.AppendEnable(ValueBool(enable_));
-
-	if (!lazy_store_)
+	if (enable_ != _enable)
 	{
-		ApplyChanges();	
+		enable_ = _enable;
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_ENABLE, enable_);
+
+		if (!lazy_store_)
+		{
+			ApplyChanges();	
+		}
 	}
 
 	return	true;
+}
+
+bool	Object::SetEnable(std::string const& _enable, bool _check)
+{
+	bool	enable;
+	bool	ret_value  = true;
+
+	try
+	{
+		if (!_check)
+		{
+			enable = IsTrue(_enable);
+
+			if (enable_ != enable)
+			{
+				enable_ = enable;
+
+				JSONNodeUpdate(updated_properties_, TITLE_NAME_ENABLE, enable_);
+
+				if (!lazy_store_)
+				{
+					ApplyChanges();	
+				}
+			}
+		}
+	}
+	catch(InvalidArgument& e)
+	{
+		TRACE_ERROR(e.what());
+		ret_value = false;
+	}
+
+
+	return	ret_value;
 }
 
 Object::Stat	Object::GetState() const
@@ -150,7 +229,7 @@ bool	Object::SetDate(Date const& _date)
 {
 	date_ = _date;
 
-	updated_properties_.AppendDate(date_);
+	JSONNodeUpdate(updated_properties_, TITLE_NAME_TIME, time_t(date_));
 
 	if (!lazy_store_)
 	{
@@ -160,23 +239,75 @@ bool	Object::SetDate(Date const& _date)
 	return	true;
 }
 
-const ValueID&	Object::GetParentID() const
+bool	Object::SetDate(std::string const& _date, bool _check)
+{
+	bool	ret_value = true;
+	try
+	{
+		if (!_check)
+		{
+			Date	date = _date;
+			if (date_ != date)
+			{
+				date_ = date;
+
+				JSONNodeUpdate(updated_properties_, TITLE_NAME_TIME, time_t(date_));
+
+				if (!lazy_store_)
+				{
+					ApplyChanges();	
+				}
+			}
+		}
+	}
+	catch(InvalidArgument& e)
+	{
+		TRACE_ERROR(e.what());
+		ret_value = false;
+	}
+
+	return	ret_value;
+}
+
+const std::string&	Object::GetParentID() const
 {
 	return	parent_id_;
 }
 
-bool	Object::SetParentID(ValueID const& _parent_id)
+bool	Object::SetParentID(std::string const& _parent_id, bool _check)
 {
-	parent_id_ = _parent_id;
+	bool	ret_value = true;
 
-	updated_properties_.AppendParentID(parent_id_);
-
-	if (!lazy_store_)
+	try
 	{
-		ApplyChanges();	
+		if (_parent_id.size() > ID_LENGTH_MAX)
+		{
+			THROW_INVALID_ARGUMENT("The ID length is (0 < length && length <= " << ID_LENGTH_MAX << ").");
+		}
+
+		if (!_check)
+		{
+			if (parent_id_ != _parent_id)
+			{
+				parent_id_ = _parent_id;
+
+				TRACE_INFO("Object[" << id_ << "] set parent id[" << parent_id_  << "]");
+				JSONNodeUpdate(updated_properties_, TITLE_NAME_PARENT_ID, parent_id_);
+
+				if (!lazy_store_)
+				{
+					ApplyChanges();	
+				}
+			}
+		}
+	}
+	catch(InvalidArgument& e)
+	{
+		TRACE_ERROR(e.what());
+		ret_value = false;	
 	}
 
-	return	true;
+	return	ret_value;
 }
 
 bool	Object::SetLazyStore(bool _enable)
@@ -203,57 +334,60 @@ bool	Object::ApplyChanges()
 	return	true;
 }
 
-bool	Object::AddUpdatedProperties(Property const& _property)
-{
-	const Property*	property = updated_properties_.Get(_property.GetName());
-	if (property != NULL)
-	{
-		updated_properties_.Delete(_property.GetName());
-	}
-
-	updated_properties_.Append(_property);
-
-	return	true;
-}
-
 bool	Object::ClearUpdatedProperties() 
 {
-	updated_properties_.Clear();
+
+	updated_properties_.clear();
 
 	return	true;
 }
 
-bool	Object::GetProperties(Properties& _properties, Properties::Fields const& _fields) 
+bool	Object::GetProperty(JSONNode& _property)
 {
-	if (_fields.id)
+	bool	ret_value = true;
+
+	try
 	{
-		_properties.AppendID(id_);
+		if (_property.name() == TITLE_NAME_TRACE)
+		{
+			_property = JSONNode(trace);
+			_property.set_name(TITLE_NAME_TRACE);
+		}
+		else if (_property.name() == TITLE_NAME_ID)
+		{
+			_property = id_;
+		}
+		else if (_property.name() == TITLE_NAME_NAME)
+		{
+			_property = name_;
+		}
+		else if (_property.name() == TITLE_NAME_TIME)
+		{
+			_property = time_t(date_);
+		}
+		else if (_property.name() == TITLE_NAME_PARENT_ID)
+		{
+			_property = parent_id_;
+		}
+		else if (_property.name() == TITLE_NAME_ENABLE)
+		{
+			_property = enable_;
+		}
+		else
+		{
+			THROW_INVALID_ARGUMENT("The " << _property.name() << " configuration is not supported!");
+		}
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR(e.what());
+		ret_value = false;
 	}
 
-	if (_fields.name)
-	{
-		_properties.AppendName(name_);
-	}
-	
-	if (_fields.time)
-	{
-		_properties.AppendDate(date_);
-	}
-
-	if (_fields.enable)
-	{
-		_properties.AppendEnable(enable_);
-	}
-
-	if (_fields.parent_id)
-	{
-		_properties.AppendParentID(parent_id_);
-	}
-
-	return	true;
+	return	ret_value;
 }
 
-bool	Object::GetProperties(JSONNode& _properties, Properties::Fields const& _fields)
+bool	Object::GetProperties(JSONNode& _properties, Fields const& _fields)
 {
 	if (_fields.id)
 	{
@@ -267,11 +401,7 @@ bool	Object::GetProperties(JSONNode& _properties, Properties::Fields const& _fie
 	
 	if (_fields.time)
 	{
-#ifdef	PROPERTY_VALUE_STRING_ONLY
-		_properties.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(date_))));
-#else
 		_properties.push_back(JSONNode(TITLE_NAME_TIME, time_t(date_)));
-#endif
 	}
 
 	if (_fields.enable)
@@ -288,98 +418,44 @@ bool	Object::GetProperties(JSONNode& _properties, Properties::Fields const& _fie
 
 }
 
-bool	Object::SetProperty(Property const& _property, Properties::Fields const& _fields)
+bool	Object::SetProperty(JSONNode const& _property, bool _check)
 {
 	bool	ret_value = true;
 
 	try
 	{
-		if (_property.GetName() == TITLE_NAME_ID)
+		if (_property.name() == TITLE_NAME_TRACE)
 		{
-			if (_fields.id)
+			if (_property.type() != JSON_NODE)
 			{
-				const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-				if (!value)
-				{
-					throw InvalidArgument(_property.GetName());
-				}
-
-				ret_value = SetID(value->Get());
+				THROW_INVALID_ARGUMENT("The " << _property.name() << " configuration is not node!");
 			}
+
+			ret_value = trace.Load(_property, _check);
 		}
-		else if (_property.GetName() == TITLE_NAME_NAME)
+		else if (_property.name() == TITLE_NAME_ID)
 		{
-			if (_fields.name)
-			{
-				const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-				if (!value)
-				{
-					throw InvalidArgument(_property.GetName());
-				}
-
-				ret_value = SetName(value->Get());
-			}
+			ret_value = SetID(_property.as_string(), _check);
 		}
-		else if (_property.GetName() == TITLE_NAME_TIME)
+		else if (_property.name() == TITLE_NAME_NAME)
 		{
-			if (_fields.time)
-			{
-				Date	time;
-				const ValueDate*	value = dynamic_cast<const ValueDate*>(_property.GetValue());
-				if (!value)
-				{
-					const ValueString*	string_value = dynamic_cast<const ValueString*>(_property.GetValue());
-					if (!string_value)
-					{
-						throw InvalidArgument(_property.GetName());
-					}
-
-					time = string_value->Get();
-				}
-				else
-				{
-					time = value->Get();
-				}
-
-			
-				ret_value = SetDate(time);
-			}
+			ret_value = SetName(_property.as_string(), _check);
 		}
-		else if (_property.GetName() == TITLE_NAME_PARENT_ID)
+		else if (_property.name() == TITLE_NAME_TIME)
 		{
-			const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-			if (!value)
-			{
-				throw InvalidArgument(_property.GetName());
-			}
-
-			ret_value = SetParentID(value->Get());
+			ret_value = SetDate(_property.as_string(), _check);
 		}
-		else if (_property.GetName() == TITLE_NAME_ENABLE)
+		else if (_property.name() == TITLE_NAME_PARENT_ID)
 		{
-			if (dynamic_cast<const ValueBool*>(_property.GetValue()))
-			{
-				const ValueBool*	value = dynamic_cast<const ValueBool*>(_property.GetValue());
-
-				ret_value = SetEnable(value->Get());
-			}
-			else if(dynamic_cast<const ValueString*>(_property.GetValue()))
-			{
-				ValueBool	value;
-
-				value.Set(dynamic_cast<const ValueString*>(_property.GetValue())->Get());
-
-				ret_value = SetEnable(value.Get());
-			}
-			else	
-			{
-				throw InvalidArgument(_property.GetName());
-			}
+			ret_value = SetParentID(_property.as_string(), _check);
+		}
+		else if (_property.name() == TITLE_NAME_ENABLE)
+		{
+			ret_value = SetEnable(_property.as_string(), _check);
 		}
 		else
 		{
-			TRACE_ERROR("Property[" << _property.GetName() << "] not supported!");
-			ret_value = false;
+			THROW_INVALID_ARGUMENT("The " << _property.name() << " configuration is not supported!");
 		}
 	}
 	catch(std::exception& e)
@@ -391,34 +467,60 @@ bool	Object::SetProperty(Property const& _property, Properties::Fields const& _f
 	return	ret_value;
 }
 
-bool	Object::SetProperties(Properties const& _properties, Properties::Fields const& _fields, bool create)
+bool	Object::SetProperties(JSONNode const& _config, bool _check, bool _create)
 {
-	SetLazyStore(create);
+	bool	ret_value = true;
 
-	for(auto it = _properties.begin(); it != _properties.end() ; it++)
+	SetLazyStore(true);
+
+	try
 	{
-		SetProperty(*it, _fields);	
+		JSONNode	trace_config = JSONNodeGetTraceNode(_config);
+
+		if (SetProperty(trace_config, _check) == false)
+		{	
+			ret_value = false;
+		}
+	}
+	catch(ObjectNotFound& e)
+	{
 	}
 
-	if (create)
+	if (ret_value == true)
+	{
+		for(auto it = _config.begin(); it != _config.end() ; it++)
+		{
+			if (it->name() != TITLE_NAME_TRACE)
+			{
+				try
+				{
+					if (SetProperty(*it, _check) == false)
+					{	
+						ret_value = false;
+						break;
+					}
+				}
+				catch(InvalidArgument& e)
+				{
+					TRACE_ERROR(e.what());	
+					ret_value = false;
+					break;
+				}
+			}
+		}
+	}
+
+	if (_create)
 	{
 		ClearUpdatedProperties();
-		SetLazyStore(!create);
 	}
 
-	return	true;
+	SetLazyStore(false);
+
+	return	ret_value;
 }
 
-bool	Object::SetProperties(JSONNode const& _properties, Properties::Fields const& _fields, bool create)
-{
-	Properties	properties;
-
-	properties.Append(_properties);
-
-	return	SetProperties(properties, _fields, create);
-}
-
-bool	Object::GetUpdatedProperties(Properties& _properties) const
+bool	Object::GetUpdatedProperties(JSONNode& _properties) const
 {
 	_properties = updated_properties_;
 
@@ -461,19 +563,6 @@ bool	Object::GetPropertyFieldList(std::list<std::string>& _field_list)
 	_field_list.push_back(TITLE_NAME_SENSOR_ID);
 
 	return	true;
-}
-
-std::string Object::ToString(Object::Stat _stat)
-{
-	switch(_stat)
-	{
-	case	RUN:	return	std::string("run");
-	case	STOP:	return	std::string("stop");
-	case	ENABLED:	return	std::string("enabled");
-	case	DISABLED:return	std::string("disabled");
-	}	
-	
-	return	std::string("unknown");
 }
 
 std::string	Object::GetTraceName() const
@@ -526,3 +615,17 @@ bool	Object::IsIncludeIn(Object *_object)
 {
 	return	dynamic_cast<Object*>(_object) != NULL;
 }
+
+std::string ToString(Object::Stat _stat)
+{
+	switch(_stat)
+	{
+	case	Object::RUN:	return	std::string("run");
+	case	Object::STOP:	return	std::string("stop");
+	case	Object::ENABLED:	return	std::string("enabled");
+	case	Object::DISABLED:return	std::string("disabled");
+	}	
+	
+	return	std::string("unknown");
+}
+

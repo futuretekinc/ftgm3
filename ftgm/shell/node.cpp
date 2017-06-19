@@ -110,7 +110,7 @@ RetValue	ShellCommandNode
 					throw std::invalid_argument("Invalid arguments!");
 				}
 
-				node->SetProperties(properties);
+				node->SetProperties(properties, false, false);
 			}
 
 		}

@@ -1,26 +1,28 @@
 #include <strings.h>
 #include <iomanip>
 #include "defined.h"
+#include "json.h"
 #include "device_ip.h"
+#include "utils.h"
 
-DeviceIP::DeviceIP(ObjectManager& _manager, ValueType const& _type)
+DeviceIP::DeviceIP(ObjectManager& _manager, std::string const& _type)
 : Device(_manager, _type), ip_(DEFAULT_CONST_LOCAL_IP)
 {
 }
 
-DeviceIP::DeviceIP(ObjectManager& _manager, ValueType const& _type, const ValueIP& _ip)
+DeviceIP::DeviceIP(ObjectManager& _manager, std::string const& _type, const std::string& _ip)
 : Device(_manager, _type), ip_(_ip)
 {
 }
 
-const	ValueType&	DeviceIP::Type()
+const	std::string&	DeviceIP::Type()
 {
-	static	ValueType	type_("device_ip");
+	static	std::string	type_("device_ip");
 
 	return	type_;
 }
 
-bool		DeviceIP::IsIncludedIn(ValueType const& _type)
+bool		DeviceIP::IsIncludedIn(std::string const& _type)
 {
 	if (_type == DeviceIP::Type())
 	{
@@ -30,51 +32,41 @@ bool		DeviceIP::IsIncludedIn(ValueType const& _type)
 	return	Device::IsIncludedIn(_type);
 }
 
-const ValueIP&	DeviceIP::GetIP()
+const std::string&	DeviceIP::GetIP()
 {
 	return	ip_;
 }
 
-void	DeviceIP::SetIP(const ValueIP& _ip)
+bool	DeviceIP::SetIP(const std::string& _ip, bool _check)
 {
-	ip_ = _ip;
-
-	updated_properties_.AppendIP(ip_);
-
-	if (!lazy_store_)
-	{
-		ApplyChanges();	
-	}
-
-}
-
-bool	DeviceIP::SetIP(const std::string& _ip)
-{
-	if (!ValueIP::IsValidIP(_ip))
+	if (!IsValidIP(_ip))
 	{
 		TRACE_ERROR("Invalid IP!");
 		return	false;
 	}
 
-	ip_ = _ip;
-
-	updated_properties_.AppendIP(ip_);
-
-	if (!lazy_store_)
+	if (!_check)
 	{
-		ApplyChanges();	
+		ip_ = _ip;
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_IP, ip_);
+
+		if (!lazy_store_)
+		{
+			ApplyChanges();	
+		}
 	}
 
 	return	true;
 }
 
-bool	DeviceIP::GetProperties(Properties& _properties, Properties::Fields const& _fields) 
+bool	DeviceIP::GetProperties(JSONNode& _properties, Fields const& _fields) 
 {
 	if (Device::GetProperties(_properties, _fields))
 	{
 		if(_fields.ip)
 		{
-			_properties.AppendIP(ip_);
+			_properties.push_back(JSONNode(TITLE_NAME_IP, ip_));
 		}
 
 		return	true;	
@@ -83,26 +75,19 @@ bool	DeviceIP::GetProperties(Properties& _properties, Properties::Fields const& 
 	return	false;
 }
 
-bool	DeviceIP::SetProperty(Property const& _property, Properties::Fields const& _fields)
+bool	DeviceIP::SetProperty(JSONNode const& _property, bool _check)
 {
-	if (strcasecmp(_property.GetName().c_str(), TITLE_NAME_IP) == 0)
+	bool	ret_value = true;
+
+	if (_property.name() == TITLE_NAME_IP)
 	{
-		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value != NULL)
-		{
-			TRACE_INFO("The ip set to " << value->Get());
-			return	ip_.Set(value->Get());
-		}
-		else
-		{
-			TRACE_ERROR("Failed to set property because value types is not string!");
-		}
+		ret_value = SetIP(_property.as_string(), _check);
 	}
 	else
 	{
-		return	Device::SetProperty(_property, _fields);
+		ret_value = Device::SetProperty(_property, _check);
 	}
 
-	return	false;
+	return	ret_value;
 }
 

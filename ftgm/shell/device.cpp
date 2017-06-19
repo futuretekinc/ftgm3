@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <fstream>
 #include "shell_ftgm.h"
+#include "exception.h"
 #include "device.h"
 #include "device_snmp.h"
 #include "object_manager.h"
@@ -18,22 +19,24 @@ RetValue	ShellCommandDevice
 	RetValue	ret_value = RET_VALUE_OK;
 	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
 
-	if (object_manager == NULL)
+	try
 	{
-		std::cout << "Object manager not attached!" << std::endl;	
-	}
-	else if (_count < 2)
-	{
-		ShellCommandDeviceList(_shell);
-	}
-	else if (_arguments[1] == "keep_alive")
-	{
-		if (_count < 3)
+		if (object_manager == NULL)
 		{
-			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+			std::cout << "Object manager not attached!" << std::endl;	
 		}
-		else
+		else if (_count < 2)
 		{
+			ShellCommandDeviceList(_shell);
+		}
+		else if (_arguments[1] == "keep_alive")
+		{
+			if (_count < 3)
+			{
+				throw InvalidArgument("The paramater is insufficient.");
+			}
+
+
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
 				Device*	device = object_manager->GetDevice(_arguments[i]);
@@ -43,69 +46,53 @@ RetValue	ShellCommandDevice
 				}
 				else
 				{
-					
+
 				}
 			}
 		}
-	}
-	else if (_arguments[1] == "create")
-	{
-		Properties	properties;
-		
-		if (_count < 3)
+		else if (_arguments[1] == "create")
 		{
-			ret_value = RET_VALUE_INVALID_ARGUMENTS;
-		}
-		else
-		{
-			if (!properties.AppendType(_arguments[2]))
+			JSONNode	properties;
+
+			if (_count < 3)
 			{
-				ret_value = RET_VALUE_INVALID_ARGUMENTS;
+				throw InvalidArgument("The paramater is insufficient.");
 			}
-			else
+
+			properties.push_back(JSONNode(TITLE_NAME_TYPE, _arguments[2]));
+
+			for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _count)  ; i+=2)
 			{
-				for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _count)  ; i+=2)
+				uint32_t	len = _arguments[i].size();
+				
+				if ((len <= 2) || (_arguments[i].substr(0,2) == "--"))
 				{
-					if (_arguments[i] == "--id")
-					{
-						if (!properties.AppendID(_arguments[i+1]))
-						{
-							ret_value = RET_VALUE_INVALID_ARGUMENTS;
-						}
-					}
-					else if (_arguments[i] == "--name")
-					{
-						if (!properties.AppendName(_arguments[i+1]))
-						{
-							ret_value = RET_VALUE_INVALID_ARGUMENTS;
-						}
-					}
+					std::ostringstream	oss;
+
+					oss << "Invalid argument option[" << _arguments[i] << "]" << std::endl;
+			
+					throw InvalidArgument(oss.str());
 				}
 
-				if (ret_value == RET_VALUE_OK)
-				{
-					Device* device = object_manager->CreateDevice(properties);	
-					if (device == NULL)
-					{
-						ret_value = RET_VALUE_INVALID_ARGUMENTS;
-					}
-					else
-					{
-						std::cout << "Device created." << std::endl;		
-					}
-				}
+				properties.push_back(JSONNode(_arguments[i].substr(2, len - 2), _arguments[i+1]));
 			}
-		}
 
-	}
-	else if (_arguments[1] == "destroy")
-	{
-		if (_count < 3)
-		{
-			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+			Device* device = object_manager->CreateDevice(properties);	
+			if (device == NULL)
+			{
+				throw InvalidArgument(properties.write_formatted());
+			}
+
+			std::cout << "Device created." << std::endl;		
+
 		}
-		else
+		else if (_arguments[1] == "destroy")
 		{
+			if (_count < 3)
+			{
+				throw InvalidArgument("The paramater is insufficient.");
+			}
+
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
 				Device *device = object_manager->GetDevice(_arguments[i]);
@@ -120,157 +107,159 @@ RetValue	ShellCommandDevice
 				}
 			}
 		}
-	}
-	else if (_arguments[1] == "start")
-	{
-		if (_count < 3)
+		else if (_arguments[1] == "start")
 		{
-			ret_value = RET_VALUE_INVALID_ARGUMENTS;
-		}
-		else if (_arguments[2] == "all")
-		{
-			std::list<Device*>	device_list;
-
-			object_manager->GetDeviceList(device_list);
-
-			for(auto it = device_list.begin(); it != device_list.end() ; it++)
+			if (_count < 3)
 			{
-				(*it)->Start();
-				std::cout << "The device[" << (*it)->GetTraceName() << "] is started!" << std::endl;
+				throw InvalidArgument("The paramater is insufficient.");
 			}
-		}
-		else
-		{
-			for(uint32_t i = 2 ; i < _count ; i++)
+
+			if (_arguments[2] == "all")
 			{
-				Device *device = object_manager->GetDevice(_arguments[i]);
-				if (device == NULL)
+				std::list<Device*>	device_list;
+
+				object_manager->GetDeviceList(device_list);
+
+				for(auto it = device_list.begin(); it != device_list.end() ; it++)
 				{
-					std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
-				}
-				else
-				{
-					device->Start();
-					std::cout << "The device[" << _arguments[i] << "] has started!" << std::endl;
+					(*it)->Start();
+					std::cout << "The device[" << (*it)->GetTraceName() << "] is started!" << std::endl;
 				}
 			}
-		}
-	}
-	else if (_arguments[1] == "stop")
-	{
-		if (_count < 3)
-		{
-			ret_value = RET_VALUE_INVALID_ARGUMENTS;
-		}
-		else if (_arguments[2] == "all")
-		{
-			std::list<Device*>	device_list;
-
-			object_manager->GetDeviceList(device_list);
-
-			for(auto it = device_list.begin(); it != device_list.end() ; it++)
+			else
 			{
-				(*it)->Stop();
-				std::cout << "The device[" << (*it)->GetTraceName() << "] is stopped!" << std::endl;
-			}
-		}
-		else
-		{
-			for(uint32_t i = 2 ; i < _count ; i++)
-			{
-				Device *device = object_manager->GetDevice(_arguments[i]);
-				if (device == NULL)
+				for(uint32_t i = 2 ; i < _count ; i++)
 				{
-					std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
-				}
-				else
-				{
-					device->Stop();
-					std::cout << "The device[" << _arguments[i] << "] has stopped!" << std::endl;
+					Device *device = object_manager->GetDevice(_arguments[i]);
+					if (device == NULL)
+					{
+						std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
+					}
+					else
+					{
+						device->Start();
+						std::cout << "The device[" << _arguments[i] << "] has started!" << std::endl;
+					}
 				}
 			}
 		}
-	}
-	else if (_arguments[1] == "enable")
-	{
-		if (_count < 3)
+		else if (_arguments[1] == "stop")
 		{
-			ret_value = RET_VALUE_INVALID_ARGUMENTS;
-		}
-		else if (_arguments[2] == "all")
-		{
-			std::list<Device*>	device_list;
-
-			object_manager->GetDeviceList(device_list);
-
-			for(auto it = device_list.begin(); it != device_list.end() ; it++)
+			if (_count < 3)
 			{
-				(*it)->SetEnable(true);
-				std::cout << "The device[" << (*it)->GetTraceName() << "] is enabled!" << std::endl;
+				throw InvalidArgument("The paramater is insufficient.");
 			}
-		}
-		else
-		{
-			for(uint32_t i = 2 ; i < _count ; i++)
+
+			if (_arguments[2] == "all")
 			{
-				Device *device = object_manager->GetDevice(_arguments[i]);
-				if (device == NULL)
+				std::list<Device*>	device_list;
+
+				object_manager->GetDeviceList(device_list);
+
+				for(auto it = device_list.begin(); it != device_list.end() ; it++)
 				{
-					std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
-				}
-				else
-				{
-					device->SetEnable(true);
-					std::cout << "The device[" << _arguments[i] << "] is enabled!" << std::endl;
+					(*it)->Stop();
+					std::cout << "The device[" << (*it)->GetTraceName() << "] is stopped!" << std::endl;
 				}
 			}
-		}
-	}
-	else if (_arguments[1] == "disable")
-	{
-		if (_count < 3)
-		{
-			ret_value = RET_VALUE_INVALID_ARGUMENTS;
-		}
-		else if (_arguments[2] == "all")
-		{
-			std::list<Device*>	device_list;
-
-			object_manager->GetDeviceList(device_list);
-
-			for(auto it = device_list.begin(); it != device_list.end() ; it++)
+			else
 			{
-				(*it)->SetEnable(false);
-				std::cout << "The device[" << (*it)->GetTraceName() << "] is disabled!" << std::endl;
-			}
-		}
-		else
-		{
-			for(uint32_t i = 2 ; i < _count ; i++)
-			{
-				Device *device = object_manager->GetDevice(_arguments[i]);
-				if (device == NULL)
+				for(uint32_t i = 2 ; i < _count ; i++)
 				{
-					std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
-				}
-				else
-				{
-					device->SetEnable(false);
-					std::cout << "The device[" << _arguments[i] << "] is disabled!" << std::endl;
+					Device *device = object_manager->GetDevice(_arguments[i]);
+					if (device == NULL)
+					{
+						std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
+					}
+					else
+					{
+						device->Stop();
+						std::cout << "The device[" << _arguments[i] << "] has stopped!" << std::endl;
+					}
 				}
 			}
 		}
-	}
-	else if (_arguments[1] == "set")
-	{
-		Properties	properties;
-		
-		if (_count < 5)
+		else if (_arguments[1] == "enable")
 		{
-			ret_value = RET_VALUE_INVALID_ARGUMENTS;
+			if (_count < 3)
+			{
+				throw InvalidArgument("The paramater is insufficient.");
+			}
+
+			if (_arguments[2] == "all")
+			{
+				std::list<Device*>	device_list;
+
+				object_manager->GetDeviceList(device_list);
+
+				for(auto it = device_list.begin(); it != device_list.end() ; it++)
+				{
+					(*it)->SetEnable(true);
+					std::cout << "The device[" << (*it)->GetTraceName() << "] is enabled!" << std::endl;
+				}
+			}
+			else
+			{
+				for(uint32_t i = 2 ; i < _count ; i++)
+				{
+					Device *device = object_manager->GetDevice(_arguments[i]);
+					if (device == NULL)
+					{
+						std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
+					}
+					else
+					{
+						device->SetEnable(true);
+						std::cout << "The device[" << _arguments[i] << "] is enabled!" << std::endl;
+					}
+				}
+			}
 		}
-		else
+		else if (_arguments[1] == "disable")
 		{
+			if (_count < 3)
+			{
+				throw InvalidArgument("The paramater is insufficient.");
+			}
+
+			if (_arguments[2] == "all")
+			{
+				std::list<Device*>	device_list;
+
+				object_manager->GetDeviceList(device_list);
+
+				for(auto it = device_list.begin(); it != device_list.end() ; it++)
+				{
+					(*it)->SetEnable(false);
+					std::cout << "The device[" << (*it)->GetTraceName() << "] is disabled!" << std::endl;
+				}
+			}
+			else
+			{
+				for(uint32_t i = 2 ; i < _count ; i++)
+				{
+					Device *device = object_manager->GetDevice(_arguments[i]);
+					if (device == NULL)
+					{
+						std::cout << "Device[" << _arguments[i] << "] not found!" << std::endl;
+					}
+					else
+					{
+						device->SetEnable(false);
+						std::cout << "The device[" << _arguments[i] << "] is disabled!" << std::endl;
+					}
+				}
+			}
+		}
+		else if (_arguments[1] == "set")
+		{
+			JSONNode	properties;
+
+			if (_count < 5)
+			{
+				throw InvalidArgument("The paramater is insufficient.");
+			}
+
 			Device*	device = object_manager->GetDevice(_arguments[2]);
 			if (device == NULL)
 			{
@@ -283,32 +272,25 @@ RetValue	ShellCommandDevice
 				{
 					if ((_arguments[i].size() <= 2) || (_arguments[i].substr(0,2) != "--"))
 					{
-						std::cout << "Invalid argument options(" << _arguments[i] << ")" << std::endl;
-						ret_value = RET_VALUE_INVALID_ARGUMENTS;
+						std::ostringstream	oss;
+
+						oss << "Invalid argument options(" << _arguments[i] << ")" << std::endl;
+						throw InvalidArgument(oss.str());
 					}
-					else if (!properties.Append(Property(_arguments[i].substr(2, _arguments[i].size() - 2), _arguments[i+1])))
-					{
-						std::cout << "properties.Append(" << _arguments[i].substr(2,_arguments[i].size() - 2)<< ", " << _arguments[i+1] << ")" << std::endl;
-						ret_value = RET_VALUE_INVALID_ARGUMENTS;
-					}
+
+					properties.push_back(JSONNode(_arguments[i].substr(2, _arguments[i].size() - 2), _arguments[i+1]));
 				}
 
-				if (ret_value == RET_VALUE_OK)
-				{
-					device->SetProperties(properties);	
-				}
+				device->SetProperties(properties, false, false);	
 			}
 		}
 	}
-	else
+	catch(InvalidArgument& e)
 	{
+		_shell->Out() << e.what() << std::endl;		
 		ret_value = RET_VALUE_INVALID_ARGUMENTS;
 	}
 
-	switch(ret_value)
-	{
-	case	RET_VALUE_INVALID_ARGUMENTS: std::cout << "Invalid arguments!" << std::endl;	break;
-	}
 
 	return	ret_value;
 }
@@ -318,19 +300,19 @@ Shell::Command	shell_ftgm_command_device =
 {
 	.name		=	"device",
 	.help		=	"<command> \n"
-					"  Management of device.\n"
-					"COMMANDS:\n"
-					"  create  <TYPE> [--id <ID>] [--name <NAME>]\n"
-					"    Create device\n"
-					"  destroy <ID> [<ID> ...]\n"
-					"    Destroy devices.\n"
-					"  start   <ID> [<ID> ...]\n"
-					"    Start devices.\n"
-					"  stop    <ID> [<ID> ...]\n"
-					"    Stop devices.\n"
-					"PARAMETERS:\n"
-					"  TYPE    Type of device\n"
-					"  ID      Device ID\n",
+		"  Management of device.\n"
+		"COMMANDS:\n"
+		"  create  <TYPE> [--id <ID>] [--name <NAME>]\n"
+		"    Create device\n"
+		"  destroy <ID> [<ID> ...]\n"
+		"    Destroy devices.\n"
+		"  start   <ID> [<ID> ...]\n"
+		"    Start devices.\n"
+		"  stop    <ID> [<ID> ...]\n"
+		"    Stop devices.\n"
+		"PARAMETERS:\n"
+		"  TYPE    Type of device\n"
+		"  ID      Device ID\n",
 	.short_help	=	"Management of device",
 	.function	=	ShellCommandDevice
 };
@@ -369,7 +351,7 @@ bool	ShellCommandDeviceList(Shell* _shell)
 			std::cout << std::setw(id_len) << device->GetID();
 			std::cout << " " << std::setw(name_len) << device->GetName();
 			std::cout << " " << std::setw(type_len) << device->GetType();
-			std::cout << " " << std::setw(stat_len) << Object::ToString(device->GetStat());
+			std::cout << " " << std::setw(stat_len) << ToString(device->GetStat());
 			std::cout << " " << std::setw(ip_len) << device->GetIP();
 			std::cout << " " << std::setw(module_len) << device->GetModule();
 			std::cout << " " << std::setw(community_len) << device->GetCommunity();
@@ -378,7 +360,7 @@ bool	ShellCommandDeviceList(Shell* _shell)
 	}
 
 	std::list<Device*>	mbtcp_list;
-	if (object_manager->GetDeviceList(ValueType("d_mbtcp"), mbtcp_list) != 0)
+	if (object_manager->GetDeviceList("d_mbtcp", mbtcp_list) != 0)
 	{
 		std::cout << "* MBTCP Device" << std::endl;
 		std::cout << std::setw(id_len) << "ID";

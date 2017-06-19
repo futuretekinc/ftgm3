@@ -21,7 +21,7 @@ TCPSession::TCPSession
 	struct sockaddr_in *_addr_info,
 	uint32_t		_timeout
 )
-: ActiveObject(), server_(_server), process_id_(""), socket_(_socket)
+: ProcessObject(), server_(_server), process_id_(""), socket_(_socket)
 
 {
 	trace.SetClassName(GetClassName());
@@ -117,7 +117,7 @@ bool		TCPSession::OnMessage(Message* _base_message)
 
 	default:
 		{
-			return	ActiveObject::OnMessage(_base_message);
+			return	ProcessObject::OnMessage(_base_message);
 		}
 	}
 
@@ -126,7 +126,7 @@ bool		TCPSession::OnMessage(Message* _base_message)
 
 void	TCPSession::Preprocess()
 {
-	ActiveObject::Preprocess();
+	ProcessObject::Preprocess();
 }
 
 void	TCPSession::Process()
@@ -155,13 +155,13 @@ void	TCPSession::Process()
 		}
 	}
 
-	ActiveObject::Process();
+	ProcessObject::Process();
 }
 
 void	TCPSession::Postprocess()
 {
 	Disconnect();
-	ActiveObject::Postprocess();
+	ProcessObject::Postprocess();
 }
 
 bool	TCPSession::Send(std::string const& _message)

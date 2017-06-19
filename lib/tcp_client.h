@@ -37,7 +37,7 @@ public:
 	bool		RequestAndReply(std::string const& _request, std::string& _reply, uint32_t _timeout = 5 * TIME_SECOND);
 	uint32_t	GetReceivedPacketCount();
 
-	void		SetMessageProcessID(ValueID const& _process_id);
+	void		SetMessageProcessID(std::string const& _process_id);
 
 protected:
 
@@ -45,7 +45,7 @@ protected:
 	void		Process();
 	void		Postprocess();
 
-	ValueID					message_process_id_;
+	std::string				message_process_id_;
 	Locker					locker_;
 	int						socket_;	
 	std::string				server_ip_;

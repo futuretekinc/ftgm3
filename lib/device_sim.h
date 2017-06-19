@@ -10,21 +10,20 @@ class	DeviceSIM : public DeviceSNMP
 {
 public:
 	DeviceSIM(ObjectManager& _manager);
-	DeviceSIM(ObjectManager& _manager, Properties const& _properties);
 	DeviceSIM(ObjectManager& _manager, JSONNode const& _properties);
-	DeviceSIM(ObjectManager& _manager, ValueIP const& _ip);
+	DeviceSIM(ObjectManager& _manager, std::string const& _ip);
 
-			bool		IsIncludedIn(ValueType const& _type);
+			bool		IsIncludedIn(std::string const& _type);
 
-	virtual	Endpoint*	CreateEndpoint(Properties const& _properties);
+	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties);
 
-			bool		ReadValue(std::string const& _endpoint_id, std::string& _value);
-			bool		WriteValue(std::string const& _endpoint_id, std::string const& _value);
+			bool		ReadValue(std::string const& _epid, time_t& time, std::string& _value);
+			bool		WriteValue(std::string const& _epid, std::string const& _value);
 
-	static	const	ValueType&	Type();
+	static	const std::string&	Type();
 protected:
-	virtual	bool		Attach(ValueID const& _endpoint_id);
-	virtual	bool		Detach(ValueID const& _endpoint_id);
+	virtual	bool		Attach(std::string const& _endpoint_id);
+	virtual	bool		Detach(std::string const& _endpoint_id);
 
 
 	std::map<std::string, float>		endpoint_sensor_value_table_;

@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <sstream>
 #include "defined.h"
+#include "json.h"
+#include "utils.h"
 #include "trace.h"
 #include "object_manager.h"
 #include "device_snmp.h"
@@ -35,41 +37,27 @@ DeviceSNMP::OID::operator string() const
 	return	oss.str();
 }
 
-DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type)
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type)
 : DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
-}
-
-DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, Properties const& _properties)
-: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
-{
-	trace.SetClassName(GetClassName());
-	SetProperties(_properties, PROPERTY_ALL, true);
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties)
 : DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
-	SetProperties(_properties, PROPERTY_ALL, true);
-}
-
-DeviceSNMP::DeviceSNMP(ObjectManager& _manager, Properties const& _properties)
-: DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
-{
-	trace.SetClassName(GetClassName());
-	SetProperties(_properties, PROPERTY_ALL, true);
+	SetProperties(_properties, false, true);
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, JSONNode const& _properties)
 : DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
-	SetProperties(_properties, PROPERTY_ALL, true);
+	SetProperties(_properties, false, true);
 }
 
-DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module)
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module)
 : DeviceIP(_manager, _type), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
@@ -87,7 +75,7 @@ DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::str
 	object_count++;
 }
 
-DeviceSNMP::DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module, ValueIP const& _ip)
+DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module, std::string const& _ip)
 : DeviceIP(_manager, _type, _ip), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
 {
 	trace.SetClassName(GetClassName());
@@ -121,7 +109,7 @@ DeviceSNMP::~DeviceSNMP()
 	}
 }
 
-bool		DeviceSNMP::IsIncludedIn(ValueType const& _type)
+bool		DeviceSNMP::IsIncludedIn(std::string const& _type)
 {
 	if (_type == DeviceSNMP::Type())
 	{
@@ -193,15 +181,18 @@ const	std::string&	DeviceSNMP::GetModule()
 	return	module_;
 }
 
-bool	DeviceSNMP::SetModule(std::string const& _module)
+bool	DeviceSNMP::SetModule(std::string const& _module, bool _check)
 {
-	module_ = _module;
-
-	updated_properties_.AppendSNMPModule(module_);
-
-	if (!lazy_store_)
+	if (!_check)
 	{
-		ApplyChanges();	
+		module_ = _module;
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_MODULE, module_);
+
+		if (!lazy_store_)
+		{
+			ApplyChanges();	
+		}
 	}
 
 	return	true;
@@ -212,15 +203,18 @@ const	std::string&	DeviceSNMP::GetCommunity()
 	return	community_;
 }
 
-bool	DeviceSNMP::SetCommunity(std::string const& _community)
+bool	DeviceSNMP::SetCommunity(std::string const& _community, bool _check)
 {
-	community_ = _community;
-	
-	updated_properties_.AppendSNMPCommunity(community_);
-
-	if (!lazy_store_)
+	if(!_check)
 	{
-		ApplyChanges();	
+		community_ = _community;
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_COMMUNITY, community_);
+
+		if (!lazy_store_)
+		{
+			ApplyChanges();	
+		}
 	}
 
 	return	true;
@@ -235,7 +229,7 @@ bool	DeviceSNMP::SetTimeout(uint32_t _timeout)
 {
 	timeout_ = _timeout;
 	
-	updated_properties_.AppendTimeout(timeout_);
+	JSONNodeUpdate(updated_properties_, TITLE_NAME_TIMEOUT, timeout_);
 
 	if (!lazy_store_)
 	{
@@ -245,23 +239,42 @@ bool	DeviceSNMP::SetTimeout(uint32_t _timeout)
 	return	true;
 }
 
-bool	DeviceSNMP::GetProperties(Properties& _properties, Properties::Fields const& _fields)
+bool	DeviceSNMP::SetTimeout(std::string const& _timeout, bool _check)
+{
+	time_t	timeout = strtoul(_timeout.c_str(), 0, 10);
+
+	if (!_check)
+	{
+		timeout_ = timeout;
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_TIMEOUT, timeout_);
+
+		if (!lazy_store_)
+		{
+			ApplyChanges();	
+		}
+	}
+
+	return	true;
+}
+
+bool	DeviceSNMP::GetProperties(JSONNode & _properties, Fields const& _fields)
 {
 	if (DeviceIP::GetProperties(_properties, _fields))
 	{
 		if (_fields.snmp_module)
 		{
-			_properties.AppendSNMPModule(module_);
+			_properties.push_back(JSONNode(TITLE_NAME_MODULE, module_));
 		}
 
 		if (_fields.snmp_community)
 		{
-			_properties.AppendSNMPCommunity(community_);
+			_properties.push_back(JSONNode(TITLE_NAME_COMMUNITY, community_));
 		}
 
 		if (_fields.timeout)
 		{
-			_properties.AppendTimeout(timeout_);
+			_properties.push_back(JSONNode(TITLE_NAME_TIMEOUT, timeout_));
 		}
 
 		return	true;	
@@ -270,41 +283,31 @@ bool	DeviceSNMP::GetProperties(Properties& _properties, Properties::Fields const
 	return	false;
 }
 
-bool	DeviceSNMP::SetProperty(Property const& _property, Properties::Fields const& _fields)
+bool	DeviceSNMP::SetProperty(JSONNode const& _property, bool _check)
 {
-	if (_property.GetName() == TITLE_NAME_MODULE)
+	bool	ret_value = true;
+
+	if (_property.name() == TITLE_NAME_MODULE)
 	{
-		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value != NULL)
-		{
-			return	SetModule(value->Get());
-		}
+		ret_value = SetModule(_property.as_string(), _check);
 	}
-	else if (_property.GetName() == TITLE_NAME_COMMUNITY)
+	else if (_property.name() == TITLE_NAME_COMMUNITY)
 	{
-		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value != NULL)
-		{
-			return	SetCommunity(value->Get());
-		}
+		ret_value = SetCommunity(_property.as_string(), _check);
 	}
-	else if (_property.GetName() == TITLE_NAME_TIMEOUT)
+	else if (_property.name() == TITLE_NAME_TIMEOUT)
 	{
-		const ValueUInt32*	value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
-		if (value != NULL)
-		{
-			return	SetTimeout(value->Get());
-		}
+		ret_value = SetTimeout(_property.as_string(), _check);
 	}
 	else
 	{
-		return	DeviceIP::SetProperty(_property, _fields);
+		ret_value = DeviceIP::SetProperty(_property, _check);
 	}
 
-	return	false;
+	return	ret_value;
 }
 
-Endpoint*	DeviceSNMP::CreateEndpoint(Properties const& _properties)
+Endpoint*	DeviceSNMP::CreateEndpoint(JSONNode const& _properties)
 {
 	Endpoint* endpoint = manager_.CreateEndpoint(_properties);
 	if (endpoint != NULL)
@@ -364,7 +367,7 @@ DeviceSNMP::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 	return	oid;
 }
 
-bool	DeviceSNMP::ReadValue(string const& _id, std::string& _value)
+bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& time, std::string& _value)
 {
 	Open();
 
@@ -400,6 +403,7 @@ bool	DeviceSNMP::ReadValue(string const& _id, std::string& _value)
 		{
 			if (response_pdu->errstat == SNMP_ERR_NOERROR)
 			{
+				time = Date::GetCurrent();
 				Convert(response_pdu->variables, _value);
 				ret = true;
 			}
@@ -420,7 +424,29 @@ bool	DeviceSNMP::ReadValue(string const& _id, std::string& _value)
 	return	ret;
 }
 
-bool	DeviceSNMP::ReadValue(OID const& _oid, Value *_value)
+bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& time, bool& _value)
+{
+	try
+	{
+		std::string	value;
+
+		if (!ReadValue(_id, time, value))
+		{
+			return	false;	
+		}
+
+		_value = IsTrue(value);
+
+		return	true;
+	}
+	catch(exception& e)
+	{
+		return	false;
+	}
+
+}
+
+bool	DeviceSNMP::ReadValue(OID const& _oid, std::string& _value)
 {
 	Open();
 
@@ -471,75 +497,6 @@ bool	DeviceSNMP::ReadValue(OID const& _oid, Value *_value)
 	Close();
 
 	return	ret;
-}
-
-bool	DeviceSNMP::Convert
-(
-	struct variable_list *_variable,
-	Value* _value
-)
-{
-	if (_variable == NULL) 
-	{   
-		TRACE_ERROR2(NULL, "Failed to convert!");
-		return	false;
-	}
-
-	switch(_variable->type)
-	{   
-	case    ASN_INTEGER:
-		{   
-			int	value = 0;
-			switch (_variable->val_len)
-			{   
-				case    1:  value = (*(int8_t *)_variable->val.integer); break;
-				case    2:  value = (*(int16_t *)_variable->val.integer); break;
-				case    4:  value = (*(int32_t *)_variable->val.integer); break;
-			}   
-
-			if (dynamic_cast<ValueInt*>(_value) != 0)
-			{
-				TRACE_INFO2(NULL,"Set Int!");
-				dynamic_cast<ValueInt*>(_value)->Set(value);
-			}
-			else if (dynamic_cast<ValueBool*>(_value) != 0)
-			{
-				TRACE_INFO2(NULL, "Set Bool!");
-				dynamic_cast<ValueBool*>(_value)->Set(value);
-			}
-			else if (dynamic_cast<ValueFloat*>(_value) != 0)
-			{
-				TRACE_INFO2(NULL, "Set Float!");
-				dynamic_cast<ValueFloat*>(_value)->Set(value);
-			}
-			else
-			{
-				TRACE_ERROR2(NULL, "Failed to convert!");
-				return	false;	
-			}
-		}   
-		break;
-
-	case    ASN_OCTET_STR:
-		{   
-			if (_variable->val_len != 0)
-			{   
-				char* buffer = new char [_variable->val_len + 1]; 
-
-				memcpy(buffer, _variable->val.string, _variable->val_len);
-				buffer[_variable->val_len] = 0;
-
-				_value->Set(buffer);	
-			}   
-		}   
-		break;
-	
-	default:
-		TRACE_ERROR2(NULL, "Failed to convert[" << (int)_variable->type << "]");
-		return	false;
-	}   
-
-	return  true;
 }
 
 bool	DeviceSNMP::Convert
@@ -670,9 +627,9 @@ bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
 	return	true;
 }
 
-const	ValueType&	DeviceSNMP::Type()
+const std::string&	DeviceSNMP::Type()
 {
-	static	ValueType	type_(NODE_TYPE_DEV_SNMP);
+	static	std::string	type_(NODE_TYPE_DEV_SNMP);
 
 	return	type_;
 }

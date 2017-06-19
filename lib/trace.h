@@ -35,7 +35,7 @@ public:
 	uint32_t	GetFileSize()	{	return	file_size_;	}
 	bool		SetFileSize(uint32_t _size);
 
-	bool		Load(JSONNode const& _json);
+	bool		Load(JSONNode const& _json, bool _check = false);
 				operator JSONNode() const;
 
 	uint32_t	GetFunctionNameSize()	{	return	function_name_len_;	};
@@ -82,7 +82,7 @@ public:
 	bool	GetEnable();
 	void	SetEnable(bool on);
 
-	bool	Load(JSONNode const& _json);
+	bool	Load(JSONNode const& _json, bool _check = false);
 			operator JSONNode() const;
 
 	Trace& 	Begin(TraceLevel _level, std::string const& _pretty_function, uint32_t line);

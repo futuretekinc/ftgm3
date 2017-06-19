@@ -2,6 +2,7 @@
 #define	RCS_CLIENT_H_
 
 #include <map>
+#include "process_object.h"
 #include "tcp_client.h"
 #include "rcs_message.h"
 
@@ -9,7 +10,7 @@ struct GatewayInfo;
 struct DeviceInfo;
 struct EndpointInfo;
 
-class	RCSClient : public ActiveObject
+class	RCSClient : public ProcessObject
 {
 public:
 

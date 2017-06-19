@@ -4,6 +4,7 @@
 #include <string>
 #include "trace.h"
 #include "defined.h"
+#include "json.h"
 #include "active_object.h"
 #include "timer.h"
 #include "message_queue.h"
@@ -16,7 +17,7 @@ ActiveObject::ActiveObject()
 	Message::RegisterRecipient(id_, this);
 }
 
-ActiveObject::ActiveObject(ValueID const& _id)
+ActiveObject::ActiveObject(std::string const& _id)
 : Object(_id), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
 {
 	Message::RegisterRecipient(id_, this);
@@ -25,23 +26,6 @@ ActiveObject::ActiveObject(ValueID const& _id)
 ActiveObject::~ActiveObject()
 {
 	Message::UnregisterRecipient(id_);
-}
-
-bool	ActiveObject::Load(JSONNode const& _json)
-{
-	bool	ret_value = true;
-
-	if (_json.name() == TITLE_NAME_TRACE)
-	{
-		ret_value = trace.Load(_json);
-	}
-	else
-	{
-		TRACE_ERROR("Invalid json format");
-		ret_value = false;
-	}
-
-	return	ret_value;
 }
 
 ActiveObject::operator JSONNode() const
@@ -65,6 +49,10 @@ bool	ActiveObject::SetEnable(bool _enable)
 			{
 				Stop();	
 			}
+		}
+		else
+		{
+			return	false;	
 		}
 	}
 
@@ -105,7 +93,7 @@ bool	ActiveObject::Start(uint32_t _wait_for_init_time)
 			TRACE_INFO("Object[" << GetTraceName() << "] has been started.");
 			while(timer.RemainTime() != 0)
 			{
-				if (!stop_)
+				if ((!stop_) && IsRunning())
 				{
 					break;
 				}
@@ -167,11 +155,11 @@ void	ActiveObject::Run()
 	thread_.join();
 }
 
-bool	ActiveObject::SetLoopInterval(Time const& _interval)
+bool	ActiveObject::SetLoopInterval(uint32_t _interval)
 {
 	loop_interval_ = _interval;
 
-	updated_properties_.AppendLoopInterval(loop_interval_);
+	JSONNodeUpdate(updated_properties_, TITLE_NAME_LOOP_INTERVAL, loop_interval_);
 
 	if (!lazy_store_)
 	{
@@ -181,22 +169,24 @@ bool	ActiveObject::SetLoopInterval(Time const& _interval)
 	return	true;
 }
 
-bool	ActiveObject::GetProperties(Properties& _properties, Properties::Fields const& _fields)
+bool	ActiveObject::SetLoopInterval(std::string const& _interval, bool _check)
 {
-	if (!Object::GetProperties(_properties, _fields))
+	if (!_check)
 	{
-		return	false;
-	}
+		loop_interval_ = strtoul(_interval.c_str(), 0, 10);
 
-	if (_fields.loop_interval)
-	{
-		_properties.AppendLoopInterval(loop_interval_);
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_LOOP_INTERVAL, loop_interval_);
+
+		if (!lazy_store_)
+		{
+			ApplyChanges();	
+		}
 	}
 
 	return	true;
 }
 
-bool	ActiveObject::GetProperties(JSONNode& _properties, Properties::Fields const& _fields)
+bool	ActiveObject::GetProperties(JSONNode& _properties, Fields const& _fields)
 {
 	if (!Object::GetProperties(_properties, _fields))
 	{
@@ -212,46 +202,28 @@ bool	ActiveObject::GetProperties(JSONNode& _properties, Properties::Fields const
 }
 
 
-bool	ActiveObject::SetProperty(Property const& _property, Properties::Fields const& _fields)
+bool	ActiveObject::SetProperty(JSONNode const& _property, bool _check)
 {
+	bool	ret_value = true;
+
 	try
 	{
-		if (_property.GetName() == TITLE_NAME_LOOP_INTERVAL)
+		if (_property.name() == TITLE_NAME_LOOP_INTERVAL)
 		{
-			if (_fields.loop_interval)
-			{
-				uint32_t	loop_interval = 0;
-
-				const ValueInt* value = dynamic_cast<const ValueInt*>(_property.GetValue());
-				if (value == NULL)
-				{
-					const ValueString* value2 = dynamic_cast<const ValueString*>(_property.GetValue());
-					if (value2 == NULL)
-					{
-						throw std::invalid_argument("Loop interval value invalid");
-					}
-
-					loop_interval = strtoul(value2->Get().c_str(), 0, 10);
-				}
-				else
-				{
-					loop_interval =  value->Get();
-				}
-
-				return	SetLoopInterval(loop_interval);
-			}
+			ret_value = SetLoopInterval(_property.as_string(), _check);
 		}
 		else
 		{
-			return	Object::SetProperty(_property);
+			ret_value = Object::SetProperty(_property, _check);
 		}
 	}
 	catch(std::exception& e)
 	{
 		TRACE_ERROR(e.what());
+		ret_value = false;
 	}
 
-	return	false;
+	return	ret_value;
 }
 
 bool	ActiveObject::IsRunning()

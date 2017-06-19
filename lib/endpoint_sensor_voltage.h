@@ -1,18 +1,17 @@
 #ifndef	ENDPOINT_SENSOR_VOLTAGE_H_
 #define	ENDPOINT_SENSOR_VOLTAGE_H_
 
-#include "endpoint_sensor.h"
+#include "endpoint_sensor_linear.h"
 
-class	EndpointSensorVoltage : public EndpointSensor
+class	EndpointSensorVoltage : public EndpointSensorLinear
 {
 public:
 	EndpointSensorVoltage(ObjectManager& _manager);
-	EndpointSensorVoltage(ObjectManager& _manager, Properties const& _properties);
+	EndpointSensorVoltage(ObjectManager& _manager, JSONNode const& _properties);
 
 			std::string	GetClassName();
-			bool		SetProperty(Property const& _property);
 
-	const 	ValueType 	Type();
+	const 	std::string 	Type();
 };
 
 #endif

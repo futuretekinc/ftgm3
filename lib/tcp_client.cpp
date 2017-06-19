@@ -287,7 +287,7 @@ uint32_t	TCPClient::GetReceivedPacketCount()
 	return	receive_packet_list_.size();
 }
 
-void	TCPClient::SetMessageProcessID(ValueID const& _process_id)
+void	TCPClient::SetMessageProcessID(std::string const& _process_id)
 {
 	message_process_id_ = _process_id;
 }

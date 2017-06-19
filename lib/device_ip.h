@@ -6,24 +6,23 @@
 class	DeviceIP : public Device
 {
 public:
-	DeviceIP(ObjectManager& _manager, ValueType const& _type);
-	DeviceIP(ObjectManager& _manager, ValueType const& _type, const ValueIP& _ip);
+	DeviceIP(ObjectManager& _manager, std::string const& _type);
+	DeviceIP(ObjectManager& _manager, std::string const& _type, const std::string& _ip);
 
-			bool		IsIncludedIn(ValueType const& _type);
+			bool		IsIncludedIn(std::string const& _type);
 
-	virtual	bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
 
-	virtual	bool		GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
 
-	const 	ValueIP&	GetIP();
-			void		SetIP(const ValueIP& _ip);
-			bool		SetIP(const std::string& _ip);
+	const std::string&	GetIP();
+			bool		SetIP(const std::string& _ip, bool _check = false);
 
-	static	const	ValueType&	Type();
+	static	const	std::string&	Type();
 
 protected:
 
-	ValueIP		ip_;
+	std::string	ip_;
 };
 
 #endif

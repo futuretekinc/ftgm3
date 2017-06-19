@@ -21,9 +21,7 @@ public:
 
 	RCSServer(ObjectManager* _manager);
 
-	bool		Load(JSONNode const& _json);
-
-	bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+	bool		SetProperty(JSONNode const& _property, bool _check = false);
 
 				operator JSONNode() const;
 

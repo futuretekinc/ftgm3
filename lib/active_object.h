@@ -9,17 +9,17 @@ class	ActiveObject : public Object
 {
 public:
 	ActiveObject();
-	ActiveObject(ValueID const& _id);
+	ActiveObject(std::string const& _id);
 	~ActiveObject();
 
-			bool	Load(JSONNode const& _json);
 					operator JSONNode() const;
 
 	virtual	bool	SetEnable(bool _enable);
 
 			Stat	GetStat() const;
 			
-			bool	SetLoopInterval(Time const& _interval);
+			bool	SetLoopInterval(uint32_t _interval);
+			bool	SetLoopInterval(std::string const& _interval, bool _check = false);
 
 	virtual	bool	Start(uint32_t _wait_for_init_time = 1000);	// ms
 	virtual	bool	Stop(bool _wait = false);
@@ -27,10 +27,9 @@ public:
 
 	virtual	bool	IsRunning();
 
-	virtual	bool	GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
-	virtual	bool	GetProperties(JSONNode& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool	GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
 
-			bool	SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool	SetProperty(JSONNode const& _property, bool _check =false);
 
 	virtual	bool	Post(Message* _message);
 
@@ -45,7 +44,7 @@ protected:
 
 	std::thread		thread_;	
 	bool			stop_;
-	Time			loop_interval_;
+	uint32_t		loop_interval_;
 	MessageQueue	message_queue_;
 
 	static	void	ThreadMain(ActiveObject* _object);

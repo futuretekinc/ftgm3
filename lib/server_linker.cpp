@@ -4,6 +4,8 @@
 #include <iomanip>
 #include "node.h"
 #include "defined.h"
+#include "exception.h"
+#include "json.h"
 #include "gateway.h"
 #include "property.h"
 #include "endpoint.h"
@@ -406,7 +408,7 @@ void	ServerLinker::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
 //	Class ServerLinker
 /////////////////////////////////////////////////////////////////////////////////////////////
 ServerLinker::ServerLinker(ObjectManager* _manager)
-: 	ActiveObject(), 
+: 	ProcessObject(), 
 	manager_(_manager), 
 	event_cb_(*this), 
 	delivery_report_cb_(*this), 
@@ -449,86 +451,33 @@ ServerLinker::~ServerLinker()
 	}
 }
 
-bool	ServerLinker::Load(JSONNode const& _json)
+bool	ServerLinker::SetProperty(JSONNode const& _config, bool _check)
 {
 	bool	ret_value = true;
 
-	if (_json.name() == TITLE_NAME_SECRET_KEY)
+	if (_config.name() == TITLE_NAME_SECRET_KEY)
 	{
-		if (_json.type() == JSON_STRING)
-		{
-			secret_key_ = _json.as_string();	
-		}
-		else
-		{
-			TRACE_ERROR("Invalid secure code!");
-		}
+		ret_value = SetSecretKey(_config.as_string(), _check);	
 	}
-	else if (_json.name() == TITLE_NAME_HASH)
+	else if (_config.name() == TITLE_NAME_HASH)
 	{
-		if (_json.type() == JSON_STRING)
-		{
-			SetHashAlg(_json.as_string());
-		}
-		else
-		{
-			TRACE_ERROR("Invalid secure code!");
-		}
-	
+		ret_value = SetHashAlg(_config.as_string(), _check);
 	}
-	else if (_json.name() == TITLE_NAME_BROKER)
+	else if (_config.name() == TITLE_NAME_BROKER)
 	{
-		if (_json.type() == JSON_STRING)
-		{
-			SetBroker(_json.as_string());
-		}
-		else
-		{
-			TRACE_ERROR("Invalid json format");
-			ret_value = false;	
-		}
+		ret_value = SetBroker(_config.as_string(), _check);
 	}
-	else if (_json.name() == TITLE_NAME_GLOBAL_UP_TOPIC)
+	else if (_config.name() == TITLE_NAME_GLOBAL_UP_TOPIC)
 	{
-		if (_json.type() == JSON_STRING)
-		{
-			SetGlobalUpTopic(_json.as_string());
-		}
-		else
-		{
-			TRACE_ERROR("Invalid json format");
-			ret_value = false;	
-		}
+		ret_value = SetGlobalUpTopic(_config.as_string(), _check);
 	}
-	else if (_json.name() == TITLE_NAME_GLOBAL_DOWN_TOPIC)
+	else if (_config.name() == TITLE_NAME_GLOBAL_DOWN_TOPIC)
 	{
-		if (_json.type() == JSON_STRING)
-		{
-			SetGlobalDownTopic(_json.as_string());
-		}
-		else
-		{
-			TRACE_ERROR("Invalid json format");
-			ret_value = false;	
-		}
-	}
-	else if ((_json.name() == TITLE_NAME_SERVER_LINKER) || (_json.name().size() == 0))
-	{
-		if (_json.type() == JSON_NODE)
-		{
-			for(auto it = _json.begin(); it != _json.end() ; it++)
-			{
-				ret_value = Load(*it);
-				if (!ret_value)
-				{
-					std::cout << "Invalid format" << std::endl;
-				}
-			}
-		}
+		ret_value = SetGlobalDownTopic(_config.as_string(), _check);
 	}
 	else
 	{
-		ret_value = ActiveObject::Load(_json);	
+		ret_value = ProcessObject::SetProperty(_config, _check);	
 	}
 
 	return	ret_value;
@@ -552,37 +501,52 @@ ServerLinker::operator JSONNode() const
 	return	root;
 }
 
-bool	ServerLinker::SetHashAlg(std::string const& _name)
+bool	ServerLinker::SetHashAlg(std::string const& _name, bool _check)
 {
 	if (_name == "sha1")
 	{
-		hash_alg_name_ = _name;
-		secret_code_hash_ = sha1;
+		if (!_check)
+		{
+			hash_alg_name_ = _name;
+			secret_code_hash_ = sha1;
+		}
 	}
 	else if (_name == "md5")
 	{
-		hash_alg_name_ = _name;
-		secret_code_hash_ = md5;
+		if (!_check)
+		{
+			hash_alg_name_ = _name;
+			secret_code_hash_ = md5;
+		}
 	}
 	else if (_name == "sha256")
 	{
-		hash_alg_name_ = _name;
-		secret_code_hash_ = sha256;	
+		if (!_check)
+		{
+			hash_alg_name_ = _name;
+			secret_code_hash_ = sha256;	
+		}
 	}
 	else
 	{
 		TRACE_ERROR("Not supported hash algorithm[" << _name << "]");
-		hash_alg_name_ = "sha1";
-		secret_code_hash_ = sha1;
+		if (!_check)
+		{
+			hash_alg_name_ = "sha1";
+			secret_code_hash_ = sha1;
+		}
 		return	false;
 	}
 
 	return	true;
 }
 
-bool	ServerLinker::SetGlobalUpTopic(std::string const& _topic)
+bool	ServerLinker::SetGlobalUpTopic(std::string const& _topic, bool _check)
 {
-	global_up_topic_ = _topic;
+	if (!_check)
+	{
+		global_up_topic_ = _topic;
+	}
 
 	return	true;
 }
@@ -592,11 +556,14 @@ const std::string&	ServerLinker::GetGlobalUpTopic()
 	return	global_up_topic_;
 }
 
-bool	ServerLinker::SetGlobalDownTopic(std::string const& _topic)
+bool	ServerLinker::SetGlobalDownTopic(std::string const& _topic, bool _check)
 {
-	global_down_topic_ = _topic;
+	if (!_check)
+	{
+		global_down_topic_ = _topic;
+	}
 
-	return	false;
+	return	true;
 }
 
 const std::string&	ServerLinker::GetGlobalDownTopic()
@@ -604,9 +571,12 @@ const std::string&	ServerLinker::GetGlobalDownTopic()
 	return	global_down_topic_;
 }
 
-bool	ServerLinker::SetSecretKey(std::string const& _secret_key)
+bool	ServerLinker::SetSecretKey(std::string const& _secret_key, bool _check)
 {
-	secret_key_=  _secret_key;
+	if (!_check)
+	{
+		secret_key_=  _secret_key;
+	}
 
 	return	true;
 }
@@ -618,9 +588,12 @@ bool	ServerLinker::GetSecretKey(std::string & _secret_key)
 	return	true;
 }
 
-bool	ServerLinker::SetBroker(std::string const& _broker)
+bool	ServerLinker::SetBroker(std::string const& _broker, bool _check)
 {
-	broker_ = _broker;
+	if (!_check)
+	{
+		broker_ = _broker;
+	}
 
 	return	true;
 }
@@ -633,6 +606,31 @@ const std::string&	ServerLinker::GetBroker()
 bool		ServerLinker::SetAutoConnection(bool _auto)
 {
 	auto_connection_ = _auto;
+
+	return	true;
+}
+
+bool		ServerLinker::SetAutoConnection(std::string const& _auto, bool _check)
+{
+	bool	value;
+
+	if ((_auto == "yes") ||(_auto == "on") ||(_auto == "true") ||(_auto == "1"))
+	{
+		value = true;
+	}
+	else if ((_auto == "no") ||(_auto == "off") ||(_auto == "false") ||(_auto == "0"))
+	{
+		value = false;
+	}
+	else
+	{
+		return	false;	
+	}
+
+	if (!_check)
+	{
+		auto_connection_ = value;
+	}
 
 	return	true;
 }
@@ -853,7 +851,7 @@ void	ServerLinker::Preprocess()
 	AddUpLink(global_up_topic_);
 	AddDownLink(global_down_topic_);
 
-	ActiveObject::Preprocess();
+	ProcessObject::Preprocess();
 	
 }
 
@@ -899,14 +897,14 @@ void	ServerLinker::Process()
 		}
 	}
 
-	ActiveObject::Process();
+	ProcessObject::Process();
 }
 
 void	ServerLinker::Postprocess()
 {
 	Disconnect();
 
-	ActiveObject::Preprocess();
+	ProcessObject::Preprocess();
 
 }
 
@@ -917,7 +915,7 @@ bool	ServerLinker::Start()
 		return	false;	
 	}
 
-	return	ActiveObject::Start();
+	return	ProcessObject::Start();
 }
 
 bool	ServerLinker::IsConnected()
@@ -1140,7 +1138,7 @@ bool	ServerLinker::ReplyInit(std::string const& _type, std::string const& _req_i
 	return	true;
 }
 
-bool	ServerLinker::AddGateway(JSONNode& _payload, Gateway* _gateway, Properties::Fields const& _fields)
+bool	ServerLinker::AddGateway(JSONNode& _payload, Gateway* _gateway, Fields const& _fields)
 {
 	auto it = _payload.find(TITLE_NAME_GATEWAY);
 	if (it != _payload.end())
@@ -1221,7 +1219,7 @@ bool	ServerLinker::AddGateway(JSONNode& _payload, std::string const& _id)
 	return	true;
 }
 
-bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Properties::Fields const& _fields)
+bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Fields const& _fields)
 {
 	auto it = _payload.find(TITLE_NAME_DEVICE);
 	if (it != _payload.end())
@@ -1300,7 +1298,7 @@ bool	ServerLinker::AddDevice(JSONNode& _payload, std::string const& _id)
 	return	true;
 }
 
-bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Properties::Fields const& _fields)
+bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields const& _fields)
 {
 	auto it = _payload.find(TITLE_NAME_ENDPOINT);
 	if (it != _payload.end())

@@ -47,34 +47,54 @@ extern	const char*	NODE_TYPE_GW_GEN;
 extern	const char*	NODE_TYPE_DEV_SNMP;
 extern	const char*	NODE_TYPE_DEV_FTE;
 
+extern	const char*	NODE_TYPE_EP_S_DISCRETE;
+extern	const char*	NODE_TYPE_EP_S_LINEAR;
 extern	const char*	NODE_TYPE_EP_S_TEMPERATURE;
 extern	const char*	NODE_TYPE_EP_S_HUMIDITY;
 extern	const char*	NODE_TYPE_EP_S_VOLTAGE;
 extern	const char*	NODE_TYPE_EP_S_CURRENT;
 extern	const char*	NODE_TYPE_EP_S_DI;
-extern	const char*	NODE_TYPE_EP_A_DO;
 extern	const char*	NODE_TYPE_EP_S_PRESSURE;
+extern	const char*	NODE_TYPE_EP_S_WIND_SPEED;
+extern	const char*	NODE_TYPE_EP_S_SOIL_MOISTURE;
+extern	const char*	NODE_TYPE_EP_S_RAINFALL;
+
+extern	const char*	NODE_TYPE_EP_A_LINEAR;
+extern	const char*	NODE_TYPE_EP_A_DISCRETE;
+extern	const char*	NODE_TYPE_EP_A_DO;
 
 extern	uint32_t	ENDPOINT_REPORT_INTERVAL;
 extern	uint32_t	ENDPOINT_UPDATE_INTERVAL;
 extern	uint32_t	ENDPOINT_VALUE_COUNT_MAX;
 extern	double		ENDPOINT_VALUE_SCALE;
 
-extern	int			ENDPOINT_SENSOR_TEMPERATURE_MAX;
-extern	int			ENDPOINT_SENSOR_TEMPERATURE_MIN;	
+extern	double		ENDPOINT_SENSOR_TEMPERATURE_MAX;
+extern	double		ENDPOINT_SENSOR_TEMPERATURE_MIN;	
 extern	const char*	ENDPOINT_SENSOR_TEMPERATURE_UNIT;
 
-extern	uint32_t	ENDPOINT_SENSOR_HUMIDITY_MAX;
-extern	uint32_t	ENDPOINT_SENSOR_HUMIDITY_MIN;
+extern	double		ENDPOINT_SENSOR_HUMIDITY_MAX;
+extern	double		ENDPOINT_SENSOR_HUMIDITY_MIN;
 extern	const char*	ENDPOINT_SENSOR_HUMIDITY_UNIT;
 
-extern	uint32_t	ENDPOINT_SENSOR_VOLTAGE_MAX;
-extern 	uint32_t	ENDPOINT_SENSOR_VOLTAGE_MIN;
+extern	double		ENDPOINT_SENSOR_VOLTAGE_MAX;
+extern 	double		ENDPOINT_SENSOR_VOLTAGE_MIN;
 extern 	const char*	ENDPOINT_SENSOR_VOLTAGE_UNIT;
 
-extern 	uint32_t	ENDPOINT_SENSOR_CURRENT_MAX;
-extern 	uint32_t	ENDPOINT_SENSOR_CURRENT_MIN;
+extern 	double		ENDPOINT_SENSOR_CURRENT_MAX;
+extern 	double		ENDPOINT_SENSOR_CURRENT_MIN;
 extern 	const char*	ENDPOINT_SENSOR_CURRENT_UNIT;
+
+extern 	double		ENDPOINT_SENSOR_WIND_SPEED_MAX;
+extern 	double		ENDPOINT_SENSOR_WIND_SPEED_MIN;
+extern 	const char*	ENDPOINT_SENSOR_WIND_SPEED_UNIT;
+
+extern 	double		ENDPOINT_SENSOR_RAINFALL_MAX;
+extern 	double		ENDPOINT_SENSOR_RAINFALL_MIN;
+extern 	const char*	ENDPOINT_SENSOR_RAINFALL_UNIT;
+
+extern 	double		ENDPOINT_SENSOR_SOIL_MOISTURE_MAX;
+extern 	double		ENDPOINT_SENSOR_SOIL_MOISTURE_MIN;
+extern 	const char*	ENDPOINT_SENSOR_SOIL_MOISTURE_UNIT;
 
 extern 	uint32_t	ENDPOINT_SENSOR_DI_MAX;
 extern 	uint32_t	ENDPOINT_SENSOR_DI_MIN;
@@ -140,7 +160,7 @@ TITLE_NAME(COMMUNITY, "community");
 TITLE_NAME(CORRECTION_INTERVAL, "correction_interval");
 TITLE_NAME(COUNT, "count");
 TITLE_NAME(DATA, "data");
-TITLE_NAME(DATA_FILE, "data file");
+TITLE_NAME(DATA_FILE, "data_file");
 TITLE_NAME(DATA_MANAGER, "database");
 TITLE_NAME(DATE, "date");
 TITLE_NAME(DEV_NAME, "dev_name");

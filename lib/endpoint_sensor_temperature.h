@@ -1,21 +1,16 @@
 #ifndef	ENDPOINT_SENSOR_TEMPERATURE_H_
 #define	ENDPOINT_SENSOR_TEMPERATURE_H_
 
-#include "endpoint_sensor.h"
-#include "property.h"
+#include "endpoint_sensor_linear.h"
 
-class	EndpointSensorTemperature : public EndpointSensor
+class	EndpointSensorTemperature : public EndpointSensorLinear
 {
 public:
 	EndpointSensorTemperature(ObjectManager& _manager);
-	EndpointSensorTemperature(ObjectManager& _manager, Properties const& _properties);
+	EndpointSensorTemperature(ObjectManager& _manager, JSONNode const& _properties);
 
 			std::string		GetClassName();
-	const 	ValueType 		Type();
-
-
-protected:
-
+	const 	std::string 	Type();
 };
 
 #endif

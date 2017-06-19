@@ -3,16 +3,16 @@
 #include "endpoint_sensor_humidity.h"
 
 EndpointSensorHumidity::EndpointSensorHumidity(ObjectManager& _manager)
-: EndpointSensor(_manager, EndpointSensorHumidity::Type(), ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
+: EndpointSensorLinear(_manager, EndpointSensorHumidity::Type(), ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
 {
 	trace.SetClassName(GetClassName());
 }
 
-EndpointSensorHumidity::EndpointSensorHumidity(ObjectManager& _manager, Properties const& _properties)
-: EndpointSensor(_manager, EndpointSensorHumidity::Type(), ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
+EndpointSensorHumidity::EndpointSensorHumidity(ObjectManager& _manager, JSONNode const& _properties)
+: EndpointSensorLinear(_manager, EndpointSensorHumidity::Type(), ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
 {
 	trace.SetClassName(GetClassName());
-	SetProperties(_properties , PROPERTY_ALL, true);
+	SetProperties(_properties , false, true);
 }
 
 std::string	EndpointSensorHumidity::GetClassName()
@@ -20,7 +20,7 @@ std::string	EndpointSensorHumidity::GetClassName()
 	return	"EPSHumidity";
 }
 
-const ValueType EndpointSensorHumidity::Type()
+const std::string EndpointSensorHumidity::Type()
 {
-	return	ValueType(NODE_TYPE_EP_S_HUMIDITY);
+	return	std::string (NODE_TYPE_EP_S_HUMIDITY);
 }

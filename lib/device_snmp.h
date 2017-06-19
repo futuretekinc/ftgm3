@@ -20,36 +20,35 @@ public:
 		operator std::string() const;
 	};
 
-	DeviceSNMP(ObjectManager& _manager, ValueType const& _type);
-	DeviceSNMP(ObjectManager& _manager, Properties const& _properties);
+	DeviceSNMP(ObjectManager& _manager, std::string const& _type);
 	DeviceSNMP(ObjectManager& _manager, JSONNode const& _properties);
-	DeviceSNMP(ObjectManager& _manager, ValueType const& _type, Properties const& _properties);
 	DeviceSNMP(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties);
-	DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module);
-	DeviceSNMP(ObjectManager& _manager, ValueType const& _type, std::string const& _module, ValueIP const& _ip);
+	DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module);
+	DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module, std::string const& _ip);
 	~DeviceSNMP();
 
-			bool	IsIncludedIn(ValueType const& _type);
+			bool	IsIncludedIn(std::string const& _type);
 
 	const	std::string&	GetModule();
-			bool			SetModule(std::string const& _module);
+			bool			SetModule(std::string const& _module, bool _check  = false);
 	const	std::string&	GetCommunity();
-			bool			SetCommunity(std::string const& _community);
+			bool			SetCommunity(std::string const& _community, bool _check = false);
 			uint32_t		GetTimeout();
 			bool			SetTimeout(uint32_t _timeout);
+			bool			SetTimeout(std::string const& _timeout, bool _check =false);
 
-	virtual	bool	SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool	GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL) ;
 
-	virtual	bool	GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL) ;
+	virtual	bool	SetProperty(JSONNode const& _property, bool _check = false);
 
-	virtual	Endpoint*	CreateEndpoint(Properties const& _properties);
+	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties);
 
 	virtual	OID		GetOID(std::string const& _id);
 	virtual	OID		GetOID(std::string const& _name, uint32_t index);
 
 	virtual	bool	InsertToDB(Kompex::SQLiteStatement*	_statement);
 
-	static	const	ValueType&	Type();
+	static	const std::string&	Type();
 	static	bool	AddMIBPath(std::string const& _path);
 	static	bool	ReadAllMIBs();
 	static	bool	ReadMIB(std::string const& _file_name);
@@ -64,9 +63,9 @@ protected:
 
 			bool	IsOpened();
 
-			bool	ReadValue(std::string const& _endpoint_id, std::string& _value);
-			bool	ReadValue(OID const& _oid, Value* _value);
-	static	bool	Convert(struct variable_list *_variable, Value* _value);
+			bool	ReadValue(std::string const& _endpoint_id, time_t& _time, std::string& _value);
+			bool	ReadValue(std::string const& _endpoint_id, time_t& _time, bool& _value);
+			bool	ReadValue(OID const& _oid, std::string& _value);
 	static	bool	Convert(struct variable_list *_variable, std::string& _value);
 
 	std::string		module_;

@@ -1,3 +1,4 @@
+#include <fstream>
 #include "defined.h"
 #include "exception.h"
 #include "utils.h"
@@ -145,6 +146,17 @@ uint32_t	JSONNodeGetCount(JSONNode const& _node, uint32_t _default)
 	throw _default;
 }
 
+JSONNode	JSONNodeGetNode(JSONNode const& _node, std::string const& _name)
+{
+	auto field = _node.find(_name);
+	if (field != _node.end())
+	{
+		return	*field;
+	}
+
+	throw ObjectNotFound(TITLE_NAME_TRACE);
+}
+
 JSONNode	JSONNodeGetTraceNode(JSONNode const& _node)
 {
 	auto field = _node.find(TITLE_NAME_TRACE);
@@ -172,4 +184,60 @@ bool		JSONNodeIsExistValue(JSONNode const& _node)
 	auto field = _node.find(TITLE_NAME_VALUE);
 
 	return	(field != _node.end());
+}
+
+void	JSONNodeUpdate(JSONNode& _node, std::string const& _name, std::string const& _value)
+{
+	auto it = _node.find(_name);
+	if (it != _node.end())
+	{
+		(*it) = _value;
+	}
+	else
+	{
+		_node.push_back(JSONNode(_name, _value));
+	}
+}
+
+void	JSONNodeUpdate(JSONNode& _node, std::string const& _name, uint32_t _value)
+{
+	auto it = _node.find(_name);
+	if (it != _node.end())
+	{
+		(*it) = _value;
+	}
+	else
+	{
+		_node.push_back(JSONNode(_name, _value));
+	}
+}
+
+
+JSONNode	JSONNodeLoadFromFile(std::string const& _file_name)
+{
+	std::fstream	fs(_file_name, std::fstream::in);
+	if (!fs.is_open())
+	{
+		THROW_INVALID_ARGUMENT("The " << _file_name << " cat not open!");
+	}
+
+	fs.seekg (0, fs.end);
+	int length = fs.tellg();
+	fs.seekg (0, fs.beg);
+
+	char * buffer = new char [length + 1];
+	fs.read(buffer, length);
+	buffer[length] = 0;
+	fs.close();
+
+	if (!libjson::is_valid(buffer))
+	{
+		delete buffer;
+		THROW_INVALID_ARGUMENT("The " << _file_name << " is invalid!");
+	}
+
+	JSONNode  node = libjson::parse(buffer);
+	delete buffer;
+
+	return	node;
 }

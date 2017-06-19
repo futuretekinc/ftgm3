@@ -29,32 +29,6 @@ RCSServer::RCSServer(ObjectManager* _manager)
 	name_ 	= "rcs_server";
 }
 
-bool	RCSServer::Load(JSONNode const& _json)
-{
-	bool	ret_value = true;
-
-	if ((_json.name() == TITLE_NAME_RCS_SERVER) || (_json.name().size() == 0))
-	{
-		if (_json.type() == JSON_NODE)
-		{
-			for(auto it = _json.begin(); it != _json.end() ; it++)
-			{
-				ret_value = Load(*it);
-				if (!ret_value)
-				{
-					std::cout << "Invalid format" << std::endl;
-				}
-			}
-		}
-	}
-	else
-	{
-		ret_value = TCPServer::Load(_json);
-	}
-
-	return	ret_value;
-}
-
 RCSServer::operator JSONNode() const
 {
 	JSONNode	root;
@@ -74,9 +48,9 @@ RCSServer::operator JSONNode() const
 	return	root;
 }
 
-bool	RCSServer::SetProperty(Property const& _property, Properties::Fields const& _fields)
+bool	RCSServer::SetProperty(JSONNode const& _property, bool _check)
 {
-	return	TCPServer::SetProperty(_property, _fields);
+	return	TCPServer::SetProperty(_property, _check);
 }
 
 TCPSession*	RCSServer::CreateSession(int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout)
@@ -317,7 +291,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
 			}
-			else if (!gateway->SetProperties(*it))
+			else if (!gateway->SetProperties(*it, false, false))
 			{
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
@@ -342,7 +316,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
 			}
-			else if (!device->SetProperties(*it))
+			else if (!device->SetProperties(*it, false, false))
 			{
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
@@ -406,7 +380,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				}
 				catch(ObjectNotFound& e)
 				{
-					if (!endpoint->SetProperties(*it))
+					if (!endpoint->SetProperties(*it, false, false))
 					{
 						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 					}
@@ -831,11 +805,11 @@ bool	RCSServer::ConfirmGateway(JSONNode& _node, std::string& _req_type)
 			Gateway*	gateway = manager_->GetGateway(id);
 			if (gateway == NULL)
 			{
-				throw ObjectNotFound(id);
+				THROW_OBJECT_NOT_FOUND("The gateway[ " << id << "] not found!");
 			}
 
 			gateway->SetRegistered(true);
-			gateway->SetProperties(_node, PROPERTY_ADD_CONFIRM);
+			gateway->SetProperties(_node, false, false);
 			TRACE_INFO("The gateway[" << id << "] registeration confirmed.");
 		}
 		else if (_req_type == MSG_TYPE_RCS_DEL)
@@ -860,7 +834,7 @@ bool	RCSServer::ConfirmGateway(JSONNode& _node, std::string& _req_type)
 	}
 	else
 	{
-		throw InvalidArgument("Invalid _message fromat!");
+		THROW_INVALID_ARGUMENT("Invalid message format!");
 	}
 }
 
@@ -885,7 +859,7 @@ bool	RCSServer::ConfirmDevice(JSONNode& _node, std::string& _req_type)
 			}
 
 			device->SetRegistered(true);
-			device->SetProperties(_node);
+			device->SetProperties(_node, false, false);
 			TRACE_INFO("The device[" << id << "] registeration confirmed.");
 		}
 		else if (_req_type == MSG_TYPE_RCS_DEL)
@@ -938,7 +912,7 @@ bool	RCSServer::ConfirmEndpoint(JSONNode& _node, std::string& _req_type)
 			}
 
 			endpoint->SetRegistered(true);
-			endpoint->SetProperties(_node);
+			endpoint->SetProperties(_node, false, false);
 			TRACE_INFO("The endpoint[" << id << "] registeration confirmed.");
 		}
 		else if (_req_type == MSG_TYPE_RCS_DEL)

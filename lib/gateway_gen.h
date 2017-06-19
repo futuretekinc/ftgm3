@@ -6,12 +6,11 @@
 class	GatewayGen : public Gateway
 {
 public:
-	GatewayGen(ObjectManager& _manager, Properties const& _properties);
 	GatewayGen(ObjectManager& _manager, JSONNode const& _properties);
 
-	virtual	bool		IsIncludedIn(ValueType const& _type);
+	virtual	bool		IsIncludedIn(std::string const& _type);
 
-	static	const	ValueType&	Type();
+	static	const	std::string&	Type();
 };
 
 #endif

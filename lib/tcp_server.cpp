@@ -20,7 +20,7 @@
 //
 ///////////////////////////////////////////////////////
 TCPServer::TCPServer(ObjectManager* _manager)
-: ActiveObject(), manager_(_manager), port_(8888), max_session_count_(10), timeout_(60 * TIME_SECOND), onMessageCallback_(NULL)
+: ProcessObject(), manager_(_manager), port_(8888), max_session_count_(10), timeout_(60 * TIME_SECOND), onMessageCallback_(NULL)
 {
 	trace.SetClassName(GetClassName());
 	enable_	= true;
@@ -37,58 +37,13 @@ TCPServer::~TCPServer()
 	session_map_locker_.Unlock();
 }
 
-bool	TCPServer::Load(JSONNode const& _json)
-{
-	bool	ret_value = true;
-
-	if ((_json.name() == TITLE_NAME_TCP_SERVER) || (_json.name().size() == 0))
-	{
-		if (_json.type() == JSON_NODE)
-		{
-			for(auto it = _json.begin(); it != _json.end() ; it++)
-			{
-				ret_value = Load(*it);
-				if (!ret_value)
-				{
-					std::cout << "Invalid format" << std::endl;
-				}
-			}
-		}
-	}
-	else if (_json.name() == TITLE_NAME_PORT)
-	{
-		port_ = _json.as_int();
-	}
-	else if (_json.name() == TITLE_NAME_ENABLE)
-	{
-		if ((_json.as_string() == "yes") ||  (_json.as_string() == "on"))
-		{
-			SetEnable(true);
-		}
-		else if ((_json.as_string() == "no") ||  (_json.as_string() == "off"))
-		{
-			SetEnable(false);
-		}
-	}
-	else if (_json.name() == TITLE_NAME_TIMEOUT)
-	{
-		timeout_ = _json.as_int();
-	}
-	else
-	{
-		ret_value = ActiveObject::Load(_json);
-	}
-
-	return	ret_value;
-}
-
 TCPServer::operator JSONNode() const
 {
 	JSONNode	root;
 	
 	root.push_back(JSONNode(TITLE_NAME_PORT, port_));
+	root.push_back(JSONNode(TITLE_NAME_MAX_SESSION, max_session_count_));
 	root.push_back(JSONNode(TITLE_NAME_TIMEOUT, timeout_));
-	root.push_back(JSONNode(TITLE_NAME_ENABLE, ((enable_)?"yes":"no")));
 
 	JSONNode	trace_config = trace;
 
@@ -101,45 +56,101 @@ TCPServer::operator JSONNode() const
 	return	root;
 }
 
-bool	TCPServer::SetProperty(Property const& _property, Properties::Fields const& _fields)
+uint16_t	TCPServer::GetPort()
+{
+	return	port_;
+}
+
+bool		TCPServer::SetPort(uint16_t _port, bool _check)
+{
+	if (!_check)
+	{
+		port_ = _port;
+	}
+
+	return	true;
+}
+
+bool		TCPServer::SetPort(std::string const& _port, bool _check)
+{
+	if (!_check)
+	{
+		port_ = strtoul(_port.c_str(), 0, 10);
+	}
+
+	return	true;
+}
+
+uint32_t	TCPServer::GetMaxSessionCount()
+{
+	return	max_session_count_;
+}
+
+bool		TCPServer::SetMaxSessionCount(uint32_t _count, bool _check)
+{
+	if (!_check)
+	{
+		max_session_count_ = _count;
+	}
+
+	return	true;
+}
+
+bool		TCPServer::SetMaxSessionCount(std::string const& _count, bool _check)
+{
+	if (!_check)
+	{
+		max_session_count_ = strtoul(_count.c_str(), 0, 10);
+	}
+
+	return	true;
+}
+
+uint32_t	TCPServer::GetTimeout()
+{
+	return	timeout_;
+}
+
+bool		TCPServer::SetTimeout(uint32_t	_timeout, bool _check)
+{
+	if (!_check)
+	{
+		timeout_ = _timeout;
+	}
+
+	return	true;
+}
+
+bool		TCPServer::SetTimeout(std::string const& _timeout, bool _check)
+{
+	if (!_check)
+	{
+		timeout_ = strtoul(_timeout.c_str(), 0, 10);
+	}
+
+	return	true;
+}
+
+bool	TCPServer::SetProperty(JSONNode const& _property, bool _check)
 {
 
-	if (_property.GetName() == TITLE_NAME_PORT)
-	{
-		const ValueUInt32* value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
-		if (value == NULL)
-		{
-			TRACE_ERROR("Failed to set port property because value type is invalid.");
-			return	false;
-		}	
+	bool	ret_value = true;
 
-		port_ = value->Get();
+	if (_property.name() == TITLE_NAME_PORT)
+	{
+		ret_value = SetPort(_property.as_string(), _check);
 	}
-	else if (_property.GetName() == TITLE_NAME_MAX_SESSION)
+	else if (_property.name() == TITLE_NAME_MAX_SESSION)
 	{
-		const ValueUInt32* value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
-		if (value == NULL)
-		{
-			TRACE_ERROR("Failed to set max_session property because value type is invalid.");
-			return	false;
-		}	
-
-		max_session_count_ = value->Get();
+		ret_value = SetMaxSessionCount(_property.as_string(), _check);
 	}
-	else if (_property.GetName() == TITLE_NAME_TIMEOUT)
+	else if (_property.name() == TITLE_NAME_TIMEOUT)
 	{
-		const ValueUInt32* value = dynamic_cast<const ValueUInt32*>(_property.GetValue());
-		if (value == NULL)
-		{
-			TRACE_ERROR("Failed to set max_session property because value type is invalid.");
-			return	false;
-		}	
-
-		timeout_ = value->Get();
+		ret_value = SetTimeout(_property.as_string(), _check);
 	}
 	else 
 	{
-		return	ActiveObject::SetProperty(_property, _fields);
+		return	ProcessObject::SetProperty(_property, _check);
 	}
 
 	return	true;
@@ -303,7 +314,7 @@ bool	TCPServer::OnMessage
 		break;
 
 	default:
-		return	ActiveObject::OnMessage(_base_message);
+		return	ProcessObject::OnMessage(_base_message);
 	}
 
 	return	true;

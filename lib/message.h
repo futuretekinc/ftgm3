@@ -45,8 +45,8 @@ public:
 	static	void	UnregisterRecipient(std::string const& _sender);
 	static	void	Send(std::string const& _sender, Message* _message);
 
-	static	void	SendPacket(ValueID const& _target, ValueID const& _sendoer, void* _data, uint32_t _len);
-	static	void	SendPacket(ValueID const& _target, ValueID const& _sendoer, std::string const& _message);
+	static	void	SendPacket(std::string const& _target, std::string const& _sendoer, void* _data, uint32_t _len);
+	static	void	SendPacket(std::string const& _target, std::string const& _sendoer, std::string const& _message);
 
 	friend	const std::string&	ToString(Message* _message);
 	friend	std::ostream& ::operator<<(std::ostream& os, Message const& _message);

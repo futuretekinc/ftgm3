@@ -50,7 +50,7 @@ bool	RCSClient::SetDumpPacket(bool _dump_packet)
 
 bool	RCSClient::OnMessage(Message* _message)
 {
-	return	ActiveObject::OnMessage(_message);
+	return	ProcessObject::OnMessage(_message);
 }
 
 bool	RCSClient::Start()
@@ -62,7 +62,7 @@ bool	RCSClient::Start()
 		TRACE_ERROR("Failed to connect!");	
 	}
 
-	return	ActiveObject::Start();
+	return	ProcessObject::Start();
 }
 
 bool	RCSClient::Stop(bool _wait)
@@ -74,7 +74,7 @@ bool	RCSClient::Stop(bool _wait)
 
 	tcp_client_.Stop();
 
-	return	ActiveObject::Stop(_wait);
+	return	ProcessObject::Stop(_wait);
 }
 
 bool	RCSClient::Connect()
@@ -95,17 +95,17 @@ bool	RCSClient::IsConnected()
 
 void	RCSClient::Preprocess()
 {
-	ActiveObject::Preprocess();
+	ProcessObject::Preprocess();
 }
 
 void	RCSClient::Process()
 {
-	ActiveObject::Process();
+	ProcessObject::Process();
 }
 
 void	RCSClient::Postprocess()
 {
-	ActiveObject::Postprocess();
+	ProcessObject::Postprocess();
 }
 
 bool	RCSClient::AddGateway(JSONNode const& _properties)

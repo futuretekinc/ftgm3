@@ -2,6 +2,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "defined.h"
+#include "exception.h"
 #include "time2.h"
 #include "trace.h"
 
@@ -120,11 +121,20 @@ Date::Date(std::string const& _date)
 {
 	struct tm	tm;
 
-	strptime(_date.c_str(), "%Y-%m-%d %H:%M:%S", &tm);
+	if (_date.find('-') != std::string::npos)
+	{
+		if (strptime(_date.c_str(), "%Y-%m-%d %H:%M:%S", &tm) == NULL)
+		{
+			THROW_INVALID_ARGUMENT("Invalid time format[" << _date << "]");	
+		}
 
-	time_t time = mktime(&tm); 
-
-	value_ = time * TIME_SECOND;
+		time_t time = mktime(&tm); 
+		value_ = time * TIME_SECOND;
+	}
+	else
+	{
+		value_ = strtoul(_date.c_str(), 0, 10) * TIME_SECOND;
+	}
 }
 
 bool	Date::IsValid() const
@@ -212,7 +222,11 @@ const	Date&	Date::operator=(std::string const& _date)
 
 	if (_date.find('-') != std::string::npos)
 	{
-		strptime(_date.c_str(), "%Y-%m-%d %H:%M:%S", &tm);
+		if (strptime(_date.c_str(), "%Y-%m-%d %H:%M:%S", &tm) == NULL)
+		{
+			THROW_INVALID_ARGUMENT("Invalid time format[" << _date << "]");	
+		}
+
 		time_t time = mktime(&tm); 
 		value_ = time * TIME_SECOND;
 	}
@@ -220,8 +234,6 @@ const	Date&	Date::operator=(std::string const& _date)
 	{
 		value_ = strtoul(_date.c_str(), 0, 10) * TIME_SECOND;
 	}
-
-
 
 	return	*this;
 }

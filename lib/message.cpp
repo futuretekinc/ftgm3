@@ -85,7 +85,7 @@ void	Message::Send(std::string const& _sender, Message* _message)
 	active_object_map_lock.unlock();
 }
 
-void	Message::SendPacket(ValueID const& _target, ValueID const& _sender, void* _data, uint32_t _length)
+void	Message::SendPacket(std::string const& _target, std::string const& _sender, void* _data, uint32_t _length)
 {
 	try
 	{
@@ -99,7 +99,7 @@ void	Message::SendPacket(ValueID const& _target, ValueID const& _sender, void* _
 	}
 }
 
-void	Message::SendPacket(ValueID const& _target, ValueID const& _sender, std::string const& _message)
+void	Message::SendPacket(std::string const& _target, std::string const& _sender, std::string const& _message)
 {
 	try
 	{

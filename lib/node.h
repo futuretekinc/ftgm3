@@ -6,25 +6,6 @@
 
 class	ObjectManager;
 
-struct	NodeInfo
-{
-	NodeInfo();
-	NodeInfo(JSONNode const& _json);
-
-	virtual	bool		GetProperties(JSONNode& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
-
-	Properties::Fields	fields;
-	ValueID			parent_id;
-	ValueID			id;
-	ValueName		name;	
-	Date			date;
-	bool			enable;
-	std::string		type;
-	std::string		location;
-	uint32_t		keep_alive_interval;
-	bool			registered;
-};
-
 class	Node : public ActiveObject
 {
 	friend class	ObjectManager;
@@ -36,26 +17,30 @@ public:
 		ENDPOINT
 	};
 
-	Node(ObjectManager& _manager, ValueType const& _type);
+	Node(ObjectManager& _manager, std::string const& _type);
 
-	virtual	ValueType 	GetType() const;
-	virtual	bool		IsIncludedIn(ValueType const& _type);
+	virtual	std::string 	GetType() const;
+	virtual	bool		SetType(std::string const& _type, bool _check = false);
+
+	virtual	bool		IsIncludedIn(std::string const& _type);
+
+	virtual	bool		SetID(std::string const& _id, bool _check = false);
 
 			bool		SetKeepAliveInterval(uint32_t _interval);
+			bool		SetKeepAliveInterval(std::string const& _interval, bool _check = false);
 			uint32_t	GetKeepAliveInterval()	{	return	keep_alive_interval_;	};
 			Date		TimeOfExpire();
 
 			bool		SetRegistered(bool _registered);
-			bool		SetRegistered(std::string const& _registered);
+			bool		SetRegistered(std::string const& _registered, bool _check = false);
 			bool		GetRegistered();
 
-			bool		SetLocation(std::string const& _location);
+			bool		SetLocation(std::string const& _location, bool _check = false);
 	const	std::string&	GetLocation();
 
-			bool		SetProperty(Property const& _property, Properties::Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
 
-	virtual	bool		GetProperties(Properties& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
-	virtual	bool		GetProperties(JSONNode& _properties, Properties::Fields const& _fields = PROPERTY_ALL);
+			bool		SetProperty(JSONNode const& _property, bool _check = false);
 
 			bool		ApplyChanges();
 
@@ -63,14 +48,14 @@ public:
 			void		Preprocess();
 			void		Process();
 
-	static	const	ValueType&	Type();
+	static	const	std::string&	Type();
 	static	bool		IsValidType(std::string const& _type);
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 	static	bool		IsIncludeIn(Object* _object);
 
 protected:
 	ObjectManager&	manager_;
-	ValueType		type_;
+	std::string		type_;
 
 	std::string		location_;
 	uint32_t		keep_alive_interval_;

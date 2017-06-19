@@ -10,25 +10,19 @@ DeviceFTE::DeviceFTE(ObjectManager& _manager)
 	trace.SetClassName(GetClassName());
 }
 
-DeviceFTE::DeviceFTE(ObjectManager& _manager, Properties const& _properties)
-: DeviceSNMP(_manager, DeviceFTE::Type(), _properties)
-{
-	trace.SetClassName(GetClassName());
-}
-
 DeviceFTE::DeviceFTE(ObjectManager& _manager, JSONNode const& _properties)
 : DeviceSNMP(_manager, DeviceFTE::Type(), _properties)
 {
 	trace.SetClassName(GetClassName());
 }
 
-DeviceFTE::DeviceFTE(ObjectManager& _manager, ValueIP const& _ip)
+DeviceFTE::DeviceFTE(ObjectManager& _manager, std::string const& _ip)
 : DeviceSNMP(_manager, DeviceFTE::Type(), "FTE-E",  _ip)
 {
 	trace.SetClassName(GetClassName());
 }
 
-bool		DeviceFTE::IsIncludedIn(ValueType const& _type)
+bool		DeviceFTE::IsIncludedIn(std::string const& _type)
 {
 	if (_type == DeviceFTE::Type())
 	{
@@ -38,7 +32,7 @@ bool		DeviceFTE::IsIncludedIn(ValueType const& _type)
 	return	DeviceSNMP::IsIncludedIn(_type);
 }
 
-Endpoint*	DeviceFTE::CreateEndpoint(Properties const& _properties)
+Endpoint*	DeviceFTE::CreateEndpoint(JSONNode const& _properties)
 {
 	Endpoint* endpoint = manager_.CreateEndpoint(_properties);
 	if (endpoint != NULL)
@@ -49,9 +43,9 @@ Endpoint*	DeviceFTE::CreateEndpoint(Properties const& _properties)
 	return	endpoint;
 }
 
-bool	DeviceFTE::Attach(ValueID const& _endpoint_id)
+bool	DeviceFTE::Attach(std::string const& _epid)
 {
-	Endpoint*	endpoint = manager_.GetEndpoint(std::string(_endpoint_id));
+	Endpoint*	endpoint = manager_.GetEndpoint(std::string(_epid));
 	if (endpoint == NULL)
 	{
 		return	false;
@@ -72,18 +66,18 @@ bool	DeviceFTE::Attach(ValueID const& _endpoint_id)
 		return	false;
 	}
 
-	auto endpoint_it = endpoint_table_.find(_endpoint_id);
+	auto endpoint_it = endpoint_table_.find(_epid);
 	if (endpoint_it == endpoint_table_.end())
 	{
-		endpoint_table_[_endpoint_id] = index;
+		endpoint_table_[_epid] = index;
 	}
 
-	return	Device::Attach(_endpoint_id);
+	return	Device::Attach(_epid);
 }
 
-bool	DeviceFTE::Detach(ValueID const& _endpoint_id)
+bool	DeviceFTE::Detach(std::string const& _epid)
 {
-	Endpoint*	endpoint = manager_.GetEndpoint(std::string(_endpoint_id));
+	Endpoint*	endpoint = manager_.GetEndpoint(std::string(_epid));
 	if (endpoint == NULL)
 	{
 		return	false;
@@ -104,37 +98,37 @@ bool	DeviceFTE::Detach(ValueID const& _endpoint_id)
 		return	false;
 	}
 
-	auto endpoint_it = endpoint_table_.find(_endpoint_id);
+	auto endpoint_it = endpoint_table_.find(_epid);
 	if (endpoint_it == endpoint_table_.end())
 	{
-		TRACE_INFO("The device[" << _endpoint_id << "] is not attached.");
+		TRACE_INFO("The device[" << _epid << "] is not attached.");
 		return	false;
 	}
 
 	endpoint_table_.erase(endpoint_it);
 
-	return	Device::Detach(_endpoint_id);
+	return	Device::Detach(_epid);
 }
 
-bool	DeviceFTE::ReadValue(std::string const& _endpoint_id, Value* _value)
+bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& time, std::string& _value)
 {
-	Endpoint*	endpoint = manager_.GetEndpoint(_endpoint_id);
+	Endpoint*	endpoint = manager_.GetEndpoint(_epid);
 	if (endpoint == NULL)
 	{
-		TRACE_ERROR("The endpoint[" << _endpoint_id << "] is not attached");
+		TRACE_ERROR("The endpoint[" << _epid << "] is not attached");
 		return	false;	
 	}
 
-	auto it = endpoint_table_.find(_endpoint_id);
+	auto it = endpoint_table_.find(_epid);
 	if (it == endpoint_table_.end())
 	{
-		TRACE_ERROR("The endpoint[" << _endpoint_id << "] has been abnormally attached");
+		TRACE_ERROR("The endpoint[" << _epid << "] has been abnormally attached");
 		return	false;	
 	}
 
 	OID oid = GetOID(endpoint->GetType(), it->second);
 
-	return	DeviceSNMP::ReadValue(oid, _value);
+	return	DeviceSNMP::ReadValue(oid, time, _value);
 }
 
 DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
@@ -178,7 +172,7 @@ DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
 	return	oid_map_[_id];
 }
 
-DeviceSNMP::OID DeviceFTE::GetOID(ValueType const& _type, uint32_t _index)
+DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _type, uint32_t _index)
 {
 	OID oid;
 	uint32_t	type_index = 0;
@@ -231,9 +225,9 @@ DeviceSNMP::OID DeviceFTE::GetOID(ValueType const& _type, uint32_t _index)
 	return	oid;
 }
 
-const	ValueType&	DeviceFTE::Type()
+const	std::string&	DeviceFTE::Type()
 {
-	static	ValueType	type_(NODE_TYPE_DEV_FTE);
+	static	std::string	type_(NODE_TYPE_DEV_FTE);
 
 	return	type_;
 }

@@ -1,18 +1,17 @@
 #ifndef	ENDPOINT_SENSOR_DI_H_
 #define	ENDPOINT_SENSOR_DI_H_
 
-#include "endpoint_sensor.h"
+#include "endpoint_sensor_discrete.h"
 
-class	EndpointSensorDI : public EndpointSensor
+class	EndpointSensorDI : public EndpointSensorDiscrete
 {
 public:
 	EndpointSensorDI(ObjectManager& _manager);
-	EndpointSensorDI(ObjectManager& _manager, Properties const& _properties);
+	EndpointSensorDI(ObjectManager& _manager, JSONNode const& _properties);
 
 			std::string	GetClassName();
-			bool		SetProperty(Property const& _property);
 
-	const 	ValueType 	Type();
+	const 	std::string 	Type();
 };
 
 #endif

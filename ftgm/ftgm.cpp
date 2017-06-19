@@ -17,53 +17,50 @@ static void sigterm (int sig)
 {
 }
 
-bool	LoadConfig(JSONNode& config, std::string const& _file_name)
+
+std::string	config_file_name(std::string(program_invocation_short_name) + ".conf");
+bool		debug_mode = false;
+
+void	SetOptions( int	argc, char* argv[])
 {
-	std::fstream	fs("./ftgm.conf", std::fstream::in);
-	if (!fs.is_open())
-	{
-		return	false;
-	}
+	char opt;
 
-	fs.seekg (0, fs.end);
-	int length = fs.tellg();
-	fs.seekg (0, fs.beg);
+    while ((opt = getopt(argc, argv, "c:d")) != (char)(-1))
+    {
+        switch (opt)
+        {
+		case 'c':
+			config_file_name = optarg;
+			break;
 
-	char * buffer = new char [length + 1];
-	fs.read(buffer, length);
-	buffer[length] = 0;
-	fs.close();
+		case 'd':
+			debug_mode = true;
+			break;
 
-	if (!libjson::is_valid(buffer))
-	{
-		delete buffer;
-		return	false;
-	}
-
-	config = libjson::parse(buffer);
-	delete buffer;
-
-	return	true;
+		default:
+			std::cerr << "Failed to get option[" << opt << "]!" << std::endl;
+			return;
+        }
+    }
 }
-
 
 int	main(int argc, char *argv[])
 {
 
+	SetOptions(argc,argv);
+
 	try
 	{
-		JSONNode	config;
-		std::string	file_name(std::string(program_invocation_short_name) + ".conf");
+		JSONNode	config = JSONNodeLoadFromFile(config_file_name);
 
-		if (!LoadConfig(config, file_name))
-		{
-			std::cerr << "Failed to load config!" << std::endl;	
-			return	0;
-		}
+		JSONNode	trace_config = JSONNodeGetNode(config, TITLE_NAME_TRACE);
+		JSONNode	manager_config = JSONNodeGetNode(config, TITLE_NAME_OBJECT_MANAGER);
+
+		trace_master.Load(trace_config);
 
 		ObjectManager	object_manager;
 
-		if (!object_manager.Load(config))
+		if (!object_manager.SetProperties(manager_config, false, false))
 		{
 			std::cerr << "Failed to load config!" << std::endl;	
 			return	0;
@@ -74,10 +71,6 @@ int	main(int argc, char *argv[])
 		TRACE_INFO2(NULL, "####################################");
 
 		object_manager.Start();
-		while(!object_manager.IsRunning())
-		{
-			usleep(1000);
-		}
 
 		//	signal(SIGINT, sigterm);
 		// 	signal(SIGTERM, sigterm);
@@ -99,4 +92,5 @@ int	main(int argc, char *argv[])
 
 	return	0;
 }
+
 

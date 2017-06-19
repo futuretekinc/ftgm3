@@ -3,16 +3,16 @@
 #include "endpoint_sensor_voltage.h"
 
 EndpointSensorVoltage::EndpointSensorVoltage(ObjectManager& _manager)
-: EndpointSensor(_manager, EndpointSensorVoltage::Type(), ENDPOINT_SENSOR_VOLTAGE_UNIT, ENDPOINT_SENSOR_VOLTAGE_MIN, ENDPOINT_SENSOR_VOLTAGE_MAX)
+: EndpointSensorLinear(_manager, EndpointSensorVoltage::Type(), ENDPOINT_SENSOR_VOLTAGE_UNIT, ENDPOINT_SENSOR_VOLTAGE_MIN, ENDPOINT_SENSOR_VOLTAGE_MAX)
 {
 	trace.SetClassName(GetClassName());
 }
 
-EndpointSensorVoltage::EndpointSensorVoltage(ObjectManager& _manager, Properties const& _properties)
-: EndpointSensor(_manager, EndpointSensorVoltage::Type(), ENDPOINT_SENSOR_VOLTAGE_UNIT, ENDPOINT_SENSOR_VOLTAGE_MIN, ENDPOINT_SENSOR_VOLTAGE_MAX)
+EndpointSensorVoltage::EndpointSensorVoltage(ObjectManager& _manager, JSONNode const& _properties)
+: EndpointSensorLinear(_manager, EndpointSensorVoltage::Type(), ENDPOINT_SENSOR_VOLTAGE_UNIT, ENDPOINT_SENSOR_VOLTAGE_MIN, ENDPOINT_SENSOR_VOLTAGE_MAX)
 {
 	trace.SetClassName(GetClassName());
-	SetProperties(_properties , PROPERTY_ALL, true);
+	SetProperties(_properties , false, true);
 }
 
 std::string	EndpointSensorVoltage::GetClassName()
@@ -20,7 +20,7 @@ std::string	EndpointSensorVoltage::GetClassName()
 	return	"EPSVoltage";
 }
 
-const ValueType EndpointSensorVoltage::Type()
+const std::string EndpointSensorVoltage::Type()
 {
-	return	ValueType(NODE_TYPE_EP_S_VOLTAGE);
+	return	std::string (NODE_TYPE_EP_S_VOLTAGE);
 }

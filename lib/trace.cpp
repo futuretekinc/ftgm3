@@ -25,7 +25,7 @@ bool	Trace::SetClassName(std::string const& _class_name)
 	return	true;
 }
 
-bool	Trace::Load(JSONNode const& _json)
+bool	Trace::Load(JSONNode const& _json, bool _check)
 {
 	bool	ret_value = true;
 
@@ -33,18 +33,24 @@ bool	Trace::Load(JSONNode const& _json)
 	{
 		if ((_json.as_string() == "yes") ||  (_json.as_string() == "on"))
 		{
-			SetEnable(true);
+			if (!_check)
+			{
+				SetEnable(true);
+			}
 		}
 		else if ((_json.as_string() == "no") ||  (_json.as_string() == "off"))
 		{
-			SetEnable(false);
+			if (!_check)
+			{
+				SetEnable(false);
+			}
 		}
 	}
 	else if (_json.type() == JSON_NODE)
 	{
 		for(auto it = _json.begin(); it != _json.end() ; it++)
 		{	
-			ret_value = Load(*it);
+			ret_value = Load(*it, _check);
 			if (ret_value != true)
 			{
 				break;

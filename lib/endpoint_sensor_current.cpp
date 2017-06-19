@@ -3,16 +3,16 @@
 #include "endpoint_sensor_current.h"
 
 EndpointSensorCurrent::EndpointSensorCurrent(ObjectManager& _manager)
-: EndpointSensor(_manager, EndpointSensorCurrent::Type(), ENDPOINT_SENSOR_CURRENT_UNIT, ENDPOINT_SENSOR_CURRENT_MIN, ENDPOINT_SENSOR_CURRENT_MAX)
+: EndpointSensorLinear(_manager, EndpointSensorCurrent::Type(), ENDPOINT_SENSOR_CURRENT_UNIT, ENDPOINT_SENSOR_CURRENT_MIN, ENDPOINT_SENSOR_CURRENT_MAX)
 {
 	trace.SetClassName(GetClassName());
 }
 
-EndpointSensorCurrent::EndpointSensorCurrent(ObjectManager& _manager, Properties const& _properties)
-: EndpointSensor(_manager, EndpointSensorCurrent::Type(), ENDPOINT_SENSOR_CURRENT_UNIT, ENDPOINT_SENSOR_CURRENT_MIN, ENDPOINT_SENSOR_CURRENT_MAX)
+EndpointSensorCurrent::EndpointSensorCurrent(ObjectManager& _manager, JSONNode const& _properties)
+: EndpointSensorLinear(_manager, EndpointSensorCurrent::Type(), ENDPOINT_SENSOR_CURRENT_UNIT, ENDPOINT_SENSOR_CURRENT_MIN, ENDPOINT_SENSOR_CURRENT_MAX)
 {
 	trace.SetClassName(GetClassName());
-	SetProperties(_properties , PROPERTY_ALL, true);
+	SetProperties(_properties , false, true);
 }
 
 std::string	EndpointSensorCurrent::GetClassName()
@@ -20,7 +20,7 @@ std::string	EndpointSensorCurrent::GetClassName()
 	return	"EPSCurrent";
 }
 
-const ValueType EndpointSensorCurrent::Type()
+const std::string EndpointSensorCurrent::Type()
 {
-	return	ValueType(NODE_TYPE_EP_S_CURRENT);
+	return	std::string(NODE_TYPE_EP_S_CURRENT);
 }

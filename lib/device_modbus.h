@@ -7,7 +7,7 @@
 class	DeviceModbus : public DeviceSerial
 {
 public:
-	DeviceModbus(ObjectManager& _manager, ValueType const& _type);
+	DeviceModbus(ObjectManager& _manager, std::string const& _type);
 
 	bool	ReadHoldingRegisters(uint16_t address, int16_t *values, uint16_t count);
 	bool	WriteRegister(uint16_t address, uint16_t value);

@@ -37,9 +37,9 @@ bool	ShellCommandGatewayList(Shell* _shell)
 				type_len = std::string(gateway->GetType()).length();
 			}
 
-			if (stat_len < Object::ToString(gateway->GetStat()).length())
+			if (stat_len < ToString(gateway->GetStat()).length())
 			{
-				stat_len = Object::ToString(gateway->GetStat()).length();
+				stat_len = ToString(gateway->GetStat()).length();
 			}
 		}
 
@@ -58,7 +58,7 @@ bool	ShellCommandGatewayList(Shell* _shell)
 			std::cout << std::setw(id_len) << gateway->GetID();
 			std::cout << " " << std::setw(name_len) << gateway->GetName();
 			std::cout << " " << std::setw(type_len) << gateway->GetType();
-			std::cout << " " << std::setw(stat_len) << Object::ToString(gateway->GetStat());
+			std::cout << " " << std::setw(stat_len) << ToString(gateway->GetStat());
 			std::cout << " " << std::setw(registered_len) << (gateway->GetRegistered()?"yes":"no");
 			std::cout << std::endl;	
 		}
@@ -258,7 +258,7 @@ RetValue	ShellCommandGateway
 					throw std::invalid_argument("Invalid arguments!");
 				}
 
-				gateway->SetProperties(properties);
+				gateway->SetProperties(properties, false, false);
 			}
 
 		}

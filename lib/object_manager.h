@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include <sstream>
-#include "active_object.h"
+#include "process_object.h"
 #include "gateway.h"
 #include "device.h"
 #include "data_manager.h"
@@ -13,7 +13,7 @@
 #include "rcs_session.h"
 #include "server_linker.h"
 
-class	ObjectManager : public ActiveObject
+class	ObjectManager : public ProcessObject
 {
 	friend	class	Node;
 	friend	class	Gateway;
@@ -21,7 +21,7 @@ class	ObjectManager : public ActiveObject
 	friend	class	Endpoint;
 public:
 						ObjectManager();
-						ObjectManager(ValueID const& _id);
+						ObjectManager(std::string const& _id);
 						~ObjectManager();
 
 			bool		GetAutoStart();
@@ -30,41 +30,36 @@ public:
 			Time const&	GetEndpointReportInterval() const;
 			bool		SetEndpointReportInterval(Time const& _time);
 
-			bool		LoadFromFile(std::string const& _file_name);
-			bool		Load(const char *_json);
-			bool		Load(JSONNode const& _json);
+			bool		SetProperty(JSONNode const& _property, bool _check = false);
 
 						operator JSONNode() const;
 
 			uint32_t	GetNodeCount();
 			uint32_t	GetNodeList(std::list<Node*>& _list);
-			uint32_t	GetNodeList(ValueType const& _type, std::list<Node*>& _list);
+			uint32_t	GetNodeList(std::string const& _type, std::list<Node*>& _list);
 			Node*		GetNode(std::string const& _id);
 
 			bool		Attach(Gateway* _device);
 			bool		Detach(Gateway* _device);
 			Gateway*	CreateGateway(JSONNode const& _properties, bool from_db = false);
-			Gateway*	CreateGateway(Properties const& _properties, bool from_db = false);
 			bool		DestroyGateway(std::string const& _id);
 			uint32_t	GetGatewayCount();
 			uint32_t	GetGatewayList(std::list<Gateway*>& _device_list);
-			uint32_t	GetGatewayList(ValueType const& _type, std::list<Gateway*>& _device_list);
+			uint32_t	GetGatewayList(std::string const& _type, std::list<Gateway*>& _device_list);
 			Gateway*	GetGateway(std::string const& _id);
 
 			bool		Attach(Device* _device);
 			bool		Detach(Device* _device);
 			Device*		CreateDevice(JSONNode const& _properties, bool from_db = false);
-			Device*		CreateDevice(Properties const& _properties, bool from_db = false);
 			bool		DestroyDevice(std::string const& _id);
 			uint32_t	GetDeviceCount();
 			uint32_t	GetDeviceList(std::list<Device*>& _device_list);
-			uint32_t	GetDeviceList(ValueType const& _type, std::list<Device*>& _device_list);
+			uint32_t	GetDeviceList(std::string const& _type, std::list<Device*>& _device_list);
 			Device*		GetDevice(std::string const& _id);
 
 			bool		Attach(Endpoint* _endpoint);
 			bool		Detach(Endpoint* _endpoint);
 			Endpoint*	CreateEndpoint(JSONNode const& _properties, bool from_db = false);
-			Endpoint*	CreateEndpoint(Properties const& _properties, bool from_db = false);
 			bool		DestroyEndpoint(std::string const& _id);
 			uint32_t	GetEndpointCount();
 			uint32_t	GetEndpointList(std::list<Endpoint*>& _endpoint_list);
@@ -97,10 +92,10 @@ protected:
 
 			bool		SendMessage(std::string const& _topic, std::string const& _message);
 
-			bool		IDChanged(Node* _node, ValueID const& _old_id);
-			bool		IDChanged(Gateway* _gateway, ValueID const& _old_id);
-			bool		IDChanged(Device* _device, ValueID const& _old_id);
-			bool		IDChanged(Endpoint* _endpoint, ValueID const& _old_id);
+			bool		IDChanged(Node* _node, std::string const& _old_id);
+			bool		IDChanged(Gateway* _gateway, std::string const& _old_id);
+			bool		IDChanged(Device* _device, std::string const& _old_id);
+			bool		IDChanged(Endpoint* _endpoint, std::string const& _old_id);
 
 			bool		UpdateProperties(Object* _object);
 			bool		UpdateProperties(Gateway* _gateway);

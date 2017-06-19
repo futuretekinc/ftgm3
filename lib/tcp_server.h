@@ -6,7 +6,7 @@
 #include <map>
 #include <list>
 #include <libjson/libjson.h>
-#include "active_object.h"
+#include "process_object.h"
 #include "message.h"
 #include "locker.h"
 #include "tcp_session.h"
@@ -14,7 +14,7 @@
 class	TCPSession;
 class	ObjectManager;
 
-class	TCPServer : public ActiveObject
+class	TCPServer : public ProcessObject
 {
 public:
 	struct MessageSessionDisconnected : Message
@@ -26,13 +26,25 @@ public:
 						TCPServer(ObjectManager* _manager);
 						~TCPServer();
 
-			bool		Load(JSONNode const& _json);
+			bool		LoadField(JSONNode const& _json, bool _check = false);
 
 						operator JSONNode() const;
 
+			uint16_t	GetPort();
+			bool		SetPort(uint16_t _port, bool _check = false);
+			bool		SetPort(std::string const& _port, bool _check = false);
+
+			uint32_t	GetMaxSessionCount();
+			bool		SetMaxSessionCount(uint32_t _count, bool _check = false);
+			bool		SetMaxSessionCount(std::string const& _count, bool _check = false);
+
+			uint32_t	GetTimeout();
+			bool		SetTimeout(uint32_t	_timeout, bool _check = false);
+			bool		SetTimeout(std::string const& _timeout, bool _check = false);
+
 			ObjectManager*	GetManager()	{	return	manager_;	};
 
-			bool		SetProperty(Property const& _property, Properties::Fields const& _fields);
+			bool		SetProperty(JSONNode const& _property, bool _check =- false);
 
 	virtual	TCPSession*	CreateSession(int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout);
 			bool		SessionDisconnected(uint16_t _port);

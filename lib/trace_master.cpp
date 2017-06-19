@@ -29,7 +29,7 @@ TraceMaster::~TraceMaster()
 {
 }
 
-bool	TraceMaster::Load(JSONNode const& _properties)
+bool	TraceMaster::Load(JSONNode const& _properties, bool _check)
 {
 	bool	ret_value = true;
 
@@ -80,6 +80,7 @@ TraceMaster::operator JSONNode() const
 	JSONNode	root;
 
 	root.push_back(JSONNode("enable", ((enable_)?"yes":"no")));
+	root.push_back(JSONNode("file_path", file_path_));
 	root.push_back(JSONNode("file_prefix", file_prefix_));
 	root.push_back(JSONNode("file_size", file_size_));
 

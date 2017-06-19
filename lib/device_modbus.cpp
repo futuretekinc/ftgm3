@@ -6,7 +6,7 @@
 
 using namespace modbus;
 
-DeviceModbus::DeviceModbus(ObjectManager& _manager, ValueType const& _type)
+DeviceModbus::DeviceModbus(ObjectManager& _manager, std::string const& _type)
 : DeviceSerial(_manager, _type), timeout_(1000)
 {
 }

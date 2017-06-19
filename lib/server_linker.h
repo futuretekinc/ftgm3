@@ -3,7 +3,7 @@
 
 #include <list>
 #include "defined.h"
-#include "active_object.h"
+#include "process_object.h"
 #include "librdkafka/rdkafkacpp.h"
 #include "timer.h"
 #include "rcs_message.h"
@@ -16,7 +16,7 @@ class	ObjectManager;
 class	Device;
 class	Endpoint;
 
-class	ServerLinker : public ActiveObject
+class	ServerLinker : public ProcessObject
 {
 public:
 
@@ -206,23 +206,24 @@ const	std::string&	GetTopic()	{ return	topic_name_;	};
 						ServerLinker(ObjectManager* _manager= NULL);
 						~ServerLinker();
 
-			bool		Load(JSONNode const& _json); 
+			bool		SetProperty(JSONNode const& _property, bool _check = false); 
 			virtual		operator JSONNode() const;
 
-			bool		SetGlobalUpTopic(std::string const& _topic);
 	const std::string&	GetGlobalUpTopic();		
-			bool		SetGlobalDownTopic(std::string const& _topic);
+			bool		SetGlobalUpTopic(std::string const& _topic, bool _check = false);
 	const std::string&	GetGlobalDownTopic();		
+			bool		SetGlobalDownTopic(std::string const& _topic, bool _check = false);
 
-			bool		SetHashAlg(std::string const& _name);
+			bool		SetHashAlg(std::string const& _name, bool _check = false);
 
-			bool		SetSecretKey(std::string const& _secret_key);
 			bool		GetSecretKey(std::string & _secret_key);
+			bool		SetSecretKey(std::string const& _secret_key, bool _check = false);
 
-			bool		SetBroker(std::string const& _broker);
 	const std::string&	GetBroker();
+			bool		SetBroker(std::string const& _broker, bool _check = false);
 
 			bool		SetAutoConnection(bool _auto);
+			bool		SetAutoConnection(std::string const& _auto, bool _check = false);
 
 			UpLink*		AddUpLink(std::string const& _topic_name, int32_t _partition = DEFAULT_CONST_MSG_PARTITION);
 			bool		DelUpLink(std::string const& _topic_name);
@@ -251,18 +252,18 @@ const	std::string&	GetTopic()	{ return	topic_name_;	};
 			bool		KeepAliveEnable(bool _enable);
 
 
-			bool		AddNode(ValueID const& _id);
+			bool		AddNode(std::string const& _id);
 			bool		AddNode(Node* _node);
-			bool		GetNode(ValueID const& _id);
+			bool		GetNode(std::string const& _id);
 			bool		ConfirmNode(std::string const& _req_id, Node* _node);
 
 			bool		RequestInit(std::string const& _type, JSONNode& _payload);
 			bool		ReplyInit(std::string const& _type, std::string const& _req_id, JSONNode& _payload);
-			bool		AddGateway(JSONNode& _payload, Gateway* _gateway, Properties::Fields const& _fields);
+			bool		AddGateway(JSONNode& _payload, Gateway* _gateway, Fields const& _fields);
 			bool		AddGateway(JSONNode& _payload, std::string const& _id);
-			bool		AddDevice(JSONNode& _payload, Device* _device, Properties::Fields const& _fields);
+			bool		AddDevice(JSONNode& _payload, Device* _device, Fields const& _fields);
 			bool		AddDevice(JSONNode& _payload, std::string const& _id);
-			bool		AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Properties::Fields const& _fields);
+			bool		AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields const& _fields);
 			bool		AddEndpoint(JSONNode& _payload, std::string const& _id);
 
 			bool		OnMessage(Message* _message);

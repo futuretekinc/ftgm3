@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <string>
+#include <sstream>
 
 class	Asserted : public std::exception
 {
@@ -14,6 +15,8 @@ public:
 protected:
 	std::string	message_;
 };
+
+#define	ASSERT(x)	{	if (!(x)) { std::ostringstream oss; oss << ##x; throw Asserted(oss.str());} }
 
 class	InvalidArgument : public std::exception
 {
@@ -27,6 +30,8 @@ protected:
 	std::string	message_;
 };
 
+#define	THROW_INVALID_ARGUMENT(x)	{	std::ostringstream oss; oss << x; throw InvalidArgument(oss.str()); }
+
 class	ObjectNotFound : public std::exception
 {
 public:
@@ -39,6 +44,8 @@ protected:
 	std::string	object_id_;
 	std::string	message_;
 };
+
+#define	THROW_OBJECT_NOT_FOUND(x)	{	std::ostringstream oss; oss << x; throw ObjectNotFound(oss.str()); }
 
 class	NotInitialized : public std::exception
 {

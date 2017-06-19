@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <fstream>
 #include "shell_ftgm.h"
+#include "exception.h"
+#include "json.h"
 #include "device.h"
 #include "device_snmp.h"
 #include "object_manager.h"
@@ -23,41 +25,17 @@ RetValue	ShellCommandLoad
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				JSONNode	json;
-				std::fstream	fs(_arguments[i], std::fstream::in);
-				if (fs)
+				try
 				{
-					fs.seekg (0, fs.end);
-					int length = fs.tellg();
-					fs.seekg (0, fs.beg);
-
-					char * buffer = new char [length + 1];
-					fs.read(buffer, length);
-					buffer[length] = 0;
-					fs.close();
-
-					if (libjson::is_valid(buffer))
-					{
-						if (!manager->Load(buffer))
-						{
-							std::cout << "The configuration file[" << _arguments[i] << "] loading failed." << std::endl;
-						}
-						else
-						{
-							std::cout << "The configuration file[" << _arguments[i] << "] loaded." << std::endl;
-						}
-					}
-					else
-					{
-						std::cout << "Invalid json format" << std::endl;	
-					}
-
-					delete buffer;
+					JSONNode	config = JSONNodeLoadFromFile(_arguments[i]);
+					
+					manager->SetProperties(config, false, false);
 				}
-				else
+				catch(InvalidArgument& e)
 				{
-					std::cout << "Invalid file[" << _arguments[i] << "]."<< std::endl;	
+					_shell->Out() << e.what() << std::endl;
 				}
+
 			}
 
 		}
@@ -65,38 +43,23 @@ RetValue	ShellCommandLoad
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				JSONNode	json;
-				std::fstream	fs(_arguments[i], std::fstream::in);
-				if (fs)
+				try
 				{
-					fs.seekg (0, fs.end);
-					int length = fs.tellg();
-					fs.seekg (0, fs.beg);
+					JSONNode	config = JSONNodeLoadFromFile(_arguments[i]);
 
-					char * buffer = new char [length + 1];
-					fs.read(buffer, length);
-					buffer[length] = 0;
-					fs.close();
-
-					if (libjson::is_valid(buffer))
+					Gateway *gateway = manager->CreateGateway(config);
+					if (gateway != NULL)
 					{
-						json = libjson::parse(buffer);
-
-						Gateway *gateway = manager->CreateGateway(json);
-						if (gateway != NULL)
-						{
-							std::cout << "Gateway[" << gateway->GetTraceName() << "] created"  << std::endl;	
-						}
-						else
-						{
-							std::cout << "Failed to create device!" << std::endl;	
-						}
+						std::cout << "Gateway[" << gateway->GetTraceName() << "] created"  << std::endl;	
 					}
 					else
 					{
-						std::cout << "Invalid json format" << std::endl;	
+						std::cout << "Failed to create device!" << std::endl;	
 					}
-					delete buffer;
+				}
+				catch(InvalidArgument& e)
+				{
+					_shell->Out() << e.what() << std::endl;
 				}
 			}
 		}	
@@ -104,38 +67,23 @@ RetValue	ShellCommandLoad
 		{
 			for(uint32_t i = 2 ; i < _count ; i++)
 			{
-				JSONNode	json;
-				std::fstream	fs(_arguments[i], std::fstream::in);
-				if (fs)
+				try
 				{
-					fs.seekg (0, fs.end);
-					int length = fs.tellg();
-					fs.seekg (0, fs.beg);
+					JSONNode	config = JSONNodeLoadFromFile(_arguments[i]);
 
-					char * buffer = new char [length + 1];
-					fs.read(buffer, length);
-					buffer[length] = 0;
-					fs.close();
-
-					if (libjson::is_valid(buffer))
+					Gateway *gateway = manager->CreateGateway(config);
+					if (gateway != NULL)
 					{
-						json = libjson::parse(buffer);
-
-						Device *device = manager->CreateDevice(json);
-						if (device != NULL)
-						{
-							std::cout << "Device[" << device->GetTraceName() << "] created"  << std::endl;	
-						}
-						else
-						{
-							std::cout << "Failed to create device!" << std::endl;	
-						}
+						std::cout << "Gateway[" << gateway->GetTraceName() << "] created"  << std::endl;	
 					}
 					else
 					{
-						std::cout << "Invalid json format" << std::endl;	
+						std::cout << "Failed to create device!" << std::endl;	
 					}
-					delete buffer;
+				}
+				catch(InvalidArgument& e)
+				{
+					_shell->Out() << e.what() << std::endl;
 				}
 			}
 		}	

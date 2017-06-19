@@ -3,178 +3,14 @@
 #include "trace.h"
 #include <sstream>
 #include "defined.h"
+#include "json.h"
+#include "exception.h"
 #include "data_manager.h"
 #include "KompexSQLiteDatabase.h"
 #include "KompexSQLiteStatement.h"
 #include "KompexSQLiteException.h"
 #include "endpoint.h"
 
-DataManager::DataManager()
-: ActiveObject(), temp_db_(true)
-{	
-	Date	date;
-
-	trace.SetClassName(GetClassName());
-
-	name_ 	= std::string("data_manager");
-	enable_ = true;
-	date 	= Date::GetCurrent();
-
-	file_name_ = "dm-" + date.ToString() + ".db";
-}
-
-DataManager::DataManager(std::string const& _db_name)
-: ActiveObject(), file_name_(_db_name), temp_db_(false)
-{
-	trace.SetClassName(GetClassName());
-
-	name_ 	= std::string("data_manager");
-	enable_ = true;
-}
-
-DataManager::~DataManager()
-{
-	if (!stop_)
-	{
-		Stop();		
-	}
-
-	if (temp_db_)
-	{
-		std::remove(file_name_.c_str());
-	}
-}
-
-bool	DataManager::Load(JSONNode const& _json)
-{
-	bool	ret_value = true;
-
-	if ((_json.name() == TITLE_NAME_DATA_MANAGER) || (_json.name().size() == 0))
-	{
-		if (_json.type() == JSON_NODE)
-		{
-			for(auto it = _json.begin(); it != _json.end() ; it++)
-			{
-				ret_value = Load(*it);
-				if (!ret_value)
-				{
-					std::cout << "Invalid format" << std::endl;
-				}
-			}
-		}
-	}
-	else if (_json.name() == TITLE_NAME_DATA_FILE)
-	{
-		file_name_ = _json.as_string();
-	}
-	else
-	{
-		ret_value = ActiveObject::Load(_json);
-	}
-
-	return	ret_value;
-}
-
-DataManager::operator JSONNode() const
-{
-	JSONNode	root;
-
-	root.push_back(JSONNode(TITLE_NAME_DATA_FILE, file_name_));
-
-	JSONNode	trace_config = trace;
-	trace_config.set_name(TITLE_NAME_TRACE);
-	root.push_back(trace_config);
-
-	return	root;
-}
-
-DataManager::Table*	DataManager::CreateTable(std::string const& _table_name, std::list<std::string>& field_list)
-{
-	if (!IsTableExist(_table_name))
-	{
-		std::ostringstream	query;
-
-
-		query << "CREATE TABLE " << _table_name << " (_id TEXT NOT NULL PRIMARY KEY";
-
-		for(auto field = field_list.begin() ; field != field_list.end() ; field++)
-		{
-			if ((*field) != "id")
-			{
-				query << ", _" + (*field) + " TEXT";
-			}
-		}
-		query <<");";
-		TRACE_INFO("Query : " << query.str());
-
-		try 
-		{
-			Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(database_);
-			if (statement == NULL)
-			{
-				TRACE_ERROR("Failed to create SQL statement!");
-				return	NULL;	
-			}
-
-			statement->SqlStatement(query.str());
-
-			delete statement;
-		}
-		catch(Kompex::SQLiteException &exception)
-		{
-			TRACE_INFO("Failed to create table[" << _table_name <<"]");
-			return	NULL;
-		}
-	}
-
-	Table* new_table = new	Table(this, _table_name);
-	if (new_table == NULL)
-	{
-		TRACE_ERROR("Failed to create table[" << _table_name << "]");
-	}
-	else
-	{
-		TRACE_INFO("Table[" << _table_name << "] created");
-	}
-
-	return	new_table;
-}
-
-bool	DataManager::IsTableExist
-(
-	std::string const& _name
-)
-{
-	bool	exist = false;
-
-	try
-	{
-		Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(database_);
-		if (statement == NULL)
-		{
-			TRACE_ERROR("Failed to create SQL statement!");
-			return	false;	
-		}
-
-		std::ostringstream	query;
-
-		query << "SELECT COUNT(*) FROM sqlite_master WHERE name=" << "'" << _name << "';";
-		TRACE_INFO("Query : " <<  query.str().c_str());
-
-		if (statement->SqlAggregateFuncResult(query.str()) != 0)
-		{
-			exist = true;
-		}
-
-		delete statement;
-	}
-	catch(Kompex::SQLiteException &exception)
-	{
-		TRACE_INFO("DB not initialized.");
-	}
-
-	return	exist;
-}
 
 DataManager::Table::Table(DataManager* _manager, std::string const& _name)
 : Object(), manager_(_manager)
@@ -184,34 +20,19 @@ DataManager::Table::Table(DataManager* _manager, std::string const& _name)
 	SetParentID(_manager->GetID());
 }
 
-bool	DataManager::Table::Add(Properties const& _properties)
+bool	DataManager::Table::Add(JSONNode const& _properties)
 {
-	const Property*	property = _properties.Get(TITLE_NAME_ID);
-	if (property == NULL)
+	try
 	{
-		TRACE_ERROR2(NULL, "Failed to add object to DB.");
-		return	false;	
-	}
+		std::string id = JSONNodeGetID(_properties);
+		if (IsExist(std::string(id)))
+		{
+			TRACE_ERROR("The object [" << id << "] already exist.");
+			return	false;
+		}
 
-	const Value* value = property->GetValue();	
-	if (value == NULL)
-	{
-		TRACE_ERROR("Invalid arguments");
-		return	false;	
-	}
-
-	std::string id = std::string(*value);
-
-	if (IsExist(std::string(id)))
-	{
-		TRACE_ERROR("The object [" << id << "] already exist.");
-		return	false;
-	}
-
-	try 
-	{
 		std::ostringstream	query;
-		uint32_t		count= 1;
+		uint32_t		count= 0;
 		uint32_t		index = 0;
 
 		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
@@ -221,42 +42,47 @@ bool	DataManager::Table::Add(Properties const& _properties)
 			return	false;	
 		}
 
-		query << "INSERT INTO " << name_ << "(_id";
+		query << "INSERT INTO " << name_ << "(";
 		for(auto it = _properties.begin() ; it != _properties.end() ; it++)
 		{
-			if (it->GetName() != "id")
+			if (count != 0)
 			{
-				query << ", _" << it->GetName();
-				count++;
+				query << ", ";
 			}
+
+			query << "_" << it->name();
+			count++;
 		}
 
 		query << ") VALUES (?";
-		for(uint32_t i = 1 ; i < count ; i++)
+		for(uint32_t i = 0 ; i < count ; i++)
 		{
-			query << ",?";
+			if (count != 0)
+			{
+				query << ", ";
+			}
+
+			query << "?";
 		}
 		query << ");";
 
 		TRACE_INFO("Query : " << query.str());
 		statement->Sql(query.str());
-		statement->BindString(++index, id);
-		TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << std::string(*value));
 
 		for(auto it = _properties.begin() ; it != _properties.end() ; it++)
 		{
-			if (it->GetName() != "id")
-			{
-				const Value*	value = it->GetValue();
-
-				statement->BindString(++index, std::string(*value));
-				TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << std::string(*value));
-			}
+			statement->BindString(++index, it->as_string());
+			TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << it->as_string());
 		}
 
 		statement->ExecuteAndFree();
 
 		delete statement;
+	}
+	catch(ObjectNotFound& e)
+	{
+		TRACE_ERROR(e.what());
+		return	false;
 	}
 	catch(Kompex::SQLiteException &exception)
 	{
@@ -369,8 +195,10 @@ uint32_t	DataManager::Table::GetCount()
 	return	count;
 }
 
-bool	DataManager::Table::GetProperties(std::string const& _id, Properties& _properties)
+bool	DataManager::Table::GetProperties(std::string const& _id, JSONNode& _properties)
 {
+	JSONNode	properties;
+
 	if (!IsExist(_id))
 	{
 		TRACE_ERROR("The object [" << _id << "is not exist!");
@@ -395,17 +223,24 @@ bool	DataManager::Table::GetProperties(std::string const& _id, Properties& _prop
 		if (statement->FetchRow())
 		{
 			TRACE_INFO("Fetch Row : " << statement->GetColumnCount());
-			for(auto it = _properties.begin(); it != _properties.end() ; it++)
+			for(uint32_t i = 0 ; i  < statement->GetColumnCount() ; i++)
 			{
-				std::string	value = statement->GetColumnString(it->GetName());
+				std::string name = statement->GetColumnName(i);
 
-				it->Set(value);
+				if ((statement->GetColumnType(i) == SQLITE_TEXT) || (statement->GetColumnType(i) == SQLITE3_TEXT))
+				{
+					std::string	value = statement->GetColumnString(name);
+
+					TRACE_INFO(name.substr(1, name.size()) << " : " << value);
+					properties.push_back(JSONNode(name.substr(1, name.size() - 1), value));
+				}
 			}
-
 		}
 		statement->FreeQuery();
 
 		delete statement;
+
+		_properties = properties;
 	}
 	catch(Kompex::SQLiteException &exception)
 	{
@@ -415,7 +250,7 @@ bool	DataManager::Table::GetProperties(std::string const& _id, Properties& _prop
 	return	true;
 }
 
-bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _properties)
+bool	DataManager::Table::SetProperties(std::string const& _id, JSONNode& _properties)
 {
 	if (!IsExist(_id))
 	{
@@ -440,11 +275,11 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 		{
 			if (index++ != 0)
 			{
-				query << ", _" + it->GetName() << "=@" << it->GetName();
+				query << ", _" + it->name() << "=@" << it->name();
 			}
 			else
 			{
-				query << "_" + it->GetName() << "=@" << it->GetName();
+				query << "_" + it->name() << "=@" << it->name();
 			}
 		}
 		query << " WHERE _id=@id;";
@@ -456,8 +291,8 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 		index = 0;
 		for(auto it = _properties.begin(); it != _properties.end() ; it++)
 		{
-			statement->BindString(++index, std::string(*(it->GetValue())));
-			TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << std::string(*(it->GetValue())));
+			statement->BindString(++index, it->as_string());
+			TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << it->as_string());
 		}
 		statement->BindString(++index, _id);
 		TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) <<  _id);
@@ -469,63 +304,9 @@ bool	DataManager::Table::SetProperties(std::string const& _id, Properties& _prop
 	catch(Kompex::SQLiteException &exception)
 	{
 		TRACE_ERROR("Failed to update! - " << exception.GetErrorDescription());
-		TRACE_ERROR("Propertyes : " << _properties);
+		TRACE_ERROR("Propertyes : " << _properties.write_formatted());
 		TRACE_ERROR("Query : " << query.str());
 		return	false;
-	}
-
-	return	true;
-}
-
-bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, std::list<Properties>& _properties_list)
-{
-	std::ostringstream	query;
-
-	query << "SELECT * FROM " << name_ << " ORDER BY _id DESC LIMIT " << _count << " OFFSET " << _index <<";";
-	TRACE_INFO("Query : " << query.str());
-
-	try 
-	{
-		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
-		if (statement == NULL)
-		{
-			TRACE_ERROR("Failed to create SQLite statement!");
-			return	false;
-		}
-
-		statement->Sql(query.str());
-		while(statement->FetchRow())
-		{
-			Properties	properties;
-
-			TRACE_INFO("Fetch Row : " << statement->GetColumnCount());
-
-			for(int i = 0 ; i < statement->GetColumnCount() ; i++)
-			{
-				std::string name = statement->GetColumnName(i);
-
-				if ((statement->GetColumnType(i) == SQLITE_TEXT) || (statement->GetColumnType(i) == SQLITE3_TEXT))
-				{
-					std::string	value = statement->GetColumnString(name);
-
-					TRACE_INFO(name.substr(1, name.size()) << " : " << value);
-					properties.Append(Property(name.substr(1, name.size() - 1), value));
-				}
-			}
-			TRACE_INFO("");
-
-			if (properties.Count() != 0)
-			{
-				_properties_list.push_back(properties);	
-			}
-		}
-		statement->FreeQuery();
-
-		delete statement;
-	}
-	catch(Kompex::SQLiteException &exception)
-	{
-		TRACE_ERROR("Failed to get object properties");
 	}
 
 	return	true;
@@ -596,43 +377,6 @@ DataManager::ValueTable::ValueTable(DataManager* _manager, std::string const& _n
 	SetParentID(_manager->GetID());
 }
 
-bool	DataManager::ValueTable::Add(Value const* _value)
-{
-	if (manager_ == NULL)
-	{
-		TRACE_ERROR("Value table manager is not assigned!");
-		return	false;
-	}
-
-	if (!manager_->IsTableExist(name_))
-	{
-		TRACE_ERROR("Value table[" << name_ << "] not exist!");
-		return	false;	
-	}
-
-	std::ostringstream	query;
-
-	query << "INSERT INTO " << name_ << "(_time, _value) values(\"" << time_t(_value->GetDate()) << "\", \"" << std::string(*_value) << "\");";
-
-	TRACE_INFO("Query : " << query.str());
-
-	Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(manager_->database_);
-	try
-	{
-		statement->SqlStatement(query.str());
-		TRACE_INFO("Done");
-	}
-	catch(Kompex::SQLiteException& e)
-	{
-		TRACE_ERROR("SQLite error! - " << e.GetString());
-	}
-
-	delete statement;
-
-
-	return	true;
-}
-
 bool	DataManager::ValueTable::Add(time_t _time, std::string const& _value)
 {
 	if (manager_ == NULL)
@@ -668,6 +412,174 @@ bool	DataManager::ValueTable::Add(time_t _time, std::string const& _value)
 
 
 	return	true;
+}
+
+DataManager::DataManager()
+: ProcessObject(), temp_db_(true)
+{	
+	Date	date;
+
+	trace.SetClassName(GetClassName());
+
+	name_ 	= std::string("data_manager");
+	enable_ = true;
+	date 	= Date::GetCurrent();
+
+	file_name_ = "dm-" + date.ToString() + ".db";
+}
+
+DataManager::DataManager(std::string const& _db_name)
+: ProcessObject(), file_name_(_db_name), temp_db_(false)
+{
+	trace.SetClassName(GetClassName());
+
+	name_ 	= std::string("data_manager");
+	enable_ = true;
+}
+
+DataManager::~DataManager()
+{
+	if (!stop_)
+	{
+		Stop();		
+	}
+
+	if (temp_db_)
+	{
+		std::remove(file_name_.c_str());
+	}
+}
+
+const std::string&	DataManager::GetDBFile()
+{
+	return	file_name_;
+}
+
+bool	DataManager::SetDBFile(std::string const& _file_name, bool _check)
+{
+	if (!_check)
+	{
+		file_name_ = _file_name;
+	}
+
+	return	true;
+}
+
+bool	DataManager::SetProperty(JSONNode const& _property, bool _check)
+{
+	bool	ret_value = true;
+
+	if (_property.name() == TITLE_NAME_DATA_FILE)
+	{
+		ret_value = SetDBFile(_property.as_string());
+	}
+	else
+	{
+		ret_value = ProcessObject::SetProperty(_property, _check);
+	}
+
+	return	ret_value;
+}
+
+DataManager::operator JSONNode() const
+{
+	JSONNode	root;
+
+	root.push_back(JSONNode(TITLE_NAME_DATA_FILE, file_name_));
+
+	JSONNode	trace_config = trace;
+	trace_config.set_name(TITLE_NAME_TRACE);
+	root.push_back(trace_config);
+
+	return	root;
+}
+
+DataManager::Table*	DataManager::CreateTable(std::string const& _table_name, std::list<std::string>& field_list)
+{
+	if (!IsTableExist(_table_name))
+	{
+		std::ostringstream	query;
+
+
+		query << "CREATE TABLE " << _table_name << " (_id TEXT NOT NULL PRIMARY KEY";
+
+		for(auto field = field_list.begin() ; field != field_list.end() ; field++)
+		{
+			if ((*field) != "id")
+			{
+				query << ", _" + (*field) + " TEXT";
+			}
+		}
+		query <<");";
+		TRACE_INFO("Query : " << query.str());
+
+		try 
+		{
+			Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(database_);
+			if (statement == NULL)
+			{
+				TRACE_ERROR("Failed to create SQL statement!");
+				return	NULL;	
+			}
+
+			statement->SqlStatement(query.str());
+
+			delete statement;
+		}
+		catch(Kompex::SQLiteException &exception)
+		{
+			TRACE_INFO("Failed to create table[" << _table_name <<"]");
+			return	NULL;
+		}
+	}
+
+	Table* new_table = new	Table(this, _table_name);
+	if (new_table == NULL)
+	{
+		TRACE_ERROR("Failed to create table[" << _table_name << "]");
+	}
+	else
+	{
+		TRACE_INFO("Table[" << _table_name << "] created");
+	}
+
+	return	new_table;
+}
+
+bool	DataManager::IsTableExist
+(
+	std::string const& _name
+)
+{
+	bool	exist = false;
+
+	try
+	{
+		Kompex::SQLiteStatement*	statement = new Kompex::SQLiteStatement(database_);
+		if (statement == NULL)
+		{
+			TRACE_ERROR("Failed to create SQL statement!");
+			return	false;	
+		}
+
+		std::ostringstream	query;
+
+		query << "SELECT COUNT(*) FROM sqlite_master WHERE name=" << "'" << _name << "';";
+		TRACE_INFO("Query : " <<  query.str().c_str());
+
+		if (statement->SqlAggregateFuncResult(query.str()) != 0)
+		{
+			exist = true;
+		}
+
+		delete statement;
+	}
+	catch(Kompex::SQLiteException &exception)
+	{
+		TRACE_INFO("DB not initialized.");
+	}
+
+	return	exist;
 }
 
 DataManager::ValueTable*	DataManager::CreateValueTable(std::string const& _endpoint_id)
@@ -723,18 +635,6 @@ DataManager::ValueTable*	DataManager::GetValueTable(std::string const& _endpoint
 	return	value_table_map_[_endpoint_id];
 }
 
-bool	DataManager::AddValue(std::string const& _endpoint_id, Value const* _value)
-{
-	ValueTable*	_value_table = value_table_map_[_endpoint_id];
-	if (!_value_table)
-	{
-		TRACE_ERROR("Endpoint[" << _endpoint_id << "] value table not exist!");
-		return	false;
-	}
-
-	return	_value_table->Add(_value);
-}
-
 bool	DataManager::AddValue(std::string const& _endpoint_id, time_t _time, std::string const& _value)
 {
 	ValueTable*	_value_table = value_table_map_[_endpoint_id];
@@ -749,7 +649,7 @@ bool	DataManager::AddValue(std::string const& _endpoint_id, time_t _time, std::s
 
 bool	DataManager::AddGateway(Gateway *_gateway)
 {
-	Properties	properties;
+	JSONNode	properties;
 
 	_gateway->GetProperties(properties);
 
@@ -771,29 +671,24 @@ uint32_t	DataManager::GetGatewayCount()
 	return	gateway_table_->GetCount();
 }
 
-bool	DataManager::GetGatewayProperties(uint32_t _index, uint32_t _count, std::list<Properties>& _properties_list)
+bool	DataManager::GetGatewayProperties(uint32_t _index, uint32_t _count, JSONNode& _array)
 {
-	return	gateway_table_->GetProperties(_index, _count, _properties_list);
+	return	gateway_table_->GetProperties(_index, _count, _array);
 }
 
-bool	DataManager::GetGatewayProperties(uint32_t _index, uint32_t _count, JSONNode& _properties_array)
-{
-	return	gateway_table_->GetProperties(_index, _count, _properties_array);
-}
-
-bool	DataManager::GetGatewayProperties(std::string const& _id, Properties& _properties)
+bool	DataManager::GetGatewayProperties(std::string const& _id, JSONNode& _properties)
 {
 	return	gateway_table_->GetProperties(_id, _properties);
 }
 
-bool	DataManager::SetGatewayProperties(std::string const& _id, Properties& _properties)
+bool	DataManager::SetGatewayProperties(std::string const& _id, JSONNode& _properties)
 {
 	return	gateway_table_->SetProperties(_id, _properties);
 }
 
 bool	DataManager::AddDevice(Device *_device)
 {
-	Properties	properties;
+	JSONNode	properties;
 
 	_device->GetProperties(properties);
 
@@ -815,24 +710,24 @@ uint32_t	DataManager::GetDeviceCount()
 	return	device_table_->GetCount();
 }
 
-bool	DataManager::GetDeviceProperties(uint32_t _index, uint32_t _count, std::list<Properties>& _properties_list)
+bool	DataManager::GetDeviceProperties(uint32_t _index, uint32_t _count, JSONNode& _array)
 {
-	return	device_table_->GetProperties(_index, _count, _properties_list);
+	return	device_table_->GetProperties(_index, _count, _array);
 }
 
-bool	DataManager::GetDeviceProperties(std::string const& _id, Properties& _properties)
+bool	DataManager::GetDeviceProperties(std::string const& _id, JSONNode& _properties)
 {
 	return	device_table_->GetProperties(_id, _properties);
 }
 
-bool	DataManager::SetDeviceProperties(std::string const& _id, Properties& _properties)
+bool	DataManager::SetDeviceProperties(std::string const& _id, JSONNode& _properties)
 {
 	return	device_table_->SetProperties(_id, _properties);
 }
 
 bool	DataManager::AddEndpoint(Endpoint *_endpoint)
 {
-	Properties	properties;
+	JSONNode	properties;
 
 	_endpoint->GetProperties(properties);
 
@@ -842,13 +737,14 @@ bool	DataManager::AddEndpoint(Endpoint *_endpoint)
 		return	false;
 	}
 
-
-	const Property*	id_property = properties.Get(TITLE_NAME_ID);
-	if (id_property != NULL)
+	try
 	{
-		const Value*	value = id_property->GetValue();
+		std::string	id = JSONNodeGetID(properties);
 
-		value_table_map_[std::string(*value)]= CreateValueTable(std::string(*value));
+		value_table_map_[id]= CreateValueTable(id);
+	}
+	catch(ObjectNotFound& e)
+	{
 	}
 
 	return	true;
@@ -869,17 +765,17 @@ uint32_t	DataManager::GetEndpointCount()
 	return	endpoint_table_->GetCount();
 }
 
-bool	DataManager::GetEndpointProperties(uint32_t _index, uint32_t _count, std::list<Properties>& _properties_list)
+bool	DataManager::GetEndpointProperties(uint32_t _index, uint32_t _count, JSONNode& _array)
 {
-	return	endpoint_table_->GetProperties(_index, _count, _properties_list);
+	return	endpoint_table_->GetProperties(_index, _count, _array);
 }
 
-bool	DataManager::GetEndpointProperties(std::string const& _id, Properties& _properties)
+bool	DataManager::GetEndpointProperties(std::string const& _id, JSONNode& _properties)
 {
 	return	endpoint_table_->GetProperties(_id, _properties);
 }
 
-bool	DataManager::SetEndpointProperties(std::string const& _id, Properties& _properties)
+bool	DataManager::SetEndpointProperties(std::string const& _id, JSONNode& _properties)
 {
 	return	endpoint_table_->SetProperties(_id, _properties);
 }
@@ -910,18 +806,20 @@ void	DataManager::Preprocess()
 		
 		for(uint32_t i = 0 ; i < GetEndpointCount() ; i++)
 		{
-			std::list<Properties>	properties_list;
+			JSONNode	properties_list;
 
 			GetEndpointProperties(i, 1, properties_list);
 
 			for(auto it = properties_list.begin(); it != properties_list.end() ; it++)
 			{
-				const Property*	id_property = it->Get(TITLE_NAME_ID);
-				if (id_property != NULL)
+				try
 				{
-					const Value*	value = id_property->GetValue();
+					std::string id = JSONNodeGetID(*it);
 
-					value_table_map_[std::string(*value)]= CreateValueTable(std::string(*value));
+					value_table_map_[id]= CreateValueTable(id);
+				}
+				catch(ObjectNotFound& e)
+				{
 				}
 			}
 		}

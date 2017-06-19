@@ -4,12 +4,12 @@
 #include <sys/socket.h> 
 #include <arpa/inet.h>
 #include <list>
-#include "active_object.h"
+#include "process_object.h"
 #include "timer.h"
 
 class	TCPServer;
 
-class	TCPSession : public ActiveObject
+class	TCPSession : public ProcessObject
 {
 public:
 	struct	Information
@@ -39,7 +39,7 @@ protected:
 	TCPServer	*server_;
 	int			socket_;
 	Information	information_;
-	ValueID		process_id_;
+	std::string		process_id_;
 
 	uint8_t	*	receive_buffer_;
 	uint32_t	receive_buffer_len_;

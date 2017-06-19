@@ -7,14 +7,15 @@
 #include <termios.h>
 #include <sys/signal.h>
 #include "defined.h"
+#include "json.h"
 #include "device_serial.h"
 
-DeviceSerial::DeviceSerial(ObjectManager& _manager, ValueType const& _type)
+DeviceSerial::DeviceSerial(ObjectManager& _manager, std::string const& _type)
 : Device(_manager, _type), dev_name_(""), baudrate_(B115200), buffer_(1024)
 {
 }
 
-DeviceSerial::DeviceSerial(ObjectManager& _manager, ValueType const& _type, std::string const& _port)
+DeviceSerial::DeviceSerial(ObjectManager& _manager, std::string const& _type, std::string const& _port)
 : Device(_manager, _type), dev_name_(_port), buffer_(1024)
 {
 }
@@ -24,44 +25,53 @@ const std::string&	DeviceSerial::GetPort()
 	return	dev_name_;
 }
 
-bool	DeviceSerial::SetPort(std::string const& _dev_name, bool _store)
+bool	DeviceSerial::SetPort(std::string const& _dev_name, bool _check)
 {
-	dev_name_ = _dev_name;
+	if (!_check)
+	{
+		dev_name_ = _dev_name;
 
-	updated_properties_.AppendDevName(dev_name_);
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_DEV_NAME, dev_name_);
+
+		if (!lazy_store_)
+		{
+			ApplyChanges();	
+		}
+	}
 
 	return	true;
 }
 
 
-bool	DeviceSerial::GetProperties(Properties& _properties) 
+bool	DeviceSerial::GetProperties(JSONNode& _properties, Fields const& _fields) 
 {
 	if (Device::GetProperties(_properties))
 	{
-		_properties.AppendDevName(dev_name_);
-		return	true;	
+		if (_fields.dev_name)
+		{
+			_properties.push_back(JSONNode(TITLE_NAME_DEV_NAME, dev_name_));
+		}
+
+		return	true;
 	}
 
 	return	false;
 }
 
-bool	DeviceSerial::SetPropertyInternal(Property const& _property, bool create)
+bool	DeviceSerial::SetProperty(JSONNode const& _property, bool _check)
 {
-	if (strcasecmp(_property.GetName().c_str(), TITLE_NAME_DEV_NAME) == 0)
+	bool	ret_value = true;
+
+	if (_property.name() == TITLE_NAME_DEV_NAME)
 	{
-		const ValueString*	value = dynamic_cast<const ValueString*>(_property.GetValue());
-		if (value != NULL)
-		{
-			return	SetPort(value->Get(), !create);
-		}
-		else
-		{
-			TRACE_ERROR("Failed to set " << _property.GetName() << " property because value type is invalid.");
-			return	false;
-		}
+		ret_value = SetPort(_property.as_string(), _check);
+	}
+	else
+	{
+		ret_value = Device::SetProperty(_property, _check);
 	}
 
-	return	DeviceSerial::SetPropertyInternal(_property, create);
+	return	ret_value;
 }
 
   

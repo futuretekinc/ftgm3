@@ -247,7 +247,7 @@ RetValue	ShellCommandServerLinker
 		else if (_count >= 4)
 		{
 			RCSMessage	payload;
-			Properties::Fields	fields;
+			Fields	fields;
 
 			if ((_arguments[1] == MSG_STR_ADD) || (_arguments[1] == MSG_STR_SET))
 			{

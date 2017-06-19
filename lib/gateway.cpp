@@ -12,7 +12,7 @@
 #include "json.h"
 #include "exception.h"
 
-Gateway::Gateway(ObjectManager& _manager, ValueType const& _type)
+Gateway::Gateway(ObjectManager& _manager, std::string const& _type)
 :	Node(_manager, _type)
 {
 }
@@ -21,16 +21,16 @@ Gateway::~Gateway()
 {
 }
 
-bool	Gateway::SetProperty(Property const& _property, Properties::Fields const& _fields)
+bool	Gateway::SetProperty(JSONNode const& _property, bool _check)
 {
 	bool	ret_value = true;
 
-	if (_property.GetName() == TITLE_NAME_DEVICE)
+	if (_property.name() == TITLE_NAME_DEVICE)
 	{
 	}
 	else
 	{
-		ret_value = Node::SetProperty(_property, _fields);
+		ret_value = Node::SetProperty(_property, _check);
 	}
 
 	return	ret_value;
@@ -41,7 +41,7 @@ bool	Gateway::SetProperty(Property const& _property, Properties::Fields const& _
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Endpoint operation
 
-bool	Gateway::IsAttached(ValueID const& _device_id)
+bool	Gateway::IsAttached(std::string const& _device_id)
 {
 	for(auto it = device_id_list_.begin() ; it != device_id_list_.end() ; it++)
 	{
@@ -54,7 +54,7 @@ bool	Gateway::IsAttached(ValueID const& _device_id)
 	return	false;
 }
 
-bool	Gateway::Attach(ValueID const& _device_id)
+bool	Gateway::Attach(std::string const& _device_id)
 {
 	if (!IsAttached(_device_id))
 	{
@@ -65,7 +65,7 @@ bool	Gateway::Attach(ValueID const& _device_id)
 	return	true;
 }
 
-bool	Gateway::Detach(ValueID const& _device_id)
+bool	Gateway::Detach(std::string const& _device_id)
 {
 	for(auto it = device_id_list_.begin() ; it != device_id_list_.end() ; it++)
 	{
@@ -92,9 +92,9 @@ uint32_t	Gateway::GetDeviceCount()
 	return	device_id_list_.size();
 }
 
-const ValueID&	Gateway::GetDeviceAt(int index)
+const std::string&	Gateway::GetDeviceAt(int index)
 {
-	static	ValueID	null_id("");
+	static	std::string	null_id("");
 
 	if (index >= 0)
 	{
@@ -112,7 +112,7 @@ const ValueID&	Gateway::GetDeviceAt(int index)
 	return	null_id;
 }
 
-bool		Gateway::GetDeviceList(std::list<ValueID>& _device_id_list)
+bool		Gateway::GetDeviceList(std::list<std::string>& _device_id_list)
 {
 	_device_id_list = device_id_list_;
 
@@ -184,42 +184,6 @@ void	Gateway::Postprocess()
 
 }
 
-Gateway*	Gateway::Create(ObjectManager& _manager, Properties const& _properties)
-{
-	Gateway*	gateway = NULL;
-	const Property *type_property = _properties.Get(TITLE_NAME_TYPE);
-
-	if (type_property != NULL)
-	{
-		const ValueString*	type_value = dynamic_cast<const ValueString*>(type_property->GetValue());
-		if (type_value != NULL)
-		{
-			Properties	properties(_properties);
-
-			properties.Delete(TITLE_NAME_TYPE);
-
-			if (std::string(*type_value) == std::string(GatewayGen::Type()))
-			{
-				gateway = new GatewayGen(_manager, properties);
-			}
-			else
-			{
-				TRACE_ERROR2(NULL, "Failed to create gateway. Gateway type[" << type_value->Get() << "] is not supported!");
-			}
-		}
-		else
-		{
-			TRACE_ERROR2(NULL, "Failed to create gateway. Gateway type is invalid!");
-		}
-	}
-	else
-	{
-		TRACE_ERROR2(NULL, "Failed to create gateway. Gateway type unknown!");
-	}
-
-	return	gateway;
-}
-
 Gateway*	Gateway::Create(ObjectManager& _manager, JSONNode const& _properties)
 {
 	Gateway*	gateway = NULL;
@@ -228,7 +192,7 @@ Gateway*	Gateway::Create(ObjectManager& _manager, JSONNode const& _properties)
 	{
 		std::string	type = JSONNodeGetType(_properties);
 
-		if (type == std::string(GatewayGen::Type()))
+		if (type == GatewayGen::Type())
 		{
 			gateway = new GatewayGen(_manager, _properties);
 		}
@@ -239,14 +203,15 @@ Gateway*	Gateway::Create(ObjectManager& _manager, JSONNode const& _properties)
 	}
 	catch(ObjectNotFound& e)
 	{
-		TRACE_ERROR2(NULL, "Failed to create gateway. Gateway type is invalid!");
+		TRACE_ERROR2(NULL, "Failed to create gateway. Gateway type unknown!");
 	}
+
 	return	gateway;
 }
 
-const	ValueType&	Gateway::Type()
+const	std::string&	Gateway::Type()
 {
-	static	ValueType	type_("gateway");
+	static	std::string	type_("gateway");
 
 	return	type_;
 }

@@ -1,4 +1,7 @@
+#include <sstream>
+#include <iomanip>
 #include "defined.h"
+#include "exception.h"
 #include "utils.h"
 
 bool	GetValue(JSONNode const& _node, bool& _value)
@@ -119,30 +122,6 @@ bool	GetValue(JSONNode const& _node, std::string const& _name, uint32_t& _value,
 			if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
 			{
 				_value = field->as_int();
-				ret_value = true;
-			}
-		}
-		else 
-		{
-			ret_value = _empty_allow;			
-		}
-	}
-
-	return	ret_value;
-}
-
-bool	GetValue(JSONNode const& _node, std::string const& _name, ValueFloat& _value, bool _empty_allow)
-{
-	bool	ret_value = false;
-
-	if (_node.type() == JSON_NODE)
-	{
-		auto field = _node.find(_name);
-		if (field != _node.end())
-		{
-			if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
-			{
-				_value = field->as_float();
 				ret_value = true;
 			}
 		}
@@ -281,3 +260,55 @@ bool	GetValue(JSONNode const& _node, std::string const& _name, JSONNode& _value,
 	return	ret_value;
 }
 
+bool	IsValidIP(const std::string& _ip)
+{
+	size_t found = _ip.find_first_not_of("0123456789.");
+	if (found == std::string::npos)
+	{
+		int	number_of_dot = 0;
+		int	position = -1;	
+
+		size_t found = _ip.find_first_of(".");
+		while(found != std::string::npos)
+		{
+			if (position + 1 == found)
+			{
+				break;
+			}
+
+			position = found;
+			number_of_dot++;
+			found = _ip.find_first_of(".", found+1);
+		}
+
+		if (number_of_dot == 3)
+		{
+			return	true;
+		}
+	}
+
+	return	false;
+}
+
+bool	IsTrue(const std::string& _value)
+{
+	if ((_value == "1") ||(_value == "true") ||(_value == "on") ||(_value == "yes"))
+	{
+		return	true;
+	}
+	else if ((_value == "0") ||(_value == "false") ||(_value == "off") ||(_value == "no"))
+	{
+		return	false;
+	}
+
+	THROW_INVALID_ARGUMENT("The value must have true or false.");
+}
+
+std::string	ToString(double _value, int precision )
+{
+	std::ostringstream	oss;
+
+	oss << std::setprecision(precision) << _value;
+
+	return	oss.str();
+}

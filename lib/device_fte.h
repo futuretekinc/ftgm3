@@ -10,23 +10,22 @@ class	DeviceFTE : public DeviceSNMP
 {
 public:
 	DeviceFTE(ObjectManager& _manager);
-	DeviceFTE(ObjectManager& _manager, Properties const& _properties);
 	DeviceFTE(ObjectManager& _manager, JSONNode const& _properties);
-	DeviceFTE(ObjectManager& _manager, ValueIP const& _ip);
+	DeviceFTE(ObjectManager& _manager, std::string const& _ip);
 
-			bool		IsIncludedIn(ValueType const& _type);
+			bool		IsIncludedIn(std::string const& _type);
 
-	virtual	Endpoint*	CreateEndpoint(Properties const& _properties);
+	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties);
 
 			OID 		GetOID(std::string const& _id);
-			OID 		GetOID(ValueType const& _type, uint32_t _index);
+			OID 		GetOID(std::string const& _type, uint32_t _index);
 
-			bool		ReadValue(std::string const& _endpoint_id, Value* _value);
+			bool		ReadValue(std::string const& _endpoint_id, time_t& _time, std::string& _value);
 
-	static	const	ValueType&	Type();
+	static	const	std::string&	Type();
 protected:
-	virtual	bool		Attach(ValueID const& _endpoint_id);
-	virtual	bool		Detach(ValueID const& _endpoint_id);
+	virtual	bool		Attach(std::string const& _endpoint_id);
+	virtual	bool		Detach(std::string const& _endpoint_id);
 
 
 	std::map<std::string, uint32_t>	endpoint_table_;

@@ -9,39 +9,14 @@ Endpoint::ValueMap::~ValueMap()
 {
 }
 
-bool Endpoint::ValueMap::Add(Date const& _date, std::string const& _value)
+bool Endpoint::ValueMap::Add(time_t _time, std::string const& _value)
 {
-	if (_date.IsValid())
-	{ 
-		if (size() >= limit_)
-		{
-			erase(begin());
-		}
-
-		insert(std::make_pair(_date, _value));
-		return	true;
-	}
-
-	return	false;
-}
-
-Endpoint::ValueList::ValueList(uint32_t _limit)
-:	limit_(_limit)
-{
-}
-
-Endpoint::ValueList::~ValueList()
-{
-}
-
-bool Endpoint::ValueList::Add(std::string const& _value)
-{
-	if (size() < limit_)
+	if (size() >= limit_)
 	{
-		push_back(_value);
-		return	true;
+		erase(begin());
 	}
 
-	return	false;
-}
+	insert(std::make_pair(_time, _value));
 
+	return	true;
+}

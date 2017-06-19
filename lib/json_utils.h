@@ -15,8 +15,15 @@ std::string	JSONNodeGetValue(JSONNode const& _node);
 std::string	JSONNodeGetMsgID(JSONNode const& _node);
 std::string	JSONNodeGetMsgID(JSONNode const& _node, std::string _default);
 
+JSONNode	JSONNodeGetNode(JSONNode const& _node, std::string const& _name);
 JSONNode	JSONNodeGetTraceNode(JSONNode const& _node);
 JSONNode	JSONNodeGetValueNode(JSONNode const& _node);
 
 bool		JSONNodeIsExistValue(JSONNode const& _node);
+
+bool		JSONNodeUpdate(JSONNode& _node, std::string const& _name, std::string const& _value);
+bool		JSONNodeUpdate(JSONNode& _node, std::string const& _name, uint32_t _value);
+
+JSONNode	JSONNodeLoadFromFile(std::string const& _file_name);
+
 #endif
