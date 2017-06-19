@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string>
 #include <unistd.h>
 #include <string.h>
@@ -359,7 +360,7 @@ void	TCPClient::Process()
 
 void	TCPClient::Postprocess()
 {
-	for(auto it = receive_packet_list_.begin(); it != receive_packet_list_.end() ; it++)
+	for(std::list<Frame*>::iterator it = receive_packet_list_.begin(); it != receive_packet_list_.end() ; it++)
 	{
 		delete *it;
 	}

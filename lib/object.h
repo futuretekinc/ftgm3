@@ -2,7 +2,7 @@
 #define	OBJECT_H_
 
 #include <iostream>
-#include <mutex>
+//#include <mutex>
 #include <libjson/libjson.h>
 #include <list>
 #include "value.h"
@@ -90,7 +90,7 @@ protected:
 	Date		date_;
 	bool		enable_;
 	bool		lazy_store_;
-	std::mutex	mutex_;
+	//std::mutex	mutex_;
 
 	JSONNode	updated_properties_;
 	Trace		trace;

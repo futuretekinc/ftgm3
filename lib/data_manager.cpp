@@ -43,7 +43,7 @@ bool	DataManager::Table::Add(JSONNode const& _properties)
 		}
 
 		query << "INSERT INTO " << name_ << "(";
-		for(auto it = _properties.begin() ; it != _properties.end() ; it++)
+		for(JSONNode::const_iterator it = _properties.begin() ; it != _properties.end() ; it++)
 		{
 			if (count != 0)
 			{
@@ -69,7 +69,7 @@ bool	DataManager::Table::Add(JSONNode const& _properties)
 		TRACE_INFO("Query : " << query.str());
 		statement->Sql(query.str());
 
-		for(auto it = _properties.begin() ; it != _properties.end() ; it++)
+		for(JSONNode::const_iterator it = _properties.begin() ; it != _properties.end() ; it++)
 		{
 			statement->BindString(++index, it->as_string());
 			TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << it->as_string());
@@ -271,7 +271,7 @@ bool	DataManager::Table::SetProperties(std::string const& _id, JSONNode& _proper
 
 		int	index = 0;
 		query << "UPDATE " << name_ << " SET ";
-		for(auto it = _properties.begin(); it != _properties.end() ; it++)
+		for(JSONNode::iterator it = _properties.begin(); it != _properties.end() ; it++)
 		{
 			if (index++ != 0)
 			{
@@ -289,7 +289,7 @@ bool	DataManager::Table::SetProperties(std::string const& _id, JSONNode& _proper
 		statement->Sql(query.str());
 
 		index = 0;
-		for(auto it = _properties.begin(); it != _properties.end() ; it++)
+		for(JSONNode::iterator it = _properties.begin(); it != _properties.end() ; it++)
 		{
 			statement->BindString(++index, it->as_string());
 			TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << it->as_string());
@@ -503,7 +503,7 @@ DataManager::Table*	DataManager::CreateTable(std::string const& _table_name, std
 
 		query << "CREATE TABLE " << _table_name << " (_id TEXT NOT NULL PRIMARY KEY";
 
-		for(auto field = field_list.begin() ; field != field_list.end() ; field++)
+		for(std::list<std::string>::iterator field = field_list.begin() ; field != field_list.end() ; field++)
 		{
 			if ((*field) != "id")
 			{
@@ -810,7 +810,7 @@ void	DataManager::Preprocess()
 
 			GetEndpointProperties(i, 1, properties_list);
 
-			for(auto it = properties_list.begin(); it != properties_list.end() ; it++)
+			for(JSONNode::iterator it = properties_list.begin(); it != properties_list.end() ; it++)
 			{
 				try
 				{

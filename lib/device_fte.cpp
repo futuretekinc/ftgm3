@@ -66,7 +66,7 @@ bool	DeviceFTE::Attach(std::string const& _epid)
 		return	false;
 	}
 
-	auto endpoint_it = endpoint_table_.find(_epid);
+	std::map<std::string, uint32_t>::iterator endpoint_it = endpoint_table_.find(_epid);
 	if (endpoint_it == endpoint_table_.end())
 	{
 		endpoint_table_[_epid] = index;
@@ -98,7 +98,7 @@ bool	DeviceFTE::Detach(std::string const& _epid)
 		return	false;
 	}
 
-	auto endpoint_it = endpoint_table_.find(_epid);
+	std::map<std::string, uint32_t>::iterator endpoint_it = endpoint_table_.find(_epid);
 	if (endpoint_it == endpoint_table_.end())
 	{
 		TRACE_INFO("The device[" << _epid << "] is not attached.");
@@ -119,7 +119,7 @@ bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& time, std::string& _
 		return	false;	
 	}
 
-	auto it = endpoint_table_.find(_epid);
+	std::map<std::string, uint32_t>::iterator it = endpoint_table_.find(_epid);
 	if (it == endpoint_table_.end())
 	{
 		TRACE_ERROR("The endpoint[" << _epid << "] has been abnormally attached");

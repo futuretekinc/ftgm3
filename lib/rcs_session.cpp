@@ -1,5 +1,6 @@
 #include <fstream>
 #include <sstream>
+#include <errno.h>
 #include <libjson/libjson.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

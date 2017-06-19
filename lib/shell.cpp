@@ -141,7 +141,7 @@ void	Shell::Add
 {
 	for(int i = 0 ; i < _command_count ; i++)
 	{
-		auto it = command_map_.find(_commands[i]->name);
+		std::map<std::string, Command *>::iterator it = command_map_.find(_commands[i]->name);
 		if (it == command_map_.end())
 		{
 			command_map_[_commands[i]->name] = _commands[i];	
@@ -159,7 +159,7 @@ Shell::Command*	Shell::GetCommandAt
 	uint32_t index
 )
 {
-	auto it = command_map_.begin();
+	std::map<std::string, Command *>::iterator it = command_map_.begin();
 
 	while (it != command_map_.end()) 
 	{
@@ -180,7 +180,7 @@ Shell::Command*	Shell::GetCommand
 	const std::string& name_
 )
 {
-	auto it = command_map_.find(name_);
+	std::map<std::string, Command*>::iterator it = command_map_.find(name_);
 	if (it != command_map_.end()) 
 	{
 		return	it->second;
@@ -302,21 +302,8 @@ RetValue	CommandHelp(std::string _argv[], uint32_t _argc, Shell* _shell)
 	return	RET_VALUE_OK;
 }
 
-Shell::Command	ShellCommandHelp = 
-{
-	.name		= "help",
-	.help		= "<command>",
-	.short_help= "Command help",
-	.function	= CommandHelp
-};
-
-Shell::Command	ShellCommandHelp2 = 
-{
-	.name		= "?",
-	.help		= "<command>",
-	.short_help= "Command help",
-	.function	= CommandHelp
-};
+Shell::Command	ShellCommandHelp = Shell::Command("help", "<command>", "Command help", CommandHelp);
+Shell::Command	ShellCommandHelp2 = Shell::Command("?", "<command>", "Command help", CommandHelp);
 
 RetValue	CommandQuit(std::string [], uint32_t, Shell* _shell)
 {
@@ -325,13 +312,7 @@ RetValue	CommandQuit(std::string [], uint32_t, Shell* _shell)
 	return	RET_VALUE_OK;
 }
 
-Shell::Command	ShellCommandQuit = 
-{
-	.name		= "quit",
-	.help		= "Quit",
-	.short_help= "Quit",
-	.function	= CommandQuit
-};
+Shell::Command	ShellCommandQuit = Shell::Command("quit", "Quit", "Quit", CommandQuit);
 
 Shell::Command*	ShellDefaultCommands[] =
 {

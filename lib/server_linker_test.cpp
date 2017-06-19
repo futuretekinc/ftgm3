@@ -24,7 +24,7 @@ void	ServerLinkerTest::Process()
 		timer_ += interval_;
 
 		Date	date;	
-		for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
+		for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 		{
 			it->second->Send(date.ToString());
 		}

@@ -2,7 +2,7 @@
 #define	TIME2_H_
 
 #include <sys/time.h>
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 
 class	Time

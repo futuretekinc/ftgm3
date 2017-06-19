@@ -26,7 +26,7 @@ protected:
 	virtual	bool		Detach(std::string const& _endpoint_id);
 
 
-	std::map<std::string, float>		endpoint_sensor_value_table_;
+	std::map<std::string, double>		endpoint_sensor_value_table_;
 	std::map<std::string, std::string>	endpoint_actuator_value_table_;
 
 };

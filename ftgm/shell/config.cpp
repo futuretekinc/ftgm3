@@ -45,15 +45,15 @@ RetValue	ShellCommandConfig
 }
 
 
-Shell::Command	shell_ftgm_command_config = 
-{
-	.name		=	"config",
-	.help		=	"<command> \n"
-					"  Manage settings.\n"
-					"COMMANDS:\n"
-					"  auto_start\n"
-					"    Automatically run the object\n"
-					"PARAMETERS:\n",
-	.short_help	=	"Manage settings",
-	.function	=	ShellCommandConfig
-};
+Shell::Command	shell_ftgm_command_config
+(
+	"config",
+	"<command> \n"
+	"  Manage settings.\n"
+	"COMMANDS:\n"
+	"  auto_start\n"
+	"    Automatically run the object\n"
+	"PARAMETERS:\n",
+	"Manage settings",
+	ShellCommandConfig
+);

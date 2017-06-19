@@ -6,7 +6,6 @@
 #include <strings.h>
 #include <map>
 #include <vector>
-#include <thread>
 #include <unistd.h>
 #include <iostream>
 #include "active_object.h"

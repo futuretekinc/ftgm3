@@ -168,7 +168,7 @@ bool	ShellCommandNode_nodeEnable(Shell* _shell, std::string const& id, bool enab
 
 		object_manager->GetNodeList(node_list);
 
-		for(auto it = node_list.begin(); it != node_list.end() ; it++)
+		for(std::list<Node*>::iterator it = node_list.begin(); it != node_list.end() ; it++)
 		{
 			(*it)->SetEnable(enable);
 			std::cout << "The object[" << (*it)->GetTraceName() << "] is " << ((enable)?"enabled":"disabled") << std::endl;
@@ -202,7 +202,7 @@ bool	ShellCommandNode_nodeStart(Shell* _shell, std::string const& id, bool start
 
 		object_manager->GetNodeList(node_list);
 
-		for(auto it = node_list.begin(); it != node_list.end() ; it++)
+		for(std::list<Node*>::iterator it = node_list.begin(); it != node_list.end() ; it++)
 		{
 			if (start)
 			{

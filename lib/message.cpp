@@ -1,8 +1,8 @@
 #include "message.h"
 #include <string>
 #include <iomanip>
-#include <mutex>
 #include <map>
+#include "mutex.h"
 #include "active_object.h"
 
 using namespace std;
@@ -27,7 +27,7 @@ message_type_string[] =
 	{ MSG_TYPE_PACKET_RECEIVED,	"Packet received" }
 };
 
-static std::mutex							active_object_map_lock;
+static Mutex								active_object_map_lock;
 static std::map<std::string,ActiveObject*>	active_object_map;
 
 Message::Message(const Message& _message)
@@ -71,7 +71,7 @@ void	Message::UnregisterRecipient(std::string const& _id)
 void	Message::Send(std::string const& _sender, Message* _message)
 {
 	active_object_map_lock.lock();
-	auto object_it = active_object_map.find(_sender);
+	std::map<std::string,ActiveObject*>::iterator object_it = active_object_map.find(_sender);
 	if (object_it == active_object_map.end())
 	{
 		TRACE_ERROR2(NULL, "Unknwon target[" << _sender << "]");

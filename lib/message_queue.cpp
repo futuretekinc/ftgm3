@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cstddef>
-#include <chrono>
+//#include <chrono>
 #include <unistd.h>
 #include <sys/time.h>
 #include "defined.h"
@@ -12,7 +12,7 @@ using namespace std;
 
 MessageQueue::MessageQueue()
 {
-	lock_.lock();
+//	lock_.lock();
 }
 
 MessageQueue::~MessageQueue()

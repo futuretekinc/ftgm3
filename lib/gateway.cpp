@@ -43,7 +43,7 @@ bool	Gateway::SetProperty(JSONNode const& _property, bool _check)
 
 bool	Gateway::IsAttached(std::string const& _device_id)
 {
-	for(auto it = device_id_list_.begin() ; it != device_id_list_.end() ; it++)
+	for(std::list<std::string>::iterator it = device_id_list_.begin() ; it != device_id_list_.end() ; it++)
 	{
 		if ((*it) == _device_id)
 		{	
@@ -67,7 +67,7 @@ bool	Gateway::Attach(std::string const& _device_id)
 
 bool	Gateway::Detach(std::string const& _device_id)
 {
-	for(auto it = device_id_list_.begin() ; it != device_id_list_.end() ; it++)
+	for(std::list<std::string>::iterator it = device_id_list_.begin() ; it != device_id_list_.end() ; it++)
 	{
 		if ((*it) == _device_id)
 		{	
@@ -98,7 +98,7 @@ const std::string&	Gateway::GetDeviceAt(int index)
 
 	if (index >= 0)
 	{
-		for(auto it = device_id_list_.begin() ; it != device_id_list_.end() ; it++)
+		for(std::list<std::string>::iterator it = device_id_list_.begin() ; it != device_id_list_.end() ; it++)
 		{
 			if (index == 0)
 			{	
@@ -121,7 +121,7 @@ bool		Gateway::GetDeviceList(std::list<std::string>& _device_id_list)
 
 bool		Gateway::GetDeviceMap(std::map<std::string, Device*>& _map)
 {
-	for(auto it = device_id_list_.begin(); it != device_id_list_.end(); it++)
+	for(std::list<std::string>::iterator it = device_id_list_.begin(); it != device_id_list_.end(); it++)
 	{
 		Device* device = manager_.GetDevice(*it);
 		if (device != NULL)
@@ -150,7 +150,7 @@ void	Gateway::Preprocess()
 {
 	Node::Preprocess();
 
-	for(auto it = device_id_list_.begin(); it != device_id_list_.end(); it++)
+	for(std::list<std::string>::iterator it = device_id_list_.begin(); it != device_id_list_.end(); it++)
 	{
 		Device*	device = manager_.GetDevice(*it);
 		if (device != NULL)
@@ -171,7 +171,7 @@ void	Gateway::Process()
 
 void	Gateway::Postprocess()
 {
-	for(auto it = device_id_list_.begin(); it != device_id_list_.end(); it++)
+	for(std::list<std::string>::iterator it = device_id_list_.begin(); it != device_id_list_.end(); it++)
 	{
 		Device*	device = manager_.GetDevice(std::string(*it));
 		if (device != NULL)

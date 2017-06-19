@@ -17,10 +17,12 @@ INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../KompexSQL
 
 ifeq ($(RELEASE), 1)
 OBJS_DIR = Release
-DBG_FLAGS = -O2 -DNDEBUG -std=gnu++11
+#DBG_FLAGS = -O2 -DNDEBUG -std=gnu++11
+DBG_FLAGS = -O2 -DNDEBUG
 else
 OBJS_DIR = Debug
-DBG_FLAGS = -g -O0 -DDEBUG -std=gnu++11
+DBG_FLAGS = -g -O0 -DDEBUG
+#DBG_FLAGS = -g -O0 -DDEBUG -std=gnu++11
 endif
 
 DEPEND_FILE = $(OBJS_DIR)/depend_file

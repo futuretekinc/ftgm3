@@ -42,17 +42,17 @@ RetValue	ShellCommandTrace
 }
 
 
-Shell::Command	shell_ftgm_command_trace= 
-{
-	.name		=	"trace",
-	.help		=	"<command> \n"
-					"  Trace settings.\n"
-					"COMMANDS:\n"
-					"  enable\n"
-					"    Object trace enable\n"
-					"  disable\n"
-					"    Object trace disable\n"
-					"PARAMETERS:\n",
-	.short_help	=	"Manage settings",
-	.function	=	ShellCommandTrace
-};
+Shell::Command	shell_ftgm_command_trace
+(
+	"trace",
+	"<command> \n"
+	"  Trace settings.\n"
+	"COMMANDS:\n"
+	"  enable\n"
+	"    Object trace enable\n"
+	"  disable\n"
+	"    Object trace disable\n"
+	"PARAMETERS:\n",
+	"Manage settings",
+	ShellCommandTrace
+);

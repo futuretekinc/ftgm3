@@ -1,7 +1,8 @@
 #ifndef	DEFINED_H_
 #define	DEFINED_H_
 
-#include <cstdint>
+//#include <cstdint>
+#include <stdint.h>
 
 #define	PROPERTY_VALUE_STRING_ONLY			1
 

@@ -43,7 +43,7 @@ bool	EndpointSensorDiscrete::IsValid(std::string const& _value)
 
 std::string	EndpointSensorDiscrete::GetValue()
 {
-	return	std::to_string(value_);
+	return	::ToString(value_);
 }
 
 bool		EndpointSensorDiscrete::SetValue(std::string const& _value, bool _check)
@@ -72,7 +72,7 @@ bool		EndpointSensorDiscrete::SetValue(std::string const& _value, bool _check)
 
 std::string	EndpointSensorDiscrete::GetValueMin()
 {
-	return	std::to_string(false);
+	return	::ToString(false);
 }
 
 bool		EndpointSensorDiscrete::SetValueMin(std::string const& _value, bool _check)
@@ -82,7 +82,7 @@ bool		EndpointSensorDiscrete::SetValueMin(std::string const& _value, bool _check
 
 std::string	EndpointSensorDiscrete::GetValueMax()
 {
-	return	std::to_string(true);
+	return	::ToString(true);
 }
 
 bool		EndpointSensorDiscrete::SetValueMax(std::string const& _value, bool _check)

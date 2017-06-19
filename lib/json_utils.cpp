@@ -5,7 +5,7 @@
 
 std::string	JSONNodeGetString(JSONNode const& _node, std::string const& field)
 {
-	auto it = _node.find(field);
+	JSONNode::const_iterator it = _node.find(field);
 
 	if (it != _node.end())
 	{
@@ -17,7 +17,7 @@ std::string	JSONNodeGetString(JSONNode const& _node, std::string const& field)
 
 std::string	JSONNodeGetString(JSONNode const& _node, std::string const& field, std::string const& _default)
 {
-	auto it = _node.find(field);
+	JSONNode::const_iterator it = _node.find(field);
 
 	if (it != _node.end())
 	{
@@ -49,7 +49,7 @@ std::string	JSONNodeGetName(JSONNode const& _node, std::string const& _default)
 
 time_t		JSONNodeGetTime(JSONNode const& _node)
 {
-	auto field = _node.find(TITLE_NAME_TIME);
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_TIME);
 	if (field != _node.end())
 	{
 		if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
@@ -63,7 +63,7 @@ time_t		JSONNodeGetTime(JSONNode const& _node)
 
 time_t		JSONNodeGetTime(JSONNode const& _node, time_t _default)
 {
-	auto field = _node.find(TITLE_NAME_TIME);
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_TIME);
 	if (field != _node.end())
 	{
 		if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
@@ -77,7 +77,7 @@ time_t		JSONNodeGetTime(JSONNode const& _node, time_t _default)
 
 time_t		JSONNodeGetStartTime(JSONNode const& _node, time_t _default)
 {
-	auto field = _node.find(TITLE_NAME_START_TIME);
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_START_TIME);
 	if (field != _node.end())
 	{
 		if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
@@ -91,7 +91,7 @@ time_t		JSONNodeGetStartTime(JSONNode const& _node, time_t _default)
 
 time_t		JSONNodeGetEndTime(JSONNode const& _node, time_t _default)
 {
-	auto field = _node.find(TITLE_NAME_END_TIME);
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_END_TIME);
 	if (field != _node.end())
 	{
 		if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
@@ -103,9 +103,23 @@ time_t		JSONNodeGetEndTime(JSONNode const& _node, time_t _default)
 	return	_default;
 }
 
+time_t		JSONNodeGetLastTime(JSONNode const& _node)
+{
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_LAST_TIME);
+	if (field != _node.end())
+	{
+		if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
+		{
+			return	time_t(field->as_int());
+		}
+	}
+	
+	throw ObjectNotFound(TITLE_NAME_LAST_TIME);
+}
+
 time_t		JSONNodeGetTimeOfExpire(JSONNode const& _node)
 {
-	auto field = _node.find(TITLE_NAME_TIME_OF_EXPIRE);
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_TIME_OF_EXPIRE);
 	if (field != _node.end())
 	{
 		if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
@@ -132,9 +146,14 @@ std::string	JSONNodeGetMsgID(JSONNode const& _node, std::string _default)
 	return	JSONNodeGetString(_node, TITLE_NAME_MSG_ID, _default);
 }
 
+std::string	JSONNodeGetMsgType(JSONNode const& _node)
+{
+	return	JSONNodeGetString(_node, TITLE_NAME_MSG_TYPE);
+}
+
 uint32_t	JSONNodeGetCount(JSONNode const& _node, uint32_t _default)
 {
-	auto field = _node.find(TITLE_NAME_COUNT);
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_COUNT);
 	if (field != _node.end())
 	{
 		if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
@@ -148,7 +167,7 @@ uint32_t	JSONNodeGetCount(JSONNode const& _node, uint32_t _default)
 
 JSONNode	JSONNodeGetNode(JSONNode const& _node, std::string const& _name)
 {
-	auto field = _node.find(_name);
+	JSONNode::const_iterator field = _node.find(_name);
 	if (field != _node.end())
 	{
 		return	*field;
@@ -159,7 +178,7 @@ JSONNode	JSONNodeGetNode(JSONNode const& _node, std::string const& _name)
 
 JSONNode	JSONNodeGetTraceNode(JSONNode const& _node)
 {
-	auto field = _node.find(TITLE_NAME_TRACE);
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_TRACE);
 	if (field != _node.end())
 	{
 		return	*field;
@@ -170,7 +189,7 @@ JSONNode	JSONNodeGetTraceNode(JSONNode const& _node)
 
 JSONNode	JSONNodeGetValueNode(JSONNode const& _node)
 {
-	auto field = _node.find(TITLE_NAME_VALUE);
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_VALUE);
 	if (field != _node.end())
 	{
 		return	*field;
@@ -181,14 +200,14 @@ JSONNode	JSONNodeGetValueNode(JSONNode const& _node)
 
 bool		JSONNodeIsExistValue(JSONNode const& _node)
 {
-	auto field = _node.find(TITLE_NAME_VALUE);
+	JSONNode::const_iterator field = _node.find(TITLE_NAME_VALUE);
 
 	return	(field != _node.end());
 }
 
 void	JSONNodeUpdate(JSONNode& _node, std::string const& _name, std::string const& _value)
 {
-	auto it = _node.find(_name);
+	JSONNode::iterator it = _node.find(_name);
 	if (it != _node.end())
 	{
 		(*it) = _value;
@@ -201,7 +220,7 @@ void	JSONNodeUpdate(JSONNode& _node, std::string const& _name, std::string const
 
 void	JSONNodeUpdate(JSONNode& _node, std::string const& _name, uint32_t _value)
 {
-	auto it = _node.find(_name);
+	JSONNode::iterator it = _node.find(_name);
 	if (it != _node.end())
 	{
 		(*it) = _value;
@@ -215,7 +234,7 @@ void	JSONNodeUpdate(JSONNode& _node, std::string const& _name, uint32_t _value)
 
 JSONNode	JSONNodeLoadFromFile(std::string const& _file_name)
 {
-	std::fstream	fs(_file_name, std::fstream::in);
+	std::fstream	fs(_file_name.c_str(), std::fstream::in);
 	if (!fs.is_open())
 	{
 		THROW_INVALID_ARGUMENT("The " << _file_name << " cat not open!");

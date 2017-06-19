@@ -46,48 +46,6 @@ public:
 			RCSMessage	message_;
 	};
 
-	class	SLMError : public std::exception
-	{
-	public:
-		SLMError();
-
-		virtual const char* 	what() const throw();
-
-	protected:
-		std::string	message_;
-	};
-
-	class	SLMInvalidArgument : public SLMError
-	{
-	public:
-		explicit SLMInvalidArgument(std::string const& _argument);
-
-	protected:
-	};
-
-	class	SLMObjectNotFound : public SLMError
-	{
-	public:
-		explicit SLMObjectNotFound(std::string const& _object_id);
-
-		const	std::string&	GetObjectID()		{	return	object_id_;		}
-
-	protected:
-		std::string	object_id_;
-	};
-
-	class	SLMRequestTimeout : public SLMError
-	{
-	public:
-		explicit	SLMRequestTimeout(RCSMessage* _message);
-	};
-
-	class	SLMNotInitialized : public SLMError
-	{
-	public:
-		explicit	SLMNotInitialized(std::string const& _message);
-	};
-
 	class EventCB : public RdKafka::EventCb, Object
 	{
 	public:

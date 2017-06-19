@@ -47,50 +47,6 @@ ServerLinker::Consume::Consume(std::string const& _topic, std::string const& _pa
 	}
 }
 
-ServerLinker::SLMError::SLMError()
-{
-}
-
-const char* ServerLinker::SLMError::what() const throw()
-{
-	return	message_.c_str();
-}
-
-ServerLinker::SLMInvalidArgument::SLMInvalidArgument(std::string const& _argument)
-: SLMError()
-{
-	std::ostringstream	oss;
-
-	oss << "Invalid argument[" << _argument << "]";
-
-	message_ = oss.str();
-}
-
-ServerLinker::SLMObjectNotFound::SLMObjectNotFound(std::string const& _object_id)
-: SLMError(), object_id_(_object_id)
-{
-	std::ostringstream	oss;
-
-	oss << "Object[" << _object_id << "] not found!";
-
-	message_ = oss.str();
-}
-
-ServerLinker::SLMRequestTimeout::SLMRequestTimeout(RCSMessage* _message)
-: SLMError()
-{ 
-	std::ostringstream	oss;
-	oss << "Message[" << _message->GetMsgID() <<"] arrives late or is invalid.";
-
-	message_ = oss.str();
-}
-
-ServerLinker::SLMNotInitialized::SLMNotInitialized(std::string const& _message)
-: SLMError()
-{
-	message_ = _message;
-}
-
 ServerLinker::EventCB::EventCB(ServerLinker& _linker)
 : Object(), RdKafka::EventCb(), linker_(_linker)
 {
@@ -151,7 +107,7 @@ void ServerLinker::DeliveryReportCB::dr_cb (RdKafka::Message &data)
 		std::string	topic = produce->GetTopic();
 		RCSMessage&	message = produce->GetMessage();
 
-		auto it = linker_.message_map_.find(message.GetMsgID());
+		std::map<std::string, Produce*>::iterator it = linker_.message_map_.find(message.GetMsgID());
 		if (it != linker_.message_map_.end())
 		{
 			TRACE_INFO("The Message[" << message.GetMsgID() << "] was delivered");
@@ -294,7 +250,7 @@ bool	ServerLinker::DownLink::Start()
 	}
 
 	RdKafka::ErrorCode error_code = linker_.GetConsumer()->start(topic_, partition_, offset_);
-	if (error_code != RdKafka::ErrorCode::ERR_NO_ERROR)
+	if (error_code != RdKafka::ERR_NO_ERROR)
 	{
 		TRACE_ERROR("Failed to start down link[" << error_code << "]!");
 		return	false;	
@@ -310,7 +266,7 @@ bool	ServerLinker::DownLink::Stop()
 	if (topic_ != NULL)
 	{
 		RdKafka::ErrorCode	error_code = linker_.GetConsumer()->stop(topic_, partition_);
-		if (error_code != RdKafka::ErrorCode::ERR_NO_ERROR)
+		if (error_code != RdKafka::ERR_NO_ERROR)
 		{
 			TRACE_ERROR("Failed to stop down link!");
 			return	false;
@@ -440,12 +396,12 @@ ServerLinker::~ServerLinker()
 	delete conf_global_;
 	delete conf_topic_;
 
-	for(auto it = up_link_map_.begin() ; it != up_link_map_.end() ; it++)
+	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin() ; it != up_link_map_.end() ; it++)
 	{
 		delete it->second;	
 	}
 
-	for(auto it = down_link_map_.begin() ; it != down_link_map_.end() ; it++)
+	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin() ; it != down_link_map_.end() ; it++)
 	{
 		delete it->second;	
 	}
@@ -614,17 +570,14 @@ bool		ServerLinker::SetAutoConnection(std::string const& _auto, bool _check)
 {
 	bool	value;
 
-	if ((_auto == "yes") ||(_auto == "on") ||(_auto == "true") ||(_auto == "1"))
+	try
 	{
-		value = true;
+		value = IsTrue(_auto);
 	}
-	else if ((_auto == "no") ||(_auto == "off") ||(_auto == "false") ||(_auto == "0"))
+	catch(InvalidArgument& e)
 	{
-		value = false;
-	}
-	else
-	{
-		return	false;	
+		TRACE_ERROR(e.what());
+		return	false;
 	}
 
 	if (!_check)
@@ -635,9 +588,10 @@ bool		ServerLinker::SetAutoConnection(std::string const& _auto, bool _check)
 	return	true;
 }
 
+
 uint32_t	ServerLinker::GetUpLink(std::vector<UpLink*>& _link_list)
 {
-	for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
+	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
 		_link_list.push_back(it->second);		
 	}
@@ -647,7 +601,7 @@ uint32_t	ServerLinker::GetUpLink(std::vector<UpLink*>& _link_list)
 
 uint32_t	ServerLinker::GetUpLink(std::list<std::string>& _topic_name_list)
 {
-	for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
+	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
 		_topic_name_list.push_back(it->first);		
 	}
@@ -657,7 +611,7 @@ uint32_t	ServerLinker::GetUpLink(std::list<std::string>& _topic_name_list)
 
 uint32_t	ServerLinker::GetDownLink(std::vector<DownLink*>& _link_list)
 {
-	for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
+	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
 		_link_list.push_back(it->second);		
 	}
@@ -667,7 +621,7 @@ uint32_t	ServerLinker::GetDownLink(std::vector<DownLink*>& _link_list)
 
 uint32_t	ServerLinker::GetDownLink(std::list<std::string>& _topic_name_list)
 {
-	for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
+	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
 		_topic_name_list.push_back(it->first);		
 	}
@@ -747,7 +701,7 @@ ServerLinker::UpLink*	ServerLinker::AddUpLink(std::string const& _topic_name, in
 
 ServerLinker::UpLink*	ServerLinker::GetUpLink(std::string const& _topic_name)
 {
-	auto it = up_link_map_.find(_topic_name);
+	std::map<std::string, UpLink*>::iterator it = up_link_map_.find(_topic_name);
 	if (it == up_link_map_.end())
 	{
 		return	NULL;
@@ -758,7 +712,7 @@ ServerLinker::UpLink*	ServerLinker::GetUpLink(std::string const& _topic_name)
 
 bool		ServerLinker::DelUpLink(std::string const& _topic_name)
 {
-	auto it = up_link_map_.find(_topic_name);
+	std::map<std::string, UpLink*>::iterator it = up_link_map_.find(_topic_name);
 	if (it == up_link_map_.end())
 	{
 		return	false;
@@ -812,7 +766,7 @@ ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic_name
 
 bool		ServerLinker::DelDownLink(std::string const& _topic_name)
 {
-	auto it = down_link_map_.find(_topic_name);
+	std::map<std::string, DownLink*>::iterator it = down_link_map_.find(_topic_name);
 	if (it == down_link_map_.end())
 	{
 		return	false;
@@ -828,7 +782,7 @@ bool		ServerLinker::DelDownLink(std::string const& _topic_name)
 
 ServerLinker::DownLink*	ServerLinker::GetDownLink(std::string const& _topic_name)
 {
-	auto it = down_link_map_.find(_topic_name);
+	std::map<std::string, DownLink*>::iterator it = down_link_map_.find(_topic_name);
 	if (it == down_link_map_.end())
 	{
 		return	NULL;
@@ -863,7 +817,7 @@ void	ServerLinker::Process()
 		{
 			producer_->poll(0);
 
-			for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
+			for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 			{
 				it->second->Consume(&consume_cb_);
 			}
@@ -881,11 +835,12 @@ void	ServerLinker::Process()
 		}
 	}
 
+	
 	uint64_t	current = uint64_t(Date::GetCurrent().GetMicroSecond());
 
 	if (request_map_.upper_bound(current) != request_map_.begin())
 	{
-		for(auto it = request_map_.begin(); it != request_map_.upper_bound(current) ; it++)
+		for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin(); it != request_map_.upper_bound(current) ; it++)
 		{
 			if (it->second->GetMessage().GetMsgType() != MSG_STR_KEEP_ALIVE)
 			{
@@ -966,13 +921,13 @@ bool	ServerLinker::InternalConnect(uint32_t _delay_sec)
 			}
 		
 			TRACE_INFO("Up Link Count : " << up_link_map_.size());
-			for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
+			for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 			{
 				it->second->Start();
 			}
 
 			TRACE_INFO("Down Link Count : " << down_link_map_.size());
-			for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
+			for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 			{
 				it->second->Start();
 			}
@@ -1013,12 +968,12 @@ bool	ServerLinker::InternalDisconnect()
 {
 	broker_connected_ = false;
 
-	for(auto it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
+	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
 		it->second->Stop();
 	}
 
-	for(auto it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
+	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
 		it->second->Stop();
 	}
@@ -1082,12 +1037,12 @@ bool	ServerLinker::ReportEPData(Endpoint* _ep)
 
 	JSONNode	array(JSON_ARRAY);
 
-	for(auto it = value_map.begin(); it != value_map.end() ; it++)
+	for(Endpoint::ValueMap::iterator it = value_map.begin(); it != value_map.end() ; it++)
 	{
 		JSONNode	item;
 		time_t		time = time_t(it->first);
 
-		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time)));
+		item.push_back(JSONNode(TITLE_NAME_TIME, ToString(time)));
 		item.push_back(JSONNode(TITLE_NAME_VALUE, it->second));
 
 		array.push_back(item);
@@ -1118,7 +1073,7 @@ bool	ServerLinker::RequestInit(std::string const& _type, JSONNode& _payload)
 	JSONNode	payload;
 
 	payload.push_back(JSONNode(TITLE_NAME_MSG_TYPE, _type));
-	payload.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(Date::GetCurrent()))));
+	payload.push_back(JSONNode(TITLE_NAME_TIME, ToString(time_t(Date::GetCurrent()))));
 
 	_payload = payload;
 
@@ -1130,7 +1085,7 @@ bool	ServerLinker::ReplyInit(std::string const& _type, std::string const& _req_i
 	JSONNode	payload;
 
 	payload.push_back(JSONNode(TITLE_NAME_MSG_TYPE, _type));
-	payload.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(Date::GetCurrent()))));
+	payload.push_back(JSONNode(TITLE_NAME_TIME, ToString(time_t(Date::GetCurrent()))));
 	payload.push_back(JSONNode(TITLE_NAME_REQ_ID, _req_id));
 
 	_payload = payload;
@@ -1140,7 +1095,7 @@ bool	ServerLinker::ReplyInit(std::string const& _type, std::string const& _req_i
 
 bool	ServerLinker::AddGateway(JSONNode& _payload, Gateway* _gateway, Fields const& _fields)
 {
-	auto it = _payload.find(TITLE_NAME_GATEWAY);
+	JSONNode::iterator it = _payload.find(TITLE_NAME_GATEWAY);
 	if (it != _payload.end())
 	{
 		if (it->type() == JSON_NODE)
@@ -1181,7 +1136,7 @@ bool	ServerLinker::AddGateway(JSONNode& _payload, Gateway* _gateway, Fields cons
 
 bool	ServerLinker::AddGateway(JSONNode& _payload, std::string const& _id)
 {
-	auto it = _payload.find(TITLE_NAME_GATEWAY);
+	JSONNode::iterator it = _payload.find(TITLE_NAME_GATEWAY);
 	if (it != _payload.end())
 	{
 		if (it->type() == JSON_NODE)
@@ -1221,7 +1176,7 @@ bool	ServerLinker::AddGateway(JSONNode& _payload, std::string const& _id)
 
 bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Fields const& _fields)
 {
-	auto it = _payload.find(TITLE_NAME_DEVICE);
+	JSONNode::iterator it = _payload.find(TITLE_NAME_DEVICE);
 	if (it != _payload.end())
 	{
 		if (it->type() == JSON_NODE)
@@ -1261,7 +1216,7 @@ bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Fields const& 
 
 bool	ServerLinker::AddDevice(JSONNode& _payload, std::string const& _id)
 {
-	auto it = _payload.find(TITLE_NAME_DEVICE);
+	JSONNode::iterator it = _payload.find(TITLE_NAME_DEVICE);
 	if (it != _payload.end())
 	{
 		if (it->type() == JSON_NODE)
@@ -1300,7 +1255,7 @@ bool	ServerLinker::AddDevice(JSONNode& _payload, std::string const& _id)
 
 bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields const& _fields)
 {
-	auto it = _payload.find(TITLE_NAME_ENDPOINT);
+	JSONNode::iterator it = _payload.find(TITLE_NAME_ENDPOINT);
 	if (it != _payload.end())
 	{
 		if (it->type() == JSON_NODE)
@@ -1339,7 +1294,7 @@ bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields c
 
 bool	ServerLinker::AddEndpoint(JSONNode& _payload, std::string const& _id)
 {
-	auto it = _payload.find(TITLE_NAME_ENDPOINT);
+	JSONNode::iterator it = _payload.find(TITLE_NAME_ENDPOINT);
 	if (it != _payload.end())
 	{
 		if (it->type() == JSON_NODE)
@@ -1395,11 +1350,11 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
 	node.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
 
 	JSONNode	array(JSON_ARRAY);
-	for(auto it = value_map.begin(); it != value_map.end() ; it++)
+	for(Endpoint::ValueMap::iterator it = value_map.begin(); it != value_map.end() ; it++)
 	{
 		JSONNode	item;
 		
-		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(it->first))));
+		item.push_back(JSONNode(TITLE_NAME_TIME, ToString(time_t(it->first))));
 		item.push_back(JSONNode(TITLE_NAME_VALUE, it->second));
 
 		array.push_back(item);
@@ -1408,7 +1363,7 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
 	array.set_name(TITLE_NAME_VALUE);
 	node.push_back(array);
 
-	auto it = _payload.find(TITLE_NAME_DATA);
+	JSONNode::iterator it = _payload.find(TITLE_NAME_DATA);
 	if (it != _payload.end())
 	{
 		if (it->type() == JSON_NODE)
@@ -1452,11 +1407,11 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_
 	node.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
 
 	JSONNode	array(JSON_ARRAY);
-	for(auto it = value_map.begin(); it != value_map.end() ; it++)
+	for(Endpoint::ValueMap::iterator it = value_map.begin(); it != value_map.end() ; it++)
 	{
 		JSONNode	item;
 		
-		item.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(it->first))));
+		item.push_back(JSONNode(TITLE_NAME_TIME, ToString(time_t(it->first))));
 		item.push_back(JSONNode(TITLE_NAME_VALUE, it->second));
 
 		array.push_back(item);
@@ -1465,7 +1420,7 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_
 
 	node.push_back(array);
 
-	auto it = _payload.find(TITLE_NAME_DATA);
+	JSONNode::iterator it = _payload.find(TITLE_NAME_DATA);
 	if (it != _payload.end())
 	{
 		if (it->type() == JSON_NODE)
@@ -1506,14 +1461,14 @@ bool	ServerLinker::Error(std::string const& _req_id ,std::string const& _err_msg
 
 bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception)
 {
-	for(auto it = request_map_.begin() ; it != request_map_.end() ; it++)
+	for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin() ; it != request_map_.end() ; it++)
 	{
 		Produce*	produce = it->second;
 		RCSMessage&	message = produce->GetMessage();
 
 		if (message.GetMsgID() == _reply->GetReqID())
 		{
-			GetValue(message.GetPayload(), TITLE_NAME_MSG_TYPE, _req_type);
+			_req_type = JSONNodeGetMsgType(message.GetPayload());
 		
 			delete produce;
 
@@ -1525,7 +1480,7 @@ bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bo
 
 	if (_exception)
 	{
-		throw SLMRequestTimeout(_reply);
+		THROW_REQUEST_TIMEOUT(_reply);
 	}
 
 	return	false;
@@ -1556,28 +1511,10 @@ bool	ServerLinker::OnMessage(Message* _message)
 			break;
 		}
 	}
-	catch(SLMObjectNotFound& e)
-	{
-		TRACE_ERROR(e.what());
-		Error(msg_id, e.what());
-	}
-	catch(SLMRequestTimeout& e)
-	{
-		TRACE_ERROR(e.what());
-		Error(msg_id, e.what());
-	}
-	catch(SLMInvalidArgument& e)
-	{
-		TRACE_ERROR(e.what());
-		Error(msg_id, e.what());
-	}
-	catch(SLMNotInitialized& e)
-	{
-		TRACE_ERROR(e.what());
-	}
 	catch(std::exception& e)
 	{
 		TRACE_ERROR(e.what());
+		Error(msg_id, e.what());
 	}
 
 	return	true;
@@ -1627,7 +1564,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 
 		if (!ConfirmRequest(&message, req_type))
 		{
-			throw SLMRequestTimeout(&message);
+			THROW_REQUEST_TIMEOUT(&message);
 		}
 
 		manager_->GetRCSServer().Confirm(message, req_type);	

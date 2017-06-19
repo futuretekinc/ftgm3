@@ -18,7 +18,7 @@ bool	ShellCommandGatewayList(Shell* _shell)
 		uint32_t	stat_len = 8;
 		uint32_t	registered_len = 10;
 
-		for(auto it = gen_list.begin() ; it != gen_list.end() ; it++)
+		for(std::list<Gateway*>::iterator it = gen_list.begin() ; it != gen_list.end() ; it++)
 		{
 			GatewayGen	*gateway = dynamic_cast<GatewayGen*>(*it);
 
@@ -51,7 +51,7 @@ bool	ShellCommandGatewayList(Shell* _shell)
 		std::cout << " " << std::setw(registered_len) << "Registered";
 		std::cout << std::endl;
 
-		for(auto it = gen_list.begin() ; it != gen_list.end() ; it++)
+		for(std::list<Gateway*>::iterator it = gen_list.begin() ; it != gen_list.end() ; it++)
 		{
 			GatewayGen	*gateway = dynamic_cast<GatewayGen*>(*it);
 
@@ -102,7 +102,7 @@ RetValue	ShellCommandGateway
 
 				object_manager->GetGatewayList(gateway_list);
 
-				for(auto it = gateway_list.begin(); it != gateway_list.end() ; it++)
+				for(std::list<Gateway*>::iterator it = gateway_list.begin(); it != gateway_list.end() ; it++)
 				{
 					(*it)->Start();
 					std::cout << "The gateway[" << (*it)->GetTraceName() << "] is started!" << std::endl;
@@ -137,7 +137,7 @@ RetValue	ShellCommandGateway
 
 				object_manager->GetGatewayList(gateway_list);
 
-				for(auto it = gateway_list.begin(); it != gateway_list.end() ; it++)
+				for(std::list<Gateway*>::iterator it = gateway_list.begin(); it != gateway_list.end() ; it++)
 				{
 					(*it)->Stop();
 					std::cout << "The gateway[" << (*it)->GetTraceName() << "] is stopped!" << std::endl;
@@ -172,42 +172,7 @@ RetValue	ShellCommandGateway
 
 				object_manager->GetGatewayList(gateway_list);
 
-				for(auto it = gateway_list.begin(); it != gateway_list.end() ; it++)
-				{
-					(*it)->SetEnable(true);
-					std::cout << "The gateway[" << (*it)->GetTraceName() << "] is enabled!" << std::endl;
-				}
-			}
-			else
-			{
-				for(uint32_t i = 2 ; i < _count ; i++)
-				{
-					Gateway *gateway = object_manager->GetGateway(_arguments[i]);
-					if (gateway == NULL)
-					{
-						std::cout << "Gateway[" << _arguments[i] << "] not found!" << std::endl;
-					}
-					else
-					{
-						gateway->SetEnable(true);
-						std::cout << "The gateway[" << _arguments[i] << "] is enabled!" << std::endl;
-					}
-				}
-			}
-		}
-		else if (_arguments[1] == "disable")
-		{
-			if (_count < 3)
-			{
-				ret_value = RET_VALUE_INVALID_ARGUMENTS;
-			}
-			else if (_arguments[2] == "all")
-			{
-				std::list<Gateway*>	gateway_list;
-
-				object_manager->GetGatewayList(gateway_list);
-
-				for(auto it = gateway_list.begin(); it != gateway_list.end() ; it++)
+				for(std::list<Gateway*>::iterator it = gateway_list.begin(); it != gateway_list.end() ; it++)
 				{
 					(*it)->SetEnable(false);
 					std::cout << "The gateway[" << (*it)->GetTraceName() << "] is disabled!" << std::endl;
@@ -277,23 +242,23 @@ RetValue	ShellCommandGateway
 }
 
 
-Shell::Command	shell_ftgm_command_gateway = 
-{
-	.name		=	"gateway",
-	.help		=	"<command> \n"
-					"  Management of gateway.\n"
-					"COMMANDS:\n"
-					"  create  <TYPE> [--id <ID>] [--name <NAME>]\n"
-					"    Create gateway\n"
-					"  destroy <ID> [<ID> ...]\n"
-					"    Destroy gateways.\n"
-					"  start   <ID> [<ID> ...]\n"
-					"    Start gateways.\n"
-					"  stop    <ID> [<ID> ...]\n"
-					"    Stop gateways.\n"
-					"PARAMETERS:\n"
-					"  TYPE    Type of gateway\n"
-					"  ID      Gateway ID\n",
-	.short_help	=	"Management of gateway",
-	.function	=	ShellCommandGateway
-};
+Shell::Command	shell_ftgm_command_gateway
+(
+	"gateway",
+	"<command> \n"
+	"  Management of gateway.\n"
+	"COMMANDS:\n"
+	"  create  <TYPE> [--id <ID>] [--name <NAME>]\n"
+	"    Create gateway\n"
+	"  destroy <ID> [<ID> ...]\n"
+	"    Destroy gateways.\n"
+	"  start   <ID> [<ID> ...]\n"
+	"    Start gateways.\n"
+	"  stop    <ID> [<ID> ...]\n"
+	"    Stop gateways.\n"
+	"PARAMETERS:\n"
+	"  TYPE    Type of gateway\n"
+	"  ID      Gateway ID\n",
+	"Management of gateway",
+	ShellCommandGateway
+);

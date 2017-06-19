@@ -112,7 +112,7 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 	JSONNode	payload  = _request.GetPayload();
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 
-	for(auto it = payload.begin(); it != payload.end() ; it++)
+	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
 		{
@@ -174,7 +174,7 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 	JSONNode	payload  = _request.GetPayload();
 
-	for(auto it = payload.begin(); it != payload.end() ; it++)
+	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
 		{
@@ -276,7 +276,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 	JSONNode	payload  = _request.GetPayload();
 
-	for(auto it = payload.begin(); it != payload.end() ; it++)
+	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
 		{
@@ -461,7 +461,7 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 	JSONNode	payload  = _request.GetPayload();
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 
-	for(auto it = payload.begin(); it != payload.end() ; it++)
+	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
 		{
@@ -555,11 +555,11 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 				}
 
 				JSONNode	array(JSON_ARRAY);
-				for(auto value_it = value_map.begin() ; value_it != value_map.end() ; value_it++)
+				for(Endpoint::ValueMap::iterator value_it = value_map.begin() ; value_it != value_map.end() ; value_it++)
 				{
 					JSONNode	value;
 
-					value.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(value_it->first))));
+					value.push_back(JSONNode(TITLE_NAME_TIME, ToString(time_t(value_it->first))));
 					value.push_back(JSONNode(TITLE_NAME_VALUE, value_it->second));
 
 					array.push_back(value);
@@ -586,7 +586,7 @@ bool	RCSServer::List(RCSMessage& _request, RCSMessage& _response)
 	JSONNode	payload  = _request.GetPayload();
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 
-	for(auto it = payload.begin(); it != payload.end() ; it++)
+	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
 		{
@@ -596,7 +596,7 @@ bool	RCSServer::List(RCSMessage& _request, RCSMessage& _response)
 
 				manager_->GetGatewayList(list);
 
-				for(auto gateway = list.begin(); gateway != list.end() ; gateway++)
+				for(std::list<Gateway*>::iterator gateway = list.begin(); gateway != list.end() ; gateway++)
 				{
 					JSONNode	result;
 
@@ -618,7 +618,7 @@ bool	RCSServer::List(RCSMessage& _request, RCSMessage& _response)
 
 				manager_->GetDeviceList(list);
 
-				for(auto device = list.begin(); device != list.end() ; device++)
+				for(std::list<Device*>::iterator device = list.begin(); device != list.end() ; device++)
 				{
 					JSONNode	result;
 
@@ -640,7 +640,7 @@ bool	RCSServer::List(RCSMessage& _request, RCSMessage& _response)
 
 				manager_->GetEndpointList(list);
 
-				for(auto endpoint = list.begin(); endpoint != list.end() ; endpoint++)
+				for(std::list<Endpoint*>::iterator endpoint = list.begin(); endpoint != list.end() ; endpoint++)
 				{
 					JSONNode	result;
 
@@ -668,7 +668,7 @@ bool	RCSServer::Confirm(RCSMessage& _reply, std::string& _req_type)
 
 	try
 	{
-		for(auto it = reply_payload.begin(); it != reply_payload.end() ; it++)
+		for(JSONNode::iterator it = reply_payload.begin(); it != reply_payload.end() ; it++)
 		{
 			if (it->name() == TITLE_NAME_GATEWAY)
 			{
@@ -711,7 +711,7 @@ bool	RCSServer::Error(RCSMessage& _reply)
 
 	try
 	{
-		for(auto it = reply_payload.begin(); it != reply_payload.end() ; it++)
+		for(JSONNode::iterator it = reply_payload.begin(); it != reply_payload.end() ; it++)
 		{
 			if (it->name() == TITLE_NAME_GATEWAY)
 			{
@@ -754,7 +754,7 @@ bool	RCSServer::Error(RCSMessage& _reply, std::string& _req_type)
 
 	try
 	{
-		for(auto it = reply_payload.begin(); it != reply_payload.end() ; it++)
+		for(JSONNode::iterator it = reply_payload.begin(); it != reply_payload.end() ; it++)
 		{
 			if (it->name() == TITLE_NAME_GATEWAY)
 			{
@@ -794,11 +794,7 @@ bool	RCSServer::ConfirmGateway(JSONNode& _node, std::string& _req_type)
 {
 	if (_node.type() == JSON_NODE)
 	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			throw InvalidArgument("Invalid _message fromat!");
-		}
+		std::string	id = JSONNodeGetID(_node);
 
 		if (_req_type == MSG_TYPE_RCS_ADD)
 		{
@@ -827,7 +823,7 @@ bool	RCSServer::ConfirmGateway(JSONNode& _node, std::string& _req_type)
 	}
 	else if (_node.type() == JSON_ARRAY)
 	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
+		for(JSONNode::iterator it = _node.begin() ; it != _node.end() ; it++)
 		{
 			ConfirmGateway(*it, _req_type);
 		}
@@ -842,12 +838,7 @@ bool	RCSServer::ConfirmDevice(JSONNode& _node, std::string& _req_type)
 {
 	if (_node.type() == JSON_NODE)
 	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
+		std::string	id = JSONNodeGetID(_node);
 
 		if (_req_type == MSG_TYPE_RCS_ADD)
 		{
@@ -877,7 +868,7 @@ bool	RCSServer::ConfirmDevice(JSONNode& _node, std::string& _req_type)
 	}
 	else if (_node.type() == JSON_ARRAY)
 	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
+		for(JSONNode::iterator it = _node.begin() ; it != _node.end() ; it++)
 		{
 			ConfirmDevice(*it, _req_type);
 		}
@@ -895,12 +886,7 @@ bool	RCSServer::ConfirmEndpoint(JSONNode& _node, std::string& _req_type)
 {
 	if (_node.type() == JSON_NODE)
 	{
-		std::string	id;
-		if (!GetValue(_node, TITLE_NAME_ID, id))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			return	false;
-		}
+		std::string	id = JSONNodeGetID(_node);
 
 		if (_req_type == MSG_TYPE_RCS_ADD)
 		{
@@ -930,7 +916,7 @@ bool	RCSServer::ConfirmEndpoint(JSONNode& _node, std::string& _req_type)
 	}
 	else if (_node.type() == JSON_ARRAY)
 	{
-		for(auto it = _node.begin() ; it != _node.end() ; it++)
+		for(JSONNode::iterator it = _node.begin() ; it != _node.end() ; it++)
 		{
 			ConfirmEndpoint(*it, _req_type);
 		}
@@ -947,14 +933,7 @@ bool	RCSServer::ConfirmEndpoint(JSONNode& _node, std::string& _req_type)
 
 bool	RCSServer::ConfirmData(JSONNode& _node, std::string& _req_type)
 {
-	std::string	id;
-
-	if (!GetValue(_node, TITLE_NAME_ID, id))
-	{
-		TRACE_ERROR("Invalid _message fromat!");
-		return	false;
-	}
-
+	std::string	id = JSONNodeGetID(_node);
 	if (_req_type == MSG_TYPE_RCS_REPORT)
 	{
 		time_t		last_time;
@@ -965,12 +944,7 @@ bool	RCSServer::ConfirmData(JSONNode& _node, std::string& _req_type)
 			return	false;
 		}
 
-		if (!GetValue(_node, TITLE_NAME_LAST_TIME, last_time))
-		{
-			TRACE_ERROR("Invalid _message fromat!");
-			TRACE_ERROR("Node : " << _node.write_formatted());
-			return	false;
-		}
+		last_time = JSONNodeGetLastTime(_node);
 
 		endpoint->SetLastConfirmTime(Date(last_time));
 		TRACE_INFO("The data for the endpoint[" << id << "] has been transferred.");

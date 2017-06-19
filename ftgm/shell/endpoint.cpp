@@ -37,7 +37,7 @@ RetValue	ShellCommandEndpoint
 				uint32_t	stat_len = 16;
 				uint32_t	value_len = 8;
 
-				for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+				for(std::list<Endpoint*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
 				{
 					uint32_t	len;
 
@@ -77,7 +77,7 @@ RetValue	ShellCommandEndpoint
 				_shell->Out() << " " << std::setw(value_len) << "Value";
 				_shell->Out() << std::endl;
 
-				for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+				for(std::list<Endpoint*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
 				{
 					Endpoint *endpoint = dynamic_cast<Endpoint*>(*it);
 
@@ -158,7 +158,7 @@ RetValue	ShellCommandEndpoint
 
 				object_manager->GetEndpointList(endpoint_list);
 
-				for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+				for(std::list<Endpoint*>::iterator it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 				{
 					(*it)->Start();
 					_shell->Out() << "The endpoint[" << (*it)->GetTraceName() << "] is started!" << std::endl;
@@ -196,7 +196,7 @@ RetValue	ShellCommandEndpoint
 
 				object_manager->GetEndpointList(endpoint_list);
 
-				for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+				for(std::list<Endpoint*>::iterator it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 				{
 					(*it)->Stop();
 					_shell->Out() << "The endpoint[" << (*it)->GetTraceName() << "] is stopped!" << std::endl;
@@ -232,7 +232,7 @@ RetValue	ShellCommandEndpoint
 
 				object_manager->GetEndpointList(endpoint_list);
 
-				for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+				for(std::list<Endpoint*>::iterator it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 				{
 					(*it)->SetEnable(true);
 					_shell->Out() << "The endpoint[" << (*it)->GetTraceName() << "] is enabled!" << std::endl;
@@ -268,7 +268,7 @@ RetValue	ShellCommandEndpoint
 
 				object_manager->GetEndpointList(endpoint_list);
 
-				for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+				for(std::list<Endpoint*>::iterator it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 				{
 					(*it)->SetEnable(false);
 					_shell->Out() << "The endpoint[" << (*it)->GetTraceName() << "] is disabled!" << std::endl;
@@ -351,7 +351,7 @@ RetValue	ShellCommandEndpoint
 
 			endpoint->GetData(count, value_map);
 
-			for(auto it = value_map.begin() ; it != value_map.end() ; it++)
+			for(Endpoint::ValueMap::iterator it = value_map.begin() ; it != value_map.end() ; it++)
 			{
 				_shell->Out() << it->first << " : " << it->second << std::endl;	
 			}
@@ -370,7 +370,7 @@ RetValue	ShellCommandEndpoint
 				uint32_t	title_len = 16;
 
 				endpoint->GetProperties(properties);
-				for(auto it = properties.begin() ; it != properties.end() ; it++)
+				for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
 				{
 					if (title_len < it->name().length())
 					{
@@ -380,7 +380,7 @@ RetValue	ShellCommandEndpoint
 
 				title_len = (title_len + 3) / 4 * 4;
 
-				for(auto it = properties.begin() ; it != properties.end() ; it++)
+				for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
 				{
 					_shell->Out() << std::setw(title_len) << it->name() << " : " <<  it->as_string() << std::endl;
 				}
@@ -409,26 +409,26 @@ RetValue	ShellCommandEndpoint
 }
 
 
-Shell::Command	shell_ftgm_command_endpoint = 
-{
-	.name		=	"endpoint",
-	.help		=	"<command> \n"
-					"  Management of endpoint.\n"
-					"COMMANDS:\n"
-					"  create  <TYPE> [--id <ID>] [--name <NAME>]\n"
-					"    Create endpoint\n"
-					"  destroy <ID> [<ID> ...]\n"
-					"    Destroy endpoints.\n"
-					"  start   <ID> [<ID> ...]\n"
-					"    Start endpoints.\n"
-					"  stop    <ID> [<ID> ...]\n"
-					"    Stop endpoints.\n"
-					"PARAMETERS:\n"
-					"  TYPE    Type of endpoint\n"
-					"  ID      Endpoint ID\n",
-	.short_help	=	"Management of endpoint",
-	.function	=	ShellCommandEndpoint
-};
+Shell::Command	shell_ftgm_command_endpoint
+(
+	"endpoint",
+	"<command> \n"
+	"  Management of endpoint.\n"
+	"COMMANDS:\n"
+	"  create  <TYPE> [--id <ID>] [--name <NAME>]\n"
+	"    Create endpoint\n"
+	"  destroy <ID> [<ID> ...]\n"
+	"    Destroy endpoints.\n"
+	"  start   <ID> [<ID> ...]\n"
+	"    Start endpoints.\n"
+	"  stop    <ID> [<ID> ...]\n"
+	"    Stop endpoints.\n"
+	"PARAMETERS:\n"
+	"  TYPE    Type of endpoint\n"
+	"  ID      Endpoint ID\n",
+	"Management of endpoint",
+	ShellCommandEndpoint
+);
 
 bool	ShellCommandEndpointList(Shell* _shell)
 {
@@ -444,7 +444,7 @@ bool	ShellCommandEndpointList(Shell* _shell)
 		uint32_t	type_len = 16;
 		uint32_t	stat_len = 16;
 
-		for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+		for(std::list<Endpoint*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
 		{
 			uint32_t	len;
 
@@ -483,7 +483,7 @@ bool	ShellCommandEndpointList(Shell* _shell)
 		_shell->Out() << " " << std::setw(id_len) << "Device ID";
 		_shell->Out() << std::endl;
 
-		for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+		for(std::list<Endpoint*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
 		{
 			Endpoint *endpoint = dynamic_cast<Endpoint*>(*it);
 

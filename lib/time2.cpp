@@ -1,6 +1,8 @@
 #include <iostream>
 #include <sys/time.h>
 #include <time.h>
+#include <string>
+#include "utils.h"
 #include "defined.h"
 #include "exception.h"
 #include "time2.h"
@@ -92,7 +94,7 @@ const 	Time&	Time::operator-=(const Time& _time)
 
 std::string	Time::ToString() const
 {
-	return	to_string(value_);
+	return	::ToString(value_);
 }
 //////////////////////////////////////////////////////////////
 // Class Date

@@ -45,7 +45,7 @@ bool	EndpointActuatorDiscrete::IsValid(std::string const& _value)
 
 std::string	EndpointActuatorDiscrete::GetValue()
 {
-	return	std::to_string(value_);
+	return	ToString(value_);
 }
 
 bool	EndpointActuatorDiscrete::SetValue(std::string const& _value, bool _check)
@@ -87,7 +87,7 @@ bool	EndpointActuatorDiscrete::SetValue(std::string const& _value, bool _check)
 
 std::string	EndpointActuatorDiscrete::GetValueMin()
 {
-	return	std::to_string(false);
+	return	ToString(false);
 }
 
 bool	EndpointActuatorDiscrete::SetValueMin(std::string const& _value, bool _check)
@@ -103,7 +103,7 @@ bool	EndpointActuatorDiscrete::SetValueMin(std::string const& _value, bool _chec
 
 std::string	EndpointActuatorDiscrete::GetValueMax()
 {
-	return	std::to_string(true);
+	return	ToString(true);
 }
 
 bool	EndpointActuatorDiscrete::SetValueMax(std::string const& _value, bool _check)

@@ -38,7 +38,7 @@ bool	Device::SetProperty(JSONNode const& _property, bool _check)
 
 bool	Device::IsAttached(std::string const& _epid)
 {
-	for(auto it = epid_list_.begin() ; it != epid_list_.end() ; it++)
+	for(std::list<std::string>::iterator it = epid_list_.begin() ; it != epid_list_.end() ; it++)
 	{
 		if ((*it) == _epid)
 		{	
@@ -62,7 +62,7 @@ bool	Device::Attach(std::string const& _epid)
 
 bool	Device::Detach(std::string const& _epid)
 {
-	for(auto it = epid_list_.begin() ; it != epid_list_.end() ; it++)
+	for(std::list<std::string>::iterator it = epid_list_.begin() ; it != epid_list_.end() ; it++)
 	{
 		if ((*it) == _epid)
 		{	
@@ -91,7 +91,7 @@ const std::string&	Device::GetEndpointAt(int index)
 {
 	if (index >= 0)
 	{
-		for(auto it = epid_list_.begin() ; it != epid_list_.end() ; it++)
+		for(std::list<std::string>::iterator it = epid_list_.begin() ; it != epid_list_.end() ; it++)
 		{
 			if (index == 0)
 			{	
@@ -115,7 +115,7 @@ bool		Device::GetEndpointList(std::list<std::string>& _epid_list)
 
 bool		Device::GetEndpointMap(std::map<std::string, Endpoint*>& _map)
 {
-	for(auto it = epid_list_.begin(); it != epid_list_.end(); it++)
+	for(std::list<std::string>::iterator it = epid_list_.begin(); it != epid_list_.end(); it++)
 	{
 		Endpoint* endpoint = manager_.GetEndpoint(*it);
 		if (endpoint != NULL)
@@ -144,7 +144,7 @@ void	Device::Preprocess()
 {
 	Node::Preprocess();
 
-	for(auto it = epid_list_.begin(); it != epid_list_.end(); it++)
+	for(std::list<std::string>::iterator it = epid_list_.begin(); it != epid_list_.end(); it++)
 	{
 		Endpoint*	endpoint = manager_.GetEndpoint(*it);
 		if (endpoint != NULL)
@@ -165,7 +165,7 @@ void	Device::Process()
 	bool	found = false;
 
 
-	auto it = endpoint_schedule_list_.begin();
+	std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin();
 	if (it != endpoint_schedule_list_.end())
 	{
 		if (it->second.RemainTime() == 0)
@@ -195,7 +195,7 @@ void	Device::Process()
 
 void	Device::Postprocess()
 {
-	for(auto it = epid_list_.begin(); it != epid_list_.end(); it++)
+	for(std::list<std::string>::iterator it = epid_list_.begin(); it != epid_list_.end(); it++)
 	{
 		Endpoint*	endpoint = manager_.GetEndpoint(std::string(*it));
 		if (endpoint != NULL)
@@ -221,10 +221,11 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 			return	false;
 		}
 	}
+	
 
 	endpoint_schedule_list_lock_.lock();
 
-	for(auto it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
+	for(std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
 	{
 		if (it->second.RemainTime() > _timer.RemainTime())
 		{
@@ -236,7 +237,7 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 
 	if (last)
 	{
-		endpoint_schedule_list_.push_back(std::pair<std::string, Timer>(_id, _timer));	
+		endpoint_schedule_list_.insert(endpoint_schedule_list_.end(), std::pair<std::string, Timer>(_id, _timer));	
 	}
 
 	endpoint_schedule_list_lock_.unlock();
@@ -249,7 +250,7 @@ bool	Device::RemoveSchedule(std::string const& _id)
 	bool	removed = false;
 	endpoint_schedule_list_lock_.lock();
 
-	for(auto it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
+	for(std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
 	{
 		if (it->first == _id)
 		{

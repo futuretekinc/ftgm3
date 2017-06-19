@@ -16,6 +16,7 @@
 #include "rcs_session.h"
 
 
+			
 /////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////
@@ -30,7 +31,7 @@ TCPServer::TCPServer(ObjectManager* _manager)
 TCPServer::~TCPServer()
 {
 	session_map_locker_.Lock();
-	for(auto it = session_map_.begin(); it != session_map_.end(); it++)
+	for(std::map<uint16_t, TCPSession*>::iterator it = session_map_.begin(); it != session_map_.end(); it++)
 	{
 		delete it->second;
 	}
@@ -230,7 +231,7 @@ void	TCPServer::Postprocess()
 {
 	session_map_locker_.Lock();
 
-	for(auto it = session_map_.begin(); it != session_map_.end() ; it++)
+	for(std::map<uint16_t, TCPSession*>::iterator it = session_map_.begin(); it != session_map_.end() ; it++)
 	{
 		delete it->second;
 	}
@@ -275,7 +276,7 @@ bool	TCPServer::GetSessionInformationList
 {
 	session_map_locker_.Lock();
 
-	for(auto it = session_map_.begin() ; it != session_map_.end() ; it++)
+	for(std::map<uint16_t, TCPSession*>::iterator it = session_map_.begin() ; it != session_map_.end() ; it++)
 	{
 		_information_list.push_back(it->second->GetInformation());
 	}

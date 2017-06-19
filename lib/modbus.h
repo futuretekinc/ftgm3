@@ -1,6 +1,6 @@
 #ifndef	MODBUS_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace	modbus
 {

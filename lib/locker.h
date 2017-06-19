@@ -1,7 +1,6 @@
 #ifndef	LOCKER_H_
 #define	LOCKER_H_
 
-#include <mutex>
 
 class	Locker
 {
@@ -14,6 +13,5 @@ public:
 
 private:
 	bool		locked_;
-	std::mutex	mutex_;
 };
 #endif

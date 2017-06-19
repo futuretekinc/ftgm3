@@ -41,12 +41,12 @@ ObjectManager::ObjectManager(std::string const& _id)
 
 ObjectManager::~ObjectManager()
 {
-	for(auto it = device_map_.begin() ; it != device_map_.end() ; it++)
+	for(std::map<std::string, Device*>::iterator it = device_map_.begin() ; it != device_map_.end() ; it++)
 	{
 		delete it->second;
 	}
 
-	for(auto it = endpoint_map_.begin() ; it != endpoint_map_.end() ; it++)
+	for(std::map<std::string, Endpoint*>::iterator it = endpoint_map_.begin() ; it != endpoint_map_.end() ; it++)
 	{
 		delete it->second;
 	}
@@ -124,7 +124,7 @@ bool	ObjectManager::SetProperty(JSONNode const& _property, bool _check)
 		{
 			if (_property.type() == JSON_ARRAY)
 			{
-				for(auto it = _property.begin(); it != _property.end() ; it++)
+				for(JSONNode::const_iterator it = _property.begin(); it != _property.end() ; it++)
 				{
 					Device* device = CreateDevice(*it);
 					if (device == NULL)
@@ -214,17 +214,17 @@ uint32_t	ObjectManager::GetNodeCount()
 
 uint32_t	ObjectManager::GetNodeList(std::list<Node*>& _list)
 {
-	for(auto it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
+	for(std::map<std::string, Gateway*>::iterator it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
 	{
 		_list.push_back(it->second);
 	}
 
-	for(auto it = device_map_.begin(); it != device_map_.end() ; it++)
+	for(std::map<std::string, Device*>::iterator it = device_map_.begin(); it != device_map_.end() ; it++)
 	{
 		_list.push_back(it->second);
 	}
 
-	for(auto it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
+	for(std::map<std::string, Endpoint*>::iterator it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
 	{
 		_list.push_back(it->second);
 	}
@@ -298,7 +298,7 @@ uint32_t	ObjectManager::GetGatewayCount()
 
 uint32_t	ObjectManager::GetGatewayList(std::list<Gateway*>& _gateway_list)
 {
-	for(auto it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
+	for(std::map<std::string, Gateway *>::iterator it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
 	{
 		_gateway_list.push_back(it->second);	
 	}
@@ -308,7 +308,7 @@ uint32_t	ObjectManager::GetGatewayList(std::list<Gateway*>& _gateway_list)
 
 uint32_t	ObjectManager::GetGatewayList(std::string const& _type, std::list<Gateway*>& _gateway_list)
 {
-	for(auto it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
+	for(std::map<std::string, Gateway*>::iterator it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
 	{
 		if (it->second->IsIncludedIn(_type))
 		{
@@ -321,7 +321,7 @@ uint32_t	ObjectManager::GetGatewayList(std::string const& _type, std::list<Gatew
 
 Gateway*		ObjectManager::GetGateway(std::string const& _id)
 {
-	auto it = gateway_map_.find(_id);
+	std::map<std::string, Gateway*>::iterator it = gateway_map_.find(_id);
 	if (it != gateway_map_.end())
 	{
 		return	it->second;	
@@ -385,7 +385,7 @@ uint32_t	ObjectManager::GetDeviceCount()
 
 uint32_t	ObjectManager::GetDeviceList(std::list<Device*>& _device_list)
 {
-	for(auto it = device_map_.begin(); it != device_map_.end() ; it++)
+	for(std::map<std::string, Device *>::iterator it = device_map_.begin(); it != device_map_.end() ; it++)
 	{
 		_device_list.push_back(it->second);	
 	}
@@ -395,7 +395,7 @@ uint32_t	ObjectManager::GetDeviceList(std::list<Device*>& _device_list)
 
 uint32_t	ObjectManager::GetDeviceList(std::string const& _type, std::list<Device*>& _device_list)
 {
-	for(auto it = device_map_.begin(); it != device_map_.end() ; it++)
+	for(std::map<std::string, Device*>::iterator it = device_map_.begin(); it != device_map_.end() ; it++)
 	{
 		if (it->second->IsIncludedIn(_type))
 		{
@@ -408,7 +408,7 @@ uint32_t	ObjectManager::GetDeviceList(std::string const& _type, std::list<Device
 
 Device*		ObjectManager::GetDevice(std::string const& _id)
 {
-	auto it = device_map_.find(_id);
+	std::map<std::string, Device*>::iterator it = device_map_.find(_id);
 	if (it != device_map_.end())
 	{
 		return	it->second;	
@@ -460,7 +460,7 @@ bool		ObjectManager::DestroyEndpoint(std::string const& _endpoint_id)
 			device->Detach(_endpoint_id);	
 		}
 		
-		auto it = endpoint_map_.find(endpoint->GetID());
+		std::map<std::string, Endpoint*>::iterator it = endpoint_map_.find(endpoint->GetID());
 		if (it != endpoint_map_.end())
 		{
 			endpoint_map_.erase(it);
@@ -482,7 +482,7 @@ uint32_t	ObjectManager::GetEndpointCount()
 
 uint32_t	ObjectManager::GetEndpointList(std::list<Endpoint*>& _endpoint_list)
 {
-	for(auto it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
+	for(std::map<std::string, Endpoint*>::iterator it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
 	{
 		_endpoint_list.push_back(it->second);	
 	}
@@ -492,7 +492,7 @@ uint32_t	ObjectManager::GetEndpointList(std::list<Endpoint*>& _endpoint_list)
 
 Endpoint*		ObjectManager::GetEndpoint(std::string const& _id)
 {
-	auto it = endpoint_map_.find(_id);
+	std::map<std::string, Endpoint*>::iterator it = endpoint_map_.find(_id);
 	if (it != endpoint_map_.end())
 	{
 		return	it->second;	
@@ -523,7 +523,7 @@ bool	ObjectManager::IDChanged(Node* _node, std::string const& _old_id)
 
 bool	ObjectManager::IDChanged(Gateway* _gateway, std::string const& _old_id)
 {
-	auto it = gateway_map_.find(std::string(_old_id));
+	std::map<std::string, Gateway*>::iterator it = gateway_map_.find(std::string(_old_id));
 	if (it != gateway_map_.end())
 	{
 		gateway_map_.erase(it);
@@ -537,7 +537,7 @@ bool	ObjectManager::IDChanged(Gateway* _gateway, std::string const& _old_id)
 
 bool	ObjectManager::IDChanged(Device* _device, std::string const& _old_id)
 {
-	auto it = device_map_.find(std::string(_old_id));
+	std::map<std::string, Device*>::iterator it = device_map_.find(std::string(_old_id));
 	if (it != device_map_.end())
 	{
 		device_map_.erase(it);
@@ -551,7 +551,7 @@ bool	ObjectManager::IDChanged(Device* _device, std::string const& _old_id)
 
 bool	ObjectManager::IDChanged(Endpoint* _endpoint, std::string const& _old_id)
 {
-	auto it = endpoint_map_.find(std::string(_old_id));
+	std::map<std::string, Endpoint*>::iterator it = endpoint_map_.find(std::string(_old_id));
 	if (it != endpoint_map_.end())
 	{
 		endpoint_map_.erase(it);
@@ -689,7 +689,7 @@ void	ObjectManager::Preprocess()
 
 			if (data_manager_.GetGatewayProperties(i, 1, properties_array))
 			{
-				for(auto it = properties_array.begin() ; it != properties_array.end() ; it++)
+				for(JSONNode::const_iterator it = properties_array.begin() ; it != properties_array.end() ; it++)
 				{
 					Gateway*	gateway = CreateGateway(*it, true);
 					if (gateway == NULL)
@@ -713,7 +713,7 @@ void	ObjectManager::Preprocess()
 
 			if (data_manager_.GetDeviceProperties(i, 1, properties_array))
 			{
-				for(auto it = properties_array.begin() ; it != properties_array.end() ; it++)
+				for(JSONNode::const_iterator it = properties_array.begin() ; it != properties_array.end() ; it++)
 				{
 					Device*	device = CreateDevice(*it, true);
 					if (device == NULL)
@@ -737,7 +737,7 @@ void	ObjectManager::Preprocess()
 
 			if (data_manager_.GetEndpointProperties(i, 1, properties_list))
 			{
-				for(auto it = properties_list.begin() ; it != properties_list.end() ; it++)
+				for(JSONNode::const_iterator it = properties_list.begin() ; it != properties_list.end() ; it++)
 				{
 					Endpoint* endpoint = CreateEndpoint(*it, true);						
 					if (endpoint == NULL)
@@ -768,7 +768,7 @@ void	ObjectManager::Preprocess()
 
 	if (auto_start_)
 	{
-		for(auto it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
+		for(std::map<std::string, Gateway *>::iterator it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
 		{
 			if(it->second->GetEnable())
 			{
@@ -776,7 +776,7 @@ void	ObjectManager::Preprocess()
 			}
 		}
 
-		for(auto it = device_map_.begin(); it != device_map_.end() ; it++)
+		for(std::map<std::string, Device*>::iterator it = device_map_.begin(); it != device_map_.end() ; it++)
 		{
 			if(it->second->GetEnable())
 			{
@@ -784,7 +784,7 @@ void	ObjectManager::Preprocess()
 			}
 		}
 
-		for(auto it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
+		for(std::map<std::string, Endpoint*>::iterator it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
 		{
 			if(it->second->GetEnable())
 			{
@@ -802,7 +802,7 @@ void	ObjectManager::Process()
 	
 	if (endpoint_report_timer_.RemainTime() == 0)
 	{
-		for(auto it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
+		for(std::map<std::string, Endpoint*>::iterator it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
 		{
 			if (it->second->IsRunning())
 			{
@@ -826,7 +826,7 @@ void	ObjectManager::Postprocess()
 
 bool	ObjectManager::Attach(Gateway* _gateway)
 {
-	auto it = gateway_map_.find(_gateway->GetID());
+	std::map<std::string, Gateway *>::iterator it = gateway_map_.find(_gateway->GetID());
 	if (it != gateway_map_.end())
 	{
 		TRACE_ERROR("The gateway[" << _gateway->GetTraceName() << "] has been already attached.");
@@ -843,7 +843,7 @@ bool	ObjectManager::Attach(Gateway* _gateway)
 
 bool	ObjectManager::Detach(Gateway* _gateway)
 {
-	auto it = gateway_map_.find(_gateway->GetID());
+	std::map<std::string, Gateway *>::iterator it = gateway_map_.find(_gateway->GetID());
 	if (it == gateway_map_.end())
 	{
 		TRACE_ERROR("The gateway[" << _gateway->GetTraceName() << "] not attached.");
@@ -859,7 +859,7 @@ bool	ObjectManager::Detach(Gateway* _gateway)
 
 bool	ObjectManager::Attach(Device* _device)
 {
-	auto it = device_map_.find(_device->GetID());
+	std::map<std::string, Device*>::iterator it = device_map_.find(_device->GetID());
 	if (it != device_map_.end())
 	{
 		TRACE_ERROR("The device[" << _device->GetTraceName() << "] has been already attached.");
@@ -876,7 +876,7 @@ bool	ObjectManager::Attach(Device* _device)
 
 bool	ObjectManager::Detach(Device* _device)
 {
-	auto it = device_map_.find(_device->GetID());
+	std::map<std::string, Device*>::iterator it = device_map_.find(_device->GetID());
 	if (it == device_map_.end())
 	{
 		TRACE_ERROR("The device[" << _device->GetTraceName() << "] not attached.");
@@ -892,7 +892,7 @@ bool	ObjectManager::Detach(Device* _device)
 
 bool	ObjectManager::Attach(Endpoint* _endpoint)
 {
-	auto it = endpoint_map_.find(_endpoint->GetID());
+	std::map<std::string, Endpoint*>::iterator it = endpoint_map_.find(_endpoint->GetID());
 	if (it != endpoint_map_.end())
 	{
 		TRACE_ERROR("The endpoint[" << _endpoint->GetTraceName() << "] has been already attached.");
@@ -920,7 +920,7 @@ bool	ObjectManager::Attach(Endpoint* _endpoint)
 
 bool	ObjectManager::Detach(Endpoint* _endpoint)
 {
-	auto it = endpoint_map_.find(_endpoint->GetID());
+	std::map<std::string, Endpoint*>::iterator it = endpoint_map_.find(_endpoint->GetID());
 	if (it == endpoint_map_.end())
 	{
 		TRACE_ERROR("The endpoint[" << _endpoint->GetTraceName() << "] not attached.");
@@ -936,7 +936,7 @@ bool	ObjectManager::Detach(Endpoint* _endpoint)
 
 bool	ObjectManager::Attach(RCSSession* _session)
 {
-	auto it = rms_map_.find(_session->GetID());
+	std::map<std::string,RCSSession*>::iterator it = rms_map_.find(_session->GetID());
 	if (it != rms_map_.end())
 	{
 		TRACE_ERROR("The rms[" << _session->GetTraceName() << "] has been already attached.");
@@ -952,7 +952,7 @@ bool	ObjectManager::Attach(RCSSession* _session)
 
 bool	ObjectManager::Detach(RCSSession* _session)
 {
-	auto it = rms_map_.find(_session->GetID());
+	std::map<std::string,RCSSession*>::iterator it = rms_map_.find(_session->GetID());
 	if (it == rms_map_.end())
 	{
 		TRACE_ERROR("The rms[" << _session->GetTraceName() << "] not attached.");

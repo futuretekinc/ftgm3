@@ -1,6 +1,7 @@
 #ifndef	TRACE_H_
 #define	TRACE_H_
 
+#include <stdint.h>
 #include <sstream>
 #include <streambuf>
 #include <libjson/libjson.h>
@@ -114,17 +115,17 @@ protected:
 extern	TraceMaster	trace_master;
 extern	Trace		trace;
 
-#define	TRACE_INFO(x)	{	trace.Begin(TraceLevel::INFO, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; }
-#define	TRACE_WARN(x)	{	trace.Begin(TraceLevel::WARNING, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; }
-#define	TRACE_ERROR(x)	{	trace.Begin(TraceLevel::ERROR, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}
-#define	TRACE_CRITICAL	{	trace.Begin(TraceLevel::CRITICAL, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}
-#define	TRACE_INFO_DUMP(buffer, len)	{	trace.Dump(TraceLevel::INFO, __PRETTY_FUNCTION__, __LINE__, buffer, len) << Trace::End;	}
-#define	TRACE_INFO_JSON(x)	{	JSONNode json = libjson::parse(x); trace.Begin(TraceLevel::INFO, __PRETTY_FUNCTION__, __LINE__) << json.write_formatted() << Trace::End;	}
+#define	TRACE_INFO(x)	{	trace.Begin(INFO, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; }
+#define	TRACE_WARN(x)	{	trace.Begin(WARNING, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; }
+#define	TRACE_ERROR(x)	{	trace.Begin(ERROR, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}
+#define	TRACE_CRITICAL	{	trace.Begin(CRITICAL, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}
+#define	TRACE_INFO_DUMP(buffer, len)	{	trace.Dump(INFO, __PRETTY_FUNCTION__, __LINE__, buffer, len) << Trace::End;	}
+#define	TRACE_INFO_JSON(x)	{	JSONNode json = libjson::parse(x); trace.Begin(INFO, __PRETTY_FUNCTION__, __LINE__) << json.write_formatted() << Trace::End;	}
 
-#define	TRACE_INFO2(x, y)	{	::trace.Begin(TraceLevel::INFO, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
-#define	TRACE_WARN2(x, y)	{	::trace.Begin(TraceLevel::WARNING, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
-#define	TRACE_ERROR2(x, y)	{	::trace.Begin(TraceLevel::ERROR, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
-#define	TRACE_CRITICAL2(x, y){	::trace.Begin(TraceLevel::CRITICAL, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
+#define	TRACE_INFO2(x, y)	{	::trace.Begin(INFO, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
+#define	TRACE_WARN2(x, y)	{	::trace.Begin(WARNING, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
+#define	TRACE_ERROR2(x, y)	{	::trace.Begin(ERROR, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
+#define	TRACE_CRITICAL2(x, y){	::trace.Begin(CRITICAL, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
 
 #define	TRACE_CREATE	TRACE_INFO("Create : " << this->GetClassName())
 #define	TRACE_ENTRY		TRACE_INFO("Entry")

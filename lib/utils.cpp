@@ -50,7 +50,7 @@ bool	GetValue(JSONNode const& _node, std::string const& _name, bool& _value, boo
 
 	if (_node.type() == JSON_NODE)
 	{
-		auto field = _node.find(_name);
+		JSONNode::const_iterator field = _node.find(_name);
 		if (field == _node.end())
 		{
 			return	_empty_allow;	
@@ -92,7 +92,7 @@ bool	GetValue(JSONNode const& _node, std::string const& _name, std::string& _val
 
 	if (_node.type() == JSON_NODE)
 	{
-		auto field = _node.find(_name);
+		JSONNode::const_iterator field = _node.find(_name);
 		if (field != _node.end())
 		{
 			if (field->type() == JSON_STRING)
@@ -116,7 +116,7 @@ bool	GetValue(JSONNode const& _node, std::string const& _name, uint32_t& _value,
 
 	if (_node.type() == JSON_NODE)
 	{
-		auto field = _node.find(_name);
+		JSONNode::const_iterator field = _node.find(_name);
 		if (field != _node.end())
 		{
 			if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
@@ -140,7 +140,7 @@ bool	GetValue(JSONNode const& _node, std::string const& _name, float& _value, bo
 
 	if (_node.type() == JSON_NODE)
 	{
-		auto field = _node.find(_name);
+		JSONNode::const_iterator field = _node.find(_name);
 		if (field != _node.end())
 		{
 			if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
@@ -164,7 +164,7 @@ bool	GetValue(JSONNode const& _node, std::string const& _name, time_t& _value, b
 
 	if (_node.type() == JSON_NODE)
 	{
-		auto field = _node.find(_name);
+		JSONNode::const_iterator field = _node.find(_name);
 		if (field != _node.end())
 		{
 			if ((field->type() == JSON_NUMBER) || (field->type() == JSON_STRING))
@@ -188,7 +188,7 @@ bool	GetValue(JSONNode const& _node, std::string const& _name, Date& _value, boo
 
 	if (_node.type() == JSON_NODE)
 	{
-		auto field = _node.find(_name);
+		JSONNode::const_iterator field = _node.find(_name);
 		if (field != _node.end())
 		{
 			if ((field->type() == JSON_NUMBER) ||(field->type() == JSON_STRING))
@@ -214,12 +214,12 @@ bool	GetValue(JSONNode const& _root, std::string const& _name, std::list<JSONNod
 
 	if (_root.type() == JSON_NODE)
 	{
-		auto field = _root.find(_name);
+		JSONNode::const_iterator field = _root.find(_name);
 		if (field != _root.end())
 		{
 			if (field->type() == JSON_ARRAY)
 			{
-				for(auto item = field->begin() ; item != field->end() ; item++)
+				for(JSONNode::const_iterator item = field->begin() ; item != field->end() ; item++)
 				{
 					_list.push_back(*item);
 				}
@@ -242,7 +242,7 @@ bool	GetValue(JSONNode const& _node, std::string const& _name, JSONNode& _value,
 
 	if (_node.type() == JSON_NODE)
 	{
-		auto field = _node.find(_name);
+		JSONNode::const_iterator field = _node.find(_name);
 		if (field != _node.end())
 		{
 			if (field->type() == JSON_NODE)
@@ -309,6 +309,51 @@ std::string	ToString(double _value, int precision )
 	std::ostringstream	oss;
 
 	oss << std::setprecision(precision) << _value;
+
+	return	oss.str();
+}
+
+std::string ToString(time_t _value)
+{
+	std::ostringstream oss;
+
+	oss << _value;
+
+	return	oss.str();
+}
+
+std::string ToString(bool _value)
+{
+	std::ostringstream oss;
+
+	oss << _value;
+
+	return	oss.str();
+}
+
+std::string ToString(int _value)
+{
+	std::ostringstream oss;
+
+	oss << _value;
+
+	return	oss.str();
+}
+
+std::string ToString(uint32_t _value)
+{
+	std::ostringstream oss;
+
+	oss << _value;
+
+	return	oss.str();
+}
+
+std::string ToString(uint64_t _value)
+{
+	std::ostringstream oss;
+
+	oss << _value;
 
 	return	oss.str();
 }

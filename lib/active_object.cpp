@@ -12,13 +12,13 @@
 using namespace	std;
 
 ActiveObject::ActiveObject()
-: Object(), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
+: Object(), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL), thread_()
 {
 	Message::RegisterRecipient(id_, this);
 }
 
 ActiveObject::ActiveObject(std::string const& _id)
-: Object(_id), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL)
+: Object(_id), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL), thread_()
 {
 	Message::RegisterRecipient(id_, this);
 }
@@ -89,7 +89,7 @@ bool	ActiveObject::Start(uint32_t _wait_for_init_time)
 
 		if (!thread_.joinable())
 		{
-			thread_ = thread(ThreadMain, this);
+			thread_.create(ActiveObject::ThreadMain, (void *)this);
 			TRACE_INFO("Object[" << GetTraceName() << "] has been started.");
 			while(timer.RemainTime() != 0)
 			{
@@ -266,9 +266,10 @@ void	ActiveObject::Postprocess()
 {
 }
 
-void	ActiveObject::ThreadMain(ActiveObject* _object)
+void *ActiveObject::ThreadMain(void *data)
 {
 	Timer	loop_timer;
+	ActiveObject* _object = (ActiveObject*)data;
 
 	_object->Preprocess();
 

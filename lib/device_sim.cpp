@@ -82,7 +82,7 @@ bool	DeviceSIM::Attach(std::string const& _epid)
 
 	if (dynamic_cast<EndpointSensor*>(endpoint))
 	{
-		auto it = endpoint_sensor_value_table_.find(_epid);
+		std::map<std::string, double>::iterator it = endpoint_sensor_value_table_.find(_epid);
 		if (it == endpoint_sensor_value_table_.end())
 		{
 			endpoint_sensor_value_table_[_epid] = index * 10;
@@ -90,7 +90,7 @@ bool	DeviceSIM::Attach(std::string const& _epid)
 	}
 	else if (dynamic_cast<EndpointActuator*>(endpoint))
 	{
-		auto it = endpoint_actuator_value_table_.find(_epid);
+		std::map<std::string, std::string>::iterator it = endpoint_actuator_value_table_.find(_epid);
 		if (it == endpoint_actuator_value_table_.end())
 		{
 			endpoint_actuator_value_table_[_epid] = ENDPOINT_ACTUATOR_DO_OFF;
@@ -123,14 +123,14 @@ bool	DeviceSIM::Detach(std::string const& _epid)
 		return	false;
 	}
 
-	auto it = endpoint_sensor_value_table_.find(_epid);
+	std::map<std::string, double>::iterator  it = endpoint_sensor_value_table_.find(_epid);
 	if (it != endpoint_sensor_value_table_.end())
 	{
 		endpoint_sensor_value_table_.erase(it);
 	}
 	else 
 	{
-		auto it = endpoint_actuator_value_table_.find(_epid);
+		std::map<std::string, std::string>::iterator it = endpoint_actuator_value_table_.find(_epid);
 		if (it != endpoint_actuator_value_table_.end())
 		{
 			endpoint_actuator_value_table_.erase(it);
@@ -158,7 +158,7 @@ bool	DeviceSIM::ReadValue(std::string const& _epid, time_t& time, std::string& _
 
 		if (dynamic_cast<EndpointSensorLinear*>(endpoint))
 		{
-			auto it = endpoint_sensor_value_table_.find(_epid);
+			std::map<std::string, double>::iterator it = endpoint_sensor_value_table_.find(_epid);
 			if (it == endpoint_sensor_value_table_.end())
 			{
 				THROW_OBJECT_NOT_FOUND("The endpoint[" << _epid << "] has been abnormally attached");
@@ -183,7 +183,7 @@ bool	DeviceSIM::ReadValue(std::string const& _epid, time_t& time, std::string& _
 		}
 		else if (dynamic_cast<EndpointSensorDiscrete*>(endpoint))
 		{
-			auto it = endpoint_sensor_value_table_.find(_epid);
+			std::map<std::string, double>::iterator it = endpoint_sensor_value_table_.find(_epid);
 			if (it == endpoint_sensor_value_table_.end())
 			{
 				THROW_OBJECT_NOT_FOUND("The endpoint[" << _epid << "] has been abnormally attached");
@@ -195,7 +195,7 @@ bool	DeviceSIM::ReadValue(std::string const& _epid, time_t& time, std::string& _
 		}
 		else if (dynamic_cast<EndpointActuatorDiscrete*>(endpoint))
 		{
-			auto it = endpoint_actuator_value_table_.find(_epid);
+			std::map<std::string, std::string>::iterator it = endpoint_actuator_value_table_.find(_epid);
 			if (it == endpoint_actuator_value_table_.end())
 			{
 				THROW_OBJECT_NOT_FOUND("The endpoint[" << _epid << "] has been abnormally attached");
@@ -238,7 +238,7 @@ bool	DeviceSIM::WriteValue(std::string const& _epid, std::string const& _value)
 
 		if (dynamic_cast<EndpointActuator*>(endpoint))
 		{
-			auto it = endpoint_actuator_value_table_.find(_epid);
+			std::map<std::string, std::string>::iterator it = endpoint_actuator_value_table_.find(_epid);
 			if (it == endpoint_actuator_value_table_.end())
 			{
 				TRACE_ERROR("The endpoint[" << _epid << "] has been abnormally attached");

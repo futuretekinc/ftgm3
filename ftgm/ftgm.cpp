@@ -17,6 +17,7 @@ static void sigterm (int sig)
 {
 }
 
+extern char* program_invocation_short_name;
 
 std::string	config_file_name(std::string(program_invocation_short_name) + ".conf");
 bool		debug_mode = false;

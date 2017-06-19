@@ -345,7 +345,7 @@ DeviceSNMP::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 
 	if (index != 0)
 	{
-		name += "." + to_string(index);
+		name += "." + ToString(index);
 	}
 
 	OID	oid = DeviceSNMP::GetOID(name);
@@ -523,7 +523,7 @@ bool	DeviceSNMP::Convert
 				case    4:  value = (*(int32_t *)_variable->val.integer); break;
 			}   
 
-			_value = std::to_string(value);
+			_value = ToString(value);
 		}   
 		break;
 
@@ -613,7 +613,7 @@ bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
 		_statement->BindString(++index, ip_);
 		_statement->BindString(++index, module_);
 		_statement->BindString(++index, community_);
-		_statement->BindString(++index, to_string(timeout_));
+		_statement->BindString(++index, ToString(timeout_));
 
 		_statement->ExecuteAndFree();
 

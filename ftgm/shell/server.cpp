@@ -92,19 +92,19 @@ RetValue	ShellCommandServerLinker
 
 							object_manager->GetGatewayList(gateway_list);
 
-							for(auto it = gateway_list.begin(); it != gateway_list.end() ; it++)
+							for(std::list<Gateway*>::iterator it = gateway_list.begin(); it != gateway_list.end() ; it++)
 							{
 								std::map<std::string, Device*>	device_map;
 
 								(*it)->GetDeviceMap(device_map);
 
-								for(auto device_it = device_map.begin() ; device_it != device_map.end() ; device_it++)
+								for(std::map<std::string, Device*>::iterator device_it = device_map.begin() ; device_it != device_map.end() ; device_it++)
 								{
 									std::map<std::string, Endpoint*>	endpoint_map;
 
 									device_it->second->GetEndpointMap(endpoint_map);
 
-									for(auto endpoint_it = endpoint_map.begin() ; endpoint_it != endpoint_map.end() ; endpoint_it++)
+									for(std::map<std::string, Endpoint*>::iterator endpoint_it = endpoint_map.begin() ; endpoint_it != endpoint_map.end() ; endpoint_it++)
 									{
 										endpoint_map[endpoint_it->first] = endpoint_it->second;
 									}
@@ -129,13 +129,13 @@ RetValue	ShellCommandServerLinker
 							std::map<std::string, Device*>	device_map;
 
 							gateway->GetDeviceMap(device_map);
-							for(auto device_it = device_map.begin() ; device_it != device_map.end() ; device_it++)
+							for(std::map<std::string, Device*>::iterator device_it = device_map.begin() ; device_it != device_map.end() ; device_it++)
 							{
 								std::map<std::string, Endpoint*>	endpoint_map;
 
 								device_it->second->GetEndpointMap(endpoint_map);
 
-								for(auto endpoint_it = endpoint_map.begin() ; endpoint_it != endpoint_map.end() ; endpoint_it++)
+								for(std::map<std::string, Endpoint*>::iterator endpoint_it = endpoint_map.begin() ; endpoint_it != endpoint_map.end() ; endpoint_it++)
 								{
 									endpoint_map[endpoint_it->first] = endpoint_it->second;
 								}
@@ -153,13 +153,13 @@ RetValue	ShellCommandServerLinker
 
 							object_manager->GetDeviceList(device_list);
 
-							for(auto device_it = device_list.begin(); device_it != device_list.end() ; device_it++)
+							for(std::list<Device*>::iterator device_it = device_list.begin(); device_it != device_list.end() ; device_it++)
 							{
 								std::map<std::string, Endpoint*>	endpoint_map;
 
 								(*device_it)->GetEndpointMap(endpoint_map);
 
-								for(auto endpoint_it = endpoint_map.begin() ; endpoint_it != endpoint_map.end() ; endpoint_it++)
+								for(std::map<std::string, Endpoint*>::iterator endpoint_it = endpoint_map.begin() ; endpoint_it != endpoint_map.end() ; endpoint_it++)
 								{
 									endpoint_map[endpoint_it->first] = endpoint_it->second;
 								}
@@ -184,7 +184,7 @@ RetValue	ShellCommandServerLinker
 
 							device->GetEndpointMap(endpoint_map);
 
-							for(auto endpoint_it = endpoint_map.begin() ; endpoint_it != endpoint_map.end() ; endpoint_it++)
+							for(std::map<std::string, Endpoint*>::iterator endpoint_it = endpoint_map.begin() ; endpoint_it != endpoint_map.end() ; endpoint_it++)
 							{
 								endpoint_map[endpoint_it->first] = endpoint_it->second;
 							}
@@ -201,7 +201,7 @@ RetValue	ShellCommandServerLinker
 
 							object_manager->GetEndpointList(endpoint_list);
 
-							for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+							for(std::list<Endpoint*>::iterator it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 							{
 								endpoint_map[(*it)->GetID()] = *it;
 							}
@@ -301,7 +301,7 @@ RetValue	ShellCommandServerLinker
 
 							object_manager->GetGatewayList(gateway_list);
 
-							for(auto it = gateway_list.begin(); it != gateway_list.end() ; it++)
+							for(std::list<Gateway*>::iterator it = gateway_list.begin(); it != gateway_list.end() ; it++)
 							{
 								JSONNode	properties;
 
@@ -343,7 +343,7 @@ RetValue	ShellCommandServerLinker
 
 							object_manager->GetDeviceList(device_list);
 
-							for(auto it = device_list.begin(); it != device_list.end() ; it++)
+							for(std::list<Device*>::iterator it = device_list.begin(); it != device_list.end() ; it++)
 							{
 								JSONNode	properties;
 
@@ -385,7 +385,7 @@ RetValue	ShellCommandServerLinker
 
 							object_manager->GetEndpointList(endpoint_list);
 
-							for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+							for(std::list<Endpoint*>::iterator it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 							{
 								JSONNode	properties;
 
@@ -427,7 +427,7 @@ RetValue	ShellCommandServerLinker
 
 							object_manager->GetEndpointList(endpoint_list);
 
-							for(auto it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
+							for(std::list<Endpoint*>::iterator it = endpoint_list.begin(); it != endpoint_list.end() ; it++)
 							{
 								JSONNode	properties;
 
@@ -486,22 +486,22 @@ RetValue	ShellCommandServerLinker
 }
 
 
-Shell::Command	shell_ftgm_command_slc = 
-{
-	.name		=	"slc",
-	.help		=	"<command> \n"
-					"  Server linker command.\n"
-					"COMMANDS:\n"
-					"  add <TYPE> <ID>\n"
-					"    Registration gateway\n"
-					"  get <TYPE> <ID>\n"
-					"    Get get object information.\n"
-					"PARAMETERS:\n"
-					"  TYPE    Type of object\n"
-					"    gw    Gateway\n"
-					"    dev   Device\n"
-					"    ep    Endpoint\n"
-					"  ID      Id of object\n",
-	.short_help	=	"Management of gateway",
-	.function	=	ShellCommandServerLinker
-};
+Shell::Command	shell_ftgm_command_slc
+(
+	"slc",
+	"<command> \n"
+	"  Server linker command.\n"
+	"COMMANDS:\n"
+	"  add <TYPE> <ID>\n"
+	"    Registration gateway\n"
+	"  get <TYPE> <ID>\n"
+	"    Get get object information.\n"
+	"PARAMETERS:\n"
+	"  TYPE    Type of object\n"
+	"    gw    Gateway\n"
+	"    dev   Device\n"
+	"    ep    Endpoint\n"
+	"  ID      Id of object\n",
+	"Management of gateway",
+	ShellCommandServerLinker
+);

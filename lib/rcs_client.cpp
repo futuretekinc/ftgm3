@@ -5,6 +5,7 @@
 #include "md5.h"
 #include "json_utils.h"
 #include "exception.h"
+#include "utils.h"
 
 RCSClient::RCSClient()
 : tcp_client_(DEFAULT_CONST_RCS_SERVER_IP, DEFAULT_CONST_RCS_SERVER_PORT), secret_code_(""), dump_packet_(false)
@@ -182,7 +183,7 @@ bool	RCSClient::GetGateway(std::list<std::string>& _fields, std::vector<JSONNode
 	
 	JSONNode	gateway(JSON_NODE);
 
-	for(auto it = _fields.begin() ; it != _fields.end() ; it++)
+	for(std::list<std::string>::iterator it = _fields.begin() ; it != _fields.end() ; it++)
 	{
 		gateway.push_back(JSONNode((*it),""));
 	}
@@ -327,7 +328,7 @@ bool	RCSClient::GetDevice(std::list<std::string>& _fields, std::vector<JSONNode>
 	
 	JSONNode	device(JSON_NODE);
 
-	for(auto it = _fields.begin() ; it != _fields.end() ; it++)
+	for(std::list<std::string>::iterator it = _fields.begin() ; it != _fields.end() ; it++)
 	{
 		device.push_back(JSONNode((*it),""));
 	}
@@ -472,7 +473,7 @@ bool	RCSClient::GetEndpoint(std::list<std::string>& _fields, std::vector<JSONNod
 	
 	JSONNode	endpoint(JSON_NODE);
 
-	for(auto it = _fields.begin() ; it != _fields.end() ; it++)
+	for(std::list<std::string>::iterator it = _fields.begin() ; it != _fields.end() ; it++)
 	{
 		endpoint.push_back(JSONNode((*it),""));
 	}
@@ -551,7 +552,7 @@ bool	RCSClient::DelEPData(std::string const& _id, uint32_t _count)
 
 	JSONNode	data;
 	data.push_back(JSONNode(TITLE_NAME_ID, _id));
-	data.push_back(JSONNode(TITLE_NAME_COUNT, std::to_string(_count)));
+	data.push_back(JSONNode(TITLE_NAME_COUNT, ToString(_count)));
 
 	request.AddEPData(data);
 
@@ -576,8 +577,8 @@ bool	RCSClient::DelEPData(std::string const& _id, time_t _start, time_t _end)
 
 	JSONNode	data;
 	data.push_back(JSONNode(TITLE_NAME_ID, _id));
-	data.push_back(JSONNode(TITLE_NAME_START_TIME, std::to_string(_start)));
-	data.push_back(JSONNode(TITLE_NAME_END_TIME, std::to_string(_end)));
+	data.push_back(JSONNode(TITLE_NAME_START_TIME, ToString(_start)));
+	data.push_back(JSONNode(TITLE_NAME_END_TIME, ToString(_end)));
 
 	request.AddEPData(data);
 
@@ -602,7 +603,7 @@ bool	RCSClient::GetEPData(std::string const& _id, uint32_t _count, std::multimap
 
 	JSONNode	data;
 	data.push_back(JSONNode(TITLE_NAME_ID, _id));
-	data.push_back(JSONNode(TITLE_NAME_COUNT, std::to_string(_count)));
+	data.push_back(JSONNode(TITLE_NAME_COUNT, ToString(_count)));
 
 	request.AddEPData(data);
 
@@ -626,12 +627,12 @@ bool	RCSClient::GetEPData(std::string const& _id, uint32_t _count, std::multimap
 				}
 				else if (value_node.type() == JSON_ARRAY)
 				{
-					for(auto it = value_node.begin(); it != value_node.end() ; it++)
+					for(JSONNode::iterator it = value_node.begin(); it != value_node.end() ; it++)
 					{
 						time_t		time = JSONNodeGetTime(*it);
 						std::string	value = JSONNodeGetValue(*it);
 
-						_value_map.emplace(time, value);
+						_value_map.insert(_value_map.end(), std::pair<time_t, std::string>(time, value));
 					}	
 				}
 			}
@@ -652,8 +653,8 @@ bool	RCSClient::GetEPData(std::string const& _id, time_t _start, time_t _end, st
 
 	JSONNode	data;
 	data.push_back(JSONNode(TITLE_NAME_ID, _id));
-	data.push_back(JSONNode(TITLE_NAME_START_TIME, std::to_string(_start)));
-	data.push_back(JSONNode(TITLE_NAME_END_TIME, std::to_string(_end)));
+	data.push_back(JSONNode(TITLE_NAME_START_TIME, ToString(_start)));
+	data.push_back(JSONNode(TITLE_NAME_END_TIME, ToString(_end)));
 
 	request.AddEPData(data);
 
@@ -677,12 +678,12 @@ bool	RCSClient::GetEPData(std::string const& _id, time_t _start, time_t _end, st
 				}
 				else if (value_node.type() == JSON_ARRAY)
 				{
-					for(auto it = value_node.begin(); it != value_node.end() ; it++)
+					for(JSONNode::iterator it = value_node.begin(); it != value_node.end() ; it++)
 					{
 						time_t		time = JSONNodeGetTime(*it);
 						std::string	value = JSONNodeGetValue(*it);
 
-						_value_map.emplace(time, value);
+						_value_map.insert(_value_map.end(), std::pair<time_t, std::string>(time, value));
 					}	
 				}
 			}

@@ -2,7 +2,8 @@
 #define	DEVICE_H_
 
 #include <list>
-#include <mutex>
+#include <map>
+#include "mutex.h"
 #include "node.h"
 #include "timer.h"
 #include "property.h"
@@ -64,8 +65,8 @@ protected:
 
 	std::list<std::string>	epid_list_;
 
-	std::mutex	endpoint_schedule_list_lock_;
-	std::list<std::pair<std::string, Timer>>	endpoint_schedule_list_;
+	Mutex							endpoint_schedule_list_lock_;
+	std::multimap<std::string, Timer>	endpoint_schedule_list_;
 };
 
 #endif

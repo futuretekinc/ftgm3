@@ -2,7 +2,7 @@
 #include "utils.h"
 #include "exception.h"
 
-Asserted::Asserted(std::string const& _argument)
+Asserted::Asserted(std::string const& _argument) throw()
 {
 	std::ostringstream	oss;
 
@@ -11,20 +11,16 @@ Asserted::Asserted(std::string const& _argument)
 	message_ = oss.str();
 }
 
+Asserted::~Asserted() throw()
+{
+}
+
 const char* Asserted::what() const throw()
 {
 	return	message_.c_str();
 }
 
-void	ThrowFunctionFailed(std::string const& _argument)
-{
-	std::ostringstream	oss;
-
-	oss << "Invalid argument[" << _argument << "]";
-	throw std::invalid_argument(oss.str());
-}
-
-InvalidArgument::InvalidArgument(std::string const& _argument)
+InvalidArgument::InvalidArgument(std::string const& _argument) throw()
 {
 	std::ostringstream	oss;
 
@@ -33,7 +29,7 @@ InvalidArgument::InvalidArgument(std::string const& _argument)
 	message_ = oss.str();
 }
 
-InvalidArgument::InvalidArgument(std::string const& _name, std::string const& _value)
+InvalidArgument::InvalidArgument(std::string const& _name, std::string const& _value) throw()
 {
 	std::ostringstream	oss;
 
@@ -42,12 +38,16 @@ InvalidArgument::InvalidArgument(std::string const& _name, std::string const& _v
 	message_ = oss.str();
 }
 
+InvalidArgument::~InvalidArgument() throw()
+{
+}
+
 const char* InvalidArgument::what() const throw()
 {
 	return	message_.c_str();
 }
 
-ObjectNotFound::ObjectNotFound(std::string const& _id)
+ObjectNotFound::ObjectNotFound(std::string const& _id) throw()
 {
 	std::ostringstream	oss;
 
@@ -57,8 +57,28 @@ ObjectNotFound::ObjectNotFound(std::string const& _id)
 	message_ = oss.str();
 }
 
+ObjectNotFound::~ObjectNotFound() throw()
+{
+}
+
 const char* ObjectNotFound::what() const throw()
 {
 	return	message_.c_str();
 }
 
+RequestTimeout::RequestTimeout(std::string const& _message) throw()
+{ 
+	std::ostringstream	oss;
+	oss << "Message[" << _message <<"] arrives late or is invalid.";
+
+	message_ = oss.str();
+}
+
+RequestTimeout::~RequestTimeout() throw()
+{
+}
+
+const char* RequestTimeout::what() const throw()
+{
+	return	message_.c_str();
+}

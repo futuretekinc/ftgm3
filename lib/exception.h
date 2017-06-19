@@ -8,7 +8,8 @@
 class	Asserted : public std::exception
 {
 public:
-	explicit Asserted(std::string const& _argument);
+	Asserted(std::string const& _argument) throw();
+	~Asserted() throw();
 
 	virtual const char* 	what() const throw();
 
@@ -21,8 +22,9 @@ protected:
 class	InvalidArgument : public std::exception
 {
 public:
-	explicit InvalidArgument(std::string const& _argument);
-	explicit InvalidArgument(std::string const& _name, std::string const& _value);
+	InvalidArgument(std::string const& _argument) throw();
+	InvalidArgument(std::string const& _name, std::string const& _value) throw();
+	~InvalidArgument() throw();
 
 	virtual const char* 	what() const throw();
 
@@ -35,7 +37,8 @@ protected:
 class	ObjectNotFound : public std::exception
 {
 public:
-	explicit ObjectNotFound(std::string const& _object_id);
+	ObjectNotFound(std::string const& _object_id) throw();
+	~ObjectNotFound() throw();
 
 	const	std::string&	GetObjectID()		{	return	object_id_;		}
 	virtual const char* 	what() const throw();
@@ -50,10 +53,25 @@ protected:
 class	NotInitialized : public std::exception
 {
 public:
-	explicit	NotInitialized(std::string const& _message);
+	NotInitialized(std::string const& _message) throw();
+	~NotInitialized() throw();
 
 protected:
 	std::string	message_;
 };
 
+class	RequestTimeout : public std::exception
+{
+public:
+	RequestTimeout(std::string const& _argument) throw();
+	RequestTimeout(std::string const& _name, std::string const& _value) throw();
+	~RequestTimeout() throw();
+
+	virtual const char* 	what() const throw();
+
+protected:
+	std::string	message_;
+};
+
+#define	THROW_REQUEST_TIMEOUT(x)	{	std::ostringstream oss; oss << x; throw RequestTimeout(oss.str()); }
 #endif

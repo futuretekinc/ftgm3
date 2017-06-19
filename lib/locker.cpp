@@ -7,7 +7,7 @@ Locker::Locker()
 
 bool	Locker::Lock()
 {
-	mutex_.lock();
+//	mutex_.lock();
 
 	locked_ = true;
 
@@ -16,7 +16,7 @@ bool	Locker::Lock()
 
 bool	Locker::Unlock()
 {
-	mutex_.unlock();
+//	mutex_.unlock();
 
 	locked_ = false;
 

@@ -10,7 +10,7 @@
 using namespace std;
 
 Trace::Trace(Object* _object)
-: master_(trace_master), object_(_object), level_(INFO), continue_(false), state_(UNDEFINED)
+: master_(trace_master), object_(_object), level_(INFO), continue_(false), state_(ENABLE)
 {
 }
 
@@ -48,7 +48,7 @@ bool	Trace::Load(JSONNode const& _json, bool _check)
 	}
 	else if (_json.type() == JSON_NODE)
 	{
-		for(auto it = _json.begin(); it != _json.end() ; it++)
+		for(JSONNode::const_iterator it = _json.begin(); it != _json.end() ; it++)
 		{	
 			ret_value = Load(*it, _check);
 			if (ret_value != true)

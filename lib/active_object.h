@@ -1,7 +1,7 @@
 #ifndef	ACTIVE_OBJECT_H_
 #define	ACTIVE_OBJECT_H_
 
-#include <thread>
+#include "thread.h"
 #include "object.h"
 #include "message_queue.h"
 
@@ -42,12 +42,12 @@ protected:
 	virtual	void	Process();
 	virtual	void	Postprocess();
 
-	std::thread		thread_;	
+	Thread			thread_;
 	bool			stop_;
 	uint32_t		loop_interval_;
 	MessageQueue	message_queue_;
 
-	static	void	ThreadMain(ActiveObject* _object);
+	static	void*	ThreadMain(void* _object);
 };
 
 #endif

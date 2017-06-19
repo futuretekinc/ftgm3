@@ -41,7 +41,7 @@ RCSMessage::RCSMessage(std::string const& _msg_type)
 {
 	time_ = Date::GetCurrent();
 
-	msg_id_ = std::to_string(time_.GetMicroSecond());
+	msg_id_ = ToString(time_.GetMicroSecond());
 }
 
 RCSMessage::RCSMessage(JSONNode const& _payload)
@@ -67,7 +67,7 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 	GetValue(_payload, TITLE_NAME_SECRET, secret_code_, true);
 	GetValue(_payload, TITLE_NAME_REQ_ID, req_id_, true);
 
-	auto it = _payload.find(TITLE_NAME_GATEWAY);
+	JSONNode::const_iterator it = _payload.find(TITLE_NAME_GATEWAY);
 	if (it != _payload.end())
 	{
 		if (it->type() == JSON_NODE)
@@ -76,7 +76,7 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 		}
 		else if (it->type() == JSON_ARRAY)
 		{
-			for(auto item = it->begin() ; item != it->end() ; item++)
+			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
 				gateway_vector_.push_back(*item);	
 			}
@@ -96,7 +96,7 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 		}
 		else if (it->type() == JSON_ARRAY)
 		{
-			for(auto item = it->begin() ; item != it->end() ; item++)
+			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
 				device_vector_.push_back(*item);	
 			}
@@ -116,7 +116,7 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 		}
 		else if (it->type() == JSON_ARRAY)
 		{
-			for(auto item = it->begin() ; item != it->end() ; item++)
+			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
 				endpoint_vector_.push_back(*item);	
 			}
@@ -136,7 +136,7 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 		}
 		else if (it->type() == JSON_ARRAY)
 		{
-			for(auto item = it->begin() ; item != it->end() ; item++)
+			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
 				epdata_vector_.push_back(*item);	
 			}
@@ -180,7 +180,7 @@ bool	RCSMessage::Make()
 		payload_.push_back(JSONNode(TITLE_NAME_MSG_ID, msg_id_));
 		payload_.push_back(JSONNode(TITLE_NAME_MSG_TYPE, msg_type_));
 		payload_.push_back(JSONNode(TITLE_NAME_SECRET, secret_code_));
-		payload_.push_back(JSONNode(TITLE_NAME_TIME, std::to_string(time_t(time_))));
+		payload_.push_back(JSONNode(TITLE_NAME_TIME, ToString(time_t(time_))));
 		if (req_id_.size() != 0)
 		{
 			payload_.push_back(JSONNode(TITLE_NAME_REQ_ID, req_id_));
@@ -208,7 +208,7 @@ bool	RCSMessage::Make()
 			{
 				JSONNode	array(JSON_ARRAY);
 
-				for(auto it = gateway_vector_.begin() ; it != gateway_vector_.end() ; it++)
+				for(std::vector<JSONNode>::iterator it = gateway_vector_.begin() ; it != gateway_vector_.end() ; it++)
 				{
 					JSONNode	node;
 
@@ -242,7 +242,7 @@ bool	RCSMessage::Make()
 			{
 				JSONNode	array(JSON_ARRAY);
 
-				for(auto it = device_vector_.begin() ; it != device_vector_.end() ; it++)
+				for(std::vector<JSONNode>::iterator it = device_vector_.begin() ; it != device_vector_.end() ; it++)
 				{
 					array.push_back(*it);
 				}
@@ -274,7 +274,7 @@ bool	RCSMessage::Make()
 			{
 				JSONNode	array(JSON_ARRAY);
 
-				for(auto it = endpoint_vector_.begin() ; it != endpoint_vector_.end() ; it++)
+				for(std::vector<JSONNode>::iterator it = endpoint_vector_.begin() ; it != endpoint_vector_.end() ; it++)
 				{
 					array.push_back(*it);
 				}
@@ -296,7 +296,7 @@ bool	RCSMessage::Make()
 		{
 			JSONNode	array(JSON_ARRAY);
 
-			for(auto it = epdata_vector_.begin() ; it != epdata_vector_.end() ; it++)
+			for(std::vector<JSONNode>::iterator it = epdata_vector_.begin(); it != epdata_vector_.end() ; it++)
 			{
 				array.push_back(*it);
 			}

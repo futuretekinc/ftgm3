@@ -120,7 +120,7 @@ RetValue	ShellCommandDevice
 
 				object_manager->GetDeviceList(device_list);
 
-				for(auto it = device_list.begin(); it != device_list.end() ; it++)
+				for(std::list<Device*>::iterator it = device_list.begin(); it != device_list.end() ; it++)
 				{
 					(*it)->Start();
 					std::cout << "The device[" << (*it)->GetTraceName() << "] is started!" << std::endl;
@@ -156,7 +156,7 @@ RetValue	ShellCommandDevice
 
 				object_manager->GetDeviceList(device_list);
 
-				for(auto it = device_list.begin(); it != device_list.end() ; it++)
+				for(std::list<Device*>::iterator it = device_list.begin(); it != device_list.end() ; it++)
 				{
 					(*it)->Stop();
 					std::cout << "The device[" << (*it)->GetTraceName() << "] is stopped!" << std::endl;
@@ -192,7 +192,7 @@ RetValue	ShellCommandDevice
 
 				object_manager->GetDeviceList(device_list);
 
-				for(auto it = device_list.begin(); it != device_list.end() ; it++)
+				for(std::list<Device*>::iterator it = device_list.begin(); it != device_list.end() ; it++)
 				{
 					(*it)->SetEnable(true);
 					std::cout << "The device[" << (*it)->GetTraceName() << "] is enabled!" << std::endl;
@@ -228,7 +228,7 @@ RetValue	ShellCommandDevice
 
 				object_manager->GetDeviceList(device_list);
 
-				for(auto it = device_list.begin(); it != device_list.end() ; it++)
+				for(std::list<Device*>::iterator it = device_list.begin(); it != device_list.end() ; it++)
 				{
 					(*it)->SetEnable(false);
 					std::cout << "The device[" << (*it)->GetTraceName() << "] is disabled!" << std::endl;
@@ -296,26 +296,26 @@ RetValue	ShellCommandDevice
 }
 
 
-Shell::Command	shell_ftgm_command_device = 
-{
-	.name		=	"device",
-	.help		=	"<command> \n"
-		"  Management of device.\n"
-		"COMMANDS:\n"
-		"  create  <TYPE> [--id <ID>] [--name <NAME>]\n"
-		"    Create device\n"
-		"  destroy <ID> [<ID> ...]\n"
-		"    Destroy devices.\n"
-		"  start   <ID> [<ID> ...]\n"
-		"    Start devices.\n"
-		"  stop    <ID> [<ID> ...]\n"
-		"    Stop devices.\n"
-		"PARAMETERS:\n"
-		"  TYPE    Type of device\n"
-		"  ID      Device ID\n",
-	.short_help	=	"Management of device",
-	.function	=	ShellCommandDevice
-};
+Shell::Command	shell_ftgm_command_device
+(
+	"device",
+	"<command> \n"
+	"  Management of device.\n"
+	"COMMANDS:\n"
+	"  create  <TYPE> [--id <ID>] [--name <NAME>]\n"
+	"    Create device\n"
+	"  destroy <ID> [<ID> ...]\n"
+	"    Destroy devices.\n"
+	"  start   <ID> [<ID> ...]\n"
+	"    Start devices.\n"
+	"  stop    <ID> [<ID> ...]\n"
+	"    Stop devices.\n"
+	"PARAMETERS:\n"
+	"  TYPE    Type of device\n"
+	"  ID      Device ID\n",
+	"Management of device",
+	ShellCommandDevice
+);
 
 bool	ShellCommandDeviceList(Shell* _shell)
 {
@@ -344,7 +344,7 @@ bool	ShellCommandDeviceList(Shell* _shell)
 		std::cout << " " << std::setw(community_len) << "Community";
 		std::cout << std::endl;
 
-		for(auto it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+		for(std::list<Device*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
 		{
 			DeviceSNMP *device = dynamic_cast<DeviceSNMP*>(*it);
 
@@ -368,7 +368,7 @@ bool	ShellCommandDeviceList(Shell* _shell)
 		std::cout << " " << std::setw(type_len) << "Type";
 		std::cout << std::endl;
 
-		for(auto it = mbtcp_list.begin() ; it != mbtcp_list.end() ; it++)
+		for(std::list<Device*>::iterator it = mbtcp_list.begin() ; it != mbtcp_list.end() ; it++)
 		{
 			std::cout << std::setw(id_len) << (*it)->GetID();
 			std::cout << " " << std::setw(name_len) << (*it)->GetName();

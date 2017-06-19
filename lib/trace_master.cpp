@@ -9,6 +9,7 @@
 
 using namespace std;
 
+extern	char*	program_invocation_short_name;
 TraceMaster	trace_master;
 Trace		trace;
 
@@ -40,7 +41,7 @@ bool	TraceMaster::Load(JSONNode const& _properties, bool _check)
 	}
 	else
 	{
-		for(auto it = _properties.begin() ; it != _properties.end() ; it++)
+		for(JSONNode::const_iterator it = _properties.begin() ; it != _properties.end() ; it++)
 		{
 			if (it->name() == TITLE_NAME_ENABLE)
 			{
@@ -120,12 +121,12 @@ void	TraceMaster::Write(std::string const& _headline, uint32_t _headline_len, st
 	{
 	case	TO_FILE:
 		{
-			ofstream	ofs;
+			std::ofstream	ofs;
 			std::ostringstream	oss;
 			istringstream	message(_log);
 			bool		first = true;
 
-			ofs.open(file_name_, ofstream::out | ofstream::app);
+			ofs.open(file_name_.c_str(), std::ofstream::out | std::ofstream::app);
 			uint32_t	size = ofs.tellp();
 			
 			if (size + _headline_len + _log.length() > file_size_)
@@ -147,7 +148,7 @@ void	TraceMaster::Write(std::string const& _headline, uint32_t _headline_len, st
 
 				system(oss.str().c_str());
 
-				ofs.open(file_name_, ofstream::out | ofstream::app);
+				ofs.open(file_name_.c_str(), ofstream::out | ofstream::app);
 			}
 
 			while(!message.eof())

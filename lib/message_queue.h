@@ -2,7 +2,7 @@
 #define	MESSAGE_QUEUE_H_
 
 #include <queue>
-#include <mutex>
+//#include <mutex>
 #include "message.h"
 
 class	MessageQueue
@@ -20,7 +20,7 @@ public:
 
 private:
 	std::queue<Message *>	queue_;
-	std::timed_mutex		lock_;
+//	std::timed_mutex		lock_;
 };
 
 #endif

@@ -495,7 +495,7 @@ bool	Endpoint::DelDataForPeriod(Date const& _begin, Date const& _end)
 
 uint32_t	Endpoint::GetData(uint32_t _count, ValueMap& _value_map)
 {
-	for(auto it = value_map_.rbegin() ; _count > 0 && it != value_map_.rend() ; _count--, it++)
+	for(ValueMap::reverse_iterator it = value_map_.rbegin() ; _count > 0 && it != value_map_.rend() ; _count--, it++)
 	{
 		_value_map.Add(it->first, it->second);	
 	}
@@ -530,7 +530,7 @@ bool	Endpoint::Add(time_t time, std::string const& _value)
 
 bool	Endpoint::Add(time_t time, bool _value)
 {
-	std::string	value = std::to_string(_value);
+	std::string	value = ::ToString(_value);
 
 	return	Add(time, value);
 }

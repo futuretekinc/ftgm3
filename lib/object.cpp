@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <typeinfo>
 #include <iomanip>
 #include <sstream>
 #include <map>
@@ -488,7 +489,7 @@ bool	Object::SetProperties(JSONNode const& _config, bool _check, bool _create)
 
 	if (ret_value == true)
 	{
-		for(auto it = _config.begin(); it != _config.end() ; it++)
+		for(JSONNode::const_iterator it = _config.begin(); it != _config.end() ; it++)
 		{
 			if (it->name() != TITLE_NAME_TRACE)
 			{
@@ -587,7 +588,7 @@ Object*	Object::GetAt(int index)
 		return	NULL;
 	}
 
-	for(auto it = object_map.begin() ; it != object_map.end();  it++)
+	for(std::map<std::string, Object*>::iterator it = object_map.begin() ; it != object_map.end();  it++)
 	{
 		if (index == 0)
 		{
@@ -601,7 +602,7 @@ Object*	Object::GetAt(int index)
 
 Object*	Object::Get(std::string const& _id)
 {
-	auto it = object_map.find(_id);
+	std::map<std::string, Object*>::iterator it = object_map.find(_id);
 
 	if (it == object_map.end())
 	{

@@ -102,16 +102,16 @@ RetValue	ShellCommandLoad
 }
 
 
-Shell::Command	shell_ftgm_command_load = 
-{
-	.name		=	"load",
-	.help		=	"<COMMAND> <FILE> [<FILE> ...] \n"
-					"  Load objects(configurations, devices, endpoints ...).\n"
-					"COMMANDS:\n"
-					"  config\n"
-					"    - Load configurations.\n"
-					"  device\n"
-					"    - Load devices.\n",
-	.short_help	=	"Load objects",
-	.function	=	ShellCommandLoad
-};
+Shell::Command	shell_ftgm_command_load
+(
+	"load",
+	"<COMMAND> <FILE> [<FILE> ...] \n"
+	"  Load objects(configurations, devices, endpoints ...).\n"
+	"COMMANDS:\n"
+	"  config\n"
+	"    - Load configurations.\n"
+	"  device\n"
+	"    - Load devices.\n",
+	"Load objects",
+	ShellCommandLoad
+);

@@ -2,7 +2,6 @@
 #define	GATEWAY_H_
 
 #include <list>
-#include <mutex>
 #include <libjson/libjson.h>
 #include "node.h"
 #include "timer.h"
