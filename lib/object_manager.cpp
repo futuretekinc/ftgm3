@@ -1033,7 +1033,7 @@ bool	ObjectManager::SendMessage(std::string const& _topic, std::string const& _m
 {
 	bool	ret_value = true;
 
-	ServerLinker::UpLink*	up_link = server_linker_.GetUpLink(_topic);
+	ServerLinkerMosq::UpLink*	up_link = server_linker_.GetUpLink(_topic);
 	if (up_link == NULL)
 	{
 		TRACE_ERROR("Failed to send message because up link[" << _topic << "] not found");	

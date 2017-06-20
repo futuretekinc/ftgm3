@@ -82,3 +82,20 @@ const char* RequestTimeout::what() const throw()
 {
 	return	message_.c_str();
 }
+
+ConnectTimeout::ConnectTimeout(std::string const& _message) throw()
+{ 
+	std::ostringstream	oss;
+	oss << "Connetion timeout : " << _message;
+
+	message_ = oss.str();
+}
+
+ConnectTimeout::~ConnectTimeout() throw()
+{
+}
+
+const char* ConnectTimeout::what() const throw()
+{
+	return	message_.c_str();
+}

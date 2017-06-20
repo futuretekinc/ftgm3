@@ -74,4 +74,19 @@ protected:
 };
 
 #define	THROW_REQUEST_TIMEOUT(x)	{	std::ostringstream oss; oss << x; throw RequestTimeout(oss.str()); }
+
+class	ConnectTimeout : public std::exception
+{
+public:
+	ConnectTimeout(std::string const& _argument) throw();
+	ConnectTimeout(std::string const& _name, std::string const& _value) throw();
+	~ConnectTimeout() throw();
+
+	virtual const char* 	what() const throw();
+
+protected:
+	std::string	message_;
+};
+
+#define	THROW_CONNECT_TIMEOUT(x)	{	std::ostringstream oss; oss << x; throw ConnectTimeout(oss.str()); }
 #endif

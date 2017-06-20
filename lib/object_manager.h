@@ -12,7 +12,9 @@
 #include "rcs_server.h"
 #include "rcs_session.h"
 #include "server_linker.h"
+#include "server_linker_mosquitto.h"
 
+class	ServerLinker;
 class	ObjectManager : public ProcessObject
 {
 	friend	class	Node;
@@ -79,7 +81,7 @@ public:
 			std::string	GetTopicNameEndpoint(std::string const& _id);
 
 			DataManager&	GetDataManager()	{	return	data_manager_;	};
-			ServerLinker&	GetServerLinker()	{	return	server_linker_;	};
+			ServerLinkerMosq&	GetServerLinker()	{	return	server_linker_;	};
 			RCSServer&		GetRCSServer()		{	return	rcs_server_;	};
 
 protected:
@@ -111,7 +113,7 @@ protected:
 	Timer				endpoint_report_timer_;
 
 	DataManager							data_manager_;
-	ServerLinker						server_linker_;
+	ServerLinkerMosq					server_linker_;
 	RCSServer							rcs_server_;
 	std::map<std::string,RCSSession*>	rms_map_;
 	std::map<std::string,Gateway*>		gateway_map_;

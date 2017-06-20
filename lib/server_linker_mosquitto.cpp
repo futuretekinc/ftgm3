@@ -10,7 +10,7 @@
 #include "property.h"
 #include "endpoint.h"
 #include "endpoint_actuator.h"
-#include "server_linker.h"
+#include "server_linker_mosquitto.h"
 #include "rcs_message.h"
 #include "object_manager.h"
 #include "trace.h"
@@ -20,12 +20,12 @@
 #include "sha256.h"
 #include "utils.h"
 
-ServerLinker::Produce::Produce(std::string const& _topic, RCSMessage const& _message)
+ServerLinkerMosq::Produce::Produce(std::string const& _topic, RCSMessage const& _message)
 : Message(MSG_TYPE_SL_PRODUCE), topic_(_topic), message_(_message)
 {
 }
 
-ServerLinker::Produce::Produce(std::string const& _topic, std::string const& _payload)
+ServerLinkerMosq::Produce::Produce(std::string const& _topic, std::string const& _payload)
 : Message(MSG_TYPE_SL_PRODUCE), topic_(_topic)
 {
 	if (libjson::is_valid(_payload))
@@ -36,7 +36,7 @@ ServerLinker::Produce::Produce(std::string const& _topic, std::string const& _pa
 	}
 }
 
-ServerLinker::Consume::Consume(std::string const& _topic, std::string const& _payload)
+ServerLinkerMosq::Consume::Consume(std::string const& _topic, std::string const& _payload)
 : Message(MSG_TYPE_SL_CONSUME), topic_(_topic)
 {
 	if (libjson::is_valid(_payload))
@@ -47,137 +47,59 @@ ServerLinker::Consume::Consume(std::string const& _topic, std::string const& _pa
 	}
 }
 
-ServerLinker::EventCB::EventCB(ServerLinker& _linker)
-: Object(), RdKafka::EventCb(), linker_(_linker)
-{
-	trace.SetClassName(GetClassName());
-	name_ 	= "event";
-	enable_ = true;
-}
-
-void	ServerLinker::EventCB::event_cb(RdKafka::Event &event) 
-{
-	switch (event.type())
-	{   
-	case RdKafka::Event::EVENT_ERROR:
-		{
-			TRACE_INFO("ERROR (" << RdKafka::err2str(event.err()) << "): " << event.str());
-			if (event.err() == RdKafka::ERR__ALL_BROKERS_DOWN)
-			{
-				linker_.InternalDisconnect();
-				linker_.InternalConnect();
-			}
-		}
-		break;
-
-	case RdKafka::Event::EVENT_STATS:
-		{
-			TRACE_INFO("STATS : " << event.str());
-		}
-		break;
-
-	case RdKafka::Event::EVENT_LOG:
-		{
-			TRACE_INFO("LOG-" << event.severity() << "-" << event.fac().c_str() << " : " << event.str().c_str());
-		}
-		break;
-
-	default:
-		{
-			TRACE_INFO("EVENT : " << event.type() << "(" << RdKafka::err2str(event.err()) << ") : " << event.str());
-		}
-		break;
-	}   
-}
-
-ServerLinker::DeliveryReportCB::DeliveryReportCB(ServerLinker& _linker)
-: Object(), RdKafka::DeliveryReportCb(), linker_(_linker)
-{
-	trace.SetClassName(GetClassName());
-	name_ 	= "delivery_report";
-	enable_ = true;
-}
-
-void ServerLinker::DeliveryReportCB::dr_cb (RdKafka::Message &data) 
-{
-
-	Produce *produce = (Produce*) data.msg_opaque();
-	if (produce!= NULL)
-	{
-		std::string	topic = produce->GetTopic();
-		RCSMessage&	message = produce->GetMessage();
-
-		std::map<std::string, Produce*>::iterator it = linker_.message_map_.find(message.GetMsgID());
-		if (it != linker_.message_map_.end())
-		{
-			TRACE_INFO("The Message[" << message.GetMsgID() << "] was delivered");
-
-			uint64_t	expire_time = message.GetTime().GetMicroSecond() + (linker_.request_timeout_ * TIME_SECOND);
-
-			TRACE_INFO("The request expiry time[" << expire_time << "] has been set in the request message[" << message.GetMsgID() << "].");
-			linker_.request_map_[expire_time] = produce;
-			linker_.message_map_.erase(it);
-		}
-
-	}
-
-	if (data.key())
-	{
-		TRACE_INFO("Key: " << *(data.key()));
-	}
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::Link
+//	Class ServerLinkerMosq::Link
 /////////////////////////////////////////////////////////////////////////////////////////////
-ServerLinker::Link::Link(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
-: Object(), linker_(_linker), partition_(_partition), topic_name_(_topic_name), topic_(NULL)
+ServerLinkerMosq::Link::Link(ServerLinkerMosq& _linker, std::string const& _topic)
+: Object(), linker_(_linker), topic_(_topic), connected_(false)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "link";
 	enable_ = true;
 }
 
-bool	ServerLinker::Link::Touch()
+bool	ServerLinkerMosq::Link::Touch()
 {
 	keep_alive_timer_.Set(Date::GetCurrent() + Time(60000000));
 
 	return	true;
 }
 
-uint32_t	ServerLinker::Link::GetLiveTime()
+uint32_t	ServerLinkerMosq::Link::GetLiveTime()
 {
 	return	keep_alive_timer_.RemainTime().GetSeconds();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::UpLink
+//	Class ServerLinkerMosq::UpLink
 /////////////////////////////////////////////////////////////////////////////////////////////
-ServerLinker::UpLink::UpLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
-: Link(_linker, _topic_name, _partition), number_of_out_going_messages_(0), number_of_error_messages_(0)
+ServerLinkerMosq::UpLink::UpLink(ServerLinkerMosq& _linker, std::string const& _topic)
+: Link(_linker, _topic), number_of_out_going_messages_(0), number_of_error_messages_(0)
 {
 }
 
-bool	ServerLinker::UpLink::Start()
+bool	ServerLinkerMosq::UpLink::Start()
 {
+#if 0
 	if (topic_ == NULL)
 	{
-		topic_ = linker_.CreateProducerTopic(topic_name_, error_string_);
+		topic_ = linker_.CreateProducerTopic(topic_, error_string_);
 		if (topic_ == NULL)
 		{
 			TRACE_ERROR("Failed to create topic!");
 			return	false;
 		}
 	}
-
+#endif
 	Touch();
 	
-	TRACE_INFO("Uplink[" << topic_name_ << "] started");
+	TRACE_INFO("Uplink[" << topic_ << "] started");
 	return	true;
 }
 
-bool	ServerLinker::UpLink::Stop()
+bool	ServerLinkerMosq::UpLink::Stop()
 {
+#if 0
 	if (topic_ != NULL)
 	{
 		try
@@ -191,12 +113,20 @@ bool	ServerLinker::UpLink::Stop()
 			return	false;
 		}
 	}
+#endif
+	return	true;
+}
+
+bool	ServerLinkerMosq::UpLink::SetQoS(uint32_t _qos)
+{
+	qos_ = _qos;
 
 	return	true;
 }
 
-bool	ServerLinker::UpLink::Send(std::string const& _message)
+bool	ServerLinkerMosq::UpLink::Send(std::string const& _message)
 {
+#if 0
 	if (topic_ == NULL)
 	{
 		if (!Start())
@@ -205,7 +135,7 @@ bool	ServerLinker::UpLink::Send(std::string const& _message)
 			return	false;
 		}
 	}
-
+#endif
 //	TRACE_INFO("Send(" << topic_->name() << ", " << partition_ << ", " << _message << ")");
 //	linker_.Send(_message);
 
@@ -213,189 +143,73 @@ bool	ServerLinker::UpLink::Send(std::string const& _message)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::DownLink::ConsumCB
+//	Class ServerLinkerMosq::DownLink
 /////////////////////////////////////////////////////////////////////////////////////////////
-void	ServerLinker::DownLink::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
-{
-	if (_msg.err() == RdKafka::ERR_NO_ERROR)
-	{
-		link_.SetOffset(_msg.offset());
-
-		TRACE_INFO2(&link_, _msg.topic_name() << " : " << _msg.offset());
-		if (_msg.len() != 0)
-		{
-			TRACE_INFO2(&link_, "Payload : " << (char *)_msg.payload());
-		}
-	}
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::DownLink
-/////////////////////////////////////////////////////////////////////////////////////////////
-ServerLinker::DownLink::DownLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
-: Link(_linker, _topic_name, _partition), message_cb_(*this), offset_(RdKafka::Topic::OFFSET_END), number_of_incomming_messages_(0), number_of_error_messages_(0)
+ServerLinkerMosq::DownLink::DownLink(ServerLinkerMosq& _linker, std::string const& _topic)
+: Link(_linker, _topic), number_of_incomming_messages_(0), number_of_error_messages_(0)
 {
 }
 
-bool	ServerLinker::DownLink::Start()
+bool	ServerLinkerMosq::DownLink::Start()
 {
-	if (topic_ == NULL)
-	{
-		topic_ = linker_.CreateConsumerTopic(topic_name_, error_string_);
-		if (topic_ == NULL)
-		{
-			TRACE_ERROR("Failed to create topic!");
-			return	false;
-		}
-	}
+	mosquitto_subscribe(linker_.mosquitto_, NULL, topic_.c_str(), 0);
 
-	RdKafka::ErrorCode error_code = linker_.GetConsumer()->start(topic_, partition_, offset_);
-	if (error_code != RdKafka::ERR_NO_ERROR)
-	{
-		TRACE_ERROR("Failed to start down link[" << error_code << "]!");
-		return	false;	
-	}
-
-	Touch();
+	connected_ = true;
 
 	return	true;
 }
 
-bool	ServerLinker::DownLink::Stop()
+bool	ServerLinkerMosq::DownLink::Stop()
 {
-	if (topic_ != NULL)
-	{
-		RdKafka::ErrorCode	error_code = linker_.GetConsumer()->stop(topic_, partition_);
-		if (error_code != RdKafka::ERR_NO_ERROR)
-		{
-			TRACE_ERROR("Failed to stop down link!");
-			return	false;
-		}
-
-		try
-		{
-			delete topic_;
-			topic_ = NULL;
-		}
-		catch(std::exception& e)
-		{
-			TRACE_ERROR("Failed to destroy topic!");	
-			return	false;
-		}
-	}
+	connected_ = false;
 
 	return	true;
 }
 
-bool	ServerLinker::DownLink::Consume(RdKafka::ConsumeCb* _consum_cb)
-{
-	if ((linker_.GetConsumer() != NULL) && (topic_ != NULL))
-	{
-		if (linker_.GetConsumer()->consume_callback(topic_, partition_, 1, _consum_cb, this) > 0)
-		{
-			return	true;	
-		}
-	}
-
-	return	false;	
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::ConsumCB
+//	Class ServerLinkerMosq
 /////////////////////////////////////////////////////////////////////////////////////////////
-void	ServerLinker::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
-{
-	DownLink*	link = (DownLink *)opaque;
-	
-	if (link != NULL)
-	{
-		if (_msg.err() == RdKafka::ERR_NO_ERROR)
-		{
-			link->SetOffset(_msg.offset());
-			link->IncreaseNumberOfIncommingMessages();
-			link->Touch();
-
-			TRACE_INFO2(&linker_, _msg.topic_name() << " : " << _msg.offset());
-			if (_msg.len() != 0)
-			{
-				std::string	payload = (char *)_msg.payload();
-
-				size_t	close_brace_pos = payload.rfind('}');
-
-				if (close_brace_pos == std::string::npos)
-				{
-					link->IncreaseNumberOfErrorMessages();
-					TRACE_ERROR2(&linker_, "Invalid payload : " << payload);
-				}
-				else
-				{
-					payload = payload.substr(0, close_brace_pos+1);
-
-					try
-					{
-						Consume	*consume = new Consume(_msg.topic_name(), payload);
-						linker_.Post(consume);
-					}
-					catch(std::exception& e)
-					{
-						link->IncreaseNumberOfErrorMessages();
-						TRACE_ERROR2(&linker_, "Exception : " << e.what());
-						TRACE_ERROR2(&linker_, "Invalid payload : " << payload);
-					}
-				}
-			}
-		}
-		else
-		{
-			if (_msg.err() != RdKafka::ERR__PARTITION_EOF)
-			{
-				TRACE_ERROR2(NULL, "Topic : " << _msg.topic_name());
-				TRACE_ERROR2(NULL, "Error : " << RdKafka::err2str(_msg.err()));
-			}
-		}
-	}
-	else
-	{
-		TRACE_ERROR2(NULL, "Down link unknown!");	
-	}
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker
-/////////////////////////////////////////////////////////////////////////////////////////////
-ServerLinker::ServerLinker(ObjectManager* _manager)
+ServerLinkerMosq::ServerLinkerMosq(ObjectManager* _manager)
 : 	ProcessObject(), 
 	manager_(_manager), 
-	event_cb_(*this), 
-	delivery_report_cb_(*this), 
-	consume_cb_(*this),
-	consumer_(NULL), 
-	producer_(NULL), 
 	broker_connected_(false),
 	auto_connection_(true),
 	keep_alive_enable_(true),
 	secret_key_(""),
-	global_up_topic_(DEFAULT_CONST_GLOBAL_UP_TOPIC),
-	global_down_topic_(DEFAULT_CONST_GLOBAL_DOWN_TOPIC),
 	report_late_arrive_message_(SERVER_LINKER_REPORT_LATE_ARRIVE_MESSAGE),
 	request_timeout_(SERVER_LINKER_REQUEST_TIMEOUT_SEC),
-	broker_retry_interval_(SERVER_LINKER_CONNECTION_RETRY_INTERVAL_SEC * TIME_SECOND)
+	broker_retry_interval_(SERVER_LINKER_CONNECTION_RETRY_INTERVAL_SEC * TIME_SECOND),
+	protocol_version_(MQTT_PROTOCOL_V31),
+	topic_version_(SERVER_LINKER_TOPIC_VERSION),
+	topic_id_(SERVER_LINKER_TOPIC_ID),
+	global_up_name_(SERVER_LINKER_TOPIC_GLOBAL_UP_NAME),
+	global_down_name_(SERVER_LINKER_TOPIC_GLOBAL_DOWN_NAME)
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "linker";
 	enable_ = true;
 
+	mosquitto_lib_init();
+
+	mosquitto_ = mosquitto_new(manager_->GetID().c_str(), true, (void *)this);
+
+	SetGlobalUpTopic(topic_version_,  global_up_name_, topic_id_);
+	SetGlobalDownTopic(topic_version_,global_up_name_, topic_id_);
+
+	mosquitto_max_inflight_messages_set(mosquitto_, 20);
+	mosquitto_opts_set(mosquitto_, MOSQ_OPT_PROTOCOL_VERSION, (void *)&protocol_version_);
+	mosquitto_log_callback_set(mosquitto_, OnLogCB);
+	mosquitto_subscribe_callback_set(mosquitto_, OnSubscribeCB);
+	mosquitto_connect_callback_set(mosquitto_, OnConnectCB);
+	mosquitto_disconnect_callback_set(mosquitto_, OnDisconnectCB);
+	mosquitto_message_callback_set(mosquitto_, OnMessageCB);
+
 	SetHashAlg(DEFAULT_CONST_SERVER_LINKER_HASH);
 
-	conf_global_= RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
-	conf_topic_ = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
 }
 
-ServerLinker::~ServerLinker()
+ServerLinkerMosq::~ServerLinkerMosq()
 {
-	delete conf_global_;
-	delete conf_topic_;
-
 	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin() ; it != up_link_map_.end() ; it++)
 	{
 		delete it->second;	
@@ -405,9 +219,14 @@ ServerLinker::~ServerLinker()
 	{
 		delete it->second;	
 	}
+
+	if (mosquitto_)
+	{
+		mosquitto_destroy(mosquitto_);
+	}
 }
 
-bool	ServerLinker::SetProperty(JSONNode const& _config, bool _check)
+bool	ServerLinkerMosq::SetProperty(JSONNode const& _config, bool _check)
 {
 	bool	ret_value = true;
 
@@ -425,27 +244,32 @@ bool	ServerLinker::SetProperty(JSONNode const& _config, bool _check)
 	}
 	else if (_config.name() == TITLE_NAME_TOPIC)
 	{
-#if 0
-		for(JSONNode::const_iterator it = _config.begin(); it != _config.end() ; it++)
+		if (_config.type() == JSON_NODE)
 		{
-			if (_config.name() == TITLE_NAME_VERSION)
+			for(JSONNode::const_iterator it = _config.begin(); it != _config.end() ; it++)
 			{
-				ret_value = SetTopicVersion(_config.as_string(), _check);
-			}
-			else if (_config.name() == TITLE_NAME_GLOBAL_UP_NAME)
-			{
-				ret_value = SetGlobalUpName(_config.as_string(), _check);
-			}
-			else if (_config.name() == TITLE_NAME_GLOBAL_DOWN_NAME)
-			{
-				ret_value = SetGlobalDownName(_config.as_string(), _check);
-			}
-			else if (_config.name() == TITLE_NAME_ID)
-			{
-				ret_value = SetTopicID(_config.as_string(), _check);
+				if (it->name() == TITLE_NAME_VERSION)
+				{
+					ret_value = SetTopicVersion(it->as_string(), _check);
+				}
+				else if (it->name() == TITLE_NAME_GLOBAL_UP_NAME)
+				{
+					ret_value = SetGlobalUpName(it->as_string(), _check);
+				}
+				else if (it->name() == TITLE_NAME_GLOBAL_DOWN_NAME)
+				{
+					ret_value = SetGlobalDownName(it->as_string(), _check);
+				}
+				if (it->name() == TITLE_NAME_ID)
+				{
+					ret_value = SetTopicID(it->as_string(), _check);
+				}
 			}
 		}
-#endif
+		else
+		{
+			return	false;	
+		}
 	}
 	else
 	{
@@ -455,15 +279,23 @@ bool	ServerLinker::SetProperty(JSONNode const& _config, bool _check)
 	return	ret_value;
 }
 
-ServerLinker::operator JSONNode() const
+ServerLinkerMosq::operator JSONNode() const
 {
 	JSONNode	root;
 
 	root.push_back(JSONNode(TITLE_NAME_HASH_ALG, hash_alg_name_));
 	root.push_back(JSONNode(TITLE_NAME_SECRET_KEY, secret_key_));
 	root.push_back(JSONNode(TITLE_NAME_BROKER, broker_));
-	//root.push_back(JSONNode(TITLE_NAME_GLOBAL_UP_TOPIC, global_up_topic_));
-	//root.push_back(JSONNode(TITLE_NAME_GLOBAL_DOWN_TOPIC, global_down_topic_));
+
+	JSONNode	topic;
+
+	topic.push_back(JSONNode(TITLE_NAME_VERSION, topic_version_));
+	topic.push_back(JSONNode(TITLE_NAME_GLOBAL_UP_NAME, global_up_name_));
+	topic.push_back(JSONNode(TITLE_NAME_GLOBAL_DOWN_NAME, global_down_name_));
+	topic.push_back(JSONNode(TITLE_NAME_ID, topic_id_));
+	topic.set_name(TITLE_NAME_TOPIC);
+
+	root.push_back(topic);
 
 	JSONNode	trace_config = trace;
 	trace_config.set_name(TITLE_NAME_TRACE);
@@ -473,7 +305,7 @@ ServerLinker::operator JSONNode() const
 	return	root;
 }
 
-bool	ServerLinker::SetHashAlg(std::string const& _name, bool _check)
+bool	ServerLinkerMosq::SetHashAlg(std::string const& _name, bool _check)
 {
 	if (_name == "sha1")
 	{
@@ -513,37 +345,103 @@ bool	ServerLinker::SetHashAlg(std::string const& _name, bool _check)
 	return	true;
 }
 
-bool	ServerLinker::SetGlobalUpTopic(std::string const& _topic, bool _check)
+bool	ServerLinkerMosq::SetTopicVersion(std::string const& _version, bool _check)
 {
 	if (!_check)
 	{
-		global_up_topic_ = _topic;
+		topic_version_ = _version;
+		SetGlobalUpTopic(topic_version_,  global_up_name_, topic_id_);
+		SetGlobalDownTopic(topic_version_,  global_down_name_, topic_id_);
 	}
 
 	return	true;
 }
 
-const std::string&	ServerLinker::GetGlobalUpTopic()
+const std::string&	ServerLinkerMosq::GetTopicVersion()
+{
+	return	topic_version_;
+}
+
+bool	ServerLinkerMosq::SetTopicID(std::string const& _id, bool _check)
+{
+	if (!_check)
+	{
+		topic_id_ = _id;
+		SetGlobalUpTopic(topic_version_,  global_up_name_, topic_id_);
+		SetGlobalDownTopic(topic_version_,  global_down_name_, topic_id_);
+	}
+
+	return	true;
+}
+
+const std::string&	ServerLinkerMosq::GetTopicID()
+{
+	return	topic_id_;
+}
+
+bool	ServerLinkerMosq::SetGlobalUpName(std::string const& _name, bool _check)
+{
+	if (!_check)
+	{
+		global_up_name_ = _name;
+		SetGlobalUpTopic(topic_version_,  global_up_name_, topic_id_);
+	}
+
+	return	true;
+}
+
+const std::string&	ServerLinkerMosq::GetGlobalUpName()
+{
+	return	global_up_name_;
+}
+
+bool	ServerLinkerMosq::SetGlobalDownName(std::string const& _name, bool _check)
+{
+	if (!_check)
+	{
+		global_down_name_ = _name;
+		SetGlobalDownTopic(topic_version_,  global_down_name_, topic_id_);
+	}
+
+	return	true;
+}
+
+const std::string&	ServerLinkerMosq::GetGlobalDownName()
+{
+	return	global_down_name_;
+}
+
+bool	ServerLinkerMosq::SetGlobalUpTopic(std::string const& _version, std::string const& _name, std::string const& _id, bool _check)
+{
+	if (!_check)
+	{
+		global_up_topic_ = _version + "/" + _name + "/" + _id;
+	}
+
+	return	true;
+}
+
+const std::string&	ServerLinkerMosq::GetGlobalUpTopic()
 {
 	return	global_up_topic_;
 }
 
-bool	ServerLinker::SetGlobalDownTopic(std::string const& _topic, bool _check)
+bool	ServerLinkerMosq::SetGlobalDownTopic(std::string const& _version, std::string const& _name, std::string const& _id, bool _check)
 {
 	if (!_check)
 	{
-		global_down_topic_ = _topic;
+		global_down_topic_ = _version + "/" + _name + "/" + _id;
 	}
 
 	return	true;
 }
 
-const std::string&	ServerLinker::GetGlobalDownTopic()
+const std::string&	ServerLinkerMosq::GetGlobalDownTopic()
 {
 	return	global_down_topic_;
 }
 
-bool	ServerLinker::SetSecretKey(std::string const& _secret_key, bool _check)
+bool	ServerLinkerMosq::SetSecretKey(std::string const& _secret_key, bool _check)
 {
 	if (!_check)
 	{
@@ -553,14 +451,14 @@ bool	ServerLinker::SetSecretKey(std::string const& _secret_key, bool _check)
 	return	true;
 }
 
-bool	ServerLinker::GetSecretKey(std::string & _secret_key)
+bool	ServerLinkerMosq::GetSecretKey(std::string & _secret_key)
 {
 	_secret_key = secret_key_;
 
 	return	true;
 }
 
-bool	ServerLinker::SetBroker(std::string const& _broker, bool _check)
+bool	ServerLinkerMosq::SetBroker(std::string const& _broker, bool _check)
 {
 	if (!_check)
 	{
@@ -570,19 +468,19 @@ bool	ServerLinker::SetBroker(std::string const& _broker, bool _check)
 	return	true;
 }
 
-const std::string&	ServerLinker::GetBroker()
+const std::string&	ServerLinkerMosq::GetBroker()
 {
 	return	broker_;
 }
 
-bool		ServerLinker::SetAutoConnection(bool _auto)
+bool		ServerLinkerMosq::SetAutoConnection(bool _auto)
 {
 	auto_connection_ = _auto;
 
 	return	true;
 }
 
-bool		ServerLinker::SetAutoConnection(std::string const& _auto, bool _check)
+bool		ServerLinkerMosq::SetAutoConnection(std::string const& _auto, bool _check)
 {
 	bool	value;
 
@@ -605,7 +503,7 @@ bool		ServerLinker::SetAutoConnection(std::string const& _auto, bool _check)
 }
 
 
-uint32_t	ServerLinker::GetUpLink(std::vector<UpLink*>& _link_list)
+uint32_t	ServerLinkerMosq::GetUpLink(std::vector<UpLink*>& _link_list)
 {
 	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
@@ -615,17 +513,17 @@ uint32_t	ServerLinker::GetUpLink(std::vector<UpLink*>& _link_list)
 	return	_link_list.size();
 }
 
-uint32_t	ServerLinker::GetUpLink(std::list<std::string>& _topic_name_list)
+uint32_t	ServerLinkerMosq::GetUpLink(std::list<std::string>& _topic_list)
 {
 	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
-		_topic_name_list.push_back(it->first);		
+		_topic_list.push_back(it->first);		
 	}
 
-	return	_topic_name_list.size();
+	return	_topic_list.size();
 }
 
-uint32_t	ServerLinker::GetDownLink(std::vector<DownLink*>& _link_list)
+uint32_t	ServerLinkerMosq::GetDownLink(std::vector<DownLink*>& _link_list)
 {
 	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
@@ -635,69 +533,29 @@ uint32_t	ServerLinker::GetDownLink(std::vector<DownLink*>& _link_list)
 	return	_link_list.size();
 }
 
-uint32_t	ServerLinker::GetDownLink(std::list<std::string>& _topic_name_list)
+uint32_t	ServerLinkerMosq::GetDownLink(std::list<std::string>& _topic_list)
 {
 	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
-		_topic_name_list.push_back(it->first);		
+		_topic_list.push_back(it->first);		
 	}
 
-	return	_topic_name_list.size();
+	return	_topic_list.size();
 }
 
-RdKafka::Topic*	ServerLinker::CreateProducerTopic(std::string const& _topic_name, std::string& _error_string)
-{
-	RdKafka::Topic*	topic  = NULL;
-
-	if (producer_ != NULL)
-	{
-		topic  = RdKafka::Topic::create(producer_, _topic_name, conf_topic_, _error_string);
-		if (topic != NULL)
-		{
-			TRACE_INFO("The producer topic[" << _topic_name << "] created");
-		}
-		else
-		{
-			TRACE_ERROR("Failed to create topic!");
-		}
-	}
-
-	return	topic;
-}
-
-RdKafka::Topic*	ServerLinker::CreateConsumerTopic(std::string const& _topic_name, std::string& _error_string)
-{
-	RdKafka::Topic* topic  = NULL;
-	
-	if (consumer_ != NULL)
-	{
-		topic = RdKafka::Topic::create(consumer_, _topic_name, conf_topic_, _error_string);
-		if (topic != NULL)
-		{
-			TRACE_INFO("The consumer topic[" << _topic_name << "] created");
-		}
-		else
-		{
-			TRACE_ERROR("Failed to create topic!");
-		}
-	}
-
-	return	topic;
-}
-
-ServerLinker::UpLink*	ServerLinker::AddUpLink(std::string const& _topic_name, int32_t _partition)
+ServerLinkerMosq::UpLink*	ServerLinkerMosq::AddUpLink(std::string const& _topic)
 {
 	UpLink*	link = NULL;
 
-	link = GetUpLink(_topic_name);
+	link = GetUpLink(_topic);
 	if (link == NULL)
 	{
 		try 
 		{
-			link = new UpLink(*this, _topic_name, _partition);	
+			link = new UpLink(*this, _topic);	
 
-			up_link_map_[_topic_name] = link;
-			TRACE_INFO("Uplink added : " << _topic_name << "[" << link << "]");
+			up_link_map_[_topic] = link;
+			TRACE_INFO("Uplink added : " << _topic << "[" << link << "]");
 
 			if (IsConnected())
 			{
@@ -711,13 +569,13 @@ ServerLinker::UpLink*	ServerLinker::AddUpLink(std::string const& _topic_name, in
 		}
 	}
 
-	TRACE_INFO("UpLink[" << _topic_name << "] added.");
+	TRACE_INFO("UpLink[" << _topic << "] added.");
 	return	link;
 }
 
-ServerLinker::UpLink*	ServerLinker::GetUpLink(std::string const& _topic_name)
+ServerLinkerMosq::UpLink*	ServerLinkerMosq::GetUpLink(std::string const& _topic)
 {
-	std::map<std::string, UpLink*>::iterator it = up_link_map_.find(_topic_name);
+	std::map<std::string, UpLink*>::iterator it = up_link_map_.find(_topic);
 	if (it == up_link_map_.end())
 	{
 		return	NULL;
@@ -726,9 +584,9 @@ ServerLinker::UpLink*	ServerLinker::GetUpLink(std::string const& _topic_name)
 	return	it->second;	
 }
 
-bool		ServerLinker::DelUpLink(std::string const& _topic_name)
+bool		ServerLinkerMosq::DelUpLink(std::string const& _topic)
 {
-	std::map<std::string, UpLink*>::iterator it = up_link_map_.find(_topic_name);
+	std::map<std::string, UpLink*>::iterator it = up_link_map_.find(_topic);
 	if (it == up_link_map_.end())
 	{
 		return	false;
@@ -743,19 +601,19 @@ bool		ServerLinker::DelUpLink(std::string const& _topic_name)
 	return	true;	
 }
 
-ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic_name, int32_t _partition)
+ServerLinkerMosq::DownLink*	ServerLinkerMosq::AddDownLink(std::string const& _topic)
 {
 	DownLink*	link = NULL;
 
-	link = ServerLinker::GetDownLink(_topic_name);
+	link = ServerLinkerMosq::GetDownLink(_topic);
 	if (link == NULL)
 	{
 		try
 		{
-			link = new DownLink(*this, _topic_name, _partition);	
+			link = new DownLink(*this, _topic);	
 
-			down_link_map_[_topic_name] = link;
-			TRACE_INFO("Downlink added : " << _topic_name << "[" << link << "]");
+			down_link_map_[_topic] = link;
+			TRACE_INFO("Downlink added : " << _topic << "[" << link << "]");
 			TRACE_INFO("Downlink Count : " << down_link_map_.size());
 
 			if (IsConnected())
@@ -776,13 +634,13 @@ ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic_name
 		AddUpLink(topic_);
 	}
 #endif
-	TRACE_INFO("DownLink[" << _topic_name << "] added.");
+	TRACE_INFO("DownLink[" << _topic << "] added.");
 	return	link;
 }
 
-bool		ServerLinker::DelDownLink(std::string const& _topic_name)
+bool		ServerLinkerMosq::DelDownLink(std::string const& _topic)
 {
-	std::map<std::string, DownLink*>::iterator it = down_link_map_.find(_topic_name);
+	std::map<std::string, DownLink*>::iterator it = down_link_map_.find(_topic);
 	if (it == down_link_map_.end())
 	{
 		return	false;
@@ -796,9 +654,9 @@ bool		ServerLinker::DelDownLink(std::string const& _topic_name)
 	return	true;	
 }
 
-ServerLinker::DownLink*	ServerLinker::GetDownLink(std::string const& _topic_name)
+ServerLinkerMosq::DownLink*	ServerLinkerMosq::GetDownLink(std::string const& _topic)
 {
-	std::map<std::string, DownLink*>::iterator it = down_link_map_.find(_topic_name);
+	std::map<std::string, DownLink*>::iterator it = down_link_map_.find(_topic);
 	if (it == down_link_map_.end())
 	{
 		return	NULL;
@@ -807,8 +665,9 @@ ServerLinker::DownLink*	ServerLinker::GetDownLink(std::string const& _topic_name
 	return	it->second;	
 }
 
-void	ServerLinker::Preprocess()
+void	ServerLinkerMosq::Preprocess()
 {
+#if 0
 	RdKafka::Conf::ConfResult result = conf_global_->set("metadata.broker.list", broker_, error_string_);
 	if (result != RdKafka::Conf::CONF_OK)
 	{
@@ -817,7 +676,7 @@ void	ServerLinker::Preprocess()
 
 	conf_global_->set("dr_cb", &delivery_report_cb_, error_string_);
 	conf_global_->set("event_cb", &event_cb_, error_string_);
-
+#endif
 	AddUpLink(global_up_topic_);
 	AddDownLink(global_down_topic_);
 
@@ -825,17 +684,17 @@ void	ServerLinker::Preprocess()
 	
 }
 
-void	ServerLinker::Process()
+void	ServerLinkerMosq::Process()
 {
 	if (IsConnected())
 	{
 		try
 		{
-			producer_->poll(0);
+//			producer_->poll(0);
 
 			for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 			{
-				it->second->Consume(&consume_cb_);
+//				it->second->Consume(&consume_cb_);
 			}
 		}
 		catch(std::exception& e)
@@ -871,7 +730,7 @@ void	ServerLinker::Process()
 	ProcessObject::Process();
 }
 
-void	ServerLinker::Postprocess()
+void	ServerLinkerMosq::Postprocess()
 {
 	Disconnect();
 
@@ -879,7 +738,7 @@ void	ServerLinker::Postprocess()
 
 }
 
-bool	ServerLinker::Start()
+bool	ServerLinkerMosq::Start()
 {
 	if (broker_.length() == 0)
 	{
@@ -889,12 +748,12 @@ bool	ServerLinker::Start()
 	return	ProcessObject::Start();
 }
 
-bool	ServerLinker::IsConnected()
+bool	ServerLinkerMosq::IsConnected()
 {
 	return	broker_connected_;
 }
 
-bool	ServerLinker::Connect(uint32_t _delay_sec)
+bool	ServerLinkerMosq::Connect(uint32_t _delay_sec)
 {
 	if (!auto_connection_)
 	{
@@ -909,7 +768,7 @@ bool	ServerLinker::Connect(uint32_t _delay_sec)
 	return	true;
 }
 
-bool	ServerLinker::InternalConnect(uint32_t _delay_sec)
+bool	ServerLinkerMosq::InternalConnect(uint32_t _delay_sec)
 {
 	try
 	{
@@ -920,22 +779,14 @@ bool	ServerLinker::InternalConnect(uint32_t _delay_sec)
 		}
 		else if (broker_retry_timeout_.RemainTime() == 0)
 		{
-			TRACE_INFO("Create producer")
-			producer_ 	= RdKafka::Producer::create(conf_global_, error_string_);
-			if (producer_ == NULL)
+			int	ret = mosquitto_connect(mosquitto_, broker_.c_str(), 1883, keep_alive_interval_);
+			
+			if (ret > 0)
 			{
-				TRACE_ERROR("Failed to create producer!");
-				throw std::logic_error("Connection timeout to broker");
+				TRACE_ERROR("Failed to connect to broker[" << broker_ << "] : " << ret);
+				THROW_CONNECT_TIMEOUT(mosquitto_strerror(ret));
 			}
 
-			TRACE_INFO("Create consumer")
-			consumer_	= RdKafka::Consumer::create(conf_global_, error_string_);
-			if (consumer_ == NULL)
-			{
-				TRACE_ERROR("Failed to create consumer!");
-				throw std::logic_error("Connection timeout to broker");
-			}
-		
 			TRACE_INFO("Up Link Count : " << up_link_map_.size());
 			for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 			{
@@ -948,7 +799,7 @@ bool	ServerLinker::InternalConnect(uint32_t _delay_sec)
 				it->second->Start();
 			}
 
-			TRACE_INFO("Connected to broker.")
+			TRACE_INFO("Connected to broker.");
 			broker_connected_ = true;
 		}
 	}
@@ -965,7 +816,7 @@ bool	ServerLinker::InternalConnect(uint32_t _delay_sec)
 	return	true;
 }
 
-bool	ServerLinker::Disconnect()
+bool	ServerLinkerMosq::Disconnect()
 {
 	if (auto_connection_)
 	{
@@ -980,7 +831,7 @@ bool	ServerLinker::Disconnect()
 	return	true;
 }
 
-bool	ServerLinker::InternalDisconnect()
+bool	ServerLinkerMosq::InternalDisconnect()
 {
 	broker_connected_ = false;
 
@@ -993,7 +844,7 @@ bool	ServerLinker::InternalDisconnect()
 	{
 		it->second->Stop();
 	}
-
+#if 0
 	if (producer_ != NULL)
 	{
 		delete producer_;	
@@ -1006,11 +857,11 @@ bool	ServerLinker::InternalDisconnect()
 		consumer_ = NULL;
 	}
 
-
+#endif
 	return	true;
 }
 
-bool	ServerLinker::Send(RCSMessage const& _message)
+bool	ServerLinkerMosq::Send(RCSMessage const& _message)
 {
 	try
 	{
@@ -1025,14 +876,14 @@ bool	ServerLinker::Send(RCSMessage const& _message)
 	return	true;
 }
 
-bool	ServerLinker::KeepAliveEnable(bool _enable)
+bool	ServerLinkerMosq::KeepAliveEnable(bool _enable)
 {
 	keep_alive_enable_ = _enable;
 
 	return	true;
 }
 
-bool	ServerLinker::ReportEPData(Endpoint* _ep)
+bool	ServerLinkerMosq::ReportEPData(Endpoint* _ep)
 {
 	RCSMessage	message(MSG_STR_REPORT);
 
@@ -1084,7 +935,7 @@ bool	ServerLinker::ReportEPData(Endpoint* _ep)
 	return	true;
 }
 
-bool	ServerLinker::RequestInit(std::string const& _type, JSONNode& _payload)
+bool	ServerLinkerMosq::RequestInit(std::string const& _type, JSONNode& _payload)
 {
 	JSONNode	payload;
 
@@ -1096,7 +947,7 @@ bool	ServerLinker::RequestInit(std::string const& _type, JSONNode& _payload)
 	return	true;
 }
 
-bool	ServerLinker::ReplyInit(std::string const& _type, std::string const& _req_id, JSONNode& _payload)
+bool	ServerLinkerMosq::ReplyInit(std::string const& _type, std::string const& _req_id, JSONNode& _payload)
 {
 	JSONNode	payload;
 
@@ -1109,7 +960,7 @@ bool	ServerLinker::ReplyInit(std::string const& _type, std::string const& _req_i
 	return	true;
 }
 
-bool	ServerLinker::AddGateway(JSONNode& _payload, Gateway* _gateway, Fields const& _fields)
+bool	ServerLinkerMosq::AddGateway(JSONNode& _payload, Gateway* _gateway, Fields const& _fields)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_GATEWAY);
 	if (it != _payload.end())
@@ -1150,7 +1001,7 @@ bool	ServerLinker::AddGateway(JSONNode& _payload, Gateway* _gateway, Fields cons
 	return	true;
 }
 
-bool	ServerLinker::AddGateway(JSONNode& _payload, std::string const& _id)
+bool	ServerLinkerMosq::AddGateway(JSONNode& _payload, std::string const& _id)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_GATEWAY);
 	if (it != _payload.end())
@@ -1190,7 +1041,7 @@ bool	ServerLinker::AddGateway(JSONNode& _payload, std::string const& _id)
 	return	true;
 }
 
-bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Fields const& _fields)
+bool	ServerLinkerMosq::AddDevice(JSONNode& _payload, Device* _device, Fields const& _fields)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_DEVICE);
 	if (it != _payload.end())
@@ -1230,7 +1081,7 @@ bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Fields const& 
 	return	true;
 }
 
-bool	ServerLinker::AddDevice(JSONNode& _payload, std::string const& _id)
+bool	ServerLinkerMosq::AddDevice(JSONNode& _payload, std::string const& _id)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_DEVICE);
 	if (it != _payload.end())
@@ -1269,7 +1120,7 @@ bool	ServerLinker::AddDevice(JSONNode& _payload, std::string const& _id)
 	return	true;
 }
 
-bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields const& _fields)
+bool	ServerLinkerMosq::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields const& _fields)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_ENDPOINT);
 	if (it != _payload.end())
@@ -1308,7 +1159,7 @@ bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields c
 	return	true;
 }
 
-bool	ServerLinker::AddEndpoint(JSONNode& _payload, std::string const& _id)
+bool	ServerLinkerMosq::AddEndpoint(JSONNode& _payload, std::string const& _id)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_ENDPOINT);
 	if (it != _payload.end())
@@ -1349,7 +1200,7 @@ bool	ServerLinker::AddEndpoint(JSONNode& _payload, std::string const& _id)
 	return	true;
 }
 
-bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
+bool	ServerLinkerMosq::AddEPData(JSONNode& _payload, Endpoint* _ep)
 {
 	JSONNode	node;
 
@@ -1408,7 +1259,7 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
 	return	true;	
 }
 
-bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound)
+bool	ServerLinkerMosq::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound)
 {
 	JSONNode	node;
 	Endpoint::ValueMap	value_map;
@@ -1466,7 +1317,7 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_
 
 }
 
-bool	ServerLinker::Error(std::string const& _req_id ,std::string const& _err_msg)
+bool	ServerLinkerMosq::Error(std::string const& _req_id ,std::string const& _err_msg)
 {
 	RCSMessage	message(MSG_STR_ERROR);
 	
@@ -1475,7 +1326,7 @@ bool	ServerLinker::Error(std::string const& _req_id ,std::string const& _err_msg
 	return	Send(message);
 }
 
-bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception)
+bool	ServerLinkerMosq::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception)
 {
 	for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin() ; it != request_map_.end() ; it++)
 	{
@@ -1503,7 +1354,7 @@ bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bo
 }
 
 
-bool	ServerLinker::OnMessage(Message* _message)
+bool	ServerLinkerMosq::OnMessage(Message* _message)
 {
 	std::string	msg_id;
 	try
@@ -1536,7 +1387,7 @@ bool	ServerLinker::OnMessage(Message* _message)
 	return	true;
 }
 
-void	ServerLinker::OnConsume(Consume* _consume)
+void	ServerLinkerMosq::OnConsume(Consume* _consume)
 {
 	RCSMessage&	message = _consume->GetMessage();	
 
@@ -1600,7 +1451,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 	}
 }
 
-bool	ServerLinker::OnProduce(Produce* _produce)
+bool	ServerLinkerMosq::OnProduce(Produce* _produce)
 {
 	std::string topic	= _produce->GetTopic();
 	RCSMessage&	message = _produce->GetMessage();	
@@ -1610,20 +1461,20 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 	UpLink* link = GetUpLink(topic);
 	if (link != NULL)
 	{
+		int	msg_id;
 		std::string	payload = message.GetPayload().write();
 
-		RdKafka::ErrorCode error_code = producer_->produce(const_cast<char *>(topic.c_str()), 0, 
-				RdKafka::Producer::RK_MSG_COPY, const_cast<char *>(payload.c_str()), payload.size(), NULL, 0, 0, _produce);
-		if (error_code != RdKafka::ERR_NO_ERROR)
+		int ret = mosquitto_publish(mosquitto_, &msg_id, link->GetTopic().c_str(), payload.size(), payload.c_str(), link->GetQoS(), 0);
+		if (ret != 0)
 		{
 			link->IncreaseNumberOfErrorMessages();
-			TRACE_ERROR("Failed to produce : " << RdKafka::err2str(error_code));
+			TRACE_ERROR("Failed to produce : " << ret);
 			return	true;
 		}
 
 		if (message.GetMsgType() != MSG_TYPE_RCS_CONFIRM)
 		{
-			message_map_.insert(std::pair<std::string, Produce*>(message.GetMsgID(), _produce));
+			message_map_.insert(std::pair<int, Produce*>(msg_id, _produce));
 		}
 
 		link->IncreaseNumberOfOutGoingMessages();
@@ -1634,4 +1485,102 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 	}
 
 	return	false;
+}
+
+void ServerLinkerMosq::OnConnectCB(struct mosquitto *mosq, void *obj, int result)
+{
+	ServerLinkerMosq*	linker = (ServerLinkerMosq*)obj;
+
+	linker->broker_connected_ = true;
+	for(std::map<std::string, DownLink*>::iterator it = linker->down_link_map_.begin() ; it != linker->down_link_map_.end() ; it++)
+	{
+		it->second->Start();
+	}
+}
+
+void ServerLinkerMosq::OnDisconnectCB(struct mosquitto *_mosq, void *_obj, int _rc)
+{
+	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
+
+	for(std::map<std::string, DownLink*>::iterator it = linker->down_link_map_.begin() ; it != linker->down_link_map_.end() ; it++)
+	{
+		it->second->Stop();
+	}
+
+	linker->broker_connected_ = false;
+}
+
+void ServerLinkerMosq::OnPublishCB(struct mosquitto *_mosq, void *_obj, int _mid)
+{
+	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
+
+	std::map<int, Produce*>::iterator it = linker->message_map_.find(_mid);
+	if (it != linker->message_map_.end())
+	{
+		Produce*	produce = it->second;
+		TRACE_INFO2(linker, "The Message[" << _mid << "] was delivered");
+
+		uint64_t	expire_time = produce->GetMessage().GetTime().GetMicroSecond() + (linker->request_timeout_ * TIME_SECOND);
+
+		TRACE_INFO2(linker, "The request expiry time[" << expire_time << "] has been set in the request message[" << _mid << "].");
+		linker->request_map_[expire_time] = produce;
+		linker->message_map_.erase(it);
+	}
+}
+
+void	ServerLinkerMosq::OnLogCB(struct mosquitto *_mosq, void *_obj, int _level, const char *_str)
+{
+	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
+
+	TRACE_INFO2(linker, "Log : " << _str);
+}
+
+void	ServerLinkerMosq::OnSubscribeCB(struct mosquitto *_mosq, void *_obj, int mid, int qos_count, const int *granted_qos)
+{
+}
+
+void	ServerLinkerMosq::OnMessageCB(struct mosquitto *_mosq, void *_obj, const struct mosquitto_message *_message)
+{
+	ServerLinkerMosq*	linker = (ServerLinkerMosq *)_obj;
+	DownLink*	link = linker->GetDownLink(_message->topic);
+
+	if (link != NULL)
+	{
+		link->IncreaseNumberOfIncommingMessages();
+		link->Touch();
+
+		TRACE_INFO2(linker, _message->topic << " : " << _message->retain);
+		if (_message->payloadlen != 0)
+		{
+			std::string	payload = (char *)_message->payload;
+
+			size_t	close_brace_pos = payload.rfind('}');
+
+			if (close_brace_pos == std::string::npos)
+			{
+				link->IncreaseNumberOfErrorMessages();
+				TRACE_ERROR2(linker, "Invalid payload : " << payload);
+			}
+			else
+			{
+				payload = payload.substr(0, close_brace_pos+1);
+
+				try
+				{
+					Consume	*consume = new Consume(_message->topic, payload);
+					linker->Post(consume);
+				}
+				catch(std::exception& e)
+				{
+					link->IncreaseNumberOfErrorMessages();
+					TRACE_ERROR2(linker, "Exception : " << e.what());
+					TRACE_ERROR2(linker, "Invalid payload : " << payload);
+				}
+			}
+		}
+	}
+	else
+	{
+		TRACE_ERROR2(NULL, "Down link unknown!");	
+	}
 }

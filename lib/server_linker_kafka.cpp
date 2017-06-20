@@ -10,7 +10,7 @@
 #include "property.h"
 #include "endpoint.h"
 #include "endpoint_actuator.h"
-#include "server_linker.h"
+#include "server_linker_kafka.h"
 #include "rcs_message.h"
 #include "object_manager.h"
 #include "trace.h"
@@ -20,12 +20,12 @@
 #include "sha256.h"
 #include "utils.h"
 
-ServerLinker::Produce::Produce(std::string const& _topic, RCSMessage const& _message)
+ServerLinkerKafka::Produce::Produce(std::string const& _topic, RCSMessage const& _message)
 : Message(MSG_TYPE_SL_PRODUCE), topic_(_topic), message_(_message)
 {
 }
 
-ServerLinker::Produce::Produce(std::string const& _topic, std::string const& _payload)
+ServerLinkerKafka::Produce::Produce(std::string const& _topic, std::string const& _payload)
 : Message(MSG_TYPE_SL_PRODUCE), topic_(_topic)
 {
 	if (libjson::is_valid(_payload))
@@ -36,7 +36,7 @@ ServerLinker::Produce::Produce(std::string const& _topic, std::string const& _pa
 	}
 }
 
-ServerLinker::Consume::Consume(std::string const& _topic, std::string const& _payload)
+ServerLinkerKafka::Consume::Consume(std::string const& _topic, std::string const& _payload)
 : Message(MSG_TYPE_SL_CONSUME), topic_(_topic)
 {
 	if (libjson::is_valid(_payload))
@@ -47,7 +47,7 @@ ServerLinker::Consume::Consume(std::string const& _topic, std::string const& _pa
 	}
 }
 
-ServerLinker::EventCB::EventCB(ServerLinker& _linker)
+ServerLinkerKafka::EventCB::EventCB(ServerLinkerKafka& _linker)
 : Object(), RdKafka::EventCb(), linker_(_linker)
 {
 	trace.SetClassName(GetClassName());
@@ -55,7 +55,7 @@ ServerLinker::EventCB::EventCB(ServerLinker& _linker)
 	enable_ = true;
 }
 
-void	ServerLinker::EventCB::event_cb(RdKafka::Event &event) 
+void	ServerLinkerKafka::EventCB::event_cb(RdKafka::Event &event) 
 {
 	switch (event.type())
 	{   
@@ -90,7 +90,7 @@ void	ServerLinker::EventCB::event_cb(RdKafka::Event &event)
 	}   
 }
 
-ServerLinker::DeliveryReportCB::DeliveryReportCB(ServerLinker& _linker)
+ServerLinkerKafka::DeliveryReportCB::DeliveryReportCB(ServerLinkerKafka& _linker)
 : Object(), RdKafka::DeliveryReportCb(), linker_(_linker)
 {
 	trace.SetClassName(GetClassName());
@@ -98,7 +98,7 @@ ServerLinker::DeliveryReportCB::DeliveryReportCB(ServerLinker& _linker)
 	enable_ = true;
 }
 
-void ServerLinker::DeliveryReportCB::dr_cb (RdKafka::Message &data) 
+void ServerLinkerKafka::DeliveryReportCB::dr_cb (RdKafka::Message &data) 
 {
 
 	Produce *produce = (Produce*) data.msg_opaque();
@@ -128,9 +128,9 @@ void ServerLinker::DeliveryReportCB::dr_cb (RdKafka::Message &data)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::Link
+//	Class ServerLinkerKafka::Link
 /////////////////////////////////////////////////////////////////////////////////////////////
-ServerLinker::Link::Link(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
+ServerLinkerKafka::Link::Link(ServerLinkerKafka& _linker, std::string const& _topic_name, int32_t _partition)
 : Object(), linker_(_linker), partition_(_partition), topic_name_(_topic_name), topic_(NULL)
 {
 	trace.SetClassName(GetClassName());
@@ -138,27 +138,27 @@ ServerLinker::Link::Link(ServerLinker& _linker, std::string const& _topic_name, 
 	enable_ = true;
 }
 
-bool	ServerLinker::Link::Touch()
+bool	ServerLinkerKafka::Link::Touch()
 {
 	keep_alive_timer_.Set(Date::GetCurrent() + Time(60000000));
 
 	return	true;
 }
 
-uint32_t	ServerLinker::Link::GetLiveTime()
+uint32_t	ServerLinkerKafka::Link::GetLiveTime()
 {
 	return	keep_alive_timer_.RemainTime().GetSeconds();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::UpLink
+//	Class ServerLinkerKafka::UpLink
 /////////////////////////////////////////////////////////////////////////////////////////////
-ServerLinker::UpLink::UpLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
+ServerLinkerKafka::UpLink::UpLink(ServerLinkerKafka& _linker, std::string const& _topic_name, int32_t _partition)
 : Link(_linker, _topic_name, _partition), number_of_out_going_messages_(0), number_of_error_messages_(0)
 {
 }
 
-bool	ServerLinker::UpLink::Start()
+bool	ServerLinkerKafka::UpLink::Start()
 {
 	if (topic_ == NULL)
 	{
@@ -176,7 +176,7 @@ bool	ServerLinker::UpLink::Start()
 	return	true;
 }
 
-bool	ServerLinker::UpLink::Stop()
+bool	ServerLinkerKafka::UpLink::Stop()
 {
 	if (topic_ != NULL)
 	{
@@ -195,7 +195,7 @@ bool	ServerLinker::UpLink::Stop()
 	return	true;
 }
 
-bool	ServerLinker::UpLink::Send(std::string const& _message)
+bool	ServerLinkerKafka::UpLink::Send(std::string const& _message)
 {
 	if (topic_ == NULL)
 	{
@@ -213,9 +213,9 @@ bool	ServerLinker::UpLink::Send(std::string const& _message)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::DownLink::ConsumCB
+//	Class ServerLinkerKafka::DownLink::ConsumCB
 /////////////////////////////////////////////////////////////////////////////////////////////
-void	ServerLinker::DownLink::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
+void	ServerLinkerKafka::DownLink::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
 {
 	if (_msg.err() == RdKafka::ERR_NO_ERROR)
 	{
@@ -230,14 +230,14 @@ void	ServerLinker::DownLink::ConsumeCB::consume_cb(RdKafka::Message& _msg, void 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::DownLink
+//	Class ServerLinkerKafka::DownLink
 /////////////////////////////////////////////////////////////////////////////////////////////
-ServerLinker::DownLink::DownLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition)
+ServerLinkerKafka::DownLink::DownLink(ServerLinkerKafka& _linker, std::string const& _topic_name, int32_t _partition)
 : Link(_linker, _topic_name, _partition), message_cb_(*this), offset_(RdKafka::Topic::OFFSET_END), number_of_incomming_messages_(0), number_of_error_messages_(0)
 {
 }
 
-bool	ServerLinker::DownLink::Start()
+bool	ServerLinkerKafka::DownLink::Start()
 {
 	if (topic_ == NULL)
 	{
@@ -261,7 +261,7 @@ bool	ServerLinker::DownLink::Start()
 	return	true;
 }
 
-bool	ServerLinker::DownLink::Stop()
+bool	ServerLinkerKafka::DownLink::Stop()
 {
 	if (topic_ != NULL)
 	{
@@ -287,7 +287,7 @@ bool	ServerLinker::DownLink::Stop()
 	return	true;
 }
 
-bool	ServerLinker::DownLink::Consume(RdKafka::ConsumeCb* _consum_cb)
+bool	ServerLinkerKafka::DownLink::Consume(RdKafka::ConsumeCb* _consum_cb)
 {
 	if ((linker_.GetConsumer() != NULL) && (topic_ != NULL))
 	{
@@ -301,9 +301,9 @@ bool	ServerLinker::DownLink::Consume(RdKafka::ConsumeCb* _consum_cb)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker::ConsumCB
+//	Class ServerLinkerKafka::ConsumCB
 /////////////////////////////////////////////////////////////////////////////////////////////
-void	ServerLinker::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
+void	ServerLinkerKafka::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
 {
 	DownLink*	link = (DownLink *)opaque;
 	
@@ -361,9 +361,9 @@ void	ServerLinker::ConsumeCB::consume_cb(RdKafka::Message& _msg, void *opaque)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-//	Class ServerLinker
+//	Class ServerLinkerKafka
 /////////////////////////////////////////////////////////////////////////////////////////////
-ServerLinker::ServerLinker(ObjectManager* _manager)
+ServerLinkerKafka::ServerLinkerKafka(ObjectManager* _manager)
 : 	ProcessObject(), 
 	manager_(_manager), 
 	event_cb_(*this), 
@@ -391,7 +391,7 @@ ServerLinker::ServerLinker(ObjectManager* _manager)
 	conf_topic_ = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
 }
 
-ServerLinker::~ServerLinker()
+ServerLinkerKafka::~ServerLinkerKafka()
 {
 	delete conf_global_;
 	delete conf_topic_;
@@ -407,7 +407,7 @@ ServerLinker::~ServerLinker()
 	}
 }
 
-bool	ServerLinker::SetProperty(JSONNode const& _config, bool _check)
+bool	ServerLinkerKafka::SetProperty(JSONNode const& _config, bool _check)
 {
 	bool	ret_value = true;
 
@@ -423,30 +423,16 @@ bool	ServerLinker::SetProperty(JSONNode const& _config, bool _check)
 	{
 		ret_value = SetBroker(_config.as_string(), _check);
 	}
-	else if (_config.name() == TITLE_NAME_TOPIC)
-	{
 #if 0
-		for(JSONNode::const_iterator it = _config.begin(); it != _config.end() ; it++)
-		{
-			if (_config.name() == TITLE_NAME_VERSION)
-			{
-				ret_value = SetTopicVersion(_config.as_string(), _check);
-			}
-			else if (_config.name() == TITLE_NAME_GLOBAL_UP_NAME)
-			{
-				ret_value = SetGlobalUpName(_config.as_string(), _check);
-			}
-			else if (_config.name() == TITLE_NAME_GLOBAL_DOWN_NAME)
-			{
-				ret_value = SetGlobalDownName(_config.as_string(), _check);
-			}
-			else if (_config.name() == TITLE_NAME_ID)
-			{
-				ret_value = SetTopicID(_config.as_string(), _check);
-			}
-		}
-#endif
+	else if (_config.name() == TITLE_NAME_GLOBAL_UP_TOPIC)
+	{
+		ret_value = SetGlobalUpTopic(_config.as_string(), _check);
 	}
+	else if (_config.name() == TITLE_NAME_GLOBAL_DOWN_TOPIC)
+	{
+		ret_value = SetGlobalDownTopic(_config.as_string(), _check);
+	}
+#endif
 	else
 	{
 		ret_value = ProcessObject::SetProperty(_config, _check);	
@@ -455,16 +441,17 @@ bool	ServerLinker::SetProperty(JSONNode const& _config, bool _check)
 	return	ret_value;
 }
 
-ServerLinker::operator JSONNode() const
+ServerLinkerKafka::operator JSONNode() const
 {
 	JSONNode	root;
 
 	root.push_back(JSONNode(TITLE_NAME_HASH_ALG, hash_alg_name_));
 	root.push_back(JSONNode(TITLE_NAME_SECRET_KEY, secret_key_));
 	root.push_back(JSONNode(TITLE_NAME_BROKER, broker_));
-	//root.push_back(JSONNode(TITLE_NAME_GLOBAL_UP_TOPIC, global_up_topic_));
-	//root.push_back(JSONNode(TITLE_NAME_GLOBAL_DOWN_TOPIC, global_down_topic_));
-
+#if 0
+	root.push_back(JSONNode(TITLE_NAME_GLOBAL_UP_TOPIC, global_up_topic_));
+	root.push_back(JSONNode(TITLE_NAME_GLOBAL_DOWN_TOPIC, global_down_topic_));
+#endif
 	JSONNode	trace_config = trace;
 	trace_config.set_name(TITLE_NAME_TRACE);
 
@@ -473,7 +460,7 @@ ServerLinker::operator JSONNode() const
 	return	root;
 }
 
-bool	ServerLinker::SetHashAlg(std::string const& _name, bool _check)
+bool	ServerLinkerKafka::SetHashAlg(std::string const& _name, bool _check)
 {
 	if (_name == "sha1")
 	{
@@ -513,7 +500,7 @@ bool	ServerLinker::SetHashAlg(std::string const& _name, bool _check)
 	return	true;
 }
 
-bool	ServerLinker::SetGlobalUpTopic(std::string const& _topic, bool _check)
+bool	ServerLinkerKafka::SetGlobalUpTopic(std::string const& _topic, bool _check)
 {
 	if (!_check)
 	{
@@ -523,12 +510,12 @@ bool	ServerLinker::SetGlobalUpTopic(std::string const& _topic, bool _check)
 	return	true;
 }
 
-const std::string&	ServerLinker::GetGlobalUpTopic()
+const std::string&	ServerLinkerKafka::GetGlobalUpTopic()
 {
 	return	global_up_topic_;
 }
 
-bool	ServerLinker::SetGlobalDownTopic(std::string const& _topic, bool _check)
+bool	ServerLinkerKafka::SetGlobalDownTopic(std::string const& _topic, bool _check)
 {
 	if (!_check)
 	{
@@ -538,12 +525,12 @@ bool	ServerLinker::SetGlobalDownTopic(std::string const& _topic, bool _check)
 	return	true;
 }
 
-const std::string&	ServerLinker::GetGlobalDownTopic()
+const std::string&	ServerLinkerKafka::GetGlobalDownTopic()
 {
 	return	global_down_topic_;
 }
 
-bool	ServerLinker::SetSecretKey(std::string const& _secret_key, bool _check)
+bool	ServerLinkerKafka::SetSecretKey(std::string const& _secret_key, bool _check)
 {
 	if (!_check)
 	{
@@ -553,14 +540,14 @@ bool	ServerLinker::SetSecretKey(std::string const& _secret_key, bool _check)
 	return	true;
 }
 
-bool	ServerLinker::GetSecretKey(std::string & _secret_key)
+bool	ServerLinkerKafka::GetSecretKey(std::string & _secret_key)
 {
 	_secret_key = secret_key_;
 
 	return	true;
 }
 
-bool	ServerLinker::SetBroker(std::string const& _broker, bool _check)
+bool	ServerLinkerKafka::SetBroker(std::string const& _broker, bool _check)
 {
 	if (!_check)
 	{
@@ -570,19 +557,19 @@ bool	ServerLinker::SetBroker(std::string const& _broker, bool _check)
 	return	true;
 }
 
-const std::string&	ServerLinker::GetBroker()
+const std::string&	ServerLinkerKafka::GetBroker()
 {
 	return	broker_;
 }
 
-bool		ServerLinker::SetAutoConnection(bool _auto)
+bool		ServerLinkerKafka::SetAutoConnection(bool _auto)
 {
 	auto_connection_ = _auto;
 
 	return	true;
 }
 
-bool		ServerLinker::SetAutoConnection(std::string const& _auto, bool _check)
+bool		ServerLinkerKafka::SetAutoConnection(std::string const& _auto, bool _check)
 {
 	bool	value;
 
@@ -605,7 +592,7 @@ bool		ServerLinker::SetAutoConnection(std::string const& _auto, bool _check)
 }
 
 
-uint32_t	ServerLinker::GetUpLink(std::vector<UpLink*>& _link_list)
+uint32_t	ServerLinkerKafka::GetUpLink(std::vector<UpLink*>& _link_list)
 {
 	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
@@ -615,7 +602,7 @@ uint32_t	ServerLinker::GetUpLink(std::vector<UpLink*>& _link_list)
 	return	_link_list.size();
 }
 
-uint32_t	ServerLinker::GetUpLink(std::list<std::string>& _topic_name_list)
+uint32_t	ServerLinkerKafka::GetUpLink(std::list<std::string>& _topic_name_list)
 {
 	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
@@ -625,7 +612,7 @@ uint32_t	ServerLinker::GetUpLink(std::list<std::string>& _topic_name_list)
 	return	_topic_name_list.size();
 }
 
-uint32_t	ServerLinker::GetDownLink(std::vector<DownLink*>& _link_list)
+uint32_t	ServerLinkerKafka::GetDownLink(std::vector<DownLink*>& _link_list)
 {
 	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
@@ -635,7 +622,7 @@ uint32_t	ServerLinker::GetDownLink(std::vector<DownLink*>& _link_list)
 	return	_link_list.size();
 }
 
-uint32_t	ServerLinker::GetDownLink(std::list<std::string>& _topic_name_list)
+uint32_t	ServerLinkerKafka::GetDownLink(std::list<std::string>& _topic_name_list)
 {
 	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
@@ -645,7 +632,7 @@ uint32_t	ServerLinker::GetDownLink(std::list<std::string>& _topic_name_list)
 	return	_topic_name_list.size();
 }
 
-RdKafka::Topic*	ServerLinker::CreateProducerTopic(std::string const& _topic_name, std::string& _error_string)
+RdKafka::Topic*	ServerLinkerKafka::CreateProducerTopic(std::string const& _topic_name, std::string& _error_string)
 {
 	RdKafka::Topic*	topic  = NULL;
 
@@ -665,7 +652,7 @@ RdKafka::Topic*	ServerLinker::CreateProducerTopic(std::string const& _topic_name
 	return	topic;
 }
 
-RdKafka::Topic*	ServerLinker::CreateConsumerTopic(std::string const& _topic_name, std::string& _error_string)
+RdKafka::Topic*	ServerLinkerKafka::CreateConsumerTopic(std::string const& _topic_name, std::string& _error_string)
 {
 	RdKafka::Topic* topic  = NULL;
 	
@@ -685,7 +672,7 @@ RdKafka::Topic*	ServerLinker::CreateConsumerTopic(std::string const& _topic_name
 	return	topic;
 }
 
-ServerLinker::UpLink*	ServerLinker::AddUpLink(std::string const& _topic_name, int32_t _partition)
+ServerLinkerKafka::UpLink*	ServerLinkerKafka::AddUpLink(std::string const& _topic_name, int32_t _partition)
 {
 	UpLink*	link = NULL;
 
@@ -715,7 +702,7 @@ ServerLinker::UpLink*	ServerLinker::AddUpLink(std::string const& _topic_name, in
 	return	link;
 }
 
-ServerLinker::UpLink*	ServerLinker::GetUpLink(std::string const& _topic_name)
+ServerLinkerKafka::UpLink*	ServerLinkerKafka::GetUpLink(std::string const& _topic_name)
 {
 	std::map<std::string, UpLink*>::iterator it = up_link_map_.find(_topic_name);
 	if (it == up_link_map_.end())
@@ -726,7 +713,7 @@ ServerLinker::UpLink*	ServerLinker::GetUpLink(std::string const& _topic_name)
 	return	it->second;	
 }
 
-bool		ServerLinker::DelUpLink(std::string const& _topic_name)
+bool		ServerLinkerKafka::DelUpLink(std::string const& _topic_name)
 {
 	std::map<std::string, UpLink*>::iterator it = up_link_map_.find(_topic_name);
 	if (it == up_link_map_.end())
@@ -743,11 +730,11 @@ bool		ServerLinker::DelUpLink(std::string const& _topic_name)
 	return	true;	
 }
 
-ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic_name, int32_t _partition)
+ServerLinkerKafka::DownLink*	ServerLinkerKafka::AddDownLink(std::string const& _topic_name, int32_t _partition)
 {
 	DownLink*	link = NULL;
 
-	link = ServerLinker::GetDownLink(_topic_name);
+	link = ServerLinkerKafka::GetDownLink(_topic_name);
 	if (link == NULL)
 	{
 		try
@@ -780,7 +767,7 @@ ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic_name
 	return	link;
 }
 
-bool		ServerLinker::DelDownLink(std::string const& _topic_name)
+bool		ServerLinkerKafka::DelDownLink(std::string const& _topic_name)
 {
 	std::map<std::string, DownLink*>::iterator it = down_link_map_.find(_topic_name);
 	if (it == down_link_map_.end())
@@ -796,7 +783,7 @@ bool		ServerLinker::DelDownLink(std::string const& _topic_name)
 	return	true;	
 }
 
-ServerLinker::DownLink*	ServerLinker::GetDownLink(std::string const& _topic_name)
+ServerLinkerKafka::DownLink*	ServerLinkerKafka::GetDownLink(std::string const& _topic_name)
 {
 	std::map<std::string, DownLink*>::iterator it = down_link_map_.find(_topic_name);
 	if (it == down_link_map_.end())
@@ -807,7 +794,7 @@ ServerLinker::DownLink*	ServerLinker::GetDownLink(std::string const& _topic_name
 	return	it->second;	
 }
 
-void	ServerLinker::Preprocess()
+void	ServerLinkerKafka::Preprocess()
 {
 	RdKafka::Conf::ConfResult result = conf_global_->set("metadata.broker.list", broker_, error_string_);
 	if (result != RdKafka::Conf::CONF_OK)
@@ -825,7 +812,7 @@ void	ServerLinker::Preprocess()
 	
 }
 
-void	ServerLinker::Process()
+void	ServerLinkerKafka::Process()
 {
 	if (IsConnected())
 	{
@@ -871,7 +858,7 @@ void	ServerLinker::Process()
 	ProcessObject::Process();
 }
 
-void	ServerLinker::Postprocess()
+void	ServerLinkerKafka::Postprocess()
 {
 	Disconnect();
 
@@ -879,7 +866,7 @@ void	ServerLinker::Postprocess()
 
 }
 
-bool	ServerLinker::Start()
+bool	ServerLinkerKafka::Start()
 {
 	if (broker_.length() == 0)
 	{
@@ -889,12 +876,12 @@ bool	ServerLinker::Start()
 	return	ProcessObject::Start();
 }
 
-bool	ServerLinker::IsConnected()
+bool	ServerLinkerKafka::IsConnected()
 {
 	return	broker_connected_;
 }
 
-bool	ServerLinker::Connect(uint32_t _delay_sec)
+bool	ServerLinkerKafka::Connect(uint32_t _delay_sec)
 {
 	if (!auto_connection_)
 	{
@@ -909,7 +896,7 @@ bool	ServerLinker::Connect(uint32_t _delay_sec)
 	return	true;
 }
 
-bool	ServerLinker::InternalConnect(uint32_t _delay_sec)
+bool	ServerLinkerKafka::InternalConnect(uint32_t _delay_sec)
 {
 	try
 	{
@@ -965,7 +952,7 @@ bool	ServerLinker::InternalConnect(uint32_t _delay_sec)
 	return	true;
 }
 
-bool	ServerLinker::Disconnect()
+bool	ServerLinkerKafka::Disconnect()
 {
 	if (auto_connection_)
 	{
@@ -980,7 +967,7 @@ bool	ServerLinker::Disconnect()
 	return	true;
 }
 
-bool	ServerLinker::InternalDisconnect()
+bool	ServerLinkerKafka::InternalDisconnect()
 {
 	broker_connected_ = false;
 
@@ -1010,7 +997,7 @@ bool	ServerLinker::InternalDisconnect()
 	return	true;
 }
 
-bool	ServerLinker::Send(RCSMessage const& _message)
+bool	ServerLinkerKafka::Send(RCSMessage const& _message)
 {
 	try
 	{
@@ -1025,14 +1012,14 @@ bool	ServerLinker::Send(RCSMessage const& _message)
 	return	true;
 }
 
-bool	ServerLinker::KeepAliveEnable(bool _enable)
+bool	ServerLinkerKafka::KeepAliveEnable(bool _enable)
 {
 	keep_alive_enable_ = _enable;
 
 	return	true;
 }
 
-bool	ServerLinker::ReportEPData(Endpoint* _ep)
+bool	ServerLinkerKafka::ReportEPData(Endpoint* _ep)
 {
 	RCSMessage	message(MSG_STR_REPORT);
 
@@ -1084,7 +1071,7 @@ bool	ServerLinker::ReportEPData(Endpoint* _ep)
 	return	true;
 }
 
-bool	ServerLinker::RequestInit(std::string const& _type, JSONNode& _payload)
+bool	ServerLinkerKafka::RequestInit(std::string const& _type, JSONNode& _payload)
 {
 	JSONNode	payload;
 
@@ -1096,7 +1083,7 @@ bool	ServerLinker::RequestInit(std::string const& _type, JSONNode& _payload)
 	return	true;
 }
 
-bool	ServerLinker::ReplyInit(std::string const& _type, std::string const& _req_id, JSONNode& _payload)
+bool	ServerLinkerKafka::ReplyInit(std::string const& _type, std::string const& _req_id, JSONNode& _payload)
 {
 	JSONNode	payload;
 
@@ -1109,7 +1096,7 @@ bool	ServerLinker::ReplyInit(std::string const& _type, std::string const& _req_i
 	return	true;
 }
 
-bool	ServerLinker::AddGateway(JSONNode& _payload, Gateway* _gateway, Fields const& _fields)
+bool	ServerLinkerKafka::AddGateway(JSONNode& _payload, Gateway* _gateway, Fields const& _fields)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_GATEWAY);
 	if (it != _payload.end())
@@ -1150,7 +1137,7 @@ bool	ServerLinker::AddGateway(JSONNode& _payload, Gateway* _gateway, Fields cons
 	return	true;
 }
 
-bool	ServerLinker::AddGateway(JSONNode& _payload, std::string const& _id)
+bool	ServerLinkerKafka::AddGateway(JSONNode& _payload, std::string const& _id)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_GATEWAY);
 	if (it != _payload.end())
@@ -1190,7 +1177,7 @@ bool	ServerLinker::AddGateway(JSONNode& _payload, std::string const& _id)
 	return	true;
 }
 
-bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Fields const& _fields)
+bool	ServerLinkerKafka::AddDevice(JSONNode& _payload, Device* _device, Fields const& _fields)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_DEVICE);
 	if (it != _payload.end())
@@ -1230,7 +1217,7 @@ bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Fields const& 
 	return	true;
 }
 
-bool	ServerLinker::AddDevice(JSONNode& _payload, std::string const& _id)
+bool	ServerLinkerKafka::AddDevice(JSONNode& _payload, std::string const& _id)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_DEVICE);
 	if (it != _payload.end())
@@ -1269,7 +1256,7 @@ bool	ServerLinker::AddDevice(JSONNode& _payload, std::string const& _id)
 	return	true;
 }
 
-bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields const& _fields)
+bool	ServerLinkerKafka::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields const& _fields)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_ENDPOINT);
 	if (it != _payload.end())
@@ -1308,7 +1295,7 @@ bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields c
 	return	true;
 }
 
-bool	ServerLinker::AddEndpoint(JSONNode& _payload, std::string const& _id)
+bool	ServerLinkerKafka::AddEndpoint(JSONNode& _payload, std::string const& _id)
 {
 	JSONNode::iterator it = _payload.find(TITLE_NAME_ENDPOINT);
 	if (it != _payload.end())
@@ -1349,7 +1336,7 @@ bool	ServerLinker::AddEndpoint(JSONNode& _payload, std::string const& _id)
 	return	true;
 }
 
-bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
+bool	ServerLinkerKafka::AddEPData(JSONNode& _payload, Endpoint* _ep)
 {
 	JSONNode	node;
 
@@ -1408,7 +1395,7 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
 	return	true;	
 }
 
-bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound)
+bool	ServerLinkerKafka::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound)
 {
 	JSONNode	node;
 	Endpoint::ValueMap	value_map;
@@ -1466,7 +1453,7 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_
 
 }
 
-bool	ServerLinker::Error(std::string const& _req_id ,std::string const& _err_msg)
+bool	ServerLinkerKafka::Error(std::string const& _req_id ,std::string const& _err_msg)
 {
 	RCSMessage	message(MSG_STR_ERROR);
 	
@@ -1475,7 +1462,7 @@ bool	ServerLinker::Error(std::string const& _req_id ,std::string const& _err_msg
 	return	Send(message);
 }
 
-bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception)
+bool	ServerLinkerKafka::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception)
 {
 	for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin() ; it != request_map_.end() ; it++)
 	{
@@ -1503,7 +1490,7 @@ bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bo
 }
 
 
-bool	ServerLinker::OnMessage(Message* _message)
+bool	ServerLinkerKafka::OnMessage(Message* _message)
 {
 	std::string	msg_id;
 	try
@@ -1536,7 +1523,7 @@ bool	ServerLinker::OnMessage(Message* _message)
 	return	true;
 }
 
-void	ServerLinker::OnConsume(Consume* _consume)
+void	ServerLinkerKafka::OnConsume(Consume* _consume)
 {
 	RCSMessage&	message = _consume->GetMessage();	
 
@@ -1600,7 +1587,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 	}
 }
 
-bool	ServerLinker::OnProduce(Produce* _produce)
+bool	ServerLinkerKafka::OnProduce(Produce* _produce)
 {
 	std::string topic	= _produce->GetTopic();
 	RCSMessage&	message = _produce->GetMessage();	
