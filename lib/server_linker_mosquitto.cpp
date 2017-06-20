@@ -74,7 +74,7 @@ uint32_t	ServerLinkerMosq::Link::GetLiveTime()
 //	Class ServerLinkerMosq::UpLink
 /////////////////////////////////////////////////////////////////////////////////////////////
 ServerLinkerMosq::UpLink::UpLink(ServerLinkerMosq& _linker, std::string const& _topic)
-: Link(_linker, _topic), number_of_out_going_messages_(0), number_of_error_messages_(0)
+: Link(_linker, _topic), number_of_out_going_messages_(0), number_of_error_messages_(0), qos_(0)
 {
 }
 
@@ -152,15 +152,22 @@ ServerLinkerMosq::DownLink::DownLink(ServerLinkerMosq& _linker, std::string cons
 
 bool	ServerLinkerMosq::DownLink::Start()
 {
-	mosquitto_subscribe(linker_.mosquitto_, NULL, topic_.c_str(), 0);
-
-	connected_ = true;
+	if (mosquitto_subscribe(linker_.mosquitto_, NULL, topic_.c_str(), 0) > 0)
+	{
+		TRACE_ERROR("Subscribe error : " << topic_);	
+	}
+	else
+	{
+		TRACE_INFO("Subscribe[" << topic_ << "] connected!!!");
+		connected_ = true;
+	}
 
 	return	true;
 }
 
 bool	ServerLinkerMosq::DownLink::Stop()
 {
+	TRACE_INFO("Subscribe[" << topic_ << "] disconnected!!!");
 	connected_ = false;
 
 	return	true;
@@ -199,6 +206,7 @@ ServerLinkerMosq::ServerLinkerMosq(ObjectManager* _manager)
 	mosquitto_max_inflight_messages_set(mosquitto_, 20);
 	mosquitto_opts_set(mosquitto_, MOSQ_OPT_PROTOCOL_VERSION, (void *)&protocol_version_);
 	mosquitto_log_callback_set(mosquitto_, OnLogCB);
+	mosquitto_publish_callback_set(mosquitto_, OnPublishCB);
 	mosquitto_subscribe_callback_set(mosquitto_, OnSubscribeCB);
 	mosquitto_connect_callback_set(mosquitto_, OnConnectCB);
 	mosquitto_disconnect_callback_set(mosquitto_, OnDisconnectCB);
@@ -780,27 +788,17 @@ bool	ServerLinkerMosq::InternalConnect(uint32_t _delay_sec)
 		else if (broker_retry_timeout_.RemainTime() == 0)
 		{
 			int	ret = mosquitto_connect(mosquitto_, broker_.c_str(), 1883, keep_alive_interval_);
-			
 			if (ret > 0)
 			{
 				TRACE_ERROR("Failed to connect to broker[" << broker_ << "] : " << ret);
 				THROW_CONNECT_TIMEOUT(mosquitto_strerror(ret));
 			}
 
-			TRACE_INFO("Up Link Count : " << up_link_map_.size());
-			for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
-			{
-				it->second->Start();
-			}
+			mosquitto_loop_start(mosquitto_);
+			Date date = Date::GetCurrent() + broker_retry_interval_;
+			broker_retry_timeout_.Set(date);
 
-			TRACE_INFO("Down Link Count : " << down_link_map_.size());
-			for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
-			{
-				it->second->Start();
-			}
-
-			TRACE_INFO("Connected to broker.");
-			broker_connected_ = true;
+			TRACE_INFO("Try Connect to broker.");
 		}
 	}
 	catch(std::exception& e)
@@ -833,6 +831,8 @@ bool	ServerLinkerMosq::Disconnect()
 
 bool	ServerLinkerMosq::InternalDisconnect()
 {
+	mosquitto_loop_stop(mosquitto_, true);
+
 	broker_connected_ = false;
 
 	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
@@ -1333,6 +1333,7 @@ bool	ServerLinkerMosq::ConfirmRequest(RCSMessage* _reply, std::string& _req_type
 		Produce*	produce = it->second;
 		RCSMessage&	message = produce->GetMessage();
 
+		TRACE_INFO("Msg ID : " << message.GetMsgID() << " - Req ID : " << _reply->GetReqID())
 		if (message.GetMsgID() == _reply->GetReqID())
 		{
 			_req_type = JSONNodeGetMsgType(message.GetPayload());
@@ -1429,9 +1430,9 @@ void	ServerLinkerMosq::OnConsume(Consume* _consume)
 	{
 		std::string	req_type;
 
-		if (!ConfirmRequest(&message, req_type))
+		if (!ConfirmRequest(&message, req_type, false))
 		{
-			THROW_REQUEST_TIMEOUT(&message);
+			Error(message.GetMsgID(), "");
 		}
 
 		manager_->GetRCSServer().Confirm(message, req_type);	
@@ -1440,7 +1441,7 @@ void	ServerLinkerMosq::OnConsume(Consume* _consume)
 	{
 		std::string	req_type;
 
-		if (!ConfirmRequest(&message, req_type))
+		if (!ConfirmRequest(&message, req_type, false))
 		{
 			manager_->GetRCSServer().Error(message);	
 		}
@@ -1480,7 +1481,7 @@ bool	ServerLinkerMosq::OnProduce(Produce* _produce)
 		link->IncreaseNumberOfOutGoingMessages();
 		link->Touch();
 
-		TRACE_INFO("  Topic : " << topic);
+		TRACE_INFO("  Topic : " << topic <<"[" << link->GetQoS() << "]");
 		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
 	}
 
@@ -1491,7 +1492,15 @@ void ServerLinkerMosq::OnConnectCB(struct mosquitto *mosq, void *obj, int result
 {
 	ServerLinkerMosq*	linker = (ServerLinkerMosq*)obj;
 
+	TRACE_INFO2(linker, "Connected to broker[!" << linker->GetBroker() << "]");
 	linker->broker_connected_ = true;
+	TRACE_INFO2(linker, "Up Link Count : " << linker->up_link_map_.size());
+	for(std::map<std::string, UpLink*>::iterator it = linker->up_link_map_.begin(); it != linker->up_link_map_.end() ; it++)
+	{
+		it->second->Start();
+	}
+
+	TRACE_INFO2(linker, "Down Link Count : " << linker->down_link_map_.size());
 	for(std::map<std::string, DownLink*>::iterator it = linker->down_link_map_.begin() ; it != linker->down_link_map_.end() ; it++)
 	{
 		it->second->Start();
@@ -1501,6 +1510,12 @@ void ServerLinkerMosq::OnConnectCB(struct mosquitto *mosq, void *obj, int result
 void ServerLinkerMosq::OnDisconnectCB(struct mosquitto *_mosq, void *_obj, int _rc)
 {
 	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
+
+	TRACE_INFO2(linker, "Disconnected from broker[" << linker->GetBroker() << "]");
+	for(std::map<std::string, UpLink*>::iterator it = linker->up_link_map_.begin(); it != linker->up_link_map_.end() ; it++)
+	{
+		it->second->Stop();
+	}
 
 	for(std::map<std::string, DownLink*>::iterator it = linker->down_link_map_.begin() ; it != linker->down_link_map_.end() ; it++)
 	{
@@ -1514,17 +1529,22 @@ void ServerLinkerMosq::OnPublishCB(struct mosquitto *_mosq, void *_obj, int _mid
 {
 	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
 
+	TRACE_INFO2(linker, "The Message[" << _mid << "] was delivered");
+
 	std::map<int, Produce*>::iterator it = linker->message_map_.find(_mid);
 	if (it != linker->message_map_.end())
 	{
 		Produce*	produce = it->second;
-		TRACE_INFO2(linker, "The Message[" << _mid << "] was delivered");
 
 		uint64_t	expire_time = produce->GetMessage().GetTime().GetMicroSecond() + (linker->request_timeout_ * TIME_SECOND);
 
 		TRACE_INFO2(linker, "The request expiry time[" << expire_time << "] has been set in the request message[" << _mid << "].");
 		linker->request_map_[expire_time] = produce;
 		linker->message_map_.erase(it);
+	}
+	else
+	{
+		TRACE_INFO2(linker, "Tth publish[" << _mid << "] not found!");	
 	}
 }
 
@@ -1537,6 +1557,9 @@ void	ServerLinkerMosq::OnLogCB(struct mosquitto *_mosq, void *_obj, int _level, 
 
 void	ServerLinkerMosq::OnSubscribeCB(struct mosquitto *_mosq, void *_obj, int mid, int qos_count, const int *granted_qos)
 {
+	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
+
+	TRACE_INFO2(linker, "Subscribe : " << mid);
 }
 
 void	ServerLinkerMosq::OnMessageCB(struct mosquitto *_mosq, void *_obj, const struct mosquitto_message *_message)
@@ -1544,6 +1567,7 @@ void	ServerLinkerMosq::OnMessageCB(struct mosquitto *_mosq, void *_obj, const st
 	ServerLinkerMosq*	linker = (ServerLinkerMosq *)_obj;
 	DownLink*	link = linker->GetDownLink(_message->topic);
 
+	TRACE_INFO2(linker, "Message Received : " << _message->topic);
 	if (link != NULL)
 	{
 		link->IncreaseNumberOfIncommingMessages();

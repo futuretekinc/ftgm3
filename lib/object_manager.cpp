@@ -1055,7 +1055,7 @@ std::string	ObjectManager::GetTopicNameGateway(std::string const& _id)
 {
 	std::ostringstream	topic;
 
-	topic << DEFAULT_CONST_MSG_VERSION << "_gw_" << _id;
+	topic << DEFAULT_CONST_MSG_VERSION << "/gw/" << _id;
 
 	return	topic.str();
 }
@@ -1064,7 +1064,7 @@ std::string	ObjectManager::GetTopicNameDevice(std::string const& _id)
 {
 	std::ostringstream	topic;
 
-	topic << DEFAULT_CONST_MSG_VERSION << "_dev_" << _id;
+	topic << DEFAULT_CONST_MSG_VERSION << "/dev/" << _id;
 
 	return	topic.str();
 }
@@ -1073,7 +1073,7 @@ std::string	ObjectManager::GetTopicNameEndpoint(std::string const& _id)
 {
 	std::ostringstream	topic;
 
-	topic << DEFAULT_CONST_MSG_VERSION << "_ep_" << _id;
+	topic << DEFAULT_CONST_MSG_VERSION << "/ep/" << _id;
 
 	return	topic.str();
 }
