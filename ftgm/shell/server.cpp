@@ -16,7 +16,7 @@ RetValue	ShellCommandServerLinker
 {
 	RetValue	ret_value = RET_VALUE_OK;
 	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
-	ServerLinker&	linker  = object_manager->GetServerLinker();
+	ServerLinkerMosq&	linker  = object_manager->GetServerLinker();
 
 	try
 	{
@@ -46,7 +46,7 @@ RetValue	ShellCommandServerLinker
 		{
 			if (_count < 3)
 			{
-				std::vector<ServerLinker::UpLink*>	up_link_array;
+				std::vector<ServerLinkerMosq::UpLink*>	up_link_array;
 
 				uint32_t	link_count = linker.GetUpLink(up_link_array);
 				std::cout << std::setw(40) << "TOPIC" << std::setw(16) << "Live Time" << std::setw(16) << "OUT GOING" <<  std::setw(16) << "ERROR" << std::endl;
@@ -58,7 +58,7 @@ RetValue	ShellCommandServerLinker
 					std::cout << std::setw(16) <<  up_link_array[i]->NumberOfErrorMessages() << std::endl;
 				}
 
-				std::vector<ServerLinker::DownLink*>	down_link_array;
+				std::vector<ServerLinkerMosq::DownLink*>	down_link_array;
 
 				link_count = linker.GetDownLink(down_link_array);
 				std::cout << std::setw(40) << "TOPIC" << std::setw(16) << "Live Time" << std::setw(16) << "INCOMMING" <<  std::setw(16) << "ERROR" << std::endl;
