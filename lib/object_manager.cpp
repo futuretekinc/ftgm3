@@ -64,7 +64,7 @@ bool	ObjectManager::SetAutoStart(bool _auto_start)
 	return	true;
 }
 
-Time const&	ObjectManager::GetEndpointReportInterval() const
+uint32_t ObjectManager::GetEndpointReportInterval() const
 {
 	return	endpoint_report_interval_;
 }

@@ -29,7 +29,7 @@ public:
 			bool		GetAutoStart();
 			bool		SetAutoStart(bool _auto_start);
 
-			Time const&	GetEndpointReportInterval() const;
+			uint32_t	GetEndpointReportInterval() const;
 			bool		SetEndpointReportInterval(Time const& _time);
 
 			bool		SetProperty(JSONNode const& _property, bool _check = false);
@@ -109,7 +109,7 @@ protected:
 	virtual	void		Postprocess();
 
 	bool				auto_start_;
-	Time				endpoint_report_interval_;
+	uint32_t			endpoint_report_interval_;
 	Timer				endpoint_report_timer_;
 
 	DataManager							data_manager_;
