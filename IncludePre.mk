@@ -1,8 +1,55 @@
 # IncludePre.mk
 
-CC = g++
-AR = ar
-RANLIB = ranlib
+TARGET="FTM-50"
+
+ifeq ($(RELEASE), 1)
+OBJS_DIR = Release
+DBG_FLAGS = -O2 -DNDEBUG
+else
+OBJS_DIR = Debug
+DBG_FLAGS = -g -O0 -DDEBUG
+endif
+
+
+ifeq ($(TARGET), "FTM-100")
+CROSS_COMPILE=arm-openwrt-linux-uclibcgnueabi-
+INC_DIRS =  -I$(PROJ_ROOT)/Include \
+			-I$(PROJ_ROOT)/lib \
+			-I$(PROJ_ROOT)/.. \
+			-I$(PROJ_ROOT)/../cortina/target/usr/local/include \
+			-I$(PROJ_ROOT)/../ftm/build/ftm-100s/_root/usr/include\
+			-I$(PROJ_ROOT)/../ftm/build/ftm-100s/_root/usr/local/include
+
+LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)\
+			-L$(PROJ_ROOT)/../cortina/target/usr/local/lib \
+			-L$(PROJ_ROOT)/../ftm/build/ftm-100s/_root/usr/lib \
+			-L$(PROJ_ROOT)/../ftm/build/ftm-100s/_root/usr/local/lib
+
+else
+ifeq ($(TARGET), "FTM-50")
+CROSS_COMPILE=armv5-linux-
+INC_DIRS =  -I$(PROJ_ROOT)/Include \
+			-I$(PROJ_ROOT)/lib \
+			-I$(PROJ_ROOT)/.. \
+			-I$(PROJ_ROOT)/../spear/target/usr/local/include\
+			-I$(PROJ_ROOT)/../spear/KompexSQLiteWrapper-Source_1.11.14/inc\
+			-I$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/include\
+			-I$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/local/include
+
+LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)\
+			-L$(PROJ_ROOT)/../spear/target/usr/lib \
+			-L$(PROJ_ROOT)/../spear/target/usr/local/lib \
+			-L$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/lib \
+			-L$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/local/lib
+else
+INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../KompexSQLiteWrapper-Source_1.11.14/inc -I$(PROJ_ROOT)/..
+LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)
+endif
+endif
+
+CC = $(CROSS_COMPILE)g++
+AR = $(CROSS_COMPILE)ar
+RANLIB = $(CROSS_COMPILE)ranlib
 RM = rm
 MKDIR = mkdir
 MAKE = make
@@ -13,18 +60,4 @@ ROOT_OUT_DIR = $(PROJ_ROOT)/out
 ROOT_LIB_DIR = $(ROOT_OUT_DIR)/lib
 ROOT_BIN_DIR = $(ROOT_OUT_DIR)/bin
 
-INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../KompexSQLiteWrapper-Source_1.11.14/inc -I$(PROJ_ROOT)/..
-
-ifeq ($(RELEASE), 1)
-OBJS_DIR = Release
-#DBG_FLAGS = -O2 -DNDEBUG -std=gnu++11
-DBG_FLAGS = -O2 -DNDEBUG
-else
-OBJS_DIR = Debug
-DBG_FLAGS = -g -O0 -DDEBUG
-#DBG_FLAGS = -g -O0 -DDEBUG -std=gnu++11
-endif
-
 DEPEND_FILE = $(OBJS_DIR)/depend_file
-
-LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)
