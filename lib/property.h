@@ -17,7 +17,7 @@
 		Fields();
 		Fields( bool	_correction_interval,
 				bool	_date,
-				bool	_dev_name,
+				bool	_port,
 				bool	_enable,
 				bool	_id,
 				bool	_ip,
@@ -45,7 +45,7 @@
 
 		bool	correction_interval:1;
 		bool	date:1;
-		bool	dev_name:1;
+		bool	port:1;
 		bool	enable:1;
 		bool	id:1;
 		bool	ip:1;

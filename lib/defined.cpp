@@ -17,6 +17,9 @@ const char*	NODE_TYPE_GW_GEN				=	"gw_gen";
 const char*	NODE_TYPE_DEV_SNMP				=	"dev_snmp";
 const char*	NODE_TYPE_DEV_FTE				=	"dev_fte";
 
+const char*	NODE_TYPE_DEV_MODBUS			=	"dev_modbus";
+const char*	NODE_TYPE_DEV_GTC_520A			=	"dev_gtc_520a";
+
 const char*	NODE_TYPE_EP_S_DISCRETE			=	"ep_s_discrete";
 const char*	NODE_TYPE_EP_S_LINEAR			=	"ep_s_linear";
 const char*	NODE_TYPE_EP_S_TEMPERATURE		=	"ep_s_temperature";

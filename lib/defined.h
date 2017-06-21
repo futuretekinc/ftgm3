@@ -48,6 +48,9 @@ extern	const char*	NODE_TYPE_GW_GEN;
 extern	const char*	NODE_TYPE_DEV_SNMP;
 extern	const char*	NODE_TYPE_DEV_FTE;
 
+extern	const char*	NODE_TYPE_DEV_MODBUS;
+extern	const char*	NODE_TYPE_DEV_GTC_520A;
+
 extern	const char*	NODE_TYPE_EP_S_DISCRETE;
 extern	const char*	NODE_TYPE_EP_S_LINEAR;
 extern	const char*	NODE_TYPE_EP_S_TEMPERATURE;
@@ -159,6 +162,7 @@ RET_CONST(NOT_ACTUATOR, "Not actuator.");
 RET_CONST(TIME_EXPIRED, "Time expired.");
 
 TITLE_NAME(AUTO_START, "auto_start");
+TITLE_NAME(BAUDRATE, "baudrate");
 TITLE_NAME(BROKER, "broker");
 TITLE_NAME(RCS_SERVER, "rcs_server");
 TITLE_NAME(CMD, "cmd");
@@ -210,6 +214,8 @@ TITLE_NAME(MSG_TYPE, "msg_type");
 TITLE_NAME(NAME, "name");
 TITLE_NAME(OBJECT_MANAGER, "object_manager");
 TITLE_NAME(PARENT_ID, "parent_id");
+TITLE_NAME(PARITY_BIT, "parity_bit");
+TITLE_NAME(DATA_BIT, "data_bit");
 TITLE_NAME(PATH, "path");
 TITLE_NAME(PORT, "port");
 TITLE_NAME(REGISTERED,  "registered");

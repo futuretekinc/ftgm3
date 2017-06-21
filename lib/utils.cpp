@@ -340,6 +340,15 @@ std::string ToString(int _value)
 	return	oss.str();
 }
 
+std::string ToString(uint16_t _value)
+{
+	std::ostringstream oss;
+
+	oss << _value;
+
+	return	oss.str();
+}
+
 std::string ToString(uint32_t _value)
 {
 	std::ostringstream oss;
