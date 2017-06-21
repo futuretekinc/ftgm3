@@ -845,7 +845,7 @@ void	ServerLinkerKafka::Process()
 	{
 		for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin(); it != request_map_.upper_bound(current) ; it++)
 		{
-			if (it->second->GetMessage().GetMsgType() != MSG_STR_KEEP_ALIVE)
+			if (it->second->GetMessage().GetMsgType() != MSG_TYPE_RCS_KEEP_ALIVE)
 			{
 				TRACE_ERROR("Requst Timeout : " <<  it->second->GetMessage().GetMsgID());
 				TRACE_ERROR("Msg Type : " <<  it->second->GetMessage().GetMsgType());
@@ -1021,7 +1021,7 @@ bool	ServerLinkerKafka::KeepAliveEnable(bool _enable)
 
 bool	ServerLinkerKafka::ReportEPData(Endpoint* _ep)
 {
-	RCSMessage	message(MSG_STR_REPORT);
+	RCSMessage	message(MSG_TYPE_RCS_REPORT);
 
 	time_t	last_time = 0;
 
@@ -1455,7 +1455,7 @@ bool	ServerLinkerKafka::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _l
 
 bool	ServerLinkerKafka::Error(std::string const& _req_id ,std::string const& _err_msg)
 {
-	RCSMessage	message(MSG_STR_ERROR);
+	RCSMessage	message(MSG_TYPE_RCS_ERROR);
 	
 	message.SetReqID(_req_id);
 
@@ -1529,7 +1529,7 @@ void	ServerLinkerKafka::OnConsume(Consume* _consume)
 
 	TRACE_INFO("Paylod : " << message.GetPayload().write_formatted());
 
-	if (message.GetMsgType() == MSG_STR_ADD)
+	if (message.GetMsgType() == MSG_TYPE_RCS_ADD)
 	{
 		RCSMessage	reply;
 
@@ -1537,7 +1537,7 @@ void	ServerLinkerKafka::OnConsume(Consume* _consume)
 
 		Send(reply);
 	}
-	else if (message.GetMsgType() == MSG_STR_DEL)
+	else if (message.GetMsgType() == MSG_TYPE_RCS_DEL)
 	{
 		RCSMessage	reply;
 
@@ -1545,7 +1545,7 @@ void	ServerLinkerKafka::OnConsume(Consume* _consume)
 
 		Send(reply);
 	}
-	else if (message.GetMsgType() == MSG_STR_GET)
+	else if (message.GetMsgType() == MSG_TYPE_RCS_GET)
 	{
 		RCSMessage	reply;
 
@@ -1553,7 +1553,7 @@ void	ServerLinkerKafka::OnConsume(Consume* _consume)
 
 		Send(reply);
 	}
-	else if (message.GetMsgType() == MSG_STR_SET)
+	else if (message.GetMsgType() == MSG_TYPE_RCS_SET)
 	{
 		RCSMessage	reply;
 
@@ -1561,7 +1561,7 @@ void	ServerLinkerKafka::OnConsume(Consume* _consume)
 
 		Send(reply);
 	}
-	else if (message.GetMsgType() == MSG_STR_CONFIRM)
+	else if (message.GetMsgType() == MSG_TYPE_RCS_CONFIRM)
 	{
 		std::string	req_type;
 
@@ -1572,7 +1572,7 @@ void	ServerLinkerKafka::OnConsume(Consume* _consume)
 
 		manager_->GetRCSServer().Confirm(message, req_type);	
 	}
-	else if (message.GetMsgType() == MSG_STR_ERROR)
+	else if (message.GetMsgType() == MSG_TYPE_RCS_ERROR)
 	{
 		std::string	req_type;
 

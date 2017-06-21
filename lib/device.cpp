@@ -227,10 +227,8 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 
 	for(std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
 	{
-		TRACE_INFO("it->second.ReminaTime() = " << it->second.RemainTime() << ", Timer.Remain() = " << _timer.RemainTime() << ")");
 		if (it->second.RemainTime() > _timer.RemainTime())
 		{
-			TRACE_INFO("AddSchedule(" << _id << "," << _timer.RemainTime() << ")");
 			endpoint_schedule_list_.insert(it, std::pair<std::string, Timer>(_id, _timer));	
 			last = false;
 			break;
@@ -239,7 +237,6 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 
 	if (last)
 	{
-		TRACE_INFO("AddSchedule at last(" << _id << "," << _timer.RemainTime() << ")");
 		endpoint_schedule_list_.insert(endpoint_schedule_list_.end(), std::pair<std::string, Timer>(_id, _timer));	
 	}
 

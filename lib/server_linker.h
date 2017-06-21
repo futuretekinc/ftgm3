@@ -4,7 +4,6 @@
 #include <list>
 #include "defined.h"
 #include "process_object.h"
-#include "librdkafka/rdkafkacpp.h"
 #include "timer.h"
 #include "rcs_message.h"
 
@@ -29,9 +28,12 @@ public:
 			const 	std::string&	GetTopic()		{	return	topic_;	}
 					RCSMessage&		GetMessage()	{	return	message_;}
 
+					uint32_t		GetTransmissionCount()		{	return	transmission_count_;	};
+					uint32_t		IncTransmissionCount()		{	return	++transmission_count_;	};
 		protected:
 			std::string	topic_;
 			RCSMessage	message_;
+			uint32_t	transmission_count_;
 	};
 
 	class	Consume : public Message
@@ -46,46 +48,21 @@ public:
 			RCSMessage	message_;
 	};
 
-	class EventCB : public RdKafka::EventCb, Object
-	{
-	public:
-					EventCB(ServerLinker& _linker);
-
-			void 	event_cb (RdKafka::Event &_event) ;
-
-	protected:
-		ServerLinker&	linker_;
-	};
-
-	class DeliveryReportCB : public RdKafka::DeliveryReportCb, Object
-	{
-	public:
-					DeliveryReportCB(ServerLinker& _linker);
-
-			void 	dr_cb (RdKafka::Message &_message) ;
-
-	protected:
-		ServerLinker&	linker_;
-	};
-
 	class Link : public Object
 	{
 	public:
-		Link(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition = DEFAULT_CONST_MSG_PARTITION);
+		Link(ServerLinker* _linker, std::string const& _topic);
 
 		
-	//	RdKafka::Topic*	GetTopic()	{ return	topic_;	};
-const	std::string&	GetTopic()	{ return	topic_name_;	};
-		int32_t			GetPartition()	{ return	partition_;	};
+const	std::string&	GetTopic()	{ return	topic_;	};
 
 		bool			Touch();
 		uint32_t		GetLiveTime();
 
 	protected:
-		ServerLinker&	linker_;
-		std::string		topic_name_;
-		RdKafka::Topic*	topic_;
-		int32_t			partition_;
+		ServerLinker*	linker_;
+		std::string		topic_;
+		bool			connected_;
 		std::string		error_string_;
 		Timer			keep_alive_timer_;
 	};
@@ -93,11 +70,15 @@ const	std::string&	GetTopic()	{ return	topic_name_;	};
 	class UpLink: public Link
 	{
 	public:
-					UpLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition = DEFAULT_CONST_MSG_PARTITION);
+					UpLink(ServerLinker* _linker, std::string const& _topic);
 
-			bool	Start();
-			bool	Stop();
-			bool	Send(std::string const& _message);
+		virtual	bool	Start();
+		virtual	bool	Stop();
+		virtual	bool	Send(std::string const& _message);
+		virtual	bool	Send(std::string const& _message, std::string& _msg_id);
+
+			uint32_t	GetQoS()	{	return	qos_;	}
+			bool		SetQoS(uint32_t _qos);
 
 			uint32_t	IncreaseNumberOfOutGoingMessages()	{	return	++number_of_out_going_messages_;	};
 			uint32_t	IncreaseNumberOfErrorMessages()		{	return	++number_of_error_messages_;	};
@@ -106,6 +87,8 @@ const	std::string&	GetTopic()	{ return	topic_name_;	};
 			uint32_t	NumberOfErrorMessages()		{	return	number_of_error_messages_;	};
 
 	protected:
+		uint32_t		qos_;
+
 		uint32_t		number_of_out_going_messages_;
 		uint32_t		number_of_error_messages_;
 	};
@@ -113,27 +96,10 @@ const	std::string&	GetTopic()	{ return	topic_name_;	};
 	class DownLink: public Link
 	{
 	public:
-		class	ConsumeCB : public RdKafka::ConsumeCb
-		{
-		public:
-			ConsumeCB(ServerLinker::DownLink& _link) : ConsumeCb(), link_(_link) {};
+					DownLink(ServerLinker* _linker, std::string const& _topic);
 
-		protected:
-				void	consume_cb(RdKafka::Message& _msg, void *opaque);
-			DownLink&	link_;
-		};
-
-					DownLink(ServerLinker& _linker, std::string const& _topic_name, int32_t _partition = DEFAULT_CONST_MSG_PARTITION);
-
-			bool		Start();
-			bool		Stop();
-
-			bool		Consume(RdKafka::ConsumeCb* _consum_cb);
-
-			ConsumeCB*	GetConsumCB()	{	return	&message_cb_;	};
-
-			int64_t		GetOffset()		{	return	offset_;	};
-			int64_t		SetOffset(int64_t _offset)		{	return	offset_ = _offset;	};
+		virtual	bool		Start();
+		virtual	bool		Stop();
 
 			uint32_t	IncreaseNumberOfIncommingMessages()	{	return	++number_of_incomming_messages_;	};
 			uint32_t	IncreaseNumberOfErrorMessages()		{	return	++number_of_error_messages_;	};
@@ -143,34 +109,29 @@ const	std::string&	GetTopic()	{ return	topic_name_;	};
 			
 	protected:
 
-		ConsumeCB		message_cb_;
-		int64_t			offset_;
-
 		uint32_t		number_of_incomming_messages_;
 		uint32_t		number_of_error_messages_;
 	};
 
-	class	ConsumeCB : public RdKafka::ConsumeCb
-	{
-	public:
-		friend	class	ServerLinker;
-		ConsumeCB(ServerLinker& _linker) : ConsumeCb(), linker_(_linker) {};
-
-	protected:
-			void	consume_cb(RdKafka::Message& _msg, void *opaque);
-		ServerLinker&	linker_;
-	};
-
 						ServerLinker(ObjectManager* _manager= NULL);
-						~ServerLinker();
+	virtual				~ServerLinker();
 
-			bool		SetProperty(JSONNode const& _property, bool _check = false); 
-			virtual		operator JSONNode() const;
+	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false); 
+	virtual				operator JSONNode() const;
+
+	const std::string&	GetTopicVersion();		
+			bool		SetTopicVersion(std::string const& _version, bool _check = false);
+
+	const std::string&	GetTopicID();		
+			bool		SetTopicID(std::string const& _id, bool _check = false);
+
+	const std::string&	GetGlobalUpName();		
+			bool		SetGlobalUpName(std::string const& _name, bool _check = false);
+	const std::string&	GetGlobalDownName();		
+			bool		SetGlobalDownName(std::string const& _name, bool _check = false);
 
 	const std::string&	GetGlobalUpTopic();		
-			bool		SetGlobalUpTopic(std::string const& _topic, bool _check = false);
 	const std::string&	GetGlobalDownTopic();		
-			bool		SetGlobalDownTopic(std::string const& _topic, bool _check = false);
 
 			bool		SetHashAlg(std::string const& _name, bool _check = false);
 
@@ -183,37 +144,30 @@ const	std::string&	GetTopic()	{ return	topic_name_;	};
 			bool		SetAutoConnection(bool _auto);
 			bool		SetAutoConnection(std::string const& _auto, bool _check = false);
 
-			UpLink*		AddUpLink(std::string const& _topic_name, int32_t _partition = DEFAULT_CONST_MSG_PARTITION);
-			bool		DelUpLink(std::string const& _topic_name);
-			UpLink*		GetUpLink(std::string const& _topic_name);
+	virtual	UpLink*		CreateUpLink(std::string const& _topic);
+			UpLink*		AddUpLink(std::string const& _topic);
+			bool		DelUpLink(std::string const& _topic);
+			UpLink*		GetUpLink(std::string const& _topic);
 			uint32_t	GetUpLink(std::vector<UpLink*>& _link_array);
-			uint32_t	GetUpLink(std::list<std::string>& _topic_name_list);
+			uint32_t	GetUpLink(std::list<std::string>& _topic_list);
 
-			DownLink*	AddDownLink(std::string const& _topic_name, int32_t _partition = DEFAULT_CONST_MSG_PARTITION);
-			bool		DelDownLink(std::string const& _topic_name);
-			DownLink*	GetDownLink(std::string const& _topic_name);
+	virtual	DownLink*	CreateDownLink(std::string const& _topic);
+			DownLink*	AddDownLink(std::string const& _topic);
+			bool		DelDownLink(std::string const& _topic);
+			DownLink*	GetDownLink(std::string const& _topic);
 			uint32_t	GetDownLink(std::vector<DownLink*>& _link_array);
-			uint32_t	GetDownLink(std::list<std::string>& _topic_name_list);
+			uint32_t	GetDownLink(std::list<std::string>& _topic_list);
 
-			bool		Start();
-			bool		Connect(uint32_t _delay_sec = 0);
-			bool		Disconnect();
+	virtual	bool		Start();
+	virtual	bool		Connect(uint32_t _delay_sec = 0);
+	virtual	bool		Disconnect();
 			bool		IsConnected();
 
 			bool		Send(RCSMessage const& _message);
-			bool		Send(std::string const& _message);
-			bool		Send(std::string const& _msg_type, JSONNode& _payload);
-			bool		Send(std::string const& _msg_type, std::string const& _req_id,  JSONNode& _payload);
 
 			bool		KeepAlive(Node* _object);
 			bool		ResetKeepAliveTimer();
 			bool		KeepAliveEnable(bool _enable);
-
-
-			bool		AddNode(std::string const& _id);
-			bool		AddNode(Node* _node);
-			bool		GetNode(std::string const& _id);
-			bool		ConfirmNode(std::string const& _req_id, Node* _node);
 
 			bool		RequestInit(std::string const& _type, JSONNode& _payload);
 			bool		ReplyInit(std::string const& _type, std::string const& _req_id, JSONNode& _payload);
@@ -223,79 +177,51 @@ const	std::string&	GetTopic()	{ return	topic_name_;	};
 			bool		AddDevice(JSONNode& _payload, std::string const& _id);
 			bool		AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields const& _fields);
 			bool		AddEndpoint(JSONNode& _payload, std::string const& _id);
-
-			bool		OnMessage(Message* _message);
-			bool		GetEPDataInfo(Endpoint* _ep);
-			bool		ConfirmEPDataInfo(Endpoint* _ep);
-			bool		ReportEPData(Endpoint* _ep);
 			bool		AddEPData(JSONNode& _payload, Endpoint* _ep);
 			bool		AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound);
+
+	virtual	bool		OnMessage(Message* _message);
+			bool		ReportEPData(Endpoint* _ep);
 
 			bool		Error(std::string const& _req_id, std::string const& _err_msg);
 
 
 protected:
-	RdKafka::Producer*	GetProducer()	{	return	producer_;	};
-	RdKafka::Consumer*	GetConsumer()	{	return	consumer_;	};
-	RdKafka::Topic*		CreateProducerTopic(std::string const& _topic_name, std::string& _error_string);
-	RdKafka::Topic*		CreateConsumerTopic(std::string const& _topic_name, std::string& _error_string);
+			bool		SetGlobalUpTopic(std::string const& _version, std::string const& _name, std::string const& _id, bool _check = false);
+			bool		SetGlobalDownTopic(std::string const& _version, std::string const& _name, std::string const& _id, bool _check = false);
 
-			void		Preprocess();
-			void		Process();
-			void		Postprocess();
-			bool		InternalConnect(uint32_t _delay_sec = 0);
-			bool		InternalDisconnect();
+	virtual	void		Preprocess();
+	virtual	void		Process();
+	virtual	void		Postprocess();
 
-			bool		OnProduce(Produce* _produce);
-			void		OnConsume(Consume* _consume);
-			void		OnConsumeAdd(Message* _message);
-			void		OnConsumeDel(Message* _message);
-			void		OnConsumeGet(Message* _message);
-			void		OnConsumeSet(Message* _message);
-			void		OnConsumeConfirm(Message* _message);
-			void		OnConsumeError(Message* _message);
+	virtual	bool		OnProduce(Produce* _produce);
+	virtual	void		OnConsume(Consume* _consume);
 
-			void		OnAddGateway(JSONNode const& _node, JSONNode& _reply);
-			void		OnDelGateway(JSONNode const& _node, JSONNode& _reply);
-			void		OnGetGateway(JSONNode const& _node, JSONNode& _reply);
-			void		OnSetGateway(JSONNode const& _node, JSONNode& _reply);
-			void		OnConfirmGateway(JSONNode const& _node, std::string const& _req_type);
+	virtual	bool		ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception = true);
 
-			void		OnAddDevice(JSONNode const& _node, JSONNode& _reply);
-			void		OnDelDevice(JSONNode const& _node, JSONNode& _reply);
-			void		OnGetDevice(JSONNode const& _node, JSONNode& _reply);
-			void		OnSetDevice(JSONNode const& _node, JSONNode& _reply);
-			void		OnConfirmDevice(JSONNode const& _node, std::string const& _req_type);
-
-			void		OnAddEndpoint(JSONNode const& _node, JSONNode& _reply);
-			void		OnDelEndpoint(JSONNode const& _node, JSONNode& _reply);
-			void		OnGetEndpoint(JSONNode const& _node, JSONNode& _reply);
-			void		OnSetEndpoint(JSONNode const& _node, JSONNode& _reply);
-			void		OnConfirmEndpoint(JSONNode const& _node, std::string const& _req_type);
-
-			void		OnDelData(JSONNode const& _node, JSONNode& _reply);
-			void		OnGetData(JSONNode const& _node, JSONNode& _reply);
-			void		OnSetData(JSONNode const& _node, JSONNode& _reply);
-			void		OnConfirmEPData(JSONNode const& _node, std::string const& _req_type);
-			
 			std::string (*secret_code_hash_)(const std::string &string);
-
-			bool		ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception = true);
 
 	ObjectManager*		manager_;
 	std::string			secret_key_;
-	std::string			broker_;
-	std::string			global_up_topic_;
-	std::string			global_down_topic_;
 
-	RdKafka::Conf*		conf_global_;
-	RdKafka::Conf*		conf_topic_;
-
-	bool				keep_alive_enable_;
 	bool				auto_connection_;
+
+	std::string			broker_;
 	bool				broker_connected_;
 	Time				broker_retry_interval_;
 	Timer				broker_retry_timeout_;
+
+	uint32_t			retransmission_count_max_;
+
+	std::string			topic_version_;
+	std::string			global_up_name_;
+	std::string			global_down_name_;
+	std::string			topic_id_;
+	std::string			global_up_topic_;
+	std::string			global_down_topic_;
+
+	bool				keep_alive_enable_;
+	uint32_t			keep_alive_interval_;
 
 	uint64_t			request_timeout_;
 	bool				report_late_arrive_message_;
@@ -303,19 +229,13 @@ protected:
 	std::map<std::string, Produce*>		message_map_;
 	std::map<uint64_t, Produce*>		request_map_;
 
-	RdKafka::Producer*	producer_;
 	std::map<std::string, UpLink*>		up_link_map_;
 
-	RdKafka::Consumer*	consumer_;
 	std::map<std::string, DownLink*>	down_link_map_;
 
 	std::string			hash_alg_name_;
 
 	std::string			error_string_;
-
-	EventCB				event_cb_;
-	DeliveryReportCB	delivery_report_cb_;
-	ConsumeCB			consume_cb_;
 };
 
 #endif

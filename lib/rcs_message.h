@@ -16,7 +16,7 @@ class	RCSMessage
 {
 public:
 	RCSMessage(RCSMessage const& _message);
-	RCSMessage(std::string const& _type = MSG_STR_ERROR);
+	RCSMessage(std::string const& _type = MSG_TYPE_RCS_ERROR);
 	RCSMessage(JSONNode const& _message);
 
 	const 	std::string&	GetMsgID()		const	{	return	msg_id_;		}
