@@ -211,6 +211,15 @@ bool	Node::GetProperties(JSONNode& _properties, Fields const& _fields)
 		_properties.push_back(JSONNode(TITLE_NAME_TIME_OF_EXPIRE, TimeOfExpire()));
 	}
 
+	if (_fields.options)
+	{
+		JSONNode	options;
+
+		GetOptions(options);
+		
+		_properties.push_back(JSONNode(TITLE_NAME_OPTIONS, options.write()));
+	}
+
 	return	true;
 }
 
@@ -237,6 +246,23 @@ bool	Node::SetProperty(JSONNode const& _property, bool _check)
 		{
 			ret_value = SetKeepAliveInterval(_property.as_string(), _check);
 		}
+		else if (_property.name() == TITLE_NAME_OPTIONS)
+		{
+			if (!libjson::is_valid(_property.write()))
+			{
+				TRACE_INFO("Failed to set optoins!");
+				TRACE_INFO("Options : " << _property.write());
+				ret_value = false;
+			}
+			else
+			{
+				JSONNode	options = libjson::parse(_property.write());
+
+				TRACE_INFO("Set Options : " << options.write_formatted());
+
+				ret_value = SetOptions(options, _check);
+			}
+		}
 		else
 		{
 			ret_value = ActiveObject::SetProperty(_property, _check);
@@ -251,6 +277,19 @@ bool	Node::SetProperty(JSONNode const& _property, bool _check)
 
 	return	ret_value;
 
+}
+
+bool	Node::GetOptions(JSONNode& _properties)
+{
+	JSONNode	empty_options(JSON_NODE);
+
+	_properties = empty_options;
+	return	true;
+}
+
+bool	Node::SetOptions(JSONNode& _properties, bool _check)
+{
+	return	true;
 }
 
 bool	Node::ApplyChanges()
@@ -323,6 +362,7 @@ bool	Node::GetPropertyFieldList(std::list<std::string>& _field_list)
 	_field_list.push_back(TITLE_NAME_KEEP_ALIVE_INTERVAL);
 	_field_list.push_back(TITLE_NAME_LOCATION);
 	_field_list.push_back(TITLE_NAME_REGISTERED);
+	_field_list.push_back(TITLE_NAME_OPTIONS);
 
 	return	true;
 }

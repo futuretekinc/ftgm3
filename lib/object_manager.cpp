@@ -132,6 +132,7 @@ bool	ObjectManager::SetProperty(JSONNode const& _property, bool _check)
 						ret_value = false;
 						break;
 					}
+
 				}
 			}
 			else if (_property.type() == JSON_NODE)
@@ -335,6 +336,26 @@ Device*	ObjectManager::CreateDevice(JSONNode const& _properties, bool from_db)
 {
 	Device*		device = NULL;
 
+	bool		found_endpoint = false;
+	JSONNode	endpoint_property;
+	JSONNode::const_iterator endpoint_it = _properties.find(TITLE_NAME_ENDPOINT);
+
+	if (!from_db)
+	{
+		if (endpoint_it != _properties.end())
+		{
+			if (endpoint_it->type() == JSON_NODE)
+			{
+				endpoint_property = endpoint_it->as_node();
+			}
+			else if (endpoint_it->type() == JSON_ARRAY)
+			{
+				endpoint_property = endpoint_it->as_array();
+			}
+		}
+		found_endpoint = true;
+	}
+
 	device = Device::Create(*this, _properties);
 	if (device != NULL)
 	{
@@ -355,6 +376,35 @@ Device*	ObjectManager::CreateDevice(JSONNode const& _properties, bool from_db)
 			if (!gateway->Attach(device->GetID()))
 			{
 				TRACE_ERROR("Failed to attach device[" << device->GetTraceName() << "]");
+			}
+		}
+
+		if ((!from_db) && found_endpoint)
+		{
+		
+			if (endpoint_property.type() == JSON_NODE)
+			{
+				endpoint_property.push_back(JSONNode(TITLE_NAME_PARENT_ID, device->GetID()));		
+
+				Endpoint* endpoint = CreateEndpoint(endpoint_property);
+				if (endpoint == NULL)
+				{
+					TRACE_ERROR("Failed to create endpoint!");
+				}
+			}
+			else if (endpoint_property.type() == JSON_ARRAY)
+			{
+				for(JSONNode::iterator it = endpoint_property.begin() ; it != endpoint_property.end() ; it++)
+				{
+					it->push_back(JSONNode(TITLE_NAME_PARENT_ID, device->GetID()));		
+
+					Endpoint* endpoint = CreateEndpoint(*it);
+					if (endpoint == NULL)
+					{
+						TRACE_ERROR("Failed to create endpoint!");
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -715,6 +765,7 @@ void	ObjectManager::Preprocess()
 			{
 				for(JSONNode::const_iterator it = properties_array.begin() ; it != properties_array.end() ; it++)
 				{
+					TRACE_INFO("Device Create ");
 					Device*	device = CreateDevice(*it, true);
 					if (device == NULL)
 					{

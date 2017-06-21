@@ -50,11 +50,11 @@ RetValue	ShellCommandLoad
 					Gateway *gateway = manager->CreateGateway(config);
 					if (gateway != NULL)
 					{
-						std::cout << "Gateway[" << gateway->GetTraceName() << "] created"  << std::endl;	
+						_shell->Out() << "Gateway[" << gateway->GetTraceName() << "] created"  << std::endl;	
 					}
 					else
 					{
-						std::cout << "Failed to create device!" << std::endl;	
+						_shell->Out() << "Failed to create device!" << std::endl;	
 					}
 				}
 				catch(InvalidArgument& e)
@@ -71,14 +71,17 @@ RetValue	ShellCommandLoad
 				{
 					JSONNode	config = JSONNodeLoadFromFile(_arguments[i]);
 
-					Gateway *gateway = manager->CreateGateway(config);
-					if (gateway != NULL)
+					_shell->Out() << "Device Configuration" << std::endl;
+					_shell->Out() << config.write_formatted() << std::endl;
+
+					Device *device = manager->CreateDevice(config);
+					if (device != NULL)
 					{
-						std::cout << "Gateway[" << gateway->GetTraceName() << "] created"  << std::endl;	
+						_shell->Out() << "Device[" << device->GetTraceName() << "] created"  << std::endl;	
 					}
 					else
 					{
-						std::cout << "Failed to create device!" << std::endl;	
+						_shell->Out() << "Failed to create device!" << std::endl;	
 					}
 				}
 				catch(InvalidArgument& e)
@@ -95,7 +98,7 @@ RetValue	ShellCommandLoad
 
 	switch(ret_value)
 	{
-	case	RET_VALUE_INVALID_ARGUMENTS: std::cout << "Invalid arguments!" << std::endl;	break;
+	case	RET_VALUE_INVALID_ARGUMENTS: _shell->Out() << "Invalid arguments!" << std::endl;	break;
 	}
 
 	return	ret_value;

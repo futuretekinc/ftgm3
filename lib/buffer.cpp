@@ -7,6 +7,10 @@ Buffer::Buffer(int	_max_size)
 	{
 		max_size_ = 1024;
 	}
+	else
+	{
+		max_size_ = _max_size;
+	}
 
 	max_size_ += 1;
 	buffer_ = new char[max_size_];

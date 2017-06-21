@@ -12,9 +12,8 @@ public:
 	DeviceSerial(ObjectManager& _manager, std::string const& _type);
 	DeviceSerial(ObjectManager& _manager, std::string const& _type, std::string const& _port);
 
-	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields) ;
-
-	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
+	virtual	bool		GetOptions(JSONNode& _options);
+	virtual	bool		SetOptions(JSONNode& _options, bool _check = false);
 
 	const std::string&	GetPort();
 			bool		SetPort(const std::string& _port, bool _check = false);

@@ -54,10 +54,10 @@ bool	DataManager::Table::Add(JSONNode const& _properties)
 			count++;
 		}
 
-		query << ") VALUES (?";
+		query << ") VALUES (";
 		for(uint32_t i = 0 ; i < count ; i++)
 		{
-			if (count != 0)
+			if (i != 0)
 			{
 				query << ", ";
 			}
@@ -69,10 +69,18 @@ bool	DataManager::Table::Add(JSONNode const& _properties)
 		TRACE_INFO("Query : " << query.str());
 		statement->Sql(query.str());
 
-		for(JSONNode::const_iterator it = _properties.begin() ; it != _properties.end() ; it++)
+		for(JSONNode::const_iterator property = _properties.begin() ; property != _properties.end() ; property++)
 		{
-			statement->BindString(++index, it->as_string());
-			TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << it->as_string());
+			if (property->type() == JSON_NODE)
+			{
+				TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << property->write());
+				statement->BindString(++index, property->write());
+			}
+			else
+			{
+				TRACE_INFO("Bind[" << std::setw(2) << index << "] : " << std::setw(0) << property->as_string());
+				statement->BindString(++index, property->as_string());
+			}
 		}
 
 		statement->ExecuteAndFree();
@@ -84,9 +92,9 @@ bool	DataManager::Table::Add(JSONNode const& _properties)
 		TRACE_ERROR(e.what());
 		return	false;
 	}
-	catch(Kompex::SQLiteException &exception)
+	catch(Kompex::SQLiteException &e)
 	{
-		TRACE_ERROR("Failed to add object to table[" << name_ << "]");
+		TRACE_ERROR("Failed to add object to table[" << name_ << "] : " << e.GetString());
 		return	false;
 	}
 

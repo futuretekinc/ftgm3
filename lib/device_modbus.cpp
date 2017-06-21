@@ -11,6 +11,16 @@ DeviceModbus::DeviceModbus(ObjectManager& _manager, std::string const& _type)
 {
 }
 
+bool	DeviceModbus::ReadValue(std::string const& _id, time_t& _time, std::string& _value)
+{
+	return	false;
+}
+
+bool	DeviceModbus::ReadValue(std::string const& _id, time_t& _time, bool& _value)
+{
+	return	false;
+}
+
 bool	DeviceModbus::RequestAndWait(uint8_t* _request, uint32_t _request_len, uint8_t* _response, uint32_t _max_response_len, uint32_t& _response_len, uint32_t _timeout)
 {
 	Timer		response_timeout;

@@ -4,13 +4,13 @@
 #include "endpoint_sensor_linear.h"
 
 EndpointSensorLinear::EndpointSensorLinear(ObjectManager& _manager, std::string const& _type, std::string const& _unit, double _min, double _max)
-: EndpointSensor(_manager, _type, _unit), value_min_(_min), value_max_(_max)
+: EndpointSensor(_manager, _type, _unit), value_(0), value_min_(_min), value_max_(_max)
 {
 	trace.SetClassName(GetClassName());
 }
 
 EndpointSensorLinear::EndpointSensorLinear(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties, std::string const& _unit, double _min, double _max)
-: EndpointSensor(_manager, _type, _unit),value_min_(_min), value_max_(_max)
+: EndpointSensor(_manager, _type, _unit),value_(0), value_min_(_min), value_max_(_max)
 {
 	trace.SetClassName(GetClassName());
 	SetProperties(_properties, false, true);
@@ -35,6 +35,7 @@ bool	EndpointSensorLinear::IsValid(std::string const& _value)
 
 std::string EndpointSensorLinear::GetValue()
 {
+	TRACE_INFO("GetValue : " << value_);
 	return	ToString(value_, 2);
 }
 

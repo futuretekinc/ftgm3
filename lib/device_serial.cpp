@@ -20,6 +20,52 @@ DeviceSerial::DeviceSerial(ObjectManager& _manager, std::string const& _type, st
 {
 }
 
+bool	DeviceSerial::GetOptions(JSONNode& _options)
+{
+	JSONNode	options;
+
+	options.push_back(JSONNode(TITLE_NAME_NAME, dev_name_));
+	options.push_back(JSONNode(TITLE_NAME_BAUDRATE, GetBaudrate()));
+	options.push_back(JSONNode(TITLE_NAME_PARITY_BIT, GetParityBit()));
+	options.push_back(JSONNode(TITLE_NAME_DATA_BIT, GetDataBit()));
+	
+	_options = options;
+
+	return	true;
+}
+
+bool	DeviceSerial::SetOptions(JSONNode& _options, bool _check)
+{
+	bool ret_value = true;
+
+	for(JSONNode::iterator it = _options.begin() ; it != _options.end() ; it++)
+	{
+		if (it->name() == TITLE_NAME_NAME)
+		{
+			ret_value = SetPort(it->as_string(), _check);	
+		}
+		else if (it->name() == TITLE_NAME_BAUDRATE)
+		{
+			ret_value = SetBaudrate(it->as_int(), _check);	
+		}
+		else if (it->name() == TITLE_NAME_PARITY_BIT)
+		{
+			ret_value = SetParityBit(it->as_string(), _check);	
+		}
+		else if (it->name() == TITLE_NAME_DATA_BIT)
+		{
+			ret_value = SetDataBit(it->as_int(), _check);	
+		}
+
+		if (ret_value != true)
+		{
+			break;
+		}
+	}
+
+	return	ret_value;
+}
+
 const std::string&	DeviceSerial::GetPort()
 {
 	return	dev_name_;
@@ -236,71 +282,6 @@ bool	DeviceSerial::SetDataBit(uint32_t _data_bit, bool _check)
 	return	true;
 }
 
-bool	DeviceSerial::GetProperties(JSONNode& _properties, Fields const& _fields) 
-{
-	if (Device::GetProperties(_properties))
-	{
-		if (_fields.port)
-		{
-			JSONNode	port;
-
-			port.push_back(JSONNode(TITLE_NAME_NAME, dev_name_));
-			port.push_back(JSONNode(TITLE_NAME_BAUDRATE, GetBaudrate()));
-			port.push_back(JSONNode(TITLE_NAME_PARITY_BIT, GetParityBit()));
-			port.push_back(JSONNode(TITLE_NAME_DATA_BIT, GetDataBit()));
-			
-			port.set_name(TITLE_NAME_PORT);
-			_properties.push_back(port);
-		}
-
-		return	true;
-	}
-
-	return	false;
-}
-
-bool	DeviceSerial::SetProperty(JSONNode const& _property, bool _check)
-{
-	bool	ret_value = true;
-
-	if (_property.name() == TITLE_NAME_PORT)
-	{
-		if (_property.type() != JSON_NODE)
-		{
-			ret_value = false;
-		}
-		else
-		{
-			for(JSONNode::const_iterator it = _property.begin(); it != _property.end() ; it++)
-			{
-				if (it->name() == TITLE_NAME_NAME)
-				{
-					ret_value = SetPort(it->as_string(), _check);
-				}
-				else if (it->name() == TITLE_NAME_BAUDRATE)
-				{
-					ret_value = SetBaudrate(it->as_int(), _check);
-				}
-				else if (it->name() == TITLE_NAME_PARITY_BIT)
-				{
-					ret_value = SetParityBit(it->as_string(), _check);
-				}
-				else if (it->name() == TITLE_NAME_DATA_BIT)
-				{
-					ret_value = SetDataBit(it->as_int(), _check);
-				}
-			}
-		}
-	}
-	else
-	{
-		ret_value = Device::SetProperty(_property, _check);
-	}
-
-	return	ret_value;
-}
-
-  
 bool	DeviceSerial::Open()
 {
 	if (fd_ > 0)

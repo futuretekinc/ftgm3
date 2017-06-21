@@ -17,33 +17,49 @@ static std::map<std::string, Object*>	object_map;
 Object::Object()
 : parent_id_(""), enable_(false), trace(this), lazy_store_(false)
 {
-	md5wrapper*	md5 = new md5wrapper;
+	try
+	{
+		md5wrapper*	md5 = new md5wrapper;
 
-	date_ = Date::GetCurrent();
-	std::ostringstream	oss;
+		date_ = Date::GetCurrent();
+		std::ostringstream	oss;
 
-	oss << date_.GetMicroSecond();
+		oss << date_.GetMicroSecond();
 
-	id_ = md5->getHashFromString(oss.str());
+		id_ = md5->getHashFromString(oss.str());
 
-	name_ = std::string(id_);
+		name_ = std::string(id_);
 
-	object_map[id_] = this;
+		object_map[id_] = this;
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR2(NULL, e.what());
+		throw e;	
+	}
 }
 
 Object::Object(std::string const& _id)
 : parent_id_(""), id_(_id), enable_(false), trace(this)
 {
-	md5wrapper*	md5 = new md5wrapper;
+	try
+	{
+		md5wrapper*	md5 = new md5wrapper;
 
-	date_ = Date::GetCurrent();
-	std::ostringstream	oss;
+		date_ = Date::GetCurrent();
+		std::ostringstream	oss;
 
-	oss << date_.GetMicroSecond();
+		oss << date_.GetMicroSecond();
 
-	name_ = std::string(id_);
+		name_ = std::string(id_);
 
-	object_map[id_] = this;
+		object_map[id_] = this;
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR2(NULL, e.what());
+		throw e;	
+	}
 }
 
 Object::~Object()
@@ -495,6 +511,7 @@ bool	Object::SetProperties(JSONNode const& _config, bool _check, bool _create)
 			{
 				try
 				{
+					TRACE_INFO("SetPropertyr : " << it->name() << "-" << it->write());
 					if (SetProperty(*it, _check) == false)
 					{	
 						ret_value = false;

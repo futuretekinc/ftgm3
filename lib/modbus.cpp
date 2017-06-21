@@ -108,6 +108,11 @@ bool	ResponseFrame::ReadHoldingRegisters(int16_t* values, uint32_t _count)
 	return	true;
 }
 
+bool	ResponseFrame::WriteSingleRegister()
+{
+	return	true;
+}
+
 bool	ResponseFrame::IsValid()
 {
 	return	valid_;

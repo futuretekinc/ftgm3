@@ -17,7 +17,7 @@
 		Fields();
 		Fields( bool	_correction_interval,
 				bool	_date,
-				bool	_port,
+				bool	_options,
 				bool	_enable,
 				bool	_id,
 				bool	_ip,
@@ -45,7 +45,7 @@
 
 		bool	correction_interval:1;
 		bool	date:1;
-		bool	port:1;
+		bool	options:1;
 		bool	enable:1;
 		bool	id:1;
 		bool	ip:1;
@@ -73,7 +73,7 @@ Fields	operator+(Fields& _fields1, Fields& _fields2);
 
 extern Fields	PROPERTY_CORRECTION_INTERVAL;
 extern Fields	PROPERTY_DATE;
-extern Fields	PROPERTY_DEV_NAME;
+extern Fields	PROPERTY_OPTIONS;
 extern Fields	PROPERTY_ENABLE;	
 extern Fields	PROPERTY_ID;
 extern Fields	PROPERTY_IP;

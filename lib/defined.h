@@ -62,6 +62,7 @@ extern	const char*	NODE_TYPE_EP_S_PRESSURE;
 extern	const char*	NODE_TYPE_EP_S_WIND_SPEED;
 extern	const char*	NODE_TYPE_EP_S_SOIL_MOISTURE;
 extern	const char*	NODE_TYPE_EP_S_RAINFALL;
+extern	const char*	NODE_TYPE_EP_S_GAS;
 
 extern	const char*	NODE_TYPE_EP_A_LINEAR;
 extern	const char*	NODE_TYPE_EP_A_DISCRETE;
@@ -110,6 +111,10 @@ extern 	const char*	ENDPOINT_ACTUATOR_DO_UNIT;
 
 extern	const char*	ENDPOINT_ACTUATOR_DO_ON;
 extern	const char*	ENDPOINT_ACTUATOR_DO_OFF;
+
+extern 	double		ENDPOINT_SENSOR_GAS_MAX;
+extern 	double		ENDPOINT_SENSOR_GAS_MIN;
+extern 	const char*	ENDPOINT_SENSOR_GAS_UNIT;
 
 extern	const char*	SERVER_LINKER_TOPIC_VERSION;
 extern	const char*	SERVER_LINKER_TOPIC_ID;
@@ -213,11 +218,16 @@ TITLE_NAME(MSG_ID, "msg_id");
 TITLE_NAME(MSG_TYPE, "msg_type");
 TITLE_NAME(NAME, "name");
 TITLE_NAME(OBJECT_MANAGER, "object_manager");
+TITLE_NAME(OPTIONS, "options");
 TITLE_NAME(PARENT_ID, "parent_id");
 TITLE_NAME(PARITY_BIT, "parity_bit");
 TITLE_NAME(DATA_BIT, "data_bit");
 TITLE_NAME(PATH, "path");
 TITLE_NAME(PORT, "port");
+TITLE_NAME(PORT_NAME, "port_name");
+TITLE_NAME(PORT_BAUDRATE, "port_baudrate");
+TITLE_NAME(PORT_PARITY_BIT, "port_parity_bit");
+TITLE_NAME(PORT_DATA_BIT, "port_data_bit");
 TITLE_NAME(REGISTERED,  "registered");
 TITLE_NAME(REQ_ID,  "req_id");
 TITLE_NAME(RESULT,  "result");

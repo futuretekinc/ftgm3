@@ -27,7 +27,7 @@ public:
 
 	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
 
-	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties) = 0;
+	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties);
 
 			uint32_t	GetEndpointCount();
 	const std::string&	GetEndpointAt(int index);

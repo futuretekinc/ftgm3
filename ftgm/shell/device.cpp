@@ -325,54 +325,34 @@ bool	ShellCommandDeviceList(Shell* _shell)
 	uint32_t	name_len= 16;
 	uint32_t	type_len= 16;
 	uint32_t	stat_len= 16;
-	uint32_t	ip_len= 16;
-	uint32_t	module_len= 16;
-	uint32_t	community_len= 16;
+	uint32_t	options_len= 16;
 
 	std::cout << "Device count : " << object_manager->GetDeviceCount() << std::endl;
 
-	std::list<Device*>	snmp_list;
-	if (object_manager->GetDeviceList(DeviceSNMP::Type(), snmp_list) != 0)
+	std::list<Device*>	device_list;
+	if (object_manager->GetDeviceList(device_list) != 0)
 	{
-		std::cout << "* SNMP Device" << std::endl;
+		std::cout << "* Device" << std::endl;
 		std::cout << std::setw(id_len) << "ID";
 		std::cout << " " << std::setw(name_len) << "Name";
 		std::cout << " " << std::setw(type_len) << "Type";
 		std::cout << " " << std::setw(stat_len) << "Stat";
-		std::cout << " " << std::setw(ip_len) << "IP";
-		std::cout << " " << std::setw(module_len) << "Module";
-		std::cout << " " << std::setw(community_len) << "Community";
+		std::cout << " " << std::setw(options_len) << "Options";
 		std::cout << std::endl;
 
-		for(std::list<Device*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+		for(std::list<Device*>::iterator it = device_list.begin() ; it != device_list.end() ; it++)
 		{
-			DeviceSNMP *device = dynamic_cast<DeviceSNMP*>(*it);
 
-			std::cout << std::setw(id_len) << device->GetID();
-			std::cout << " " << std::setw(name_len) << device->GetName();
-			std::cout << " " << std::setw(type_len) << device->GetType();
-			std::cout << " " << std::setw(stat_len) << ToString(device->GetStat());
-			std::cout << " " << std::setw(ip_len) << device->GetIP();
-			std::cout << " " << std::setw(module_len) << device->GetModule();
-			std::cout << " " << std::setw(community_len) << device->GetCommunity();
-			std::cout << std::endl;	
-		}
-	}
+			JSONNode	options;
 
-	std::list<Device*>	mbtcp_list;
-	if (object_manager->GetDeviceList("d_mbtcp", mbtcp_list) != 0)
-	{
-		std::cout << "* MBTCP Device" << std::endl;
-		std::cout << std::setw(id_len) << "ID";
-		std::cout << " " << std::setw(name_len) << "Name";
-		std::cout << " " << std::setw(type_len) << "Type";
-		std::cout << std::endl;
-
-		for(std::list<Device*>::iterator it = mbtcp_list.begin() ; it != mbtcp_list.end() ; it++)
-		{
 			std::cout << std::setw(id_len) << (*it)->GetID();
 			std::cout << " " << std::setw(name_len) << (*it)->GetName();
 			std::cout << " " << std::setw(type_len) << (*it)->GetType();
+			std::cout << " " << std::setw(stat_len) << ToString((*it)->GetStat());
+			(*it)->GetOptions(options);
+
+			std::cout << " " << std::setw(stat_len) << options.write();
+
 			std::cout << std::endl;	
 		}
 	}

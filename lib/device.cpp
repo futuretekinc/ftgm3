@@ -10,6 +10,7 @@
 #include "device_snmp.h"
 #include "device_fte.h"
 #include "device_sim.h"
+#include "device_gtc_520a.h"
 #include "endpoint.h"
 #include "endpoint_sensor.h"
 
@@ -21,6 +22,18 @@ Device::Device(ObjectManager& _manager, std::string const& _type)
 Device::~Device()
 {
 }
+
+Endpoint*	Device::CreateEndpoint(JSONNode const& _properties)
+{
+	Endpoint* endpoint = manager_.CreateEndpoint(_properties);
+	if (endpoint != NULL)
+	{
+		Attach(endpoint->GetID());	
+	}
+
+	return	endpoint;
+}
+
 
 bool	Device::GetProperties(JSONNode& _properties, Fields const& _fields) 
 {
@@ -291,6 +304,10 @@ Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
 		{
 			device = new DeviceSIM(_manager, _properties);
 		}
+		else if (type == std::string(DeviceGTC520A::Type()))
+		{
+			device = new DeviceGTC520A(_manager, _properties);
+		}
 		else
 		{
 			TRACE_ERROR2(NULL, "Failed to create device. Device type[" << type << "] is not supported!");
@@ -299,6 +316,10 @@ Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
 	catch(ObjectNotFound& e)
 	{
 		TRACE_ERROR2(NULL, "Failed to create device. Device type unknown!");
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR2(&_manager, e.what());
 	}
 
 	return	device;
@@ -309,10 +330,10 @@ bool	Device::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
 	if (Node::GetPropertyFieldList(_field_list))
 	{
-		_field_list.push_back(TITLE_NAME_IP);
-		_field_list.push_back(TITLE_NAME_MODULE);
-		_field_list.push_back(TITLE_NAME_COMMUNITY);
-		_field_list.push_back(TITLE_NAME_TIMEOUT);
+//		_field_list.push_back(TITLE_NAME_IP);
+//		_field_list.push_back(TITLE_NAME_MODULE);
+//		_field_list.push_back(TITLE_NAME_COMMUNITY);
+//		_field_list.push_back(TITLE_NAME_TIMEOUT);
 	}
 
 	return	true;

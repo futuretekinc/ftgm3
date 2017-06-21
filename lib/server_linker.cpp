@@ -1138,7 +1138,6 @@ bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bo
 		Produce*	produce = it->second;
 		RCSMessage&	message = produce->GetMessage();
 
-		TRACE_INFO("Msg ID : " << message.GetMsgID() << " - Req ID : " << _reply->GetReqID())
 		if (message.GetMsgID() == _reply->GetReqID())
 		{
 			_req_type = JSONNodeGetMsgType(message.GetPayload());

@@ -9,7 +9,7 @@
  
 Fields	PROPERTY_CORRECTION_INTERVAL( true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
 Fields	PROPERTY_DATE				(false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
-Fields	PROPERTY_DEV_NAME			(false, false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
+Fields	PROPERTY_OPTIONS			(false, false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
 Fields	PROPERTY_ENABLE				(false, false, false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
 Fields	PROPERTY_ID					(false, false, false, false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
 Fields	PROPERTY_IP					(false, false, false, false, false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
@@ -41,7 +41,7 @@ Fields::Fields()
 {
 	correction_interval = false;
 	date = false;
-	port = false;
+	options = false;
 	enable = false;
 	id = false;
 	ip = false;
@@ -65,10 +65,10 @@ Fields::Fields()
 	time_of_expire = false;
 }
 
-Fields::Fields( bool	_correction_interval, bool	_date, bool	_port, bool	_enable, bool	_id, bool	_ip, bool	_keep_alive_interval, bool	_location, bool	_loop_interval, bool	_name,
+Fields::Fields( bool	_correction_interval, bool	_date, bool	_options, bool	_enable, bool	_id, bool	_ip, bool	_keep_alive_interval, bool	_location, bool	_loop_interval, bool	_name,
 				bool	_parent_id, bool	_registered, bool	_scale, bool	_sensor_id, bool	_snmp_module, bool	_snmp_community, bool	_time, bool	_timeout, bool	_type, bool	_value_min,
 				bool	_value_max, bool	_unit, bool	_update_interval, bool _time_of_expire)
-:correction_interval(_correction_interval), date(date), port(_port), enable(_enable), id(_id), ip(_ip), keep_alive_interval(_keep_alive_interval), location(_location), loop_interval(_loop_interval), name(_name),
+:correction_interval(_correction_interval), date(date), options(_options), enable(_enable), id(_id), ip(_ip), keep_alive_interval(_keep_alive_interval), location(_location), loop_interval(_loop_interval), name(_name),
 				parent_id(_parent_id), registered(_registered), scale(_scale), sensor_id(_sensor_id), snmp_module(_snmp_module), snmp_community(_snmp_community), time(_time), timeout(_timeout), type(_type),
 				value_min(_value_min), value_max(_value_max), unit(_unit), update_interval(_update_interval), time_of_expire(_time_of_expire)
 {
@@ -80,7 +80,7 @@ Fields	operator+(Fields& _field1, Fields& _fields2)
 
 	fields.correction_interval = _field1.correction_interval || _fields2.correction_interval;
 	fields.date = _field1.date || _fields2.date;
-	fields.port = _field1.port || _fields2.port;
+	fields.options= _field1.options || _fields2.options;
 	fields.enable = _field1.enable || _fields2.enable;
 	fields.id = _field1.id || _fields2.id;
 	fields.ip = _field1.ip || _fields2.ip;
@@ -110,7 +110,7 @@ Fields&	Fields::operator+=(Fields& _fields)
 {
 	correction_interval = correction_interval || _fields.correction_interval;
 	date = date || _fields.date;
-	port = port || _fields.port ;
+	options = options || _fields.options;
 	enable = enable || _fields.enable;
 	id = id || _fields.id;
 	ip = ip || _fields.ip;
@@ -146,9 +146,9 @@ bool	Fields::Set(std::string const& _field)
 	{
 		date = true;
 	}
-	else if (_field == TITLE_NAME_PORT)
+	else if (_field == TITLE_NAME_OPTIONS)
 	{
-		port = true;
+		options = true;
 	}
 	else if (_field == TITLE_NAME_ENABLE)
 	{

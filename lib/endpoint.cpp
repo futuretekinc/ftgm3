@@ -16,6 +16,7 @@
 #include "endpoint_sensor_windspeed.h"
 #include "endpoint_sensor_soilmoisture.h"
 #include "endpoint_sensor_rainfall.h"
+#include "endpoint_sensor_gas.h"
 #include "endpoint_actuator_do.h"
 #include "utils.h"
 
@@ -546,6 +547,7 @@ bool		Endpoint::IsValidType(std::string const& _type)
 	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_WIND_SPEED) == 0) ||
 	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_SOIL_MOISTURE) == 0) ||
 	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_RAINFALL) == 0) ||
+	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_GAS) == 0) ||
 	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_A_DO) == 0))
 	{	
 		return	true;
@@ -560,6 +562,8 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 	Endpoint*	endpoint = NULL;
 	try
 	{
+		TRACE_INFO2(&_manager, "Endpoint Properties : " << _properties.write_formatted());
+
 		std::string type = JSONNodeGetType(_properties);
 
 		if (type == NODE_TYPE_EP_S_TEMPERATURE)
@@ -601,6 +605,11 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 		{
 			endpoint = new EndpointSensorRainfall(_manager, _properties);
 			TRACE_INFO2(NULL, "The railfall endpoint[" << endpoint->GetID() <<"] created");
+		}
+		else if (type == NODE_TYPE_EP_S_GAS) 
+		{
+			endpoint = new EndpointSensorGAS(_manager, _properties);
+			TRACE_INFO2(NULL, "The gas endpoint[" << endpoint->GetID() <<"] created");
 		}
 		else if (type == NODE_TYPE_EP_A_DO)
 		{
