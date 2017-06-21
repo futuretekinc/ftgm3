@@ -235,7 +235,7 @@ RetValue	ShellCommandServerLinker
 				}
 			}
 
-			RCSMessage	message(MSG_STR_REPORT);
+			RCSMessage	message(MSG_TYPE_RCS_REPORT);
 
 //			for(auto it = endpoint_map.begin(); it != endpoint_map.end() ; it++)
 //			{
@@ -249,12 +249,12 @@ RetValue	ShellCommandServerLinker
 			RCSMessage	payload;
 			Fields	fields;
 
-			if ((_arguments[1] == MSG_STR_ADD) || (_arguments[1] == MSG_STR_SET))
+			if ((_arguments[1] == MSG_TYPE_RCS_ADD) || (_arguments[1] == MSG_TYPE_RCS_SET))
 			{
 				payload.SetMsgType(_arguments[1]);	
 				fields = PROPERTY_ALL;
 			}
-			else if ((_arguments[1] == MSG_STR_DEL) || (_arguments[1] == MSG_STR_GET))
+			else if ((_arguments[1] == MSG_TYPE_RCS_DEL) || (_arguments[1] == MSG_TYPE_RCS_GET))
 			{
 				payload.SetMsgType(_arguments[1]);	
 				fields = PROPERTY_ID;
