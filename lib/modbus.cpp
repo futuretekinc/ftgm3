@@ -12,21 +12,25 @@ RequestFrame::RequestFrame(FunctionCode _function, uint16_t _address, uint16_t _
 	{
 	case	READ_HOLDING_REGISTERS:
 		{
+			frame_.read_holding_registers.device	= 1;
 			frame_.read_holding_registers.function	= _function;
 			frame_.read_holding_registers.address	= htons(_address);
 			frame_.read_holding_registers.quantity	= htons(_value);
-			frame_size_ = 5;
-			response_size_ = 2 + _value*2;
+			frame_.read_holding_registers.crc		= htons(0xD5CA);
+			frame_size_ = 8;
+			response_size_ = 5 + _value*2;
 		}
 		break;
 
 	case	WRITE_SINGLE_REGISTER:
 		{
+			frame_.write_single_register.device		= 1;
 			frame_.write_single_register.function	= _function;
 			frame_.write_single_register.address	= htons(_address);
 			frame_.write_single_register.value		= htons(_value);
-			frame_size_ = 5;
-			response_size_ = 5;
+			frame_.write_single_register.crc		= htons(0xD5CA);
+			frame_size_ = 8;
+			response_size_ = 8;
 		}
 		break;
 	}

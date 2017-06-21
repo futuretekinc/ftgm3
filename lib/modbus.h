@@ -16,16 +16,20 @@ enum	FunctionCode
 
 struct	RequestReadHoldingRegisters
 {
+	uint8_t		device;
 	uint8_t		function;
 	uint16_t	address;
 	uint16_t	quantity;
+	uint16_t	crc;
 };
 
 struct	RequestWriteSingleRegister
 {
+	uint8_t		device;
 	uint8_t		function;
 	uint16_t	address;
 	uint16_t	value;
+	uint16_t	crc;
 };
 
 class	RequestFrame

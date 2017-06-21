@@ -511,7 +511,7 @@ bool	Object::SetProperties(JSONNode const& _config, bool _check, bool _create)
 			{
 				try
 				{
-					TRACE_INFO("SetPropertyr : " << it->name() << "-" << it->write());
+					TRACE_INFO("SetProperty : " << it->name() << "-" << it->write());
 					if (SetProperty(*it, _check) == false)
 					{	
 						ret_value = false;

@@ -63,6 +63,7 @@ extern	const char*	NODE_TYPE_EP_S_WIND_SPEED;
 extern	const char*	NODE_TYPE_EP_S_SOIL_MOISTURE;
 extern	const char*	NODE_TYPE_EP_S_RAINFALL;
 extern	const char*	NODE_TYPE_EP_S_GAS;
+extern	const char* NODE_TYPE_EP_S_SOIL_ACIDITY;
 
 extern	const char*	NODE_TYPE_EP_A_LINEAR;
 extern	const char*	NODE_TYPE_EP_A_DISCRETE;

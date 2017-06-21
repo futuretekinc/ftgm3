@@ -32,6 +32,7 @@ const char*	NODE_TYPE_EP_S_WIND_SPEED		=	"ep_s_wind_speed";
 const char*	NODE_TYPE_EP_S_SOIL_MOISTURE	=	"ep_s_soil_moisture";
 const char*	NODE_TYPE_EP_S_RAINFALL			=	"ep_s_rainfall";
 const char*	NODE_TYPE_EP_S_GAS				=	"ep_s_gas";
+const char* NODE_TYPE_EP_S_SOIL_ACIDITY		=	"ep_s_soil_acidity";
 
 const char*	NODE_TYPE_EP_A_DISCRETE			=	"ep_a_discrete";
 const char*	NODE_TYPE_EP_A_LINEAR			=	"ep_a_linear";

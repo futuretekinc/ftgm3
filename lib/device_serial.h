@@ -41,6 +41,7 @@ protected:
 
 	std::string	dev_name_;
 	int			fd_;
+	int			ioctl_;
 	uint32_t	baudrate_;
 	uint32_t	parity_bit_;
 	uint32_t	data_bit_;

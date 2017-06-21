@@ -76,7 +76,7 @@ bool	DeviceSerial::SetPort(std::string const& _dev_name, bool _check)
 	if (!_check)
 	{
 		dev_name_ = _dev_name;
-
+		TRACE_INFO("Set device name : " << dev_name_);
 		JSONNodeUpdate(updated_properties_, TITLE_NAME_DEV_NAME, dev_name_);
 
 		if (!lazy_store_)
@@ -253,11 +253,12 @@ uint32_t	DeviceSerial::GetDataBit()
 {
 	switch(data_bit_)
 	{
-	case	CS5:	5;	
-	case	CS6:	6;	
-	case	CS7:	7;	
-	case	CS8:	8;	
+	case	CS5:	return	5;	
+	case	CS6:	return	6;	
+	case	CS7:	return	7;	
+	case	CS8:	return	8;	
 	}
+
 }
 
 bool	DeviceSerial::SetDataBit(uint32_t _data_bit, bool _check)
@@ -313,18 +314,33 @@ bool	DeviceSerial::Open()
 	fcntl(fd_, F_SETFL, FASYNC);
 
 	tcgetattr(fd_, &old_term_ios_); /* save current port settings */
-
+	
 	/* set new port settings for canonical input processing */
 	struct termios	new_term_ios;
-	new_term_ios.c_cflag = baudrate_ | data_bit_ | parity_bit_ | CLOCAL | CREAD;
+	new_term_ios.c_cflag = data_bit_ | parity_bit_ | CLOCAL | CREAD;
 	new_term_ios.c_iflag = IGNPAR | ICRNL;
 	new_term_ios.c_oflag = 0;
 	new_term_ios.c_lflag = 0;
-	new_term_ios.c_cc[VMIN]=1;
-	new_term_ios.c_cc[VTIME]=0;
+	new_term_ios.c_cc[VMIN]=0;
+	new_term_ios.c_cc[VTIME]=5;
+
+	cfsetispeed(&new_term_ios, baudrate_);
+	cfsetospeed(&new_term_ios, baudrate_);
 
 	tcflush(fd_, TCIFLUSH);
 	tcsetattr(fd_, TCSANOW, &new_term_ios);
+
+	ioctl_ = open("/sys/class/gpio/gpio15/value", O_RDWR | O_NOCTTY | O_NONBLOCK);
+	if (ioctl_ <= 0)
+	{
+		ioctl_ = 0;
+		TRACE_ERROR("Failed to open dev[ I/O Control ]");
+		return	false;
+	}
+
+	TRACE_INFO("######################################!");
+	TRACE_INFO("Dev[" << dev_name_ << "] opened!");
+	TRACE_INFO("######################################!");
 
 	return	true;
 }
@@ -344,13 +360,30 @@ bool	DeviceSerial::Close()
 
 bool	DeviceSerial::Write(uint8_t *buffer, uint32_t buffer_len)
 {
+	char*	write = "1\n";
+	char*	read = "0\n";
 	if (fd_ == 0)
 	{
 		TRACE_ERROR("The dev is not open!");
 		return	false;
 	}
 
-	write(fd_, buffer, buffer_len);
+	::write(ioctl_, write, 2);
+
+	TRACE_INFO_DUMP((char *)buffer, buffer_len);
+	::write(fd_, buffer, buffer_len);
+	usleep(1000);
+	::write(ioctl_, read, 2);
+
+		char	buffer2[256];
+		int		read_len;
+	usleep(10000);
+	read_len = ::read(fd_, buffer2, sizeof(buffer2));
+	if (read_len > 0)
+	{
+		TRACE_INFO_DUMP(buffer2, read_len);
+		buffer_.Put(buffer2, read_len);
+	}
 
 	return	true;
 }
@@ -375,6 +408,8 @@ void 	DeviceSerial::SignalHandler(int status, siginfo_t *ioinfo, void *context )
 void	DeviceSerial::Preprocess()
 {
 	Open();
+
+	Device::Preprocess();
 }
 
 void	DeviceSerial::Process()
@@ -387,7 +422,12 @@ void	DeviceSerial::Process()
 		read_len = read(fd_, buffer, sizeof(buffer));
 		if (read_len > 0)
 		{
+			TRACE_INFO_DUMP(buffer, read_len);
 			buffer_.Put(buffer, read_len);
+		}
+		else
+		{
+			TRACE_ERROR("##############################");	
 		}
 	}
 
@@ -396,5 +436,6 @@ void	DeviceSerial::Process()
 
 void	DeviceSerial::Postprocess()
 {
+	Device::Postprocess();
 	Close();
 }

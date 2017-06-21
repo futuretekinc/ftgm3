@@ -14,14 +14,16 @@ DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager, JSONNode const& _propertie
 : DeviceModbus(_manager, NODE_TYPE_DEV_GTC_520A)
 {
 	TRACE_INFO("GTE520A Created");
-	baudrate_ = B9600;
-	parity_bit_ = PARENB;
 
 	SetProperties(_properties, false, true);
+
+	baudrate_ = B9600;
+	parity_bit_ = PARENB;
 }
 
 bool	DeviceGTC520A::ReadValue(std::string const& _id, time_t& _time, std::string& _value)
 {
+	TRACE_INFO("ReadValue(" << _id << ")");
 	if (_id == "30001")
 	{
 		int16_t	value;

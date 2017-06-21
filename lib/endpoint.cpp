@@ -377,7 +377,7 @@ void	Endpoint::CorrectionProcess()
 	Device* device = manager_.GetDevice(parent_id_);
 	if(device != NULL)
 	{
-		if (device->ReadValue(GetID(), time, value))
+		if (device->ReadValue(GetSensorID(), time, value))
 		{
 			if (IsValid(value))
 			{

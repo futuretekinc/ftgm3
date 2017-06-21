@@ -248,15 +248,15 @@ bool	Node::SetProperty(JSONNode const& _property, bool _check)
 		}
 		else if (_property.name() == TITLE_NAME_OPTIONS)
 		{
-			if (!libjson::is_valid(_property.write()))
+			if (!libjson::is_valid(_property.as_string()))
 			{
 				TRACE_INFO("Failed to set optoins!");
-				TRACE_INFO("Options : " << _property.write());
+				TRACE_INFO("Options : " << _property.as_string());
 				ret_value = false;
 			}
 			else
 			{
-				JSONNode	options = libjson::parse(_property.write());
+				JSONNode	options = libjson::parse(_property.as_string());
 
 				TRACE_INFO("Set Options : " << options.write_formatted());
 
