@@ -4,7 +4,7 @@
 	"parent_id" : "FTM20170601012345678901234567890",
 	"options" : 
 	{
-		"name" : "/dev/ttyS1"
+		"name" : "/dev/ttyS2"
 	},
 	"endpoint" : 
 	[
