@@ -276,6 +276,8 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 	JSONNode	payload  = _request.GetPayload();
 
+	response.SetReqID(_request.GetMsgID());
+
 	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
@@ -365,7 +367,6 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 						}
 						else
 						{
-							TRACE_ENTRY;
 							if (actuator->SetValue(value))
 							{
 								result.push_back(JSONNode(TITLE_NAME_VALUE, actuator->GetValue()));

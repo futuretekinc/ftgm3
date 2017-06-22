@@ -1276,10 +1276,13 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 			return	true;
 		}
 
-		TRACE_INFO("The MsgID of ReqID [" << message.GetReqID() << "] is " << msg_id);
 		if (message.GetMsgType() != MSG_TYPE_RCS_CONFIRM)
 		{
 			message_map_.insert(std::pair<std::string, Produce*>(msg_id, _produce));
+		}
+		else
+		{
+			TRACE_INFO("The MsgID of ReqID [" << message.GetReqID() << "] is " << msg_id);
 		}
 
 		_produce->IncTransmissionCount();
