@@ -1236,7 +1236,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 
 		if (!ConfirmRequest(&message, req_type, false))
 		{
-			Error(message.GetMsgID(), "");
+			Error(message.GetMsgID(), "The confirm message was timed out.");
 		}
 
 		manager_->GetRCSServer().Confirm(message, req_type);	
@@ -1276,6 +1276,7 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 			return	true;
 		}
 
+		TRACE_INFO("The MsgID of ReqID [" << message.GetReqID() << "] is " << msg_id);
 		if (message.GetMsgType() != MSG_TYPE_RCS_CONFIRM)
 		{
 			message_map_.insert(std::pair<std::string, Produce*>(msg_id, _produce));

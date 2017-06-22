@@ -391,7 +391,9 @@ void ServerLinkerMosq::OnDisconnectCB(struct mosquitto *_mosq, void *_obj, int _
 {
 	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
 
+	TRACE_INFO2(linker, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 	TRACE_INFO2(linker, "Disconnected from broker[" << linker->GetBroker() << "]");
+	TRACE_INFO2(linker, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 	for(std::map<std::string, UpLink*>::iterator it = linker->up_link_map_.begin(); it != linker->up_link_map_.end() ; it++)
 	{
 		it->second->Stop();
@@ -416,7 +418,7 @@ void ServerLinkerMosq::OnPublishCB(struct mosquitto *_mosq, void *_obj, int _mid
 	{
 		Produce*	produce = it->second;
 
-		uint64_t	expire_time = produce->GetMessage().GetTime().GetMicroSecond() + (linker->request_timeout_ * TIME_SECOND);
+		uint64_t	expire_time = Date::GetCurrent().GetMicroSecond() + (linker->request_timeout_ * TIME_SECOND);
 
 		TRACE_INFO2(linker, "The request expiry time[" << expire_time << "] has been set in the request message[" << _mid << "].");
 		linker->request_map_[expire_time] = produce;
