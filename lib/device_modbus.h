@@ -7,7 +7,7 @@
 class	DeviceModbus : public DeviceSerial
 {
 public:
-	DeviceModbus(ObjectManager& _manager, std::string const& _type);
+	DeviceModbus(ObjectManager& _manager, std::string const& _type, bool _half = false);
 
 	virtual	bool	ReadValue(std::string const& _epid, time_t& _time, std::string& _value);
 	virtual	bool	ReadValue(std::string const& _epid, time_t& _time, bool& _value);

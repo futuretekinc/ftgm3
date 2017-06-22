@@ -4,10 +4,10 @@
 
 
 DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager)
-: DeviceModbus(_manager, NODE_TYPE_DEV_GTC_520A)
+: DeviceModbus(_manager, NODE_TYPE_DEV_GTC_520A, true)
 {
-	baudrate_ = B9600;
-	parity_bit_ = PARENB;
+	serial_->SetBaudrate(9600);
+	serial_->SetParityBit("even");
 }
 
 DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager, JSONNode const& _properties)
@@ -15,10 +15,10 @@ DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager, JSONNode const& _propertie
 {
 	TRACE_INFO("GTE520A Created");
 
-	SetProperties(_properties, false, true);
+	serial_->SetBaudrate(9600);
+	serial_->SetParityBit("even");
 
-	baudrate_ = B9600;
-	parity_bit_ = PARENB;
+	SetProperties(_properties, false, true);
 }
 
 bool	DeviceGTC520A::ReadValue(std::string const& _id, time_t& _time, std::string& _value)

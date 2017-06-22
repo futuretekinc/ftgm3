@@ -6,8 +6,8 @@
 
 using namespace modbus;
 
-DeviceModbus::DeviceModbus(ObjectManager& _manager, std::string const& _type)
-: DeviceSerial(_manager, _type), timeout_(1000)
+DeviceModbus::DeviceModbus(ObjectManager& _manager, std::string const& _type, bool _half)
+: DeviceSerial(_manager, _type, _half), timeout_(1000)
 {
 }
 
@@ -25,7 +25,7 @@ bool	DeviceModbus::RequestAndWait(uint8_t* _request, uint32_t _request_len, uint
 {
 	Timer		response_timeout;
 
-	if (!Write(_request, _request_len))
+	if (!serial_->Write(_request, _request_len))
 	{
 		TRACE_ERROR("Failed to send frame!");
 		return	false;
@@ -37,7 +37,7 @@ bool	DeviceModbus::RequestAndWait(uint8_t* _request, uint32_t _request_len, uint
 	{
 		uint32_t	read_len = 0;	
 
-		if (Read(&_response[_response_len], _max_response_len - _response_len, read_len))
+		if (serial_->Read(&_response[_response_len], _max_response_len - _response_len, read_len))
 		{
 			_response_len += read_len;
 

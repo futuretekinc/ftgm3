@@ -176,6 +176,7 @@ TITLE_NAME(COMMAND, "command");
 TITLE_NAME(COMMUNITY, "community");
 TITLE_NAME(CORRECTION_INTERVAL, "correction_interval");
 TITLE_NAME(COUNT, "count");
+TITLE_NAME(CONTROL, "control");
 TITLE_NAME(DATA, "data");
 TITLE_NAME(DATA_FILE, "data_file");
 TITLE_NAME(DATA_MANAGER, "database");
