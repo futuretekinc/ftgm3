@@ -21,6 +21,7 @@ JSONNode	JSONNodeGetNode(JSONNode const& _node, std::string const& _name);
 JSONNode	JSONNodeGetTraceNode(JSONNode const& _node);
 JSONNode	JSONNodeGetValueNode(JSONNode const& _node);
 
+bool		JSONNodeIsExistField(JSONNode const& _node, std::string const& _name);
 bool		JSONNodeIsExistValue(JSONNode const& _node);
 
 bool		JSONNodeUpdate(JSONNode& _node, std::string const& _name, std::string const& _value);

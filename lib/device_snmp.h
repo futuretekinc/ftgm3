@@ -41,6 +41,9 @@ public:
 
 	virtual	bool	SetProperty(JSONNode const& _property, bool _check = false);
 
+	virtual	bool		GetOptions(JSONNode& _properties);
+	virtual	bool		SetOption(JSONNode& _properties, bool _check = false);
+
 	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties);
 
 	virtual	OID		GetOID(std::string const& _id);

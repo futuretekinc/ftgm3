@@ -47,6 +47,7 @@ extern	const char*	NODE_TYPE_GW_GEN;
 
 extern	const char*	NODE_TYPE_DEV_SNMP;
 extern	const char*	NODE_TYPE_DEV_FTE;
+extern	const char*	NODE_TYPE_DEV_SIM;
 
 extern	const char*	NODE_TYPE_DEV_MODBUS;
 extern	const char*	NODE_TYPE_DEV_GTC_520A;
@@ -101,6 +102,10 @@ extern 	const char*	ENDPOINT_SENSOR_RAINFALL_UNIT;
 extern 	double		ENDPOINT_SENSOR_SOIL_MOISTURE_MAX;
 extern 	double		ENDPOINT_SENSOR_SOIL_MOISTURE_MIN;
 extern 	const char*	ENDPOINT_SENSOR_SOIL_MOISTURE_UNIT;
+
+extern 	double		ENDPOINT_SENSOR_SOIL_ACIDITY_MAX;
+extern 	double		ENDPOINT_SENSOR_SOIL_ACIDITY_MIN;
+extern 	const char*	ENDPOINT_SENSOR_SOIL_ACIDITY_UNIT;
 
 extern 	uint32_t	ENDPOINT_SENSOR_DI_MAX;
 extern 	uint32_t	ENDPOINT_SENSOR_DI_MIN;

@@ -31,7 +31,7 @@ DeviceSIM::DeviceSIM(ObjectManager& _manager, std::string const& _ip)
 
 const	std::string&	DeviceSIM::Type()
 {
-	static	std::string type_("d_sim");
+	static	std::string type_(NODE_TYPE_DEV_SIM);
 
 	return	type_;
 }

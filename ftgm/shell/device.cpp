@@ -337,6 +337,7 @@ bool	ShellCommandDeviceList(Shell* _shell)
 		std::cout << " " << std::setw(name_len) << "Name";
 		std::cout << " " << std::setw(type_len) << "Type";
 		std::cout << " " << std::setw(stat_len) << "Stat";
+		std::cout << " " << std::setw(id_len) << "Parent ID";
 		std::cout << " " << std::setw(options_len) << "Options";
 		std::cout << std::endl;
 
@@ -349,9 +350,11 @@ bool	ShellCommandDeviceList(Shell* _shell)
 			std::cout << " " << std::setw(name_len) << (*it)->GetName();
 			std::cout << " " << std::setw(type_len) << (*it)->GetType();
 			std::cout << " " << std::setw(stat_len) << ToString((*it)->GetStat());
+			std::cout << " " << std::setw(id_len) << (*it)->GetParentID();
 			(*it)->GetOptions(options);
 
 			std::cout << " " << std::setw(stat_len) << options.write();
+
 
 			std::cout << std::endl;	
 		}

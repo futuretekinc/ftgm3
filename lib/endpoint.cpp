@@ -15,6 +15,7 @@
 #include "endpoint_sensor_di.h"
 #include "endpoint_sensor_windspeed.h"
 #include "endpoint_sensor_soilmoisture.h"
+#include "endpoint_sensor_soil_acidity.h"
 #include "endpoint_sensor_rainfall.h"
 #include "endpoint_sensor_gas.h"
 #include "endpoint_actuator_do.h"
@@ -223,7 +224,7 @@ bool	Endpoint::SetProperty(JSONNode const& _property, bool _check)
 	{
 		ret_value = SetSensorID(_property.as_string(), _check);
 	}
-	else if (_property.name() == TITLE_NAME_CORRECTION_INTERVAL)
+	else if ((_property.name() == TITLE_NAME_CORRECTION_INTERVAL) || (_property.name() == TITLE_NAME_UPDATE_INTERVAL))
 	{
 		ret_value = SetCorrectionInterval(_property.as_string(), _check);
 	}
@@ -600,6 +601,11 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 		{
 			endpoint = new EndpointSensorSoilMoisture(_manager, _properties);
 			TRACE_INFO2(NULL, "The soil moisture endpoint[" << endpoint->GetID() <<"] created");
+		}
+		else if (type == NODE_TYPE_EP_S_SOIL_ACIDITY) 
+		{
+			endpoint = new EndpointSensorSoilAcidity(_manager, _properties);
+			TRACE_INFO2(NULL, "The soil acidity endpoint[" << endpoint->GetID() <<"] created");
 		}
 		else if (type == NODE_TYPE_EP_S_RAINFALL) 
 		{

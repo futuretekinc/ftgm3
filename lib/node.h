@@ -43,7 +43,8 @@ public:
 			bool		SetProperty(JSONNode const& _property, bool _check = false);
 
 	virtual	bool		GetOptions(JSONNode& _properties);
-	virtual	bool		SetOptions(JSONNode& _properties, bool _check = false);
+	virtual	bool		SetOptions(JSONNode const& _properties, bool _check = false);
+	virtual	bool		SetOption(JSONNode const& _property, bool _check = false);
 
 			bool		ApplyChanges();
 

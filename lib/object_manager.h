@@ -49,6 +49,7 @@ public:
 			uint32_t	GetGatewayList(std::list<Gateway*>& _device_list);
 			uint32_t	GetGatewayList(std::string const& _type, std::list<Gateway*>& _device_list);
 			Gateway*	GetGateway(std::string const& _id);
+			Gateway*	GetMasterGateway();
 
 			bool		Attach(Device* _device);
 			bool		Detach(Device* _device);

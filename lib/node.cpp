@@ -287,7 +287,20 @@ bool	Node::GetOptions(JSONNode& _properties)
 	return	true;
 }
 
-bool	Node::SetOptions(JSONNode& _properties, bool _check)
+bool	Node::SetOptions(JSONNode const& _properties, bool _check)
+{
+	for(JSONNode::const_iterator it = _properties.begin() ; it != _properties.end() ; it++)
+	{
+		if (!SetOption(*it, _check))
+		{
+			return	false;	
+		}
+	}
+
+	return	true;
+}
+
+bool	Node::SetOption(JSONNode const& _property, bool _check)
 {
 	return	true;
 }

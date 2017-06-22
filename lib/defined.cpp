@@ -16,6 +16,7 @@ const char*	NODE_TYPE_GW_GEN				=	"gw_gen";
 
 const char*	NODE_TYPE_DEV_SNMP				=	"dev_snmp";
 const char*	NODE_TYPE_DEV_FTE				=	"dev_fte";
+const char*	NODE_TYPE_DEV_SIM				=	"dev_sim";
 
 const char*	NODE_TYPE_DEV_MODBUS			=	"dev_modbus";
 const char*	NODE_TYPE_DEV_GTC_520A			=	"dev_gtc_520a";
@@ -71,6 +72,10 @@ const char*	ENDPOINT_SENSOR_RAINFALL_UNIT	=	"mm";
 double		ENDPOINT_SENSOR_SOIL_MOISTURE_MAX	= 100;
 double		ENDPOINT_SENSOR_SOIL_MOISTURE_MIN	= 0;
 const char*	ENDPOINT_SENSOR_SOIL_MOISTURE_UNIT	= "%";
+
+double		ENDPOINT_SENSOR_SOIL_ACIDITY_MAX	= 10;
+double		ENDPOINT_SENSOR_SOIL_ACIDITY_MIN	= 0;
+const char*	ENDPOINT_SENSOR_SOIL_ACIDITY_UNIT	= "";
 
 double		ENDPOINT_SENSOR_GAS_MAX			= 100;
 double		ENDPOINT_SENSOR_GAS_MIN			= 0;

@@ -1,69 +1,43 @@
 {
-	"type" : "d_sim",
-	"name" : "sn-1111",
-	"ip" : "10.0.1.26",
-	"module" : "FTE-E.txt",
+	"type" : "dev_sim",
+	"name" : "dev_sim_1",
 	"endpoint" : 
 	[
 		{
-			"type": "s_temperature",
-			"name" : "temp01",
+			"type": "ep_s_temperature",
+			"name" : "Temperature",
 			"update_interval" : 1000000,
 			"sensor_id" : "01000001"
 		},
 		{
-			"type": "s_temperature",
-			"name" : "temp02",
+			"type": "ep_s_humidity",
+			"name" : "Humidity",
 			"update_interval" : 2000000,
 			"sensor_id" : "01000002"
 		},
 		{
-			"type": "s_temperature",
-			"name" : "temp03",
+			"type": "ep_s_wind_speed",
+			"name" : "Wind Speed",
 			"update_interval" : 3000000,
 			"sensor_id" : "01000003"
 		},
 		{
-			"type": "s_temperature",
-			"name" : "temp04",
+			"type": "ep_s_soil_moisture",
+			"name" : "Soil Moisture",
 			"update_interval" : 4000000,
 			"sensor_id" : "01000004"
 		},
 		{
-			"type": "s_temperature",
-			"name" : "temp05",
+			"type": "ep_s_rainfall",
+			"name" : "Rainfall",
 			"update_interval" : 5000000,
 			"sensor_id" : "01000005"
 		},
 		{
-			"type": "s_temperature",
-			"name" : "temp06",
+			"type": "ep_s_soil_acidity",
+			"name" : "Soil Acidity",
 			"update_interval" : 5000000,
 			"sensor_id" : "01000006"
-		},
-		{
-			"type": "s_temperature",
-			"name" : "temp07",
-			"update_interval" : 4000000,
-			"sensor_id" : "01000007"
-		},
-		{
-			"type": "s_temperature",
-			"name" : "temp08",
-			"update_interval" : 3000000,
-			"sensor_id" : "01000008"
-		},
-		{
-			"type": "s_temperature",
-			"name" : "temp09",
-			"update_interval" : 2000000,
-			"sensor_id" : "01000009"
-		},
-		{
-			"type": "s_temperature",
-			"name" : "temp10",
-			"update_interval" : 1000000,
-			"sensor_id" : "0100000A"
 		}
 	]
 }

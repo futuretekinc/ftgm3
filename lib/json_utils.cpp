@@ -198,6 +198,13 @@ JSONNode	JSONNodeGetValueNode(JSONNode const& _node)
 	throw ObjectNotFound(TITLE_NAME_VALUE);
 }
 
+bool		JSONNodeIsExistField(JSONNode const& _node, std::string const& _name)
+{
+	JSONNode::const_iterator field = _node.find(_name);
+
+	return	(field != _node.end());
+}
+
 bool		JSONNodeIsExistValue(JSONNode const& _node)
 {
 	JSONNode::const_iterator field = _node.find(TITLE_NAME_VALUE);

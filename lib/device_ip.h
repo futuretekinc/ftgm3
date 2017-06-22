@@ -11,9 +11,12 @@ public:
 
 			bool		IsIncludedIn(std::string const& _type);
 
-	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		GetOptions(JSONNode& _properties);
+	virtual	bool		SetOption(JSONNode const& _properties, bool _check = false);
 
-	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
+//	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
+
+//	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
 
 	const std::string&	GetIP();
 			bool		SetIP(const std::string& _ip, bool _check = false);

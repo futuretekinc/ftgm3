@@ -260,50 +260,54 @@ bool	DeviceSNMP::SetTimeout(std::string const& _timeout, bool _check)
 
 bool	DeviceSNMP::GetProperties(JSONNode & _properties, Fields const& _fields)
 {
-	if (DeviceIP::GetProperties(_properties, _fields))
-	{
-		if (_fields.snmp_module)
-		{
-			_properties.push_back(JSONNode(TITLE_NAME_MODULE, module_));
-		}
-
-		if (_fields.snmp_community)
-		{
-			_properties.push_back(JSONNode(TITLE_NAME_COMMUNITY, community_));
-		}
-
-		if (_fields.timeout)
-		{
-			_properties.push_back(JSONNode(TITLE_NAME_TIMEOUT, timeout_));
-		}
-
-		return	true;	
-	}
-
-	return	false;
+	return	DeviceIP::GetProperties(_properties, _fields);
 }
 
 bool	DeviceSNMP::SetProperty(JSONNode const& _property, bool _check)
 {
-	bool	ret_value = true;
+	return	DeviceIP::SetProperty(_property, _check);
+}
 
-	if (_property.name() == TITLE_NAME_MODULE)
+bool	DeviceSNMP::GetOptions(JSONNode& _options)
+{
+	JSONNode	options;
+
+	if (!DeviceIP::GetOptions(options))
 	{
-		ret_value = SetModule(_property.as_string(), _check);
+		TRACE_ERROR("Failed to get device options");
+		return	false;	
 	}
-	else if (_property.name() == TITLE_NAME_COMMUNITY)
+
+	options.push_back(JSONNode(TITLE_NAME_MODULE, module_));
+	options.push_back(JSONNode(TITLE_NAME_COMMUNITY, community_));
+	options.push_back(JSONNode(TITLE_NAME_TIMEOUT, timeout_));
+
+	_options = options;
+
+	return	true;
+}
+
+bool	DeviceSNMP::SetOption(JSONNode& _option, bool _check)
+{
+	bool	ret_value;
+
+	if (_option.name() == TITLE_NAME_MODULE)
 	{
-		ret_value = SetCommunity(_property.as_string(), _check);
+		ret_value = SetModule(_option.as_string(), _check);
 	}
-	else if (_property.name() == TITLE_NAME_TIMEOUT)
+	else if (_option.name() == TITLE_NAME_COMMUNITY)
 	{
-		ret_value = SetTimeout(_property.as_string(), _check);
+		ret_value = SetCommunity(_option.as_string(), _check);
+	}
+	else if (_option.name() == TITLE_NAME_TIMEOUT)
+	{
+		ret_value = SetTimeout(_option.as_string(), _check);
 	}
 	else
 	{
-		ret_value = DeviceIP::SetProperty(_property, _check);
+		ret_value = DeviceIP::SetProperty(_option, _check);
 	}
-
+	
 	return	ret_value;
 }
 

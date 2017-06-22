@@ -333,10 +333,6 @@ bool	Device::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
 	if (Node::GetPropertyFieldList(_field_list))
 	{
-//		_field_list.push_back(TITLE_NAME_IP);
-//		_field_list.push_back(TITLE_NAME_MODULE);
-//		_field_list.push_back(TITLE_NAME_COMMUNITY);
-//		_field_list.push_back(TITLE_NAME_TIMEOUT);
 	}
 
 	return	true;

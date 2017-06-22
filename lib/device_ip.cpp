@@ -60,24 +60,27 @@ bool	DeviceIP::SetIP(const std::string& _ip, bool _check)
 	return	true;
 }
 
-bool	DeviceIP::GetProperties(JSONNode& _properties, Fields const& _fields) 
-{
-	if (Device::GetProperties(_properties, _fields))
-	{
-		if(_fields.ip)
-		{
-			_properties.push_back(JSONNode(TITLE_NAME_IP, ip_));
-		}
 
-		return	true;	
+bool	DeviceIP::GetOptions(JSONNode& _options)
+{
+	JSONNode	options(JSON_NODE);
+
+	if (!Device::GetOptions(options))
+	{
+		TRACE_ERROR("Failed to get device options");
+		return	false;	
 	}
 
-	return	false;
+	options.push_back(JSONNode(TITLE_NAME_IP, ip_));
+
+	_options = options;
+
+	return	true;
 }
 
-bool	DeviceIP::SetProperty(JSONNode const& _property, bool _check)
+bool	DeviceIP::SetOption(JSONNode const& _property, bool _check)
 {
-	bool	ret_value = true;
+	bool	ret_value;
 
 	if (_property.name() == TITLE_NAME_IP)
 	{
@@ -85,9 +88,8 @@ bool	DeviceIP::SetProperty(JSONNode const& _property, bool _check)
 	}
 	else
 	{
-		ret_value = Device::SetProperty(_property, _check);
+		ret_value = Device::SetOption(_property, _check);	
 	}
 
 	return	ret_value;
 }
-

@@ -332,31 +332,59 @@ Gateway*		ObjectManager::GetGateway(std::string const& _id)
 	return	NULL;
 }
 
+Gateway*		ObjectManager::GetMasterGateway()
+{
+	if (gateway_map_.size() != 0)
+	{
+		return	gateway_map_.begin()->second;	
+	}
+
+	TRACE_ERROR("The master gateway not found!");
+
+	return	NULL;
+}
+
 Device*	ObjectManager::CreateDevice(JSONNode const& _properties, bool from_db)
 {
 	Device*		device = NULL;
 
-	bool		found_endpoint = false;
-	JSONNode	endpoint_property;
-	JSONNode::const_iterator endpoint_it = _properties.find(TITLE_NAME_ENDPOINT);
-
-	if (!from_db)
+	JSONNode	properties = _properties;
+	
+	if (!JSONNodeIsExistField(properties, TITLE_NAME_PARENT_ID))
 	{
-		if (endpoint_it != _properties.end())
+		TRACE_INFO("The properties does not contain a parent id.");
+
+		Gateway*	gateway = GetMasterGateway();	
+		if (gateway == NULL)
 		{
-			if (endpoint_it->type() == JSON_NODE)
-			{
-				endpoint_property = endpoint_it->as_node();
-			}
-			else if (endpoint_it->type() == JSON_ARRAY)
-			{
-				endpoint_property = endpoint_it->as_array();
-			}
+			TRACE_ERROR("At least one gateway must be registered.");
+			return	NULL;
 		}
-		found_endpoint = true;
+
+		properties.push_back(JSONNode(TITLE_NAME_PARENT_ID, gateway->GetID()));
 	}
 
-	device = Device::Create(*this, _properties);
+
+	JSONNode	endpoint_property;
+	if (JSONNodeIsExistField(properties, TITLE_NAME_ENDPOINT))
+	{
+		JSONNode::iterator it = properties.find(TITLE_NAME_ENDPOINT);
+		if (it != properties.end())
+		{
+			if (it->type() == JSON_NODE)
+			{
+				endpoint_property = it->as_node();
+			}
+			else if (it->type() == JSON_ARRAY)
+			{
+				endpoint_property = it->as_array();
+			}
+		}
+
+		properties.erase(it);
+	}
+
+	device = Device::Create(*this, properties);
 	if (device != NULL)
 	{
 		Attach(device);	
@@ -379,7 +407,7 @@ Device*	ObjectManager::CreateDevice(JSONNode const& _properties, bool from_db)
 			}
 		}
 
-		if ((!from_db) && found_endpoint)
+		if ((!from_db) && (endpoint_property.size() != 0))
 		{
 		
 			if (endpoint_property.type() == JSON_NODE)
