@@ -293,6 +293,7 @@ bool	SerialPort::Open()
 		}
 	}
 
+	TRACE_INFO("Serial Port [" << port_ << "] is opened.");
 	return	true;
 }
 
@@ -339,7 +340,7 @@ bool	SerialPort::Write(uint8_t *buffer, uint32_t buffer_len)
 		::write(ctrl_, write_enable, strlen(write_enable));
 	}
 
-	uint32_t 	output_time = 1000000 / baudrate_ * (buffer_len * 10) * 1.5;
+	uint32_t 	output_time = 1000000 / baudrate_ * (buffer_len) / 2;
 
 	::write(fd_, buffer, buffer_len);
 
@@ -358,6 +359,8 @@ bool	SerialPort::Write(uint8_t *buffer, uint32_t buffer_len)
 		::write(ctrl_, read_enable, strlen(read_enable));
 	}
 
+	TRACE_INFO("Writing Time : " << output_time);
+	TRACE_INFO_DUMP((char *)buffer, buffer_len);
 	return	true;
 }
 
@@ -404,6 +407,8 @@ bool	SerialPort::Read(uint8_t *buffer, uint32_t buffer_len, uint32_t _timeout, u
 		read_len = read( fd_, (char *)buffer, buffer_len); /* there was data to read */
 	}
 
+	TRACE_INFO("Read");
+	TRACE_INFO_DUMP((char *)buffer, buffer_len);
 	return	true;
 }
 

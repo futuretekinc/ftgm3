@@ -248,19 +248,26 @@ bool	Node::SetProperty(JSONNode const& _property, bool _check)
 		}
 		else if (_property.name() == TITLE_NAME_OPTIONS)
 		{
-			if (!libjson::is_valid(_property.as_string()))
+			if (_property.type() == JSON_NODE)
 			{
-				TRACE_INFO("Failed to set optoins!");
-				TRACE_INFO("Options : " << _property.as_string());
-				ret_value = false;
+				ret_value = SetOptions(_property.as_node(), _check);
 			}
 			else
 			{
-				JSONNode	options = libjson::parse(_property.as_string());
+				if (!libjson::is_valid(_property.as_string()))
+				{
+					TRACE_INFO("Failed to set optoins!");
+					TRACE_INFO("Options : " << _property.as_string());
+					ret_value = false;
+				}
+				else
+				{
+					JSONNode	options = libjson::parse(_property.as_string());
 
-				TRACE_INFO("Set Options : " << options.write_formatted());
+					TRACE_INFO("Set Options : " << options.write_formatted());
 
-				ret_value = SetOptions(options, _check);
+					ret_value = SetOptions(options, _check);
+				}
 			}
 		}
 		else

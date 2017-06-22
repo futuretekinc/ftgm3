@@ -387,9 +387,6 @@ void	Endpoint::CorrectionProcess()
 		{
 			if (IsValid(value))
 			{
-	//			time_  = time;
-	//			value_ = value;
-
 				if (!Add(time, value))
 				{
 					TRACE_ERROR("Failed to add data");	

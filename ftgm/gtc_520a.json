@@ -4,7 +4,8 @@
 	"parent_id" : "FTM20170601012345678901234567890",
 	"options" : 
 	{
-		"name" : "/dev/ttyS2"
+		"name" : "/dev/ttyS2",
+		"control" : "/sys/class/gpio/gpio15/value"
 	},
 	"endpoint" : 
 	[

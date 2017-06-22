@@ -35,7 +35,7 @@ struct	RequestWriteSingleRegister
 class	RequestFrame
 {
 public:
-	RequestFrame(FunctionCode _function, uint16_t _address, uint16_t _value);
+	RequestFrame(uint8_t _device_id, FunctionCode _function, uint16_t _address, uint16_t _value);
 
 	uint32_t	Size();
 	uint32_t	DesiredResponseSize();
@@ -54,11 +54,13 @@ private:
 
 struct	ResponseCommon
 {
+	uint8_t		device;
 	uint8_t		function;
 };
 
 struct	ResponseReadHoldingRegisters
 {
+	uint8_t		device;
 	uint8_t		function;
 	uint8_t		count;
 	int16_t		values[];
@@ -66,6 +68,7 @@ struct	ResponseReadHoldingRegisters
 
 struct	ResponseWriteSingleRegister
 {
+	uint8_t		device;
 	uint8_t		function;
 	uint16_t	address;
 	uint16_t	value;
@@ -73,6 +76,7 @@ struct	ResponseWriteSingleRegister
 
 struct	ResponseError
 {
+	uint8_t		device;
 	uint8_t		code;
 	uint8_t		exception;
 };
@@ -81,7 +85,7 @@ struct	ResponseError
 class	ResponseFrame
 {
 public:
-	ResponseFrame(FunctionCode _function, uint8_t* _buffer, uint32_t _length);
+	ResponseFrame(uint8_t _device_id, FunctionCode _function, uint8_t* _buffer, uint32_t _length);
 
 	bool	IsValid();
 	bool	ReadHoldingRegisters(int16_t* values, uint32_t _count);
@@ -100,6 +104,8 @@ private:
 		uint8_t							raw[MODBUS_FRAME_SIZE];
 	}	frame_;
 };
+
+uint16_t	crc16(void*	data, uint32_t	len);
 
 #pragma pack(pop)
 };

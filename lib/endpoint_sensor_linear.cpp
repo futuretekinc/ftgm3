@@ -105,9 +105,14 @@ bool	EndpointSensorLinear::SetProperty(JSONNode const& _property, bool _check)
 
 bool	EndpointSensorLinear::Add(time_t time, std::string const& _value)
 {
-	time_ = time;
+	if (time_ != time)
+	{
+		time_ = time;
 
-	value_= strtod(_value.c_str(), 0); 
+		value_= strtod(_value.c_str(), 0); 
 
-	return	Endpoint::Add(time, _value);
+		return	Endpoint::Add(time, _value);
+	}
+
+	return	true;
 }

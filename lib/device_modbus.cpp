@@ -7,7 +7,7 @@
 using namespace modbus;
 
 DeviceModbus::DeviceModbus(ObjectManager& _manager, std::string const& _type, bool _half)
-: DeviceSerial(_manager, _type, _half), timeout_(1000)
+: DeviceSerial(_manager, _type, _half), timeout_(100000)
 {
 }
 
@@ -37,7 +37,7 @@ bool	DeviceModbus::RequestAndWait(uint8_t* _request, uint32_t _request_len, uint
 	{
 		uint32_t	read_len = 0;	
 
-		if (serial_.Read(&_response[_response_len], _max_response_len - _response_len, read_len))
+		if (serial_.Read(&_response[_response_len], _max_response_len - _response_len, 20, read_len))
 		{
 			_response_len += read_len;
 
@@ -60,7 +60,7 @@ bool	DeviceModbus::RequestAndWait(uint8_t* _request, uint32_t _request_len, uint
 
 bool	DeviceModbus::ReadHoldingRegisters(uint16_t address, int16_t *values, uint16_t count)
 {
-	RequestFrame	request(READ_HOLDING_REGISTERS, address, count);
+	RequestFrame	request(1, READ_HOLDING_REGISTERS, address, count);
 	uint8_t			buffer[MODBUS_FRAME_SIZE];
 	uint32_t		response_len = 0;
 
@@ -72,7 +72,7 @@ bool	DeviceModbus::ReadHoldingRegisters(uint16_t address, int16_t *values, uint1
 
 	try
 	{
-		ResponseFrame	response(READ_HOLDING_REGISTERS, buffer, response_len);
+		ResponseFrame	response(1, READ_HOLDING_REGISTERS, buffer, response_len);
 
 		if (!response.IsValid())
 		{
@@ -97,7 +97,7 @@ bool	DeviceModbus::ReadHoldingRegisters(uint16_t address, int16_t *values, uint1
 
 bool	DeviceModbus::WriteRegister(uint16_t address, uint16_t value)
 {
-	RequestFrame	request(WRITE_SINGLE_REGISTER, address, value);
+	RequestFrame	request(1, WRITE_SINGLE_REGISTER, address, value);
 	uint8_t			buffer[MODBUS_FRAME_SIZE];
 	uint32_t		response_len = 0;
 
@@ -109,7 +109,7 @@ bool	DeviceModbus::WriteRegister(uint16_t address, uint16_t value)
 
 	try
 	{
-		ResponseFrame	response(WRITE_SINGLE_REGISTER, buffer, response_len);
+		ResponseFrame	response(1, WRITE_SINGLE_REGISTER, buffer, response_len);
 
 		if (!response.IsValid())
 		{

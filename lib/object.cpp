@@ -511,12 +511,25 @@ bool	Object::SetProperties(JSONNode const& _config, bool _check, bool _create)
 			{
 				try
 				{
-					TRACE_INFO("SetProperty : " << it->name() << "-" << it->write());
-					if (SetProperty(*it, _check) == false)
-					{	
-						TRACE_ERROR("SetProperty : " << it->name() << "-" << it->write());
-						ret_value = false;
-						break;
+					if (it->type() == JSON_NODE)
+					{
+						TRACE_INFO("SetProperty : " << it->name() << "-" << it->write());
+						if (SetProperty(*it, _check) == false)
+						{	
+							TRACE_ERROR("SetProperty : " << it->name() << "-" << it->write());
+							ret_value = false;
+							break;
+						}
+					}
+					else
+					{
+						TRACE_INFO("SetProperty : " << it->name() << "-" << it->as_string());
+						if (SetProperty(*it, _check) == false)
+						{	
+							TRACE_ERROR("SetProperty : " << it->name() << "-" << it->as_string());
+							ret_value = false;
+							break;
+						}
 					}
 				}
 				catch(InvalidArgument& e)

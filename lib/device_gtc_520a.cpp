@@ -1,5 +1,7 @@
 #include "defined.h"
+#include "exception.h"
 #include "utils.h"
+#include "object_manager.h"
 #include "device_gtc_520a.h"
 
 
@@ -25,18 +27,36 @@ DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager, JSONNode const& _propertie
 
 bool	DeviceGTC520A::ReadValue(std::string const& _id, time_t& _time, std::string& _value)
 {
-	TRACE_INFO("ReadValue(" << _id << ")");
-	if (_id == "30001")
+	try
 	{
-		_time = time_;
-		_value = ToString(registers_[0]);
+		Endpoint*	endpoint = manager_.GetEndpoint(_id);
+		if (endpoint == NULL)
+		{
+			THROW_OBJECT_NOT_FOUND("The endpoint[" << _id << "] is not attached");
+			return	false;	
+		}
+		if (endpoint->GetSensorID() == "30001")
+		{
+			_time = time_;
+			_value = ToString(registers_[0]);
+		}
+		else if (endpoint->GetSensorID() == "30002")
+		{
+			_time = time_;
+			_value = ToString(registers_[1]);
+		}
+		else
+		{
+			return	false;	
+		}
+
+		return	true;
 	}
-	else
+	catch(ObjectNotFound& e)
 	{
+		TRACE_ERROR(e.what());
 		return	false;	
 	}
-
-	return	true;
 }
 
 void	DeviceGTC520A::Preprocess()
@@ -48,7 +68,7 @@ void	DeviceGTC520A::Process()
 {
 	if(correction_timer_.RemainTime() == 0)
 	{
-		if (!ReadHoldingRegisters(1, registers_, 2))
+		if (!ReadHoldingRegisters(0, registers_, 2))
 		{
 			TRACE_ERROR("Failed to read register");
 		}
