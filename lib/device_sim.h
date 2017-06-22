@@ -19,6 +19,7 @@ public:
 
 			bool		ReadValue(std::string const& _epid, time_t& time, std::string& _value);
 			bool		WriteValue(std::string const& _epid, std::string const& _value);
+			bool		WriteValue(std::string const& _epid, bool _value);
 
 	static	const std::string&	Type();
 protected:

@@ -261,3 +261,39 @@ bool	DeviceSIM::WriteValue(std::string const& _epid, std::string const& _value)
 	return	true;
 }
 
+bool	DeviceSIM::WriteValue(std::string const& _epid, bool _value)
+{
+	try
+	{
+		Endpoint*	endpoint = manager_.GetEndpoint(_epid);
+		if (endpoint == NULL)
+		{
+			TRACE_ERROR("The endpoint[" << _epid << "] is not attached");
+			return	false;	
+		}
+
+		if (dynamic_cast<EndpointActuator*>(endpoint))
+		{
+			std::map<std::string, std::string>::iterator it = endpoint_actuator_value_table_.find(_epid);
+			if (it == endpoint_actuator_value_table_.end())
+			{
+				TRACE_ERROR("The endpoint[" << _epid << "] has been abnormally attached");
+				return	false;	
+			}
+
+			TRACE_INFO("The endpoint[" << _epid << "] is set to " << _value);
+			it->second = ToString(_value);
+		}
+		else
+		{
+			TRACE_ERROR("Endpoint Sensor is not supported to set!");
+		}
+
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR("Exception : " << e.what());	
+	}
+	return	true;
+}
+
