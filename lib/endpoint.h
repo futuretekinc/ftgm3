@@ -51,7 +51,7 @@ public:
 
 	virtual	bool		IsValid(std::string const& _value);
 
-	virtual	std::string	GetValue()	=	0;
+	virtual	std::string	GetValue();
 	virtual	bool		SetValue(std::string const& _value, bool _check = false) = 0;
 
 	virtual	std::string	GetValueMin() = 0;

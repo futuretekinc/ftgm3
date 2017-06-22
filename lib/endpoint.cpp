@@ -370,6 +370,11 @@ bool		Endpoint::IsValid(std::string const& _value)
 	return	true;
 }
 
+std::string	Endpoint::GetValue()
+{
+	return	std::string("");
+}
+
 void	Endpoint::CorrectionProcess()
 {
 	std::string	value;
@@ -378,7 +383,7 @@ void	Endpoint::CorrectionProcess()
 	Device* device = manager_.GetDevice(parent_id_);
 	if(device != NULL)
 	{
-		if (device->ReadValue(GetSensorID(), time, value))
+		if (device->ReadValue(GetID(), time, value))
 		{
 			if (IsValid(value))
 			{

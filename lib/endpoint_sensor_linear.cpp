@@ -35,7 +35,6 @@ bool	EndpointSensorLinear::IsValid(std::string const& _value)
 
 std::string EndpointSensorLinear::GetValue()
 {
-	TRACE_INFO("GetValue : " << value_);
 	return	ToString(value_, 2);
 }
 
