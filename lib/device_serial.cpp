@@ -13,61 +13,43 @@
 #include "serial_port_half.h"
 
 DeviceSerial::DeviceSerial(ObjectManager& _manager, std::string const& _type, bool _half)
-: Device(_manager, _type)
+: Device(_manager, _type), serial_()
 {
-	if (!_half)
-	{
-		serial_ = new SerialPort;
-	}
-	else
-	{
-		serial_ = new SerialPortHalf;
-	}
+	serial_.SetMode(_half);
 }
 
 DeviceSerial::~DeviceSerial()
 {
-	delete serial_;
 }
 
-bool	DeviceSerial::GetProperties(JSONNode& _properties, Fields const& _fields)
+bool	DeviceSerial::GetOptions(JSONNode& _options)
 {
-	if (!Device::GetProperties(_properties, _fields))
+	JSONNode	options;
+	if (!Device::GetOptions(options))
 	{
 		return	false;
 	}
 
-	if (_fields.options)
+	JSONNode	serial_options;
+	serial_.GetOptions(serial_options);
+	
+	for(JSONNode::iterator it = serial_options.begin(); it != serial_options.end(); it++)
 	{
-		JSONNode	options;
-
-		serial_->GetOptions(options);
-		
-		_properties.push_back(JSONNode(TITLE_NAME_OPTIONS, options.write()));
+		options.push_back(*it);
 	}
+
+	_options = options;
 
 	return	true;
 }
 
-bool	DeviceSerial::SetProperty(JSONNode const& _property, bool _check)
+bool	DeviceSerial::SetOption(JSONNode const& _option, bool _check)
 {
 	bool ret_value = true;
 
-	if (_property.name() == TITLE_NAME_OPTIONS)
+	if (!serial_.SetOption(_option, _check))
 	{
-		if (!libjson::is_valid(_property.as_string()))
-		{
-			ret_value = false;
-		}
-		else
-		{
-			JSONNode	options = libjson::parse(_property.as_string());
-			ret_value = serial_->SetOptions(options, _check);
-		}
-	}
-	else
-	{
-		ret_value = Device::SetProperty(_property, _check);	
+		ret_value = Device::SetOption(_option, _check);	
 	}
 
 	return	ret_value;
@@ -75,7 +57,7 @@ bool	DeviceSerial::SetProperty(JSONNode const& _property, bool _check)
 
 void	DeviceSerial::Preprocess()
 {
-	serial_->Open();
+	serial_.Open();
 
 	Device::Preprocess();
 }
@@ -89,5 +71,5 @@ void	DeviceSerial::Postprocess()
 {
 	Device::Postprocess();
 
-	serial_->Close();
+	serial_.Close();
 }

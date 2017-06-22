@@ -4,19 +4,21 @@
 
 
 DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager)
-: DeviceModbus(_manager, NODE_TYPE_DEV_GTC_520A, true)
+: DeviceModbus(_manager, NODE_TYPE_DEV_GTC_520A, true), correction_interval_(1)
 {
-	serial_->SetBaudrate(9600);
-	serial_->SetParityBit("even");
+	serial_.SetBaudrate(9600);
+	serial_.SetParityBit("even");
+	serial_.SetDataBit(8);
 }
 
 DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager, JSONNode const& _properties)
-: DeviceModbus(_manager, NODE_TYPE_DEV_GTC_520A)
+: DeviceModbus(_manager, NODE_TYPE_DEV_GTC_520A, true), correction_interval_(1)
 {
 	TRACE_INFO("GTE520A Created");
 
-	serial_->SetBaudrate(9600);
-	serial_->SetParityBit("even");
+	serial_.SetBaudrate(9600);
+	serial_.SetParityBit("even");
+	serial_.SetDataBit(8);
 
 	SetProperties(_properties, false, true);
 }
@@ -26,16 +28,8 @@ bool	DeviceGTC520A::ReadValue(std::string const& _id, time_t& _time, std::string
 	TRACE_INFO("ReadValue(" << _id << ")");
 	if (_id == "30001")
 	{
-		int16_t	value;
-
-		if (!ReadHoldingRegisters(1, &value, 1))
-		{
-			TRACE_ERROR("Failed to read register");
-			return	false;	
-		}
-
-		_time = time_t(Date::GetCurrent());
-		_value = ToString(value);
+		_time = time_;
+		_value = ToString(registers_[0]);
 	}
 	else
 	{
@@ -45,8 +39,27 @@ bool	DeviceGTC520A::ReadValue(std::string const& _id, time_t& _time, std::string
 	return	true;
 }
 
+void	DeviceGTC520A::Preprocess()
+{
+	DeviceModbus::Preprocess();
+}
+
 void	DeviceGTC520A::Process()
 {
+	if(correction_timer_.RemainTime() == 0)
+	{
+		if (!ReadHoldingRegisters(1, registers_, 2))
+		{
+			TRACE_ERROR("Failed to read register");
+		}
+		else
+		{
+			time_ = Date::GetCurrent();
+		}
+
+		correction_timer_ += correction_interval_ * TIME_SECOND;
+	}
+
 	DeviceModbus::Process();
 }
 

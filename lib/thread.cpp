@@ -33,7 +33,6 @@ bool	Thread::create(void *(*_func)(void*), void *_args)
 		return	false;	
 	}
 
-	TRACE_INFO("PThread : " << thread_);
 	func_ = _func;
 	args_ = _args;
 

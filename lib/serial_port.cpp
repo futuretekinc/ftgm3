@@ -11,12 +11,20 @@
 #include "serial_port.h"
 
 SerialPort::SerialPort()
-: port_(""), baudrate_(115200), parity_bit_("none"), data_bit_(CS8), fd_(0)
+: port_(""), ctrl_port_(""), baudrate_(115200), parity_bit_("none"), data_bit_(CS8), fd_(0)
 {
 }
 
 SerialPort::SerialPort(std::string const& _port, uint32_t _baudrate, uint32_t _data_bit, std::string const& _parity_bit)
-: port_(_port), fd_(0)
+: port_(_port), ctrl_port_(""), fd_(0), mode_(false)
+{
+	SetBaudrate(_baudrate);
+	SetDataBit(_data_bit);
+	SetParityBit(_parity_bit);
+}
+
+SerialPort::SerialPort(std::string const& _port, std::string const& _ctrl_port, uint32_t _baudrate, uint32_t _data_bit, std::string const& _parity_bit)
+: port_(_port), ctrl_port_(_ctrl_port), fd_(0), mode_(true)
 {
 	SetBaudrate(_baudrate);
 	SetDataBit(_data_bit);
@@ -28,6 +36,8 @@ bool	SerialPort::GetOptions(JSONNode& _options)
 	JSONNode	options;
 
 	options.push_back(JSONNode(TITLE_NAME_NAME, port_));
+	options.push_back(JSONNode(TITLE_NAME_CONTROL, ctrl_port_));
+	options.push_back(JSONNode(TITLE_NAME_MODE, GetMode()));
 	options.push_back(JSONNode(TITLE_NAME_BAUDRATE, GetBaudrate()));
 	options.push_back(JSONNode(TITLE_NAME_PARITY_BIT, GetParityBit()));
 	options.push_back(JSONNode(TITLE_NAME_DATA_BIT, GetDataBit()));
@@ -37,11 +47,11 @@ bool	SerialPort::GetOptions(JSONNode& _options)
 	return	true;
 }
 
-bool	SerialPort::SetOptions(JSONNode& _options, bool _check)
+bool	SerialPort::SetOptions(JSONNode const& _options, bool _check)
 {
 	bool ret_value = true;
 
-	for(JSONNode::iterator it = _options.begin() ; it != _options.end() ; it++)
+	for(JSONNode::const_iterator it = _options.begin() ; it != _options.end() ; it++)
 	{
 		ret_value = SetOption(*it, _check);
 		if (ret_value != true)
@@ -53,13 +63,21 @@ bool	SerialPort::SetOptions(JSONNode& _options, bool _check)
 	return	ret_value;
 }
 
-bool	SerialPort::SetOption(JSONNode& _option, bool _check)
+bool	SerialPort::SetOption(JSONNode const& _option, bool _check)
 {
 	bool ret_value = true;
 
 	if (_option.name() == TITLE_NAME_NAME)
 	{
 		ret_value = SetPort(_option.as_string(), _check);	
+	}
+	else if (_option.name() == TITLE_NAME_CONTROL)
+	{
+		ret_value = SetControlPort(_option.as_string(), _check);	
+	}
+	else if (_option.name() == TITLE_NAME_MODE)
+	{
+		ret_value = SetMode(_option.as_int(), _check);	
 	}
 	else if (_option.name() == TITLE_NAME_BAUDRATE)
 	{
@@ -88,6 +106,21 @@ bool	SerialPort::SetPort(std::string const& _port, bool _check)
 	if (!_check)
 	{
 		port_ = _port;
+	}
+
+	return	true;
+}
+
+const std::string&	SerialPort::GetControlPort()
+{
+	return	ctrl_port_;
+}
+
+bool	SerialPort::SetControlPort(std::string const& _ctrl_port, bool _check)
+{
+	if (!_check)
+	{
+		ctrl_port_ = _ctrl_port;
 	}
 
 	return	true;
@@ -148,6 +181,18 @@ bool	SerialPort::SetDataBit(uint32_t _data_bit, bool _check)
 	{
 		data_bit_ = _data_bit;	
 	}
+
+	return	true;
+}
+
+bool	SerialPort::GetMode()
+{
+	return	mode_;
+}
+
+bool	SerialPort::SetMode(bool _mode, bool _check)
+{
+	mode_ = _mode;
 
 	return	true;
 }
@@ -232,11 +277,36 @@ bool	SerialPort::Open()
 	tcflush(fd_, TCIFLUSH);
 	tcsetattr(fd_, TCSANOW, &new_term_ios);
 
+	if (mode_)
+	{
+		ctrl_ = open(ctrl_port_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+		if (ctrl_ <= 0)
+		{
+			ctrl_ = 0;
+			TRACE_ERROR("Failed to open control [ " << ctrl_port_ << "]");
+			return	false;
+		}
+		else
+		{
+			const char*	read_enable = "0\n";
+			::write(ctrl_, read_enable, strlen(read_enable));
+		}
+	}
+
 	return	true;
 }
 
 bool	SerialPort::Close()
 {
+	if (mode_)
+	{
+		if (ctrl_ != 0)
+		{
+			close(ctrl_);	
+			ctrl_ = 0;
+		}	
+	}
+
 	if (fd_ != 0)
 	{
 		tcsetattr(fd_, TCSANOW, &old_term_ios_);
@@ -256,11 +326,37 @@ bool	SerialPort::Write(uint8_t *buffer, uint32_t buffer_len)
 		return	false;
 	}
 
+	if (mode_)
+	{
+		const char*	write_enable = "1\n";
+
+		if (ctrl_ == 0)
+		{
+			TRACE_ERROR("The dev is not open!");
+			return	false;
+		}
+
+		::write(ctrl_, write_enable, strlen(write_enable));
+	}
+
 	uint32_t 	output_time = 1000000 / baudrate_ * (buffer_len * 10) * 1.5;
 
 	::write(fd_, buffer, buffer_len);
 
 	usleep(output_time);
+
+	if (mode_)
+	{
+		const char*	read_enable = "0\n";
+
+		if (ctrl_ == 0)
+		{
+			TRACE_ERROR("The dev is not open!");
+			return	false;
+		}
+
+		::write(ctrl_, read_enable, strlen(read_enable));
+	}
 
 	return	true;
 }
@@ -272,6 +368,7 @@ bool	SerialPort::Read(uint8_t *buffer, uint32_t buffer_len, uint32_t& read_len)
 		TRACE_ERROR("The dev is not open!");
 		return	false;
 	}
+
 
 	read_len = read(fd_, (char *)buffer, buffer_len);
 

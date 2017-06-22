@@ -33,23 +33,7 @@ bool	SerialPortHalf::GetOptions(JSONNode& _options)
 	return	true;
 }
 
-bool	SerialPortHalf::SetOptions(JSONNode& _options, bool _check)
-{
-	bool ret_value = true;
-
-	for(JSONNode::iterator it = _options.begin() ; it != _options.end() ; it++)
-	{
-		ret_value = SetOption(*it, _check);
-		if (ret_value != true)
-		{
-			break;
-		}
-	}
-
-	return	ret_value;
-}
-
-bool	SerialPortHalf::SetOption(JSONNode& _option, bool _check)
+bool	SerialPortHalf::SetOption(JSONNode const& _option, bool _check)
 {
 	bool	ret_value = true;
 
@@ -92,7 +76,7 @@ bool	SerialPortHalf::Open()
 		if (ctrl_ <= 0)
 		{
 			ctrl_ = 0;
-			TRACE_ERROR("Failed to open dev[ I/O Control ]");
+			TRACE_ERROR("Failed to open control [ " << ctrl_port_ << "]");
 			ret_value = false;
 		}
 		else

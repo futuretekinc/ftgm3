@@ -13,16 +13,15 @@ public:
 	DeviceSerial(ObjectManager& _manager, std::string const& _type, bool _half = false);
 	~DeviceSerial();
 
-	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
-
-	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
-
 protected:
+	virtual	bool		GetOptions(JSONNode& _optoins);
+	virtual	bool		SetOption(JSONNode const& _option, bool _check = false);
+
 			void		Preprocess();
 			void		Process();
 			void		Postprocess();
 
-	SerialPort*			serial_;	
+	SerialPort			serial_;	
 };
 
 #endif

@@ -220,6 +220,7 @@ TITLE_NAME(LOG, "log");
 TITLE_NAME(LOOP_INTERVAL, "loop_interval");
 TITLE_NAME(MAX_SESSION, "max_session");
 TITLE_NAME(MODULE, "module");
+TITLE_NAME(MODE, "mode");
 TITLE_NAME(MQTT, "mqtt");
 TITLE_NAME(MSG_ID, "msg_id");
 TITLE_NAME(MSG_TYPE, "msg_type");

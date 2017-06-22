@@ -15,7 +15,13 @@ public:
 	static	const	std::string&	Type();
 protected:
 
+	void	Preprocess();
 	void	Process();
 
+	Timer		correction_timer_;
+	uint32_t	correction_interval_;
+
+	time_t		time_;
+	int16_t		registers_[2];
 };
 #endif
