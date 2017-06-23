@@ -1,6 +1,7 @@
 #ifndef	LOCKER_H_
 #define	LOCKER_H_
 
+#include <pthread.h>
 
 class	Locker
 {
@@ -12,6 +13,7 @@ public:
 	bool	IsLocked();
 
 private:
-	bool		locked_;
+	pthread_mutex_t	mutex_;
+	bool	locked_;
 };
 #endif

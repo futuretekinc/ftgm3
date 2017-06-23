@@ -215,12 +215,26 @@ ServerLinkerMosq::operator JSONNode() const
 
 ServerLinker::UpLink*	ServerLinkerMosq::CreateUpLink(std::string const& _topic)
 {
-	return	new UpLinkMosq(this, _topic);	
+	try
+	{
+		return	new UpLinkMosq(this, _topic);	
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR("Failed to creat UpLinkMosq!!");	
+	}
 }
 
 ServerLinker::DownLink*	ServerLinkerMosq::CreateDownLink(std::string const& _topic)
 {
-	return	new DownLinkMosq(this, _topic);	
+	try
+	{
+		return	new DownLinkMosq(this, _topic);	
+	}
+	catch(std::exception& e)
+	{
+		TRACE_ERROR("Failed to creat DownLinkMosq!!");	
+	}
 }
 
 void	ServerLinkerMosq::Preprocess()
@@ -241,6 +255,8 @@ void	ServerLinkerMosq::Process()
 	
 	uint64_t	current = uint64_t(Date::GetCurrent().GetMicroSecond());
 
+	request_map_locker_.Lock();
+
 	if (request_map_.upper_bound(current) != request_map_.begin())
 	{
 		for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin(); it != request_map_.upper_bound(current) ; it++)
@@ -251,14 +267,14 @@ void	ServerLinkerMosq::Process()
 
 			if (produce->GetMessage().GetMsgType() != MSG_TYPE_RCS_KEEP_ALIVE)
 			{
-				TRACE_ERROR("Requst Timeout : " <<  it->second->GetMessage().GetMsgID());
-				TRACE_ERROR("Msg Type : " <<  it->second->GetMessage().GetMsgType());
+				TRACE_ERROR("Requst Timeout : " <<  produce->GetMessage().GetMsgID());
+				TRACE_ERROR("Msg Type : " <<  produce->GetMessage().GetMsgType());
 
 				if (produce->GetTransmissionCount() < retransmission_count_max_)
 				{
-					TRACE_ERROR("Retransmission : " <<  produce->GetTransmissionCount());
+			//		TRACE_ERROR("Retransmission : " <<  produce->GetTransmissionCount());
 
-					Post(produce);
+			//		Post(produce);
 				}
 				else
 				{
@@ -271,6 +287,8 @@ void	ServerLinkerMosq::Process()
 			}
 		}
 	}
+	
+	request_map_locker_.Unlock();
 
 	ProcessObject::Process();
 }
@@ -420,13 +438,13 @@ void ServerLinkerMosq::OnPublishCB(struct mosquitto *_mosq, void *_obj, int _mid
 
 		uint64_t	expire_time = Date::GetCurrent().GetMicroSecond() + (linker->request_timeout_ * TIME_SECOND);
 
-		TRACE_INFO2(linker, "The request expiry time[" << expire_time << "] has been set in the request message[" << _mid << "].");
+		TRACE_INFO2(linker, "The request expire time[" << expire_time << "] has been set in the request message[" << produce->GetMessage().GetMsgID() << ":" << _mid << "].");
 		linker->request_map_[expire_time] = produce;
 		linker->message_map_.erase(it);
 	}
 	else
 	{
-		TRACE_INFO2(linker, "Tth publish[" << _mid << "] not found!");	
+//		TRACE_INFO2(linker, "Tth publish[" << _mid << "] not found!");	
 	}
 }
 
@@ -434,14 +452,14 @@ void	ServerLinkerMosq::OnLogCB(struct mosquitto *_mosq, void *_obj, int _level, 
 {
 	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
 
-	TRACE_INFO2(linker, "Log : " << _str);
+//	TRACE_INFO2(linker, "Log : " << _str);
 }
 
 void	ServerLinkerMosq::OnSubscribeCB(struct mosquitto *_mosq, void *_obj, int mid, int qos_count, const int *granted_qos)
 {
 	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
 
-	TRACE_INFO2(linker, "Subscribe : " << mid);
+//	TRACE_INFO2(linker, "Subscribe : " << mid);
 }
 
 void	ServerLinkerMosq::OnMessageCB(struct mosquitto *_mosq, void *_obj, const struct mosquitto_message *_message)
@@ -449,7 +467,7 @@ void	ServerLinkerMosq::OnMessageCB(struct mosquitto *_mosq, void *_obj, const st
 	ServerLinkerMosq*	linker = (ServerLinkerMosq *)_obj;
 	DownLink*	link = linker->GetDownLink(_message->topic);
 
-	TRACE_INFO2(linker, "Message Received : " << _message->topic);
+	//TRACE_INFO2(linker, "Message Received : " << _message->topic);
 	if (link != NULL)
 	{
 		link->IncreaseNumberOfIncommingMessages();

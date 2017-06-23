@@ -265,11 +265,11 @@ bool	SerialPort::Open()
 	/* set new port settings for canonical input processing */
 	struct termios	new_term_ios;
 	new_term_ios.c_cflag = data_bit | parity_bit | CLOCAL | CREAD;
-	new_term_ios.c_iflag = IGNPAR | ICRNL;
-	new_term_ios.c_oflag = 0;
+	new_term_ios.c_iflag = 0;
+	new_term_ios.c_oflag = OFILL;
 	new_term_ios.c_lflag = 0;
 	new_term_ios.c_cc[VMIN]=0;
-	new_term_ios.c_cc[VTIME]=5;
+	new_term_ios.c_cc[VTIME]=0;
 
 	cfsetispeed(&new_term_ios, baudrate);
 	cfsetospeed(&new_term_ios, baudrate);
@@ -319,6 +319,28 @@ bool	SerialPort::Close()
 	return	true;
 }
 
+void	SerialPort::SetDirectionOut(bool _out)
+{
+	if (mode_)
+	{
+		if (ctrl_ != 0)
+		{
+			if (_out)
+			{
+				::write(ctrl_, "1", 2);
+			}
+			else
+			{
+				::write(ctrl_, "0", 2);
+			}
+		}
+		else
+		{
+			TRACE_ERROR("The dev is not open!");
+		}
+	}
+}
+
 bool	SerialPort::Write(uint8_t *buffer, uint32_t buffer_len)
 {
 	if (fd_ == 0)
@@ -327,40 +349,29 @@ bool	SerialPort::Write(uint8_t *buffer, uint32_t buffer_len)
 		return	false;
 	}
 
-	if (mode_)
-	{
-		const char*	write_enable = "1\n";
+	uint32_t 	output_time = 1000000 / baudrate_ * (buffer_len) * 2 / 3;
 
-		if (ctrl_ == 0)
-		{
-			TRACE_ERROR("The dev is not open!");
-			return	false;
-		}
 
-		::write(ctrl_, write_enable, strlen(write_enable));
-	}
-
-	uint32_t 	output_time = 1000000 / baudrate_ * (buffer_len) / 2;
-
-	::write(fd_, buffer, buffer_len);
-
-	usleep(output_time);
-
-	if (mode_)
-	{
-		const char*	read_enable = "0\n";
-
-		if (ctrl_ == 0)
-		{
-			TRACE_ERROR("The dev is not open!");
-			return	false;
-		}
-
-		::write(ctrl_, read_enable, strlen(read_enable));
-	}
-
-	TRACE_INFO("Writing Time : " << output_time);
 	TRACE_INFO_DUMP((char *)buffer, buffer_len);
+
+	uint64_t	start_time = Date::GetCurrent().GetMicroSecond();
+	SetDirectionOut(true);
+
+	tcflush(fd_, TCIFLUSH);
+	::write(fd_, buffer, buffer_len);
+	uint64_t	end_time1 = Date::GetCurrent().GetMicroSecond();
+	usleep(output_time);
+	if (end_time1 < 32000)
+	{
+		usleep(output_time);
+	}
+	uint64_t	end_time2 = Date::GetCurrent().GetMicroSecond();
+
+	SetDirectionOut(false);
+	uint64_t	end_time3 = Date::GetCurrent().GetMicroSecond();
+
+	TRACE_INFO("Write Interval : " << end_time1 - start_time << " - " << end_time2 - start_time << " - " << end_time3 - start_time << " - " << output_time);
+
 	return	true;
 }
 
@@ -407,8 +418,6 @@ bool	SerialPort::Read(uint8_t *buffer, uint32_t buffer_len, uint32_t _timeout, u
 		read_len = read( fd_, (char *)buffer, buffer_len); /* there was data to read */
 	}
 
-	TRACE_INFO("Read");
-	TRACE_INFO_DUMP((char *)buffer, buffer_len);
 	return	true;
 }
 

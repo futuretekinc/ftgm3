@@ -186,7 +186,7 @@ void	Device::Process()
 			timer = it->second;
 			found = true;	
 			endpoint_schedule_list_.erase(it);
-			TRACE_INFO("Schedule expired : " << id);
+//			TRACE_INFO("Schedule expired : " << id);
 			break;
 		}
 	}
@@ -243,7 +243,7 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 	{
 		if (it->second.RemainTime() > _timer.RemainTime())
 		{
-			TRACE_INFO("Endpoint[" << _id << "] inserted to scheduer at " << _timer.reference_date_.ToString() << "+" << _timer.time_.ToString());
+		//	TRACE_INFO("Endpoint[" << _id << "] inserted to scheduer at " << _timer.reference_date_.ToString() << "+" << _timer.time_.ToString());
 			endpoint_schedule_list_.insert(it, std::pair<std::string, Timer>(_id, _timer));	
 			last = false;
 			break;
@@ -252,7 +252,7 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 
 	if (last)
 	{
-		TRACE_INFO("Endpoint[" << _id << "] inserted to scheduer last at " << _timer.reference_date_.ToString() << "+" << _timer.time_.ToString());
+//		TRACE_INFO("Endpoint[" << _id << "] inserted to scheduer last at " << _timer.reference_date_.ToString() << "+" << _timer.time_.ToString());
 		endpoint_schedule_list_.insert(endpoint_schedule_list_.end(), std::pair<std::string, Timer>(_id, _timer));	
 	}
 

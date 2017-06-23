@@ -150,7 +150,8 @@ ServerLinker::ServerLinker(ObjectManager* _manager)
 	topic_id_(SERVER_LINKER_TOPIC_ID),
 	global_up_name_(SERVER_LINKER_TOPIC_GLOBAL_UP_NAME),
 	global_down_name_(SERVER_LINKER_TOPIC_GLOBAL_DOWN_NAME),
-	retransmission_count_max_(SERVER_LINKER_RETRANSMISSION_COUNT_MAX)
+	retransmission_count_max_(SERVER_LINKER_RETRANSMISSION_COUNT_MAX),
+	request_map_locker_()
 {
 	trace.SetClassName(GetClassName());
 	name_ 	= "linker";
@@ -1131,14 +1132,21 @@ bool	ServerLinker::Error(std::string const& _req_id ,std::string const& _err_msg
 	return	Send(message);
 }
 
-bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception)
+bool	ServerLinker::ConfirmRequest(RCSMessage const& _reply, std::string& _req_type, bool _exception)
 {
+	bool	ret_value = false;
+
+	request_map_locker_.Lock();
+
+	TRACE_INFO("Server Linker [" << this << "] request_map_ count : " << request_map_.size());
+
 	for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin() ; it != request_map_.end() ; it++)
 	{
 		Produce*	produce = it->second;
 		RCSMessage&	message = produce->GetMessage();
+		TRACE_INFO("REQ ID : " << message.GetMsgID() <<  ", Reply ID : " << _reply.GetReqID());
 
-		if (message.GetMsgID() == _reply->GetReqID())
+		if (message.GetMsgID() == _reply.GetReqID())
 		{
 			_req_type = JSONNodeGetMsgType(message.GetPayload());
 		
@@ -1146,16 +1154,18 @@ bool	ServerLinker::ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bo
 
 			request_map_.erase(it);
 
-			return	true;
+			ret_value = true;
 		}
 	}
 
-	if (_exception)
+	request_map_locker_.Unlock();
+
+	if (!ret_value && _exception)
 	{
-		THROW_REQUEST_TIMEOUT(_reply);
+		THROW_REQUEST_TIMEOUT(&_reply);
 	}
 
-	return	false;
+	return	ret_value;
 }
 
 
@@ -1234,18 +1244,21 @@ void	ServerLinker::OnConsume(Consume* _consume)
 	{
 		std::string	req_type;
 
-		if (!ConfirmRequest(&message, req_type, false))
+		if (!ConfirmRequest(message, req_type, false))
 		{
-			Error(message.GetMsgID(), "The confirm message was timed out.");
+			TRACE_ERROR("The confirm message[" << message.GetMsgID() << "] was timed out.");
+		//	Error(message.GetMsgID(), "The confirm message was timed out.");
 		}
-
-		manager_->GetRCSServer().Confirm(message, req_type);	
+		else
+		{
+			manager_->GetRCSServer().Confirm(message, req_type);	
+		}
 	}
 	else if (message.GetMsgType() == MSG_TYPE_RCS_ERROR)
 	{
 		std::string	req_type;
 
-		if (!ConfirmRequest(&message, req_type, false))
+		if (!ConfirmRequest(message, req_type, false))
 		{
 			manager_->GetRCSServer().Error(message);	
 		}
@@ -1259,7 +1272,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 bool	ServerLinker::OnProduce(Produce* _produce)
 {
 	std::string topic	= _produce->GetTopic();
-	RCSMessage&	message = _produce->GetMessage();	
+	RCSMessage 	message = _produce->GetMessage();	
 
 	message.Make();
 
@@ -1276,22 +1289,28 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 			return	true;
 		}
 
+		TRACE_INFO("  Topic : " << topic);
+		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
+
 		if (message.GetMsgType() != MSG_TYPE_RCS_CONFIRM)
 		{
-			message_map_.insert(std::pair<std::string, Produce*>(msg_id, _produce));
+			uint64_t	expire_time = Date::GetCurrent().GetMicroSecond() + (request_timeout_ * TIME_SECOND);
+
+			request_map_locker_.Lock();
+			request_map_[expire_time] = _produce;
+			request_map_locker_.Unlock();
+		//	TRACE_INFO("Produce insert to Message Map[" << msg_id << "]");
+		//	message_map_.insert(std::pair<std::string, Produce*>(msg_id, _produce));
+		//	TRACE_INFO("Message Map Size : " << message_msp_.size());
 		}
 		else
 		{
 			TRACE_INFO("The MsgID of ReqID [" << message.GetReqID() << "] is " << msg_id);
 		}
 
-		_produce->IncTransmissionCount();
-
 		link->IncreaseNumberOfOutGoingMessages();
 		link->Touch();
 
-		TRACE_INFO("  Topic : " << topic);
-		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
 	}
 
 	return	false;

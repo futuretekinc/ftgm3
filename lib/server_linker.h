@@ -6,6 +6,7 @@
 #include "process_object.h"
 #include "timer.h"
 #include "rcs_message.h"
+#include "locker.h"
 
 #define	MSG_TYPE_SL						0x00040000
 #define	MSG_TYPE_SL_CONSUME				(MSG_TYPE_SL + 1)
@@ -197,7 +198,7 @@ protected:
 	virtual	bool		OnProduce(Produce* _produce);
 	virtual	void		OnConsume(Consume* _consume);
 
-	virtual	bool		ConfirmRequest(RCSMessage* _reply, std::string& _req_type, bool _exception = true);
+	virtual	bool		ConfirmRequest(RCSMessage const & _reply, std::string& _req_type, bool _exception = true);
 
 			std::string (*secret_code_hash_)(const std::string &string);
 
@@ -226,6 +227,7 @@ protected:
 	uint64_t			request_timeout_;
 	bool				report_late_arrive_message_;
 
+	Locker								request_map_locker_;
 	std::map<std::string, Produce*>		message_map_;
 	std::map<uint64_t, Produce*>		request_map_;
 

@@ -22,7 +22,7 @@ public:
 			bool	SetLoopInterval(std::string const& _interval, bool _check = false);
 
 	virtual	bool	Start(uint32_t _wait_for_init_time = 1000);	// ms
-	virtual	bool	Stop(bool _wait = false);
+	virtual	bool	Stop(bool _wait = true);
 	virtual	void	Run();
 
 	virtual	bool	IsRunning();

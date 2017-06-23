@@ -40,7 +40,10 @@ public:
 	virtual	bool		Read(uint8_t *buffer, uint32_t buffer_len, uint32_t& read_len);
 	virtual	bool		Read(uint8_t *buffer, uint32_t buffer_len, uint32_t _timeout, uint32_t& read_len);
 	virtual	bool		Write(uint8_t *buffer, uint32_t buffer_len);
+
 protected:
+	virtual	void		SetDirectionOut(bool _out);
+
  	static	void 		SignalHandler(int status, siginfo_t *ioinfo, void *context );
 
 		

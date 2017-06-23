@@ -2,12 +2,13 @@
 
 Locker::Locker()
 {
-	locked_ = false;
+	mutex_ = PTHREAD_MUTEX_INITIALIZER;
+	locked_= false;
 }
 
 bool	Locker::Lock()
 {
-//	mutex_.lock();
+	pthread_mutex_lock(&mutex_);
 
 	locked_ = true;
 
@@ -16,9 +17,9 @@ bool	Locker::Lock()
 
 bool	Locker::Unlock()
 {
-//	mutex_.unlock();
-
 	locked_ = false;
+
+	pthread_mutex_unlock(&mutex_);
 
 	return	true;
 }

@@ -280,10 +280,6 @@ void *ActiveObject::ThreadMain(void *data)
 
 		_object->Process();
 
-//		if (std::string(_object->name_) == "shell")
-//		{
-//			std::cout << "shell!!" << loop_timer.RemainTime() << std::endl;
-//		}
 		usleep(loop_timer.RemainTime());
 	}
 

@@ -383,6 +383,8 @@ DataManager::ValueTable::ValueTable(DataManager* _manager, std::string const& _n
 	name_ = _name;
 	trace.SetClassName(GetClassName());
 	SetParentID(_manager->GetID());
+
+	SetTrace(false);
 }
 
 bool	DataManager::ValueTable::Add(time_t _time, std::string const& _value)
@@ -799,17 +801,20 @@ void	DataManager::Preprocess()
 		std::list<std::string>	gateway_field_list;
 		Gateway::GetPropertyFieldList(gateway_field_list);
 		gateway_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_GATEWAY, gateway_field_list);	
-		gateway_table_->SetTrace(trace.GetEnable());
+//		gateway_table_->SetTrace(trace.GetEnable());
+		gateway_table_->SetTrace(false);
 
 		std::list<std::string>	device_field_list;
 		Device::GetPropertyFieldList(device_field_list);
 		device_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_DEVICE, device_field_list);	
-		device_table_->SetTrace(trace.GetEnable());
+//		device_table_->SetTrace(trace.GetEnable());
+		device_table_->SetTrace(false);
 
 		std::list<std::string>	endpoint_field_list;
 		Endpoint::GetPropertyFieldList(endpoint_field_list);
 		endpoint_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_ENDPOINT, endpoint_field_list);	
-		endpoint_table_->SetTrace(trace.GetEnable());
+//		endpoint_table_->SetTrace(trace.GetEnable());
+		endpoint_table_->SetTrace(false);
 
 		
 		for(uint32_t i = 0 ; i < GetEndpointCount() ; i++)
