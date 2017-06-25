@@ -262,6 +262,7 @@ void	ServerLinkerMosq::Process()
 		for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin(); it != request_map_.upper_bound(current) ; it++)
 		{
 			Produce*	produce = it->second;
+			it->second = NULL;
 
 			if (produce->GetMessage().GetMsgType() != MSG_TYPE_RCS_KEEP_ALIVE)
 			{
@@ -296,7 +297,9 @@ void	ServerLinkerMosq::Process()
 			}
 		}
 
+		TRACE_INFO("Timeout request erase start!");
 		request_map_.erase(request_map_.begin(), request_map_.upper_bound(current));
+		TRACE_INFO("Timeout request erase finished!");
 	}
 	
 	request_map_locker_.Unlock();

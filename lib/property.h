@@ -41,16 +41,16 @@
 				bool	_time_of_expire,
 				bool	_value,
 				bool	_stat);
-		Fields(uint64_t _flags);
+		Fields(uint32_t _flags);
 
 		bool	Set(std::string const& _field);
-		bool	Set(uint64_t _flags);
+		bool	Set(uint32_t _flags);
 		bool	Reset(std::string const& _field);
-		bool	Reset(uint64_t _flags);
-		bool	Names(std::multimap<uint64_t, std::string>& _names);
+		bool	Reset(uint32_t _flags);
+		bool	Names(std::multimap<uint32_t, std::string>& _names);
 
 		Fields&	operator+=(Fields& _fields);
-				operator uint64_t();
+				operator uint32_t();
 
 		bool	correction_interval:1;
 		bool	date:1;
@@ -82,32 +82,32 @@
 
 Fields	operator+(Fields& _fields1, Fields& _fields2);
 
-extern	uint64_t	PROPERTY_CORRECTION_INTERVAL_FLAG;
-extern	uint64_t	PROPERTY_DATE_FLAG;
-extern	uint64_t	PROPERTY_OPTIONS_FLAG;
-extern	uint64_t	PROPERTY_ENABLE_FLAG;	
-extern	uint64_t	PROPERTY_ID_FLAG;
-extern	uint64_t	PROPERTY_IP_FLAG;
-extern	uint64_t	PROPERTY_KEEP_ALIVE_INTERVAL_FLAG;
-extern	uint64_t	PROPERTY_LOCATION_FLAG;
-extern	uint64_t	PROPERTY_LOOP_INTERVAL_FLAG;
-extern	uint64_t	PROPERTY_NAME_FLAG;
-extern	uint64_t	PROPERTY_PARENT_ID_FLAG;	
-extern	uint64_t	PROPERTY_REGISTERED_FLAG;
-extern	uint64_t	PROPERTY_SCALE_FLAG;
-extern	uint64_t	PROPERTY_SENSOR_ID_FLAG;
-extern	uint64_t	PROPERTY_SNMP_MODULE_FLAG;
-extern	uint64_t	PROPERTY_SNMP_COMMUNITY_FLAG;
-extern	uint64_t	PROPERTY_TIME_FLAG;
-extern	uint64_t	PROPERTY_TIMEOUT_FLAG;
-extern	uint64_t	PROPERTY_TYPE_FLAG;
-extern	uint64_t	PROPERTY_VALUE_MIN_FLAG;
-extern	uint64_t	PROPERTY_VALUE_MAX_FLAG;
-extern	uint64_t	PROPERTY_UNIT_FLAG;
-extern	uint64_t	PROPERTY_UPDATE_INTERVAL_FLAG;
-extern	uint64_t	PROPERTY_TIME_OF_EXPIRE_FLAG;
-extern	uint64_t	PROPERTY_VALUE_FLAG;
-extern	uint64_t	PROPERTY_STAT_FLAG;
+extern	uint32_t	PROPERTY_CORRECTION_INTERVAL_FLAG;
+extern	uint32_t	PROPERTY_DATE_FLAG;
+extern	uint32_t	PROPERTY_OPTIONS_FLAG;
+extern	uint32_t	PROPERTY_ENABLE_FLAG;	
+extern	uint32_t	PROPERTY_ID_FLAG;
+extern	uint32_t	PROPERTY_IP_FLAG;
+extern	uint32_t	PROPERTY_KEEP_ALIVE_INTERVAL_FLAG;
+extern	uint32_t	PROPERTY_LOCATION_FLAG;
+extern	uint32_t	PROPERTY_LOOP_INTERVAL_FLAG;
+extern	uint32_t	PROPERTY_NAME_FLAG;
+extern	uint32_t	PROPERTY_PARENT_ID_FLAG;	
+extern	uint32_t	PROPERTY_REGISTERED_FLAG;
+extern	uint32_t	PROPERTY_SCALE_FLAG;
+extern	uint32_t	PROPERTY_SENSOR_ID_FLAG;
+extern	uint32_t	PROPERTY_SNMP_MODULE_FLAG;
+extern	uint32_t	PROPERTY_SNMP_COMMUNITY_FLAG;
+extern	uint32_t	PROPERTY_TIME_FLAG;
+extern	uint32_t	PROPERTY_TIMEOUT_FLAG;
+extern	uint32_t	PROPERTY_TYPE_FLAG;
+extern	uint32_t	PROPERTY_VALUE_MIN_FLAG;
+extern	uint32_t	PROPERTY_VALUE_MAX_FLAG;
+extern	uint32_t	PROPERTY_UNIT_FLAG;
+extern	uint32_t	PROPERTY_UPDATE_INTERVAL_FLAG;
+extern	uint32_t	PROPERTY_TIME_OF_EXPIRE_FLAG;
+extern	uint32_t	PROPERTY_VALUE_FLAG;
+extern	uint32_t	PROPERTY_STAT_FLAG;
 
 extern Fields	PROPERTY_CORRECTION_INTERVAL;
 extern Fields	PROPERTY_DATE;

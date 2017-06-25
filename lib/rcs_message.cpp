@@ -190,9 +190,9 @@ bool	RCSMessage::Make()
 			payload_.push_back(JSONNode(TITLE_NAME_REQ_ID, req_id_));
 		}
 
-		if (uint64_t(gateway_fields_) != 0)
+		if (uint32_t(gateway_fields_) != 0)
 		{
-			payload_.push_back(JSONNode(TITLE_NAME_GATEWAY_FIELDS, uint64_t(gateway_fields_)));	
+			payload_.push_back(JSONNode(TITLE_NAME_GATEWAY_FIELDS, uint32_t(gateway_fields_)));	
 		}
 
 		if (gateway_is_null_)
@@ -230,9 +230,9 @@ bool	RCSMessage::Make()
 			}
 		}
 
-		if (uint64_t(device_fields_) != 0)
+		if (uint32_t(device_fields_) != 0)
 		{
-			payload_.push_back(JSONNode(TITLE_NAME_DEVICE_FIELDS, uint64_t(device_fields_)));	
+			payload_.push_back(JSONNode(TITLE_NAME_DEVICE_FIELDS, uint32_t(device_fields_)));	
 		}
 
 		if (device_is_null_)
@@ -267,9 +267,9 @@ bool	RCSMessage::Make()
 			}
 		}
 
-		if (uint64_t(endpoint_fields_) != 0)
+		if (uint32_t(endpoint_fields_) != 0)
 		{
-			payload_.push_back(JSONNode(TITLE_NAME_ENDPOINT_FIELDS, uint64_t(endpoint_fields_)));	
+			payload_.push_back(JSONNode(TITLE_NAME_ENDPOINT_FIELDS, uint32_t(endpoint_fields_)));	
 		}
 
 		if (endpoint_is_null_)

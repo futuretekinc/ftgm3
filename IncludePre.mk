@@ -17,6 +17,7 @@ INC_DIRS =  -I$(PROJ_ROOT)/Include \
 			-I$(PROJ_ROOT)/lib \
 			-I$(PROJ_ROOT)/.. \
 			-I$(PROJ_ROOT)/../cortina/target/usr/local/include \
+			-I$(PROJ_ROOT)/../cortina/KompexSQLiteWrapper-Source_1.11.14/inc\
 			-I$(PROJ_ROOT)/../ftm/build/ftm-100s/_root/usr/include\
 			-I$(PROJ_ROOT)/../ftm/build/ftm-100s/_root/usr/local/include
 

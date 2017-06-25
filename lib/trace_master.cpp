@@ -14,7 +14,7 @@ TraceMaster	trace_master;
 Trace		trace;
 
 TraceMaster::TraceMaster()
-: level_(INFO), continue_(false), mode_(TO_FILE), enable_(false)
+: level_(INFO), continue_(false), mode_(TO_FILE), enable_(false), locker_()
 {
 	out_ = &std::cout;
 	file_path_ = std::string(DEFAULT_CONST_LOG_FILE_PATH);	
@@ -117,6 +117,8 @@ bool	TraceMaster::ConsoleMode()
 
 void	TraceMaster::Write(std::string const& _headline, uint32_t _headline_len, std::string const& _log)
 {
+	locker_.Lock();
+
 	switch(mode_)
 	{
 	case	TO_FILE:
@@ -199,4 +201,6 @@ void	TraceMaster::Write(std::string const& _headline, uint32_t _headline_len, st
 		break;
 	
 	}
+	
+	locker_.Unlock();
 }

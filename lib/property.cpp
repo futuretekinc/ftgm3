@@ -7,32 +7,32 @@
 #include "device.h"
 #include "endpoint.h"
  
-uint64_t	PROPERTY_CORRECTION_INTERVAL_FLAG	= ((uint64_t)1) << 0 ;
-uint64_t	PROPERTY_DATE_FLAG				= ((uint64_t)1) <<  1;
-uint64_t	PROPERTY_OPTIONS_FLAG			= ((uint64_t)1) <<  2;
-uint64_t	PROPERTY_ENABLE_FLAG			= ((uint64_t)1) <<  3;	
-uint64_t	PROPERTY_ID_FLAG				= ((uint64_t)1) <<  4;
-uint64_t	PROPERTY_IP_FLAG				= ((uint64_t)1) <<  5;
-uint64_t	PROPERTY_KEEP_ALIVE_INTERVAL_FLAG	= ((uint64_t)1) << 6;
-uint64_t	PROPERTY_LOCATION_FLAG			= ((uint64_t)1) <<  7;
-uint64_t	PROPERTY_LOOP_INTERVAL_FLAG		= ((uint64_t)1) <<  8;
-uint64_t	PROPERTY_NAME_FLAG				= ((uint64_t)1) <<  9;
-uint64_t	PROPERTY_PARENT_ID_FLAG			= ((uint64_t)1) <<  10;	
-uint64_t	PROPERTY_REGISTERED_FLAG		= ((uint64_t)1) <<  11;
-uint64_t	PROPERTY_SCALE_FLAG				= ((uint64_t)1) <<  12;
-uint64_t	PROPERTY_SENSOR_ID_FLAG			= ((uint64_t)1) <<  13;
-uint64_t	PROPERTY_SNMP_MODULE_FLAG		= ((uint64_t)1) <<  14;
-uint64_t	PROPERTY_SNMP_COMMUNITY_FLAG	= ((uint64_t)1) <<  15;
-uint64_t	PROPERTY_TIME_FLAG				= ((uint64_t)1) <<  16;
-uint64_t	PROPERTY_TIMEOUT_FLAG			= ((uint64_t)1) <<  17;
-uint64_t	PROPERTY_TYPE_FLAG				= ((uint64_t)1) <<  18;
-uint64_t	PROPERTY_VALUE_MIN_FLAG			= ((uint64_t)1) <<  19;
-uint64_t	PROPERTY_VALUE_MAX_FLAG			= ((uint64_t)1) <<  20;
-uint64_t	PROPERTY_UNIT_FLAG				= ((uint64_t)1) <<  21;
-uint64_t	PROPERTY_UPDATE_INTERVAL_FLAG	= ((uint64_t)1) <<  22;
-uint64_t	PROPERTY_TIME_OF_EXPIRE_FLAG	= ((uint64_t)1) <<  23;
-uint64_t	PROPERTY_VALUE_FLAG				= ((uint64_t)1) <<  24;
-uint64_t	PROPERTY_STAT_FLAG				= ((uint64_t)1) <<  25;
+uint32_t	PROPERTY_CORRECTION_INTERVAL_FLAG	= ((uint32_t)1) << 0 ;
+uint32_t	PROPERTY_DATE_FLAG				= ((uint32_t)1) <<  1;
+uint32_t	PROPERTY_OPTIONS_FLAG			= ((uint32_t)1) <<  2;
+uint32_t	PROPERTY_ENABLE_FLAG			= ((uint32_t)1) <<  3;	
+uint32_t	PROPERTY_ID_FLAG				= ((uint32_t)1) <<  4;
+uint32_t	PROPERTY_IP_FLAG				= ((uint32_t)1) <<  5;
+uint32_t	PROPERTY_KEEP_ALIVE_INTERVAL_FLAG	= ((uint32_t)1) << 6;
+uint32_t	PROPERTY_LOCATION_FLAG			= ((uint32_t)1) <<  7;
+uint32_t	PROPERTY_LOOP_INTERVAL_FLAG		= ((uint32_t)1) <<  8;
+uint32_t	PROPERTY_NAME_FLAG				= ((uint32_t)1) <<  9;
+uint32_t	PROPERTY_PARENT_ID_FLAG			= ((uint32_t)1) <<  10;	
+uint32_t	PROPERTY_REGISTERED_FLAG		= ((uint32_t)1) <<  11;
+uint32_t	PROPERTY_SCALE_FLAG				= ((uint32_t)1) <<  12;
+uint32_t	PROPERTY_SENSOR_ID_FLAG			= ((uint32_t)1) <<  13;
+uint32_t	PROPERTY_SNMP_MODULE_FLAG		= ((uint32_t)1) <<  14;
+uint32_t	PROPERTY_SNMP_COMMUNITY_FLAG	= ((uint32_t)1) <<  15;
+uint32_t	PROPERTY_TIME_FLAG				= ((uint32_t)1) <<  16;
+uint32_t	PROPERTY_TIMEOUT_FLAG			= ((uint32_t)1) <<  17;
+uint32_t	PROPERTY_TYPE_FLAG				= ((uint32_t)1) <<  18;
+uint32_t	PROPERTY_VALUE_MIN_FLAG			= ((uint32_t)1) <<  19;
+uint32_t	PROPERTY_VALUE_MAX_FLAG			= ((uint32_t)1) <<  20;
+uint32_t	PROPERTY_UNIT_FLAG				= ((uint32_t)1) <<  21;
+uint32_t	PROPERTY_UPDATE_INTERVAL_FLAG	= ((uint32_t)1) <<  22;
+uint32_t	PROPERTY_TIME_OF_EXPIRE_FLAG	= ((uint32_t)1) <<  23;
+uint32_t	PROPERTY_VALUE_FLAG				= ((uint32_t)1) <<  24;
+uint32_t	PROPERTY_STAT_FLAG				= ((uint32_t)1) <<  25;
 
 Fields	PROPERTY_CORRECTION_INTERVAL(PROPERTY_CORRECTION_INTERVAL_FLAG);
 Fields	PROPERTY_DATE				(PROPERTY_DATE_FLAG);
@@ -106,7 +106,7 @@ Fields::Fields( bool	_correction_interval, bool	_date, bool	_options, bool	_enab
 {
 }
 
-Fields::Fields(uint64_t _flags)
+Fields::Fields(uint32_t _flags)
 {
 	Set(_flags);
 }
@@ -177,7 +177,7 @@ Fields&	Fields::operator+=(Fields& _fields)
 	return	*this;
 }
 
-bool	Fields::Set(uint64_t _value)
+bool	Fields::Set(uint32_t _value)
 {
 	if (_value & PROPERTY_CORRECTION_INTERVAL_FLAG)
 	{
@@ -287,7 +287,7 @@ bool	Fields::Set(uint64_t _value)
 	return	true;
 }
 
-bool	Fields::Reset(uint64_t _value)
+bool	Fields::Reset(uint32_t _value)
 {
 	if (_value & PROPERTY_CORRECTION_INTERVAL_FLAG)
 	{
@@ -627,9 +627,9 @@ bool	Fields::Reset(std::string const& _field)
 }
 
 
-Fields::operator uint64_t()
+Fields::operator uint32_t()
 {
-	uint64_t	value = 0;
+	uint32_t	value = 0;
 
 	if (correction_interval)
 	{
@@ -740,136 +740,136 @@ Fields::operator uint64_t()
 }
 
 
-bool	Fields::Names(std::multimap<uint64_t, std::string>& _names)
+bool	Fields::Names(std::multimap<uint32_t, std::string>& _names)
 {
 	if (correction_interval)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_CORRECTION_INTERVAL_FLAG, TITLE_NAME_CORRECTION_INTERVAL));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_CORRECTION_INTERVAL_FLAG, TITLE_NAME_CORRECTION_INTERVAL));
 	}
 
 	if (date)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_DATE_FLAG, TITLE_NAME_DATE));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_DATE_FLAG, TITLE_NAME_DATE));
 	}
 
 	if (options)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_OPTIONS_FLAG, TITLE_NAME_OPTIONS));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_OPTIONS_FLAG, TITLE_NAME_OPTIONS));
 	}
 
 	if (enable)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_ENABLE_FLAG, TITLE_NAME_ENABLE));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_ENABLE_FLAG, TITLE_NAME_ENABLE));
 	}
 
 	if (id)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_ID_FLAG, TITLE_NAME_ID));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_ID_FLAG, TITLE_NAME_ID));
 	}
 
 	if (ip)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_IP_FLAG, TITLE_NAME_IP));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_IP_FLAG, TITLE_NAME_IP));
 	}
 
 	if (keep_alive_interval)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_KEEP_ALIVE_INTERVAL_FLAG, TITLE_NAME_KEEP_ALIVE_INTERVAL));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_KEEP_ALIVE_INTERVAL_FLAG, TITLE_NAME_KEEP_ALIVE_INTERVAL));
 	}
 
 	if (location)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_LOCATION_FLAG, TITLE_NAME_LOCATION));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_LOCATION_FLAG, TITLE_NAME_LOCATION));
 	}
 
 	if (loop_interval)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_LOOP_INTERVAL_FLAG, TITLE_NAME_LOOP_INTERVAL));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_LOOP_INTERVAL_FLAG, TITLE_NAME_LOOP_INTERVAL));
 	}
 
 	if (name)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_NAME_FLAG, TITLE_NAME_NAME));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_NAME_FLAG, TITLE_NAME_NAME));
 	}
 
 	if (parent_id)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_PARENT_ID_FLAG, TITLE_NAME_PARENT_ID));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_PARENT_ID_FLAG, TITLE_NAME_PARENT_ID));
 	}
 	
 	if (registered)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_REGISTERED_FLAG, TITLE_NAME_REGISTERED));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_REGISTERED_FLAG, TITLE_NAME_REGISTERED));
 	}
 	
 	if (scale)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_SCALE_FLAG, TITLE_NAME_SCALE));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_SCALE_FLAG, TITLE_NAME_SCALE));
 	}
 	
 	if (sensor_id)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_SENSOR_ID_FLAG, TITLE_NAME_SENSOR_ID));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_SENSOR_ID_FLAG, TITLE_NAME_SENSOR_ID));
 	}
 	
 	if (snmp_module)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_SNMP_MODULE_FLAG, TITLE_NAME_MODULE));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_SNMP_MODULE_FLAG, TITLE_NAME_MODULE));
 	}
 	
 	if (snmp_community)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_SNMP_COMMUNITY_FLAG, TITLE_NAME_COMMUNITY));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_SNMP_COMMUNITY_FLAG, TITLE_NAME_COMMUNITY));
 	}
 	
 	if (time)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_TIME_FLAG, TITLE_NAME_TIME));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_TIME_FLAG, TITLE_NAME_TIME));
 	}
 	
 	if (timeout)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_TIMEOUT_FLAG, TITLE_NAME_TIMEOUT));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_TIMEOUT_FLAG, TITLE_NAME_TIMEOUT));
 	}
 	
 	if (type)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_TYPE_FLAG, TITLE_NAME_TYPE));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_TYPE_FLAG, TITLE_NAME_TYPE));
 	}
 	
 	if (value_min)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_VALUE_MIN_FLAG, TITLE_NAME_VALUE_MIN));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_VALUE_MIN_FLAG, TITLE_NAME_VALUE_MIN));
 	}
 	
 	if (value_max)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_VALUE_MAX_FLAG, TITLE_NAME_VALUE_MAX));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_VALUE_MAX_FLAG, TITLE_NAME_VALUE_MAX));
 	}
 	
 	if (unit)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_UNIT_FLAG, TITLE_NAME_UNIT));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_UNIT_FLAG, TITLE_NAME_UNIT));
 	}
 	
 	if (update_interval)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_UPDATE_INTERVAL_FLAG, TITLE_NAME_UPDATE_INTERVAL));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_UPDATE_INTERVAL_FLAG, TITLE_NAME_UPDATE_INTERVAL));
 	}
 	
 	if (time_of_expire)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_TIME_OF_EXPIRE_FLAG, TITLE_NAME_TIME_OF_EXPIRE));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_TIME_OF_EXPIRE_FLAG, TITLE_NAME_TIME_OF_EXPIRE));
 	}
 	
 	if (value)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_VALUE_FLAG, TITLE_NAME_VALUE));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_VALUE_FLAG, TITLE_NAME_VALUE));
 	}
 	
 	if (stat)
 	{
-		_names.insert(_names.end(), std::pair<uint64_t, std::string>(PROPERTY_STAT_FLAG, TITLE_NAME_STAT));
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_STAT_FLAG, TITLE_NAME_STAT));
 	}
 
 	return	true;

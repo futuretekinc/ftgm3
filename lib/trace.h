@@ -5,6 +5,7 @@
 #include <sstream>
 #include <streambuf>
 #include <libjson/libjson.h>
+#include "locker.h"
 
 class	Object;
 
@@ -52,6 +53,7 @@ public:
 protected:
 	void	Write(std::string const& _headline, uint32_t _headline_max, std::string const& _log);
 
+	Locker			locker_;
 	std::ostream*	out_;
 	bool			enable_;
 	TraceMode		mode_;
@@ -103,6 +105,7 @@ public:
 
 protected:
 
+	Locker			locker_;
 	TraceMaster&	master_;
 	Object*			object_;
 	State			state_;
@@ -126,6 +129,7 @@ extern	Trace		trace;
 #define	TRACE_WARN2(x, y)	{	::trace.Begin(WARNING, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
 #define	TRACE_ERROR2(x, y)	{	::trace.Begin(ERROR, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
 #define	TRACE_CRITICAL2(x, y){	::trace.Begin(CRITICAL, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
+#define	TRACE_INFO_DUMP2(x, buffer, len)	{	::trace.Dump(INFO, __PRETTY_FUNCTION__, __LINE__, x, buffer, len) << Trace::End;	}
 
 #define	TRACE_CREATE	TRACE_INFO("Create : " << this->GetClassName())
 #define	TRACE_ENTRY		TRACE_INFO("Entry")

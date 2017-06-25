@@ -1186,15 +1186,28 @@ bool	ServerLinker::OnMessage(Message* _message)
 			{
 				Produce*	produce = dynamic_cast<Produce*>(_message);
 
-				return	OnProduce(produce);
+				if (produce != NULL)
+				{
+					return	OnProduce(produce);
+				}
+				else
+				{
+					TRACE_ERROR("Woops!! Invalid Message : " << _message->GetType());
+				}
 			}
 			break;
 		
 		case	MSG_TYPE_SL_CONSUME:
 			{
 				Consume*	consume = dynamic_cast<Consume*>(_message);
-
-				OnConsume(consume);
+				if (consume != NULL)
+				{
+					OnConsume(consume);
+				}
+				else
+				{
+					TRACE_ERROR("Woops!! Invalid Message : " << _message->GetType());
+				}
 			}
 			break;
 		}

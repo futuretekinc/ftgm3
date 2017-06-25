@@ -12,13 +12,13 @@
 using namespace	std;
 
 ActiveObject::ActiveObject()
-: Object(), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL), thread_()
+: Object(), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL), thread_(), message_queue_(*this)
 {
 	Message::RegisterRecipient(id_, this);
 }
 
 ActiveObject::ActiveObject(std::string const& _id)
-: Object(_id), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL), thread_()
+: Object(_id), stop_(true), loop_interval_(ACTIVE_OBJECT_LOOP_INTERVAL), thread_(), message_queue_(*this)
 {
 	Message::RegisterRecipient(id_, this);
 }
@@ -254,10 +254,16 @@ void	ActiveObject::Process()
 	if (message_queue_.Count() != 0)
 	{
 		Message*	message = message_queue_.Pop();
-
-		if (OnMessage(message))
+		if (message != NULL)
 		{
-			delete message;
+			if (OnMessage(message))
+			{
+				delete message;
+			}
+		}
+		else
+		{
+			TRACE_ERROR("Queue is abnormal!!");
 		}
 	}
 }

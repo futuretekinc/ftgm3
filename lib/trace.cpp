@@ -10,7 +10,7 @@
 using namespace std;
 
 Trace::Trace(Object* _object)
-: master_(trace_master), object_(_object), level_(INFO), continue_(false), state_(ENABLE)
+: master_(trace_master), object_(_object), level_(INFO), continue_(false), state_(ENABLE), locker_()
 {
 }
 

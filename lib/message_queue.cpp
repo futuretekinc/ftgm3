@@ -7,12 +7,14 @@
 #include "trace.h"
 #include "message_queue.h"
 #include "time.h"
+#include "object.h"
 
 using namespace std;
 
-MessageQueue::MessageQueue()
+MessageQueue::MessageQueue(Object& _object)
+: parent_(_object), locker_()
 {
-//	lock_.lock();
+	TRACE_INFO("Create Queue : " << queue_.size());
 }
 
 MessageQueue::~MessageQueue()
@@ -20,7 +22,7 @@ MessageQueue::~MessageQueue()
 	while(queue_.size() > 0)
 	{
 		Message *message = queue_.front();
-		queue_.pop();
+		queue_.pop_front();
 
 		delete message;
 	}
@@ -31,7 +33,27 @@ void MessageQueue::Push
 	Message* _message
 )
 {
-	queue_.push(_message);
+	locker_.Lock();
+
+	TRACE_ENTRY;
+	if (_message == NULL)
+	{
+		TRACE_ERROR("Woops! Pushed message is NULL!");	
+	}
+	else
+	{
+		queue_.push_back(_message);
+	
+		TRACE_INFO("Message Pushed : " << parent_.GetClassName() << " - " << _message);
+		uint32_t	count = 0;
+		for(std::list<Message*>::iterator it = queue_.begin() ; it != queue_.end() ; it++)
+		{
+			TRACE_INFO( "" << count << " : " << *it);
+		}
+	}
+	
+	TRACE_EXIT;
+	locker_.Unlock();
 }
 
 Message* MessageQueue::Front()
@@ -44,23 +66,38 @@ Message* MessageQueue::Pop
 	bool _do_release
 )
 {
-	Message *message = queue_.front();
+	locker_.Lock();
 
-	queue_.pop();	
+	Message *message = NULL;
 
-	if (message != NULL)
+	if (queue_.size() != 0)
 	{
-		if (_do_release)
+		message = queue_.front();
+		queue_.pop_front();
+
+		TRACE_INFO("Message poped: " << parent_.GetClassName() << " - " << message);
+		uint32_t	count = 0;
+		for(std::list<Message*>::iterator it = queue_.begin() ; it != queue_.end() ; it++)
 		{
-			delete message;
-			message = NULL;
+			TRACE_INFO( "" << count << " : " << *it);
+		}
+
+		if (message != NULL)
+		{
+			if (_do_release)
+			{
+				delete message;
+				message = NULL;
+			}
+		}
+		else
+		{
+			TRACE_ERROR("Queue element is NULL!!!");	
+			TRACE_ERROR("Queue Size : " << queue_.size());
 		}
 	}
-	else
-	{
-		TRACE_ERROR("Queue element is NULL!!!");	
-	}
 
+	locker_.Unlock();
 	return	message;
 }
 

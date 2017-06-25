@@ -2,13 +2,14 @@
 #define	MESSAGE_QUEUE_H_
 
 #include <queue>
-//#include <mutex>
+#include <list>
+#include "locker.h"
 #include "message.h"
 
 class	MessageQueue
 {
 public:
-	MessageQueue();
+	MessageQueue(Object& _parent);
 	~MessageQueue();
 
 	void		Push(Message *_message);
@@ -19,8 +20,9 @@ public:
 	bool TimedWait(int _milliseconds);
 
 private:
-	std::queue<Message *>	queue_;
-//	std::timed_mutex		lock_;
+	Object&					parent_;
+	std::list<Message *>	queue_;
+	Locker					locker_;
 };
 
 #endif

@@ -68,6 +68,7 @@ protected:
 
 			bool	ReadValue(std::string const& _endpoint_id, time_t& _time, std::string& _value);
 			bool	ReadValue(std::string const& _endpoint_id, time_t& _time, bool& _value);
+			bool	ReadValue(OID const& _oid, time_t& _time, std::string& _value);
 			bool	ReadValue(OID const& _oid, std::string& _value);
 	static	bool	Convert(struct variable_list *_variable, std::string& _value);
 

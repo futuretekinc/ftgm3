@@ -112,6 +112,7 @@ bool	DeviceFTE::Detach(std::string const& _epid)
 
 bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& time, std::string& _value)
 {
+	TRACE_ENTRY;
 	Endpoint*	endpoint = manager_.GetEndpoint(_epid);
 	if (endpoint == NULL)
 	{
@@ -204,6 +205,26 @@ DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _type, uint32_t _index)
 	else if (_type == NODE_TYPE_EP_S_PRESSURE)
 	{
 		type_index = 7;
+	}
+	else if (_type == NODE_TYPE_EP_S_WIND_SPEED)
+	{
+		type_index = 10;
+	}
+	else if (_type == NODE_TYPE_EP_S_SOIL_MOISTURE)
+	{
+		type_index = 2;
+	}
+	else if (_type == NODE_TYPE_EP_S_RAINFALL)
+	{
+		type_index = 10;	
+	}
+	else if (_type == NODE_TYPE_EP_S_GAS)
+	{
+		type_index = 7;
+	}
+	else if (_type == NODE_TYPE_EP_S_SOIL_ACIDITY)
+	{
+		type_index = 10;	
 	}
 
 	oid.id[oid.length++] = 1;

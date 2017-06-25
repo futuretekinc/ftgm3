@@ -450,6 +450,55 @@ bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& time, bool& _value)
 
 }
 
+bool	DeviceSNMP::ReadValue(OID const& _oid, time_t& time, std::string& _value)
+{
+	Open();
+
+	if (session_ == NULL)
+	{
+		TRACE_ERROR("Session is not opened.");
+		return	false;
+	}
+
+	netsnmp_pdu*	response_pdu = NULL;
+	netsnmp_pdu*	request_pdu = snmp_pdu_create(SNMP_MSG_GET);
+	if (request_pdu == NULL)
+	{
+		Close();
+		return	false;
+	}
+
+	bool	ret = false;
+	request_pdu->time = 5;
+	snmp_add_null_var(request_pdu, _oid.id, _oid.length);   
+
+	if (snmp_synch_response(session_, request_pdu, &response_pdu) == STAT_SUCCESS)
+	{ 
+		if (response_pdu != NULL)
+		{
+			if (response_pdu->errstat == SNMP_ERR_NOERROR)
+			{
+				time = Date::GetCurrent();
+				Convert(response_pdu->variables, _value);
+				ret = true;
+			}
+		}
+	}
+	else
+	{
+		TRACE_ERROR("Failed to get SNMP!");
+	}
+
+	if (response_pdu != NULL)
+	{
+		snmp_free_pdu(response_pdu);	
+	}
+
+	Close();
+
+	return	ret;
+}
+
 bool	DeviceSNMP::ReadValue(OID const& _oid, std::string& _value)
 {
 	Open();
@@ -541,12 +590,17 @@ bool	DeviceSNMP::Convert
 				buffer[_variable->val_len] = 0;
 
 				_value = buffer;
+				delete buffer;
 			}   
 		}   
 		break;
 	
 	default:
 		TRACE_ERROR2(NULL, "Failed to convert[" << (int)_variable->type << "]");
+		if (_variable->val_len != 0)
+		{
+			TRACE_INFO_DUMP2(NULL, (const char *)_variable->val.string, _variable->val_len);
+		}
 		return	false;
 	}   
 
