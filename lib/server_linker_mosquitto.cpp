@@ -263,29 +263,40 @@ void	ServerLinkerMosq::Process()
 		{
 			Produce*	produce = it->second;
 
-			request_map_.erase(it);
-
 			if (produce->GetMessage().GetMsgType() != MSG_TYPE_RCS_KEEP_ALIVE)
 			{
-				TRACE_ERROR("Requst Timeout : " <<  produce->GetMessage().GetMsgID());
-				TRACE_ERROR("Msg Type : " <<  produce->GetMessage().GetMsgType());
-
 				if (produce->GetTransmissionCount() < retransmission_count_max_)
 				{
-			//		TRACE_ERROR("Retransmission : " <<  produce->GetTransmissionCount());
-
-			//		Post(produce);
+					TRACE_ERROR("Retransmission : " <<  produce->GetTransmissionCount());
+					Post(produce);
+					produce->IncTransmissionCount();
 				}
 				else
 				{
-					delete produce;
+					try
+					{
+						delete produce;
+					}
+					catch(std::exception& e)
+					{
+						TRACE_INFO("Woops : Failed to delete produce");
+					}
 				}
 			}
 			else
 			{
-				delete produce;
+				try
+				{
+					delete produce;
+				}
+				catch(std::exception& e)
+				{
+					TRACE_INFO("Woops : Failed to delete produce");
+				}
 			}
 		}
+
+		request_map_.erase(request_map_.begin(), request_map_.upper_bound(current));
 	}
 	
 	request_map_locker_.Unlock();
@@ -377,10 +388,12 @@ bool	ServerLinkerMosq::InternalDisconnect()
 		it->second->Stop();
 	}
 
+	TRACE_ENTRY;
 	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
 		it->second->Stop();
 	}
+	TRACE_EXIT;
 
 	return	true;
 }

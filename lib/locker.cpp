@@ -2,7 +2,7 @@
 
 Locker::Locker()
 {
-	mutex_ = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_init(&mutex_, NULL);	
 	locked_= false;
 }
 

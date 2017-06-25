@@ -20,10 +20,10 @@ RetValue	ShellCommandTrace
 	return	ret_value;
 }
 
-Shell::Command	object_manager_command_trace =
-{
-	.command	= "trace",
-	.help		= "trace",
-	.short_help	= "trace",
-	.function	= ShellCommandTrace
-};
+Shell::Command	object_manager_command_trace 
+(
+	"trace",
+	"trace",
+	"trace",
+	ShellCommandTrace
+);

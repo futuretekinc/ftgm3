@@ -2,6 +2,7 @@
 #include <iomanip>
 #include "shell.h"
 #include "trace.h"
+#include "exception.h"
 
 using namespace std;
 
@@ -246,9 +247,13 @@ void 	Shell::Process()
 		{
 			RetValue	ret_value;
 
-			ret_value = it->second->function(arguments, count, this);
-			if (ret_value == RET_VALUE_INVALID_ARGUMENTS)
+			try
 			{
+				ret_value = it->second->function(arguments, count, this);
+			}
+			catch(InvalidArgument& e)
+			{
+				Out() << e.what() << std::endl;
 				std::cout << it->second->help << std::endl;
 			}
 		}

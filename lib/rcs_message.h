@@ -32,18 +32,21 @@ public:
 			bool			AddGateway(JSONNode const& _properties);
 			bool			AddGatewayID(std::string const& _id);
 			bool			AddGatewayNull();
+			bool			AddGatewayFields(Fields _fields);
 			uint32_t		GetGatewayCount();
 			JSONNode		GetGateway(uint32_t index);
 
 			bool			AddDevice(JSONNode const& _properties);
 			bool			AddDeviceID(std::string const& _id);
 			bool			AddDeviceNull();
+			bool			AddDeviceFields(Fields _fields);
 			uint32_t		GetDeviceCount();
 			JSONNode		GetDevice(uint32_t index);
 
 			bool			AddEndpoint(JSONNode const& _properties);
 			bool			AddEndpointID(std::string const& _id);
 			bool			AddEndpointNull();
+			bool			AddEndpointFields(Fields _fields);
 			uint32_t		GetEndpointCount();
 			JSONNode		GetEndpoint(uint32_t index);
 
@@ -63,6 +66,9 @@ protected:
 	std::string		req_id_;
 	Date			time_;
 	JSONNode		payload_;
+	Fields			gateway_fields_;
+	Fields			device_fields_;
+	Fields			endpoint_fields_;
 	bool			gateway_is_null_;
 	bool			device_is_null_;
 	bool			endpoint_is_null_;

@@ -30,7 +30,7 @@ RetValue	ShellCommandNode
 	{
 		if (object_manager == NULL)
 		{
-			std::cout << "Node manager not attached!" << std::endl;	
+			_shell->Out() << "Node manager not attached!" << std::endl;	
 		}
 		if (_count < 2)
 		{
@@ -47,7 +47,7 @@ RetValue	ShellCommandNode
 				Node*	node = object_manager->GetNode(_arguments[1]);
 				if (node == NULL)
 				{
-					std::cout << "Node [" << _arguments[1] << "] not found!" << std::endl;	
+					_shell->Out() << "Node [" << _arguments[1] << "] not found!" << std::endl;	
 				}
 			}
 		}
@@ -129,7 +129,7 @@ RetValue	ShellCommandNode
 					Node	*node = object_manager->GetNode(_arguments[i]);
 					if (node != NULL)
 					{
-						std::cout << *node;
+						_shell->Out() << *node;
 					}
 				}	
 			}
@@ -142,7 +142,7 @@ RetValue	ShellCommandNode
 	}
 	catch(std::exception& e)
 	{
-		std::cout << "Invalid arguments!" << std::endl;	
+		_shell->Out() << "Invalid arguments!" << std::endl;	
 		ret_value = RET_VALUE_INVALID_ARGUMENTS;
 	}
 
@@ -171,7 +171,7 @@ bool	ShellCommandNode_nodeEnable(Shell* _shell, std::string const& id, bool enab
 		for(std::list<Node*>::iterator it = node_list.begin(); it != node_list.end() ; it++)
 		{
 			(*it)->SetEnable(enable);
-			std::cout << "The object[" << (*it)->GetTraceName() << "] is " << ((enable)?"enabled":"disabled") << std::endl;
+			_shell->Out() << "The object[" << (*it)->GetTraceName() << "] is " << ((enable)?"enabled":"disabled") << std::endl;
 		}
 	}
 	else
@@ -179,13 +179,13 @@ bool	ShellCommandNode_nodeEnable(Shell* _shell, std::string const& id, bool enab
 		Node *node = object_manager->GetNode(id);
 		if (node == NULL)
 		{
-			std::cout << "Node [" << id << "] not found!" << std::endl;
+			_shell->Out() << "Node [" << id << "] not found!" << std::endl;
 			return	false;
 		}
 		else
 		{
 			node->SetEnable(enable);
-			std::cout << "The object[" << id << "] is " << ((enable)?"enabled":"disabled") << std::endl;
+			_shell->Out() << "The object[" << id << "] is " << ((enable)?"enabled":"disabled") << std::endl;
 		}
 	}
 
@@ -208,22 +208,22 @@ bool	ShellCommandNode_nodeStart(Shell* _shell, std::string const& id, bool start
 			{
 				if ((*it)->Start())
 				{
-					std::cout << "The (*it)[" << (*it)->GetID() << "] is " << "started!" << std::endl;
+					_shell->Out() << "The (*it)[" << (*it)->GetID() << "] is " << "started!" << std::endl;
 				}
 				else
 				{
-					std::cout << "The (*it)[" << (*it)->GetID() << "] failed to start!" << std::endl;
+					_shell->Out() << "The (*it)[" << (*it)->GetID() << "] failed to start!" << std::endl;
 				}
 			}
 			else
 			{
 				if ((*it)->Stop())
 				{
-					std::cout << "The (*it)[" << (*it)->GetID() << "] is " << "stopped!" << std::endl;
+					_shell->Out() << "The (*it)[" << (*it)->GetID() << "] is " << "stopped!" << std::endl;
 				}
 				else
 				{
-					std::cout << "The (*it)[" << (*it)->GetID() << "] failed to stop!" << std::endl;
+					_shell->Out() << "The (*it)[" << (*it)->GetID() << "] failed to stop!" << std::endl;
 				}
 			}
 		}
@@ -233,7 +233,7 @@ bool	ShellCommandNode_nodeStart(Shell* _shell, std::string const& id, bool start
 		Node *node  = object_manager->GetNode(id);
 		if (node == NULL)
 		{
-			std::cout << "Node [" << id << "] not found!" << std::endl;
+			_shell->Out() << "Node [" << id << "] not found!" << std::endl;
 			return	false;
 		}
 		else
@@ -242,22 +242,22 @@ bool	ShellCommandNode_nodeStart(Shell* _shell, std::string const& id, bool start
 			{
 				if (node->Start())
 				{
-					std::cout << "The node[" << id << "] is " << "started!" << std::endl;
+					_shell->Out() << "The node[" << id << "] is " << "started!" << std::endl;
 				}
 				else
 				{
-					std::cout << "The node[" << id << "] failed to start!" << std::endl;
+					_shell->Out() << "The node[" << id << "] failed to start!" << std::endl;
 				}
 			}
 			else
 			{
 				if (node->Stop())
 				{
-					std::cout << "The node[" << id << "] is " << "stopped!" << std::endl;
+					_shell->Out() << "The node[" << id << "] is " << "stopped!" << std::endl;
 				}
 				else
 				{
-					std::cout << "The node[" << id << "] failed to stop!" << std::endl;
+					_shell->Out() << "The node[" << id << "] failed to stop!" << std::endl;
 				}
 			}
 		}

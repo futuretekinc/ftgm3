@@ -1,41 +1,55 @@
 {
 	"type" : "gw_gen",
-	"id" : "FTM20170601012345678901234567890",
-	"name" : "xtra_test_gateway",
+	"id" : "FTM20170601012345678901234567894",
+	"name" : "gw-ftr-lib",
 	"device" : 
-	[
-		{
-			"type" : "d_sim",
-			"name" : "sn-1111",
-			"ip" : "10.0.1.26",
-			"module" : "FTE-E.txt",
-			"endpoint" : 
+	{
+		"type" : "dev_sim",
+		"name" : "dev_sim_1",
+		"endpoint" : 
 			[
-				{
-					"type": "ep_s_temperature",
-					"name" : "temp01",
-					"correction_interval" : 5,
-					"sensor_id" : "01000001"
-				},
-				{
-					"type": "ep_s_temperature",
-					"name" : "temp02",
-					"correction_interval" : 10,
-					"sensor_id" : "01000002"
-				},
-				{
-					"type": "ep_s_humidity",
-					"name" : "humi01",
-					"correction_interval" : 5,
-					"sensor_id" : "02000001"
-				},
-				{
-					"type": "ep_a_do",
-					"name" : "do01",
-					"correction_interval" : 5,
-					"sensor_id" : "06000001"
-				}
-			]
-		}
-	]
+			{
+				"type": "ep_s_temperature",
+				"name" : "Temperature",
+				"update_interval" : 1,
+				"sensor_id" : "01000001"
+			},
+			{
+				"type": "ep_s_humidity",
+				"name" : "Humidity",
+				"update_interval" : 2,
+				"sensor_id" : "01000002"
+			},
+			{
+				"type": "ep_s_wind_speed",
+				"name" : "Wind Speed",
+				"update_interval" : 3,
+				"sensor_id" : "01000003"
+			},
+			{
+				"type": "ep_s_soil_moisture",
+				"name" : "Soil Moisture",
+				"update_interval" : 4,
+				"sensor_id" : "01000004"
+			},
+			{
+				"type": "ep_s_rainfall",
+				"name" : "Rainfall",
+				"update_interval" : 5,
+				"sensor_id" : "01000005"
+			},
+			{
+				"type": "ep_s_soil_acidity",
+				"name" : "Soil Acidity",
+				"update_interval" : 5,
+				"sensor_id" : "01000006"
+			},
+			{
+				"type": "ep_a_do",
+				"name" : "Remote Control",
+				"update_interval" : 1,
+				"sensor_id" : "06000001"
+			}
+		]
+	}
 }

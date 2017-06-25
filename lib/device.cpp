@@ -237,7 +237,7 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 	}
 	
 
-	endpoint_schedule_list_lock_.lock();
+	endpoint_schedule_list_lock_.Lock();
 
 	for(std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
 	{
@@ -256,7 +256,7 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 		endpoint_schedule_list_.insert(endpoint_schedule_list_.end(), std::pair<std::string, Timer>(_id, _timer));	
 	}
 
-	endpoint_schedule_list_lock_.unlock();
+	endpoint_schedule_list_lock_.Unlock();
 
 	return	true;
 }
@@ -264,7 +264,7 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 bool	Device::RemoveSchedule(std::string const& _id)
 {
 	bool	removed = false;
-	endpoint_schedule_list_lock_.lock();
+	endpoint_schedule_list_lock_.Lock();
 
 	for(std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
 	{
@@ -276,7 +276,7 @@ bool	Device::RemoveSchedule(std::string const& _id)
 		}
 	}
 
-	endpoint_schedule_list_lock_.unlock();
+	endpoint_schedule_list_lock_.Unlock();
 
 	return	removed;
 }

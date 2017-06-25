@@ -104,10 +104,12 @@ bool	TCPClient::Connect()
 	if (ret_value < 0)
 	{
 		close(client_socket);
-		TRACE_ERROR("Failed to connect to " << server_ip_.c_str() << ":" << server_port_);
+		TRACE_ERROR("Failed to connect to " << server_ip_ << ":" << server_port_);
 		return false;
 	}
 
+	TRACE_INFO("The client was connected to the server[" << server_ip_ << ":" << server_port_ << "] using port ");
+	server.sin_port 		= htons(server_port_);
 	socket_ = client_socket;
 
 	return	true;
@@ -249,23 +251,31 @@ bool		TCPClient::RequestAndReply(std::string const& _request, std::string& _repl
 			{   
 				uint32_t	frame_len = 0;
 				
-				TRACE_ENTRY;
 				if (Receive(frame_len))
 				{
-					char *frame = new char[frame_len + 1];
-				
-					if (Receive(frame, frame_len))
-					{   
-						frame[frame_len] = 0;
+					try
+					{
+						char *frame = new char[frame_len + 1];
 
-						_reply = frame;
+						if (Receive(frame, frame_len))
+						{   
+							frame[frame_len] = 0;
+
+							_reply = frame;
+
+							delete frame;
+
+							return	true;
+						}   
 
 						delete frame;
-
-						return	true;
-					}   
-
-					delete frame;
+					}
+					catch(exception& e)
+					{
+						TRACE_ERROR("Failed to new char[" << frame_len + 1<< "]");
+						return	false;
+					}
+				
 				}
 				else
 				{

@@ -54,7 +54,7 @@ bool	TCPSession::Disconnect()
 		socket_ = 0;
 		if (server_ != NULL)
 		{
-			server_->SessionDisconnected(information_.addr_info.sin_port);
+			server_->SessionDisconnected(ntohs(information_.addr_info.sin_port));
 		}
 	}
 

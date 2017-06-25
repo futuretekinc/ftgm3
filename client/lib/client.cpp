@@ -93,26 +93,26 @@ finished:
 	return	ret_value;
 }
 
-Shell::Command	object_manager_command_connect=
-{
-	.command	= "connect",
-	.help		= "Connect to server",
-	.short_help	= "Connect to server",
-	.function	= ShellCommandConnect
-};
+Shell::Command	object_manager_command_connect
+(
+	"connect",
+	"Connect to server",
+	"Connect to server",
+	ShellCommandConnect
+);
 
-Shell::Command	object_manager_command_disconnect=
-{
-	.command	= "disconnect",
-	.help		= "Disconnect from server",
-	.short_help	= "Disconnect from server",
-	.function	= ShellCommandDisconnect
-};
+Shell::Command	object_manager_command_disconnect
+(
+	"disconnect",
+	"Disconnect from server",
+	"Disconnect from server",
+	ShellCommandDisconnect
+);
 
-Shell::Command	object_manager_command_send=
-{
-	.command	= "send",
-	.help		= "Send message to server",
-	.short_help	= "Send message to server",
-	.function	= ShellCommandSend
-};
+Shell::Command	object_manager_command_send
+(
+	"send",
+	"Send message to server",
+	"Send message to server",
+	ShellCommandSend
+);

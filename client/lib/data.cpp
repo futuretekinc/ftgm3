@@ -49,7 +49,7 @@ RetValue	ShellCommandData
 
 				client->GetEPData(_arguments[2], count, value_map);
 				
-				for(auto it = value_map.begin();  it != value_map.end() ; it++)
+				for(std::multimap<time_t, std::string>::iterator it = value_map.begin();  it != value_map.end() ; it++)
 				{
 					_shell->Out() << it->first << " : " << it->second << std::endl;	
 				}
@@ -75,10 +75,10 @@ RetValue	ShellCommandData
 	return	RET_VALUE_OK;
 }
 
-Shell::Command	object_manager_command_data =
-{
-	.command	= "data",
-	.help		= "data",
-	.short_help	= "data",
-	.function	= ShellCommandData
-};
+Shell::Command	object_manager_command_data 
+(
+	"data",
+	"data",
+	"data",
+	ShellCommandData
+);

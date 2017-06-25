@@ -3,6 +3,8 @@
 EndpointActuator::EndpointActuator(ObjectManager& _manager, std::string const& _type)
 :Endpoint(_manager, _type)
 {
+	JSONNode	test;
+	GetProperties(test);
 }
 
 bool	EndpointActuator::IsIncludeIn(Object *_object)

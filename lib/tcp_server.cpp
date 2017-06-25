@@ -208,10 +208,16 @@ void	TCPServer::Process()
 		{
 			try
 			{
+				uint16_t	port;
+
 				TCPSession* session = CreateSession(client_socket, &client, timeout_);
 
+				port = ntohs(client.sin_port);
+
 				session_map_locker_.Lock();
-				session_map_[ntohs(client.sin_port)] = session;
+				session_map_[port] = session;
+				TRACE_INFO("Session Port : " << port);
+				TRACE_INFO("Session Count : " << session_map_.size());
 				session_map_locker_.Unlock();
 
 
@@ -225,6 +231,8 @@ void	TCPServer::Process()
 			}
 		}
 	}
+
+	ProcessObject::Process();
 }
 
 void	TCPServer::Postprocess()
@@ -300,16 +308,22 @@ bool	TCPServer::OnMessage
 			if (message != NULL)
 			{
 				session_map_locker_.Lock();
-
+				
 				TCPSession *session = session_map_[message->port];		
-				session_map_.erase(message->port);
+				if (session != NULL)
+				{
+					TRACE_INFO("Session[" << message->port <<"] closed.");
+					session_map_.erase(message->port);
+					session->Stop();
+					delete session;
+				}
+				else
+				{
+					TRACE_ERROR("Session[" << message->port <<"] not found!");
+				}
 
 				session_map_locker_.Unlock();
-				
-				session->Stop();
-
-				delete session;
-
+			
 			}
 		}
 		break;

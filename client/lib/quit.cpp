@@ -19,10 +19,10 @@ RetValue	ShellCommandQuit
 	return	RET_VALUE_OK;
 }
 
-Shell::Command	object_manager_command_quit =
-{
-	.command	= "quit",
-	.help		= "quit",
-	.short_help	= "quit",
-	.function	= ShellCommandQuit
-};
+Shell::Command	object_manager_command_quit 
+(
+	"quit",
+	"quit",
+	"quit",
+	ShellCommandQuit
+);

@@ -82,6 +82,6 @@ void	RCSSession::Process()
 		}
 	}
 
-	ActiveObject::Process();
+	TCPSession::Process();
 }
 

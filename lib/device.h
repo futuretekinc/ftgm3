@@ -3,7 +3,7 @@
 
 #include <list>
 #include <map>
-#include "mutex.h"
+#include "locker.h"
 #include "node.h"
 #include "timer.h"
 #include "property.h"
@@ -64,8 +64,8 @@ protected:
 			bool		RemoveSchedule(std::string const& _id);
 
 	std::list<std::string>	epid_list_;
-
-	Mutex							endpoint_schedule_list_lock_;
+	
+	Locker								endpoint_schedule_list_lock_;
 	std::multimap<std::string, Timer>	endpoint_schedule_list_;
 };
 

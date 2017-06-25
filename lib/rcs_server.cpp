@@ -806,7 +806,7 @@ bool	RCSServer::ConfirmGateway(JSONNode& _node, std::string& _req_type)
 			}
 
 			gateway->SetRegistered(true);
-			gateway->SetProperties(_node, false, false);
+//			gateway->SetProperties(_node, false, false);
 			TRACE_INFO("The gateway[" << id << "] registeration confirmed.");
 		}
 		else if (_req_type == MSG_TYPE_RCS_DEL)
@@ -851,7 +851,7 @@ bool	RCSServer::ConfirmDevice(JSONNode& _node, std::string& _req_type)
 			}
 
 			device->SetRegistered(true);
-			device->SetProperties(_node, false, false);
+//			device->SetProperties(_node, false, false);
 			TRACE_INFO("The device[" << id << "] registeration confirmed.");
 		}
 		else if (_req_type == MSG_TYPE_RCS_DEL)
@@ -899,7 +899,7 @@ bool	RCSServer::ConfirmEndpoint(JSONNode& _node, std::string& _req_type)
 			}
 
 			endpoint->SetRegistered(true);
-			endpoint->SetProperties(_node, false, false);
+//			endpoint->SetProperties(_node, false, false);
 			TRACE_INFO("The endpoint[" << id << "] registeration confirmed.");
 		}
 		else if (_req_type == MSG_TYPE_RCS_DEL)

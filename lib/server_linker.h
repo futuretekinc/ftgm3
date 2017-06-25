@@ -25,6 +25,7 @@ public:
 		public:
 			Produce(std::string const& _topic, RCSMessage const& _message);
 			Produce(std::string const& _topic, std::string const& _payload);
+			~Produce();
 
 			const 	std::string&	GetTopic()		{	return	topic_;	}
 					RCSMessage&		GetMessage()	{	return	message_;}

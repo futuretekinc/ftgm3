@@ -36,6 +36,11 @@ ServerLinker::Produce::Produce(std::string const& _topic, std::string const& _pa
 	}
 }
 
+ServerLinker::Produce::~Produce()
+{
+	TRACE_INFO2(NULL, "#### << " << message_.GetMsgID());
+}
+
 ServerLinker::Consume::Consume(std::string const& _topic, std::string const& _payload)
 : Message(MSG_TYPE_SL_CONSUME), topic_(_topic)
 {
@@ -511,7 +516,7 @@ ServerLinker::UpLink*	ServerLinker::AddUpLink(std::string const& _topic)
 			link = CreateUpLink(_topic);	
 
 			up_link_map_[_topic] = link;
-			TRACE_INFO("Uplink added : " << _topic << "[" << link << "]");
+			TRACE_INFO("Uplink added : " << _topic);
 
 			if (IsConnected())
 			{
@@ -574,7 +579,7 @@ ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic)
 			link = CreateDownLink(_topic);	
 
 			down_link_map_[_topic] = link;
-			TRACE_INFO("Downlink added : " << _topic << "[" << link << "]");
+			TRACE_INFO("Downlink added : " << _topic);
 			TRACE_INFO("Downlink Count : " << down_link_map_.size());
 
 			if (IsConnected())
@@ -1155,6 +1160,7 @@ bool	ServerLinker::ConfirmRequest(RCSMessage const& _reply, std::string& _req_ty
 			request_map_.erase(it);
 
 			ret_value = true;
+			break;
 		}
 	}
 
@@ -1299,6 +1305,7 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 			request_map_locker_.Lock();
 			request_map_[expire_time] = _produce;
 			request_map_locker_.Unlock();
+			TRACE_INFO("Request Timeout : " << expire_time << " - " << _produce);
 		//	TRACE_INFO("Produce insert to Message Map[" << msg_id << "]");
 		//	message_map_.insert(std::pair<std::string, Produce*>(msg_id, _produce));
 		//	TRACE_INFO("Message Map Size : " << message_msp_.size());

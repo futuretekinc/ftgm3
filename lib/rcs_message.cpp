@@ -26,6 +26,10 @@ RCSMessage::RCSMessage(RCSMessage const& _message)
 	time_			=	_message.time_;
 	payload_		=	_message.payload_;
 
+	gateway_fields_	=	_message.gateway_fields_;
+	device_fields_	=	_message.device_fields_;
+	endpoint_fields_=	_message.endpoint_fields_;
+
 	gateway_is_null_=	_message.gateway_is_null_;
 	device_is_null_	=	_message.device_is_null_;
 	endpoint_is_null_=	_message.endpoint_is_null_;
@@ -186,6 +190,11 @@ bool	RCSMessage::Make()
 			payload_.push_back(JSONNode(TITLE_NAME_REQ_ID, req_id_));
 		}
 
+		if (uint64_t(gateway_fields_) != 0)
+		{
+			payload_.push_back(JSONNode(TITLE_NAME_GATEWAY_FIELDS, uint64_t(gateway_fields_)));	
+		}
+
 		if (gateway_is_null_)
 		{
 			JSONNode	node(JSON_NODE);
@@ -221,6 +230,11 @@ bool	RCSMessage::Make()
 			}
 		}
 
+		if (uint64_t(device_fields_) != 0)
+		{
+			payload_.push_back(JSONNode(TITLE_NAME_DEVICE_FIELDS, uint64_t(device_fields_)));	
+		}
+
 		if (device_is_null_)
 		{
 			JSONNode	node(JSON_NODE);
@@ -251,6 +265,11 @@ bool	RCSMessage::Make()
 
 				payload_.push_back(array);
 			}
+		}
+
+		if (uint64_t(endpoint_fields_) != 0)
+		{
+			payload_.push_back(JSONNode(TITLE_NAME_ENDPOINT_FIELDS, uint64_t(endpoint_fields_)));	
 		}
 
 		if (endpoint_is_null_)
@@ -334,6 +353,13 @@ bool	RCSMessage::AddGatewayNull()
 	return	true;
 }
 
+bool	RCSMessage::AddGatewayFields(Fields _fields)
+{
+	gateway_fields_ = _fields;
+
+	return	true;
+}
+
 bool	RCSMessage::AddDevice(JSONNode const& properties)
 {
 	device_vector_.push_back(properties);
@@ -359,6 +385,12 @@ bool	RCSMessage::AddDeviceNull()
 	return	true;
 }
 
+bool	RCSMessage::AddDeviceFields(Fields _fields)
+{
+	device_fields_ = _fields;
+
+	return	true;
+}
 bool	RCSMessage::AddEndpoint(JSONNode const& properties)
 {
 	endpoint_vector_.push_back(properties);
@@ -380,6 +412,13 @@ bool	RCSMessage::AddEndpointID(std::string const& _id)
 bool	RCSMessage::AddEndpointNull()
 {
 	endpoint_vector_.clear();
+
+	return	true;
+}
+
+bool	RCSMessage::AddEndpointFields(Fields _fields)
+{
+	endpoint_fields_ = _fields;
 
 	return	true;
 }

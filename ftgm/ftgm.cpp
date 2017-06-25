@@ -71,16 +71,38 @@ int	main(int argc, char *argv[])
 		TRACE_INFO2(NULL, "## " << object_manager.GetID());
 		TRACE_INFO2(NULL, "####################################");
 
-		object_manager.Start();
 
-		//	signal(SIGINT, sigterm);
-		// 	signal(SIGTERM, sigterm);
+		if (debug_mode)
+		{
+			object_manager.Start();
 
-		Shell	shell(shell_ftgm_commands, shell_ftgm_command_count, &object_manager);
+			//	signal(SIGINT, sigterm);
+			// 	signal(SIGTERM, sigterm);
 
-		shell.Run();
+			Shell	shell(shell_ftgm_commands, shell_ftgm_command_count, &object_manager);
 
-		object_manager.Stop(true);
+			shell.Run();
+
+			object_manager.Stop(true);
+		}
+		else
+		{
+			if (!fork())
+			{
+				object_manager.Start();
+					
+				sleep(1);
+
+				while(object_manager.IsRunning())
+				{
+					sleep(1);	
+				}
+			}
+			else
+			{
+				exit(0);	
+			}
+		}
 	}
 	catch(ObjectNotFound& e)
 	{

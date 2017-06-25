@@ -31,7 +31,6 @@ Endpoint::Endpoint(ObjectManager& _manager, std::string const& _type)
 	last_report_date_(),
 	last_confirm_date_()
 {
-	keep_alive_interval_ = 0;
 }
 
 Endpoint::Endpoint(ObjectManager& _manager, std::string const& _type, std::string const& _unit)
@@ -203,6 +202,11 @@ bool	Endpoint::GetProperties(JSONNode& _properties, Fields const& _fields)
 	if (_fields.correction_interval)
 	{
 		_properties.push_back(JSONNode(TITLE_NAME_CORRECTION_INTERVAL, correction_interval_));
+	}
+
+	if (_fields.value)
+	{
+		_properties.push_back(JSONNode(TITLE_NAME_VALUE, GetValue()));
 	}
 
 	return	true;	

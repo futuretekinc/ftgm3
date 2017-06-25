@@ -252,6 +252,28 @@ Node*		ObjectManager::GetNode(std::string const& _id)
 
 Gateway*		ObjectManager::CreateGateway(JSONNode const& _properties, bool from_db)
 {
+	JSONNode	properties = _properties;
+	
+	JSONNode	device_property;
+	if (JSONNodeIsExistField(properties, TITLE_NAME_DEVICE))
+	{
+		JSONNode::iterator it = properties.find(TITLE_NAME_DEVICE);
+		if (it != properties.end())
+		{
+			if (it->type() == JSON_NODE)
+			{
+				device_property = it->as_node();
+			}
+			else if (it->type() == JSON_ARRAY)
+			{
+				device_property = it->as_array();
+			}
+		}
+
+		properties.erase(it);
+	}
+
+// XTRA
 	Gateway*		gateway = NULL;
 
 	gateway = Gateway::Create(*this, _properties);
@@ -271,6 +293,34 @@ Gateway*		ObjectManager::CreateGateway(JSONNode const& _properties, bool from_db
 		gateway->ClearUpdatedProperties();
 
 		TRACE_INFO("The gateway[" << gateway->GetID() << "] created!");
+
+		if ((!from_db) && (device_property.size() != 0))
+		{
+		
+			if (device_property.type() == JSON_NODE)
+			{
+				device_property.push_back(JSONNode(TITLE_NAME_PARENT_ID, gateway->GetID()));		
+
+				Device * device = CreateDevice(device_property);
+				if (device == NULL)
+				{
+					TRACE_ERROR("Failed to create deivce!");
+				}
+			}
+			else if (device_property.type() == JSON_ARRAY)
+			{
+				for(JSONNode::iterator it = device_property.begin() ; it != device_property.end() ; it++)
+				{
+					it->push_back(JSONNode(TITLE_NAME_PARENT_ID, gateway->GetID()));		
+
+					Device * device = CreateDevice(device_property);
+					if (device == NULL)
+					{
+						TRACE_ERROR("Failed to create deivce!");
+					}
+				}
+			}
+		}
 	}
 
 	return	gateway;
@@ -383,7 +433,7 @@ Device*	ObjectManager::CreateDevice(JSONNode const& _properties, bool from_db)
 
 		properties.erase(it);
 	}
-
+// XTRA
 	device = Device::Create(*this, properties);
 	if (device != NULL)
 	{
@@ -505,6 +555,11 @@ Endpoint*	ObjectManager::CreateEndpoint(JSONNode const& _properties, bool from_d
 
 		if (!from_db)
 		{
+			JSONNode	properties;
+
+			endpoint->GetProperties(properties);
+
+			TRACE_INFO("ENDPOINT : " << properties.write_formatted());
 			data_manager_.AddEndpoint(endpoint);
 		}
 
@@ -740,7 +795,7 @@ void	ObjectManager::Preprocess()
 
 	uint32_t count = data_manager_.GetGatewayCount();
 	TRACE_INFO("Gateway Count : " << count);
-
+#if 0
 	if (count == 0)
 	{
 		JSONNode	properties;
@@ -760,6 +815,7 @@ void	ObjectManager::Preprocess()
 		}
 	}
 	else
+#endif
 	{
 		for(uint32_t i = 0 ; i < count ; i++)
 		{

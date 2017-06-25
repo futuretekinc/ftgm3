@@ -80,6 +80,11 @@ bool	RCSClient::Stop(bool _wait)
 
 bool	RCSClient::Connect()
 {
+	if (tcp_client_.IsConnected())
+	{
+		TRACE_INFO("Tcp client is already connected.");
+		return	true;
+	}
 	return	tcp_client_.Connect();
 
 }
@@ -160,6 +165,29 @@ bool	RCSClient::GetGateway(std::string const& _id, JSONNode& _properties)
 	RCSMessage	response;
 
 	request.AddGatewayID(_id);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		_properties = response.GetGateway(0);
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::GetGateway(std::string const& _id, Fields const& _fields, JSONNode& _properties)
+{
+	RCSMessage	request(MSG_TYPE_RCS_GET);
+	RCSMessage	response;
+
+	request.AddGatewayID(_id);
+	request.AddGatewayFields(_fields);
 
 	if (!RemoteCall(request, response))
 	{
@@ -321,6 +349,29 @@ bool	RCSClient::GetDevice(std::string const& _id, JSONNode& _properties)
 	return	false;
 }
 
+bool	RCSClient::GetDevice(std::string const& _id, Fields const& _fields, JSONNode& _properties)
+{
+	RCSMessage	request(MSG_TYPE_RCS_GET);
+	RCSMessage	response;
+
+	request.AddDeviceID(_id);
+	request.AddDeviceFields(_fields);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		_properties = response.GetDevice(0);
+		return	true;
+	}
+
+	return	false;
+}
+
 bool	RCSClient::GetDevice(std::list<std::string>& _fields, std::vector<JSONNode>& _vector)
 {
 	RCSMessage	request(MSG_TYPE_RCS_LIST);
@@ -450,6 +501,29 @@ bool	RCSClient::GetEndpoint(std::string const& _id, JSONNode& _properties)
 	RCSMessage	response;
 
 	request.AddEndpointID(_id);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		_properties = response.GetEndpoint(0);
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::GetEndpoint(std::string const& _id, Fields const& _fields, JSONNode& _properties)
+{
+	RCSMessage	request(MSG_TYPE_RCS_GET);
+	RCSMessage	response;
+
+	request.AddEndpointID(_id);
+	request.AddEndpointFields(_fields);
 
 	if (!RemoteCall(request, response))
 	{
@@ -746,7 +820,14 @@ bool	RCSClient::RemoteCall(JSONNode& _request, JSONNode& _response)
 		return	false;
 	}
 
-	_response = libjson::parse(receive_buffer);
+	try
+	{
+		_response = libjson::parse(receive_buffer);
+	}
+	catch(std::bad_alloc& e)
+	{
+		TRACE_ERROR("Failed to alloc memory in libjson::parse[" << receive_buffer.size() << "]");
+	}
 
 	return	true;
 }
@@ -776,7 +857,14 @@ bool	RCSClient::RemoteCall(RCSMessage& _request, RCSMessage& _response)
 		return	false;
 	}
 
-	_response = libjson::parse(receive_buffer);
+	try
+	{
+		_response = libjson::parse(receive_buffer);
+	}
+	catch(std::bad_alloc& e)
+	{
+		TRACE_ERROR("Failed to alloc memory in libjson::parse[" << receive_buffer.size() << "]");
+	}
 
 	return	true;
 }

@@ -4,7 +4,6 @@
 #include <sstream>
 #include <fstream>
 #include <cstring>
-#include <mutex>
 #include <unistd.h>
 #include "trace.h"
 #include "defined.h"
@@ -18,6 +17,7 @@ using namespace std;
 
 extern	Shell::Command*	object_manager_shell_commands[];
 extern	int	object_manager_shell_command_count;
+extern	char* program_invocation_short_name;
 
 void	LoadConfig(std::string _file_name);
 
@@ -90,7 +90,7 @@ void	LoadConfig(std::string _file_name)
 			JSONNode	json = libjson::parse(buffer);
 
 
-			for(auto it = json.begin() ; it != json.end() ; it++)
+			for(JSONNode::iterator it = json.begin() ; it != json.end() ; it++)
 			{
 				if (it->name() == TITLE_NAME_TRACE)
 				{

@@ -1,6 +1,8 @@
 #ifndef	JSON_UTILS_H_
 #define	JSON_UTILS_H_
 
+#include <stdint.h>
+
 std::string	JSONNodeGetID(JSONNode const& _node);
 std::string	JSONNodeGetName(JSONNode const& _node);
 std::string	JSONNodeGetName(JSONNode const& _node, std::string const& _default);
