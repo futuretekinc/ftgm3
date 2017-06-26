@@ -38,7 +38,6 @@ ServerLinker::Produce::Produce(std::string const& _topic, std::string const& _pa
 
 ServerLinker::Produce::~Produce()
 {
-	TRACE_INFO2(NULL, "#### << " << message_.GetMsgID());
 }
 
 ServerLinker::Consume::Consume(std::string const& _topic, std::string const& _payload)
@@ -647,14 +646,14 @@ void	ServerLinker::Postprocess()
 
 }
 
-bool	ServerLinker::Start()
+bool	ServerLinker::Start(uint32_t _wait_for_init_time)
 {
 	if (broker_.length() == 0)
 	{
 		return	false;	
 	}
 
-	return	ProcessObject::Start();
+	return	ProcessObject::Start(_wait_for_init_time);
 }
 
 bool	ServerLinker::IsConnected()
@@ -676,7 +675,11 @@ bool	ServerLinker::Send(RCSMessage const& _message)
 {
 	try
 	{
-		Post(new Produce(global_up_topic_, _message));
+		Produce	*produce = (new Produce(global_up_topic_, _message));
+
+		TRACE_INFO("New Produce = " << produce);
+
+		Post(produce);
 	}
 	catch(std::exception& e)
 	{
@@ -854,6 +857,8 @@ bool	ServerLinker::AddGateway(JSONNode& _payload, std::string const& _id)
 
 bool	ServerLinker::AddDevice(JSONNode& _payload, Device* _device, Fields const& _fields)
 {
+	ASSERT(_device != NULL);
+
 	JSONNode::iterator it = _payload.find(TITLE_NAME_DEVICE);
 	if (it != _payload.end())
 	{
@@ -933,6 +938,8 @@ bool	ServerLinker::AddDevice(JSONNode& _payload, std::string const& _id)
 
 bool	ServerLinker::AddEndpoint(JSONNode& _payload, Endpoint* _endpoint, Fields const& _fields)
 {
+	ASSERT(_endpoint != NULL);
+
 	JSONNode::iterator it = _payload.find(TITLE_NAME_ENDPOINT);
 	if (it != _payload.end())
 	{
@@ -1013,6 +1020,8 @@ bool	ServerLinker::AddEndpoint(JSONNode& _payload, std::string const& _id)
 
 bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
 {
+	ASSERT(_ep != NULL);
+
 	JSONNode	node;
 
 	Endpoint::ValueMap value_map;
@@ -1072,6 +1081,8 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
 
 bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_bound, uint32_t _upper_bound)
 {
+	ASSERT(_ep != NULL);
+
 	JSONNode	node;
 	Endpoint::ValueMap	value_map;
 
@@ -1137,7 +1148,7 @@ bool	ServerLinker::Error(std::string const& _req_id ,std::string const& _err_msg
 	return	Send(message);
 }
 
-bool	ServerLinker::ConfirmRequest(RCSMessage const& _reply, std::string& _req_type, bool _exception)
+bool	ServerLinker::ConfirmRequest(RCSMessage const& _reply, std::string& _req_type)
 {
 	bool	ret_value = false;
 
@@ -1153,23 +1164,25 @@ bool	ServerLinker::ConfirmRequest(RCSMessage const& _reply, std::string& _req_ty
 
 		if (message.GetMsgID() == _reply.GetReqID())
 		{
-			_req_type = JSONNodeGetMsgType(message.GetPayload());
-		
-			delete produce;
+			try
+			{
+				_req_type = JSONNodeGetMsgType(message.GetPayload());
 
-			request_map_.erase(it);
+				delete produce;
 
-			ret_value = true;
+				request_map_.erase(it);
+
+				ret_value = true;
+			}
+			catch(ObjectNotFound& e)
+			{
+				TRACE_ERROR("Request type unknown");
+			}
 			break;
 		}
 	}
 
 	request_map_locker_.Unlock();
-
-	if (!ret_value && _exception)
-	{
-		THROW_REQUEST_TIMEOUT(&_reply);
-	}
 
 	return	ret_value;
 }
@@ -1177,6 +1190,9 @@ bool	ServerLinker::ConfirmRequest(RCSMessage const& _reply, std::string& _req_ty
 
 bool	ServerLinker::OnMessage(Message* _message)
 {
+	bool	ret_value = true;
+	ASSERT(_message != NULL);
+
 	std::string	msg_id;
 	try
 	{
@@ -1188,7 +1204,7 @@ bool	ServerLinker::OnMessage(Message* _message)
 
 				if (produce != NULL)
 				{
-					return	OnProduce(produce);
+					ret_value = OnProduce(produce);
 				}
 				else
 				{
@@ -1210,22 +1226,26 @@ bool	ServerLinker::OnMessage(Message* _message)
 				}
 			}
 			break;
+
+		default:
+			ret_value = false;
 		}
 	}
 	catch(std::exception& e)
 	{
 		TRACE_ERROR(e.what());
-		Error(msg_id, e.what());
+		//Error(msg_id, e.what());
+		ret_value = false;
 	}
 
-	return	true;
+	return	ret_value;
 }
 
 void	ServerLinker::OnConsume(Consume* _consume)
 {
-	RCSMessage&	message = _consume->GetMessage();	
+	ASSERT(_consume != NULL);
 
-	TRACE_INFO("Paylod : " << message.GetPayload().write_formatted());
+	RCSMessage&	message = _consume->GetMessage();	
 
 	if (message.GetMsgType() == MSG_TYPE_RCS_ADD)
 	{
@@ -1263,7 +1283,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 	{
 		std::string	req_type;
 
-		if (!ConfirmRequest(message, req_type, false))
+		if (!ConfirmRequest(message, req_type))
 		{
 			TRACE_ERROR("The confirm message[" << message.GetMsgID() << "] was timed out.");
 		//	Error(message.GetMsgID(), "The confirm message was timed out.");
@@ -1277,7 +1297,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 	{
 		std::string	req_type;
 
-		if (!ConfirmRequest(message, req_type, false))
+		if (!ConfirmRequest(message, req_type))
 		{
 			manager_->GetRCSServer().Error(message);	
 		}
@@ -1290,6 +1310,8 @@ void	ServerLinker::OnConsume(Consume* _consume)
 
 bool	ServerLinker::OnProduce(Produce* _produce)
 {
+	ASSERT(_produce != NULL);
+
 	std::string topic	= _produce->GetTopic();
 	RCSMessage 	message = _produce->GetMessage();	
 
@@ -1308,9 +1330,9 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 			return	true;
 		}
 
-		TRACE_INFO("  Topic : " << topic);
-		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
-
+//		TRACE_INFO("  Topic : " << topic);
+//		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
+#if 1
 		if (message.GetMsgType() != MSG_TYPE_RCS_CONFIRM)
 		{
 			uint64_t	expire_time = Date::GetCurrent().GetMicroSecond() + (request_timeout_ * TIME_SECOND);
@@ -1318,16 +1340,12 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 			request_map_locker_.Lock();
 			request_map_[expire_time] = _produce;
 			request_map_locker_.Unlock();
-			TRACE_INFO("Request Timeout : " << expire_time << " - " << _produce);
-		//	TRACE_INFO("Produce insert to Message Map[" << msg_id << "]");
-		//	message_map_.insert(std::pair<std::string, Produce*>(msg_id, _produce));
-		//	TRACE_INFO("Message Map Size : " << message_msp_.size());
 		}
 		else
 		{
 			TRACE_INFO("The MsgID of ReqID [" << message.GetReqID() << "] is " << msg_id);
 		}
-
+#endif
 		link->IncreaseNumberOfOutGoingMessages();
 		link->Touch();
 

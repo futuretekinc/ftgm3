@@ -17,7 +17,7 @@ protected:
 	std::string	message_;
 };
 
-#define	ASSERT(x)	{	if (!(x)) { std::ostringstream oss; oss << ##x; throw Asserted(oss.str());} }
+#define	ASSERT(x)	{	if (!(x)) { std::ostringstream oss; oss << #x; throw Asserted(oss.str());} }
 
 class	InvalidArgument : public std::exception
 {

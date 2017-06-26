@@ -263,14 +263,13 @@ void	ServerLinkerMosq::Process()
 		{
 			Produce*	produce = it->second;
 			it->second = NULL;
-
 			if (produce->GetMessage().GetMsgType() != MSG_TYPE_RCS_KEEP_ALIVE)
 			{
 				if (produce->GetTransmissionCount() < retransmission_count_max_)
 				{
-					TRACE_ERROR("Retransmission : " <<  produce->GetTransmissionCount());
-					Post(produce);
+					TRACE_ERROR("Retransmission : " << produce << " - " <<  produce->GetTransmissionCount());
 					produce->IncTransmissionCount();
+					Post(produce);
 				}
 				else
 				{
@@ -297,9 +296,7 @@ void	ServerLinkerMosq::Process()
 			}
 		}
 
-		TRACE_INFO("Timeout request erase start!");
 		request_map_.erase(request_map_.begin(), request_map_.upper_bound(current));
-		TRACE_INFO("Timeout request erase finished!");
 	}
 	
 	request_map_locker_.Unlock();
@@ -338,6 +335,8 @@ bool	ServerLinkerMosq::InternalConnect(uint32_t _delay_sec)
 		}
 		else if (broker_retry_timeout_.RemainTime() == 0)
 		{
+			TRACE_INFO("mosquitto_ : " << mosquitto_ );
+			TRACE_INFO("broker : " << broker_);
 			int	ret = mosquitto_connect(mosquitto_, broker_.c_str(), 1883, keep_alive_interval_);
 			if (ret > 0)
 			{
@@ -391,12 +390,10 @@ bool	ServerLinkerMosq::InternalDisconnect()
 		it->second->Stop();
 	}
 
-	TRACE_ENTRY;
 	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
 		it->second->Stop();
 	}
-	TRACE_EXIT;
 
 	return	true;
 }
@@ -443,6 +440,7 @@ void ServerLinkerMosq::OnDisconnectCB(struct mosquitto *_mosq, void *_obj, int _
 
 void ServerLinkerMosq::OnPublishCB(struct mosquitto *_mosq, void *_obj, int _mid)
 {
+#if 0
 	ServerLinkerMosq*	linker = (ServerLinkerMosq*)_obj;
 
 	TRACE_INFO2(linker, "The Message[" << _mid << "] was delivered");
@@ -462,6 +460,7 @@ void ServerLinkerMosq::OnPublishCB(struct mosquitto *_mosq, void *_obj, int _mid
 	{
 //		TRACE_INFO2(linker, "Tth publish[" << _mid << "] not found!");	
 	}
+#endif
 }
 
 void	ServerLinkerMosq::OnLogCB(struct mosquitto *_mosq, void *_obj, int _level, const char *_str)
@@ -508,6 +507,7 @@ void	ServerLinkerMosq::OnMessageCB(struct mosquitto *_mosq, void *_obj, const st
 				try
 				{
 					Consume	*consume = new Consume(_message->topic, payload);
+					TRACE_INFO2(linker, "New Consume : " << consume);
 					linker->Post(consume);
 				}
 				catch(std::exception& e)

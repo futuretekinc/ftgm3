@@ -790,8 +790,7 @@ bool	ObjectManager::UpdateProperties(Endpoint* _endpoint)
 
 void	ObjectManager::Preprocess()
 {
-	data_manager_.Start(1000);
-	rcs_server_.Start(1000);
+	data_manager_.Start(100);
 
 	uint32_t count = data_manager_.GetGatewayCount();
 	TRACE_INFO("Gateway Count : " << count);
@@ -899,7 +898,8 @@ void	ObjectManager::Preprocess()
 		}
 	}
 
-	server_linker_.Start();
+	rcs_server_.Start(100);
+	server_linker_.Start(100);
 
 	if (auto_start_)
 	{
@@ -924,6 +924,7 @@ void	ObjectManager::Preprocess()
 			if(it->second->GetEnable())
 			{
 				it->second->Start();	
+				usleep(500000);
 			}
 		}
 	}
@@ -954,8 +955,27 @@ void	ObjectManager::Process()
 
 void	ObjectManager::Postprocess()
 {
+	TRACE_INFO("Object manager post process!");
+	for(std::map<std::string, Endpoint*>::iterator it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
+	{
+		it->second->Stop();	
+	}
+
+	for(std::map<std::string, Device*>::iterator it = device_map_.begin(); it != device_map_.end() ; it++)
+	{
+		it->second->Stop();	
+	}
+
+	for(std::map<std::string, Gateway *>::iterator it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
+	{
+		it->second->Stop();	
+	}
+
+	Date date = Date::GetCurrent() + Time(endpoint_report_interval_ * TIME_SECOND);
+	endpoint_report_timer_.Set(date);
 	rcs_server_.Stop(true);
-	server_linker_.Stop();
+	server_linker_.Stop(true);
+
 	ProcessObject::Postprocess();
 }
 

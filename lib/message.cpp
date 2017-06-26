@@ -54,6 +54,10 @@ Message::Message(uint32_t	_type, const std::string& _sender)
 	id_ = time_.GetMicroSecond();
 }
 
+Message::~Message()
+{
+}
+
 void	Message::RegisterRecipient(std::string const& _id, ActiveObject* _object)
 {
 	active_object_map_lock.lock();

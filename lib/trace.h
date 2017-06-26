@@ -84,6 +84,8 @@ public:
 
 	bool	GetEnable();
 	void	SetEnable(bool on);
+	bool	SetState(State _state);
+	Trace::State	GetState();
 
 	bool	Load(JSONNode const& _json, bool _check = false);
 			operator JSONNode() const;
@@ -117,8 +119,9 @@ protected:
 
 extern	TraceMaster	trace_master;
 extern	Trace		trace;
+extern	Locker		global_locker;
 
-#define	TRACE_INFO(x)	{	trace.Begin(INFO, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; }
+#define	TRACE_INFO(x)	{	global_locker.Lock(); trace.Begin(INFO, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; global_locker.Unlock(); }
 #define	TRACE_WARN(x)	{	trace.Begin(WARNING, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; }
 #define	TRACE_ERROR(x)	{	trace.Begin(ERROR, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}
 #define	TRACE_CRITICAL	{	trace.Begin(CRITICAL, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}

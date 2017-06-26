@@ -34,10 +34,25 @@ RCSMessage::RCSMessage(RCSMessage const& _message)
 	device_is_null_	=	_message.device_is_null_;
 	endpoint_is_null_=	_message.endpoint_is_null_;
 
-	gateway_vector_	=	_message.gateway_vector_;
-	device_vector_	=	_message.device_vector_;
-	endpoint_vector_=	_message.endpoint_vector_;
-	epdata_vector_	=	_message.epdata_vector_;
+	for(std::list<JSONNode>::const_iterator it = _message.gateway_list_.begin() ; it != _message.gateway_list_.end() ; it ++)
+	{
+		gateway_list_.push_back(it->duplicate());
+	}
+
+	for(std::list<JSONNode>::const_iterator it = _message.device_list_.begin() ; it != _message.device_list_.end() ; it ++)
+	{
+		device_list_.push_back(it->duplicate());
+	}
+
+	for(std::list<JSONNode>::const_iterator it = _message.endpoint_list_.begin() ; it != _message.endpoint_list_.end() ; it ++)
+	{
+		endpoint_list_.push_back(it->duplicate());
+	}
+
+	for(std::list<JSONNode>::const_iterator it = _message.epdata_list_.begin() ; it != _message.epdata_list_.end() ; it ++)
+	{
+		epdata_list_.push_back(it->duplicate());
+	}
 }
 
 RCSMessage::RCSMessage(std::string const& _msg_type)
@@ -76,13 +91,13 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 	{
 		if (it->type() == JSON_NODE)
 		{
-			gateway_vector_.push_back(*it);
+			gateway_list_.push_back(*it);
 		}
 		else if (it->type() == JSON_ARRAY)
 		{
 			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
-				gateway_vector_.push_back(*item);	
+				gateway_list_.push_back(*item);	
 			}
 		}
 		else
@@ -96,13 +111,13 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 	{
 		if (it->type() == JSON_NODE)
 		{
-			device_vector_.push_back(*it);
+			device_list_.push_back(*it);
 		}
 		else if (it->type() == JSON_ARRAY)
 		{
 			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
-				device_vector_.push_back(*item);	
+				device_list_.push_back(*item);	
 			}
 		}
 		else
@@ -116,13 +131,13 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 	{
 		if (it->type() == JSON_NODE)
 		{
-			endpoint_vector_.push_back(*it);
+			endpoint_list_.push_back(*it);
 		}
 		else if (it->type() == JSON_ARRAY)
 		{
 			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
-				endpoint_vector_.push_back(*item);	
+				endpoint_list_.push_back(*item);	
 			}
 		}
 		else
@@ -136,13 +151,13 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 	{
 		if (it->type() == JSON_NODE)
 		{
-			epdata_vector_.push_back(*it);
+			epdata_list_.push_back(*it);
 		}
 		else if (it->type() == JSON_ARRAY)
 		{
 			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
-				epdata_vector_.push_back(*item);	
+				epdata_list_.push_back(*item);	
 			}
 		}
 		else
@@ -152,6 +167,10 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 	}
 
 	Make();
+}
+
+RCSMessage::~RCSMessage()
+{
 }
 
 bool	RCSMessage::SetMsgType(std::string const& _type)
@@ -205,19 +224,19 @@ bool	RCSMessage::Make()
 		}
 		else
 		{
-			if (gateway_vector_.size() == 1)
+			if (gateway_list_.size() == 1)
 			{
-				JSONNode	node = gateway_vector_[0];
+				JSONNode	node = gateway_list_.front();
 
 				node.set_name(TITLE_NAME_GATEWAY);
 
 				payload_.push_back(node);
 			}
-			else if (gateway_vector_.size() > 1)
+			else if (gateway_list_.size() > 1)
 			{
 				JSONNode	array(JSON_ARRAY);
 
-				for(std::vector<JSONNode>::iterator it = gateway_vector_.begin() ; it != gateway_vector_.end() ; it++)
+				for(std::list<JSONNode>::iterator it = gateway_list_.begin() ; it != gateway_list_.end() ; it++)
 				{
 					JSONNode	node;
 
@@ -245,18 +264,18 @@ bool	RCSMessage::Make()
 		}
 		else
 		{
-			if (device_vector_.size() == 1)
+			if (device_list_.size() == 1)
 			{
-				JSONNode	node = device_vector_[0];
+				JSONNode	node = device_list_.front();
 				node.set_name(TITLE_NAME_DEVICE);
 
 				payload_.push_back(node);
 			}
-			else if (device_vector_.size() > 1)
+			else if (device_list_.size() > 1)
 			{
 				JSONNode	array(JSON_ARRAY);
 
-				for(std::vector<JSONNode>::iterator it = device_vector_.begin() ; it != device_vector_.end() ; it++)
+				for(std::list<JSONNode>::iterator it = device_list_.begin() ; it != device_list_.end() ; it++)
 				{
 					array.push_back(*it);
 				}
@@ -282,18 +301,18 @@ bool	RCSMessage::Make()
 		}
 		else
 		{
-			if (endpoint_vector_.size() == 1)
+			if (endpoint_list_.size() == 1)
 			{
-				JSONNode	node = endpoint_vector_[0];
+				JSONNode	node = endpoint_list_.front();
 				node.set_name(TITLE_NAME_ENDPOINT);
 
 				payload_.push_back(node);
 			}
-			else if (endpoint_vector_.size() > 1)
+			else if (endpoint_list_.size() > 1)
 			{
 				JSONNode	array(JSON_ARRAY);
 
-				for(std::vector<JSONNode>::iterator it = endpoint_vector_.begin() ; it != endpoint_vector_.end() ; it++)
+				for(std::list<JSONNode>::iterator it = endpoint_list_.begin() ; it != endpoint_list_.end() ; it++)
 				{
 					array.push_back(*it);
 				}
@@ -304,18 +323,18 @@ bool	RCSMessage::Make()
 			}
 		}
 
-		if (epdata_vector_.size() == 1)
+		if (epdata_list_.size() == 1)
 		{
-			JSONNode	node = epdata_vector_[0];
+			JSONNode	node = epdata_list_.front();
 			node.set_name(TITLE_NAME_DATA);
 
 			payload_.push_back(node);
 		}
-		else if (epdata_vector_.size() > 1)
+		else if (epdata_list_.size() > 1)
 		{
 			JSONNode	array(JSON_ARRAY);
 
-			for(std::vector<JSONNode>::iterator it = epdata_vector_.begin(); it != epdata_vector_.end() ; it++)
+			for(std::list<JSONNode>::iterator it = epdata_list_.begin(); it != epdata_list_.end() ; it++)
 			{
 				array.push_back(*it);
 			}
@@ -330,7 +349,7 @@ bool	RCSMessage::Make()
 
 bool	RCSMessage::AddGateway(JSONNode const& properties)
 {
-	gateway_vector_.push_back(properties);
+	gateway_list_.push_back(properties);
 
 	return	true;
 }
@@ -341,14 +360,14 @@ bool	RCSMessage::AddGatewayID(std::string const& _id)
 
 	node.push_back(JSONNode(TITLE_NAME_ID, _id));
 
-	gateway_vector_.push_back(node);
+	gateway_list_.push_back(node);
 
 	return	true;
 }
 
 bool	RCSMessage::AddGatewayNull()
 {
-	gateway_vector_.clear();
+	gateway_list_.clear();
 
 	return	true;
 }
@@ -362,7 +381,7 @@ bool	RCSMessage::AddGatewayFields(Fields _fields)
 
 bool	RCSMessage::AddDevice(JSONNode const& properties)
 {
-	device_vector_.push_back(properties);
+	device_list_.push_back(properties);
 
 	return	true;
 }
@@ -373,14 +392,14 @@ bool	RCSMessage::AddDeviceID(std::string const& _id)
 
 	node.push_back(JSONNode(TITLE_NAME_ID, _id));
 
-	device_vector_.push_back(node);
+	device_list_.push_back(node);
 
 	return	true;
 }
 
 bool	RCSMessage::AddDeviceNull()
 {
-	device_vector_.clear();
+	device_list_.clear();
 
 	return	true;
 }
@@ -393,7 +412,7 @@ bool	RCSMessage::AddDeviceFields(Fields _fields)
 }
 bool	RCSMessage::AddEndpoint(JSONNode const& properties)
 {
-	endpoint_vector_.push_back(properties);
+	endpoint_list_.push_back(properties);
 
 	return	true;
 }
@@ -404,14 +423,14 @@ bool	RCSMessage::AddEndpointID(std::string const& _id)
 
 	node.push_back(JSONNode(TITLE_NAME_ID, _id));
 
-	endpoint_vector_.push_back(node);
+	endpoint_list_.push_back(node);
 
 	return	true;
 }
 
 bool	RCSMessage::AddEndpointNull()
 {
-	endpoint_vector_.clear();
+	endpoint_list_.clear();
 
 	return	true;
 }
@@ -425,7 +444,7 @@ bool	RCSMessage::AddEndpointFields(Fields _fields)
 
 bool	RCSMessage::AddEPData(JSONNode const& properties)
 {
-	epdata_vector_.push_back(properties);
+	epdata_list_.push_back(properties);
 
 	return	true;
 }
@@ -433,41 +452,42 @@ bool	RCSMessage::AddEPData(JSONNode const& properties)
 
 uint32_t	RCSMessage::GetGatewayCount()
 {
-	return	gateway_vector_.size();
+	return	gateway_list_.size();
 }
-
+#if 0
 JSONNode	RCSMessage::GetGateway(uint32_t index)
 {
-	return	gateway_vector_[index];
+	return	gateway_list_[index];
 }
-
+#endif
 uint32_t	RCSMessage::GetDeviceCount()
 {
-	return	device_vector_.size();
+	return	device_list_.size();
 }
-
+#if 0
 JSONNode	RCSMessage::GetDevice(uint32_t index)
 {
-	return	device_vector_[index];
+	return	device_list_[index];
 }
 
+#endif
 uint32_t	RCSMessage::GetEndpointCount()
 {
-	return	endpoint_vector_.size();
+	return	endpoint_list_.size();
 }
-
+#if 0
 JSONNode	RCSMessage::GetEndpoint(uint32_t index)
 {
-	return	endpoint_vector_[index];
+	return	endpoint_list_[index];
 }
-
+#endif
 uint32_t	RCSMessage::GetEPDataCount()
 {
-	return	epdata_vector_.size();
+	return	epdata_list_.size();
 }
-
+#if 0
 JSONNode	RCSMessage::GetEPData(uint32_t index)
 {
-	return	epdata_vector_[index];
+	return	epdata_list_[index];
 }
-
+#endif

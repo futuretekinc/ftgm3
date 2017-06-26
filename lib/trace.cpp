@@ -9,6 +9,8 @@
 
 using namespace std;
 
+Locker	global_locker;
+
 Trace::Trace(Object* _object)
 : master_(trace_master), object_(_object), level_(INFO), continue_(false), state_(ENABLE), locker_()
 {
@@ -111,6 +113,16 @@ void	Trace::SetEnable(bool _enable)
 	{
 		state_ = DISABLE;
 	}
+}
+
+bool	Trace::SetState(State _state)
+{
+	state_ = _state;
+}
+
+Trace::State Trace::GetState()
+{
+	return	state_;
 }
 
 Trace& Trace::Begin(TraceLevel _level, std::string const& _pretty_function, uint32_t _line)

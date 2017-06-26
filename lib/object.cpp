@@ -661,3 +661,7 @@ std::string ToString(Object::Stat _stat)
 	return	std::string("unknown");
 }
 
+Trace&	Object::GetTrace()
+{
+	return	trace;
+}

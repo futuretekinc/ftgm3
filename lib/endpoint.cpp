@@ -518,6 +518,7 @@ bool	Endpoint::Add(time_t time, std::string const& _value)
 	ret_value = value_map_.Add(time, _value);
 	if (ret_value == true)
 	{
+#if 0
 		try
 		{
 			Message *message = new MessageEndpointUpdated(id_, id_, time, _value);
@@ -532,6 +533,7 @@ bool	Endpoint::Add(time_t time, std::string const& _value)
 		{
 			TRACE_ERROR("Failed to create message!");	
 		}
+#endif
 	}
 	return	ret_value;
 }

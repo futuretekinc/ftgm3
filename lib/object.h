@@ -77,6 +77,7 @@ public:
 
 	std::string			GetTraceName() const;
 			void		SetTrace(bool	_enable);
+	Trace&				GetTrace();
 
 	friend std::ostream&	operator<<(std::ostream& os, Object & _object);
 

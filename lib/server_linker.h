@@ -160,7 +160,7 @@ const	std::string&	GetTopic()	{ return	topic_;	};
 			uint32_t	GetDownLink(std::vector<DownLink*>& _link_array);
 			uint32_t	GetDownLink(std::list<std::string>& _topic_list);
 
-	virtual	bool		Start();
+	virtual	bool		Start(uint32_t _wait_for_init_time = 1000);
 	virtual	bool		Connect(uint32_t _delay_sec = 0);
 	virtual	bool		Disconnect();
 			bool		IsConnected();
@@ -199,7 +199,7 @@ protected:
 	virtual	bool		OnProduce(Produce* _produce);
 	virtual	void		OnConsume(Consume* _consume);
 
-	virtual	bool		ConfirmRequest(RCSMessage const & _reply, std::string& _req_type, bool _exception = true);
+	virtual	bool		ConfirmRequest(RCSMessage const & _reply, std::string& _req_type);
 
 			std::string (*secret_code_hash_)(const std::string &string);
 
@@ -225,12 +225,14 @@ protected:
 	bool				keep_alive_enable_;
 	uint32_t			keep_alive_interval_;
 
+	bool				request_confirm_;
 	uint64_t			request_timeout_;
+	Locker				request_map_locker_;
+	std::map<uint64_t, Produce*>		request_map_;
+
 	bool				report_late_arrive_message_;
 
-	Locker								request_map_locker_;
 	std::map<std::string, Produce*>		message_map_;
-	std::map<uint64_t, Produce*>		request_map_;
 
 	std::map<std::string, UpLink*>		up_link_map_;
 

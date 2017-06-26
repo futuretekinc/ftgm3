@@ -121,6 +121,7 @@ bool	ActiveObject::Stop(bool _wait)
 	{
 		if (thread_.joinable())
 		{
+			TRACE_INFO("Object[" << GetTraceName() << "] stopped");
 			stop_ = true;
 
 			if (_wait)
@@ -256,7 +257,8 @@ void	ActiveObject::Process()
 		Message*	message = message_queue_.Pop();
 		if (message != NULL)
 		{
-			if (OnMessage(message))
+			bool ret_value = OnMessage(message);
+			if (ret_value)
 			{
 				delete message;
 			}
@@ -278,8 +280,8 @@ void *ActiveObject::ThreadMain(void *data)
 	ActiveObject* _object = (ActiveObject*)data;
 
 	_object->Preprocess();
-
 	_object->stop_ = false;
+
 	while(!_object->stop_)
 	{
 		loop_timer += _object->loop_interval_;
@@ -289,6 +291,7 @@ void *ActiveObject::ThreadMain(void *data)
 		usleep(loop_timer.RemainTime());
 	}
 
+	TRACE_INFO2(_object, "Entry post process");
 	_object->Postprocess();
 }
 

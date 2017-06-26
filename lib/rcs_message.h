@@ -2,7 +2,6 @@
 #define	RCS_MESSAGE_H_
 
 #include <list>
-#include <vector>
 #include "defined.h"
 #include "active_object.h"
 #include "librdkafka/rdkafkacpp.h"
@@ -18,6 +17,7 @@ public:
 	RCSMessage(RCSMessage const& _message);
 	RCSMessage(std::string const& _type = MSG_TYPE_RCS_ERROR);
 	RCSMessage(JSONNode const& _message);
+	~RCSMessage();
 
 	const 	std::string&	GetMsgID()		const	{	return	msg_id_;		}
 	const	std::string&	GetMsgType()	const	{	return	msg_type_;		}
@@ -72,10 +72,10 @@ protected:
 	bool			gateway_is_null_;
 	bool			device_is_null_;
 	bool			endpoint_is_null_;
-	std::vector<JSONNode>	gateway_vector_;
-	std::vector<JSONNode>	device_vector_;
-	std::vector<JSONNode>	endpoint_vector_;
-	std::vector<JSONNode>	epdata_vector_;
+	std::list<JSONNode>	gateway_list_;
+	std::list<JSONNode>	device_list_;
+	std::list<JSONNode>	endpoint_list_;
+	std::list<JSONNode>	epdata_list_;
 };
 
 

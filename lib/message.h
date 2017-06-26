@@ -30,7 +30,8 @@ public:
 					Message(const Message& _message);
 					Message(uint32_t	_type = MSG_TYPE_UNKNOWN);
 					Message(uint32_t	_type, const std::string& _sender);
-			
+			virtual	~Message();
+
 			uint32_t	GetType()		{	return	type_;	}
 			uint64_t	GetID()			{	return	id_;	}
 			std::string	GetSendoer()	{	return	sender_;	}

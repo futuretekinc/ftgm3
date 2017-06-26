@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cstddef>
-//#include <chrono>
 #include <unistd.h>
 #include <sys/time.h>
 #include "defined.h"
@@ -12,9 +11,8 @@
 using namespace std;
 
 MessageQueue::MessageQueue(Object& _object)
-: parent_(_object), locker_()
+: parent_(_object), locker_(), queue_()
 {
-	TRACE_INFO("Create Queue : " << queue_.size());
 }
 
 MessageQueue::~MessageQueue()
@@ -35,7 +33,6 @@ void MessageQueue::Push
 {
 	locker_.Lock();
 
-	TRACE_ENTRY;
 	if (_message == NULL)
 	{
 		TRACE_ERROR("Woops! Pushed message is NULL!");	
@@ -43,22 +40,18 @@ void MessageQueue::Push
 	else
 	{
 		queue_.push_back(_message);
-	
-		TRACE_INFO("Message Pushed : " << parent_.GetClassName() << " - " << _message);
-		uint32_t	count = 0;
-		for(std::list<Message*>::iterator it = queue_.begin() ; it != queue_.end() ; it++)
-		{
-			TRACE_INFO( "" << count << " : " << *it);
-		}
 	}
 	
-	TRACE_EXIT;
 	locker_.Unlock();
 }
 
 Message* MessageQueue::Front()
 {
-	return	queue_.front();
+	locker_.Lock();
+	Message*	front = queue_.front();
+	locker_.Unlock();
+
+	return	front;
 }
 
 Message* MessageQueue::Pop
@@ -74,13 +67,6 @@ Message* MessageQueue::Pop
 	{
 		message = queue_.front();
 		queue_.pop_front();
-
-		TRACE_INFO("Message poped: " << parent_.GetClassName() << " - " << message);
-		uint32_t	count = 0;
-		for(std::list<Message*>::iterator it = queue_.begin() ; it != queue_.end() ; it++)
-		{
-			TRACE_INFO( "" << count << " : " << *it);
-		}
 
 		if (message != NULL)
 		{
@@ -103,7 +89,11 @@ Message* MessageQueue::Pop
 
 uint32_t	MessageQueue::Count()
 {
-	return	queue_.size();
+	locker_.Lock();
+	uint32_t	size = queue_.size();
+	locker_.Unlock();
+
+	return	size;
 }
 
 bool MessageQueue::TimedWait

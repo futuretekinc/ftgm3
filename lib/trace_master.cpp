@@ -157,6 +157,7 @@ void	TraceMaster::Write(std::string const& _headline, uint32_t _headline_len, st
 			{
 				char	buffer[1024];
 
+				memset(buffer, 0, sizeof(buffer));
 				message.getline(buffer, sizeof(buffer) - 1);
 				if (first)
 				{
@@ -184,6 +185,7 @@ void	TraceMaster::Write(std::string const& _headline, uint32_t _headline_len, st
 			{
 				char	buffer[1024];
 
+				memset(buffer, 0, sizeof(buffer));
 				message.getline(buffer, sizeof(buffer) - 1);
 				if (first)
 				{
