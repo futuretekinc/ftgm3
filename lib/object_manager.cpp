@@ -313,7 +313,7 @@ Gateway*		ObjectManager::CreateGateway(JSONNode const& _properties, bool from_db
 				{
 					it->push_back(JSONNode(TITLE_NAME_PARENT_ID, gateway->GetID()));		
 
-					Device * device = CreateDevice(device_property);
+					Device * device = CreateDevice(*it);
 					if (device == NULL)
 					{
 						TRACE_ERROR("Failed to create deivce!");
