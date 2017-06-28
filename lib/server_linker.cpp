@@ -1247,6 +1247,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 
 	RCSMessage&	message = _consume->GetMessage();	
 
+	TRACE_INFO("OnConsum : " << message.GetPayload().write_formatted());
 	if (message.GetMsgType() == MSG_TYPE_RCS_ADD)
 	{
 		RCSMessage	reply;

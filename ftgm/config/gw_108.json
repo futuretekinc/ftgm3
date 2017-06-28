@@ -1,0 +1,136 @@
+{
+	"type" : "gw_gen",
+	"id" : "FTM-GW-108",
+	"name" : "gw_108",
+	"device" : 
+	[
+		{
+			"type" : "dev_fte",
+			"name" : "dev_fte_1",
+			"options" : 
+			{
+				"ip"   : "10.0.1.26",
+				"module" : "FTE-E.txt",
+				"community" : "public"
+			},
+			"endpoint" : 
+			[
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature",
+					"update_interval" : 5,
+					"sensor_id" : "01800101"
+				},
+				{
+					"type": "ep_s_humidity",
+					"name" : "Humidity",
+					"update_interval" : 5,
+					"sensor_id" : "02800101"
+				},
+				{
+					"type": "ep_s_wind_speed",
+					"name" : "Wind Speed",
+					"update_interval" : 5,
+					"sensor_id" : "01000003"
+				},
+				{
+					"type": "ep_s_soil_moisture",
+					"name" : "Soil Moisture",
+					"update_interval" : 5,
+					"sensor_id" : "02800302"
+				},
+				{
+					"type": "ep_s_rainfall",
+					"name" : "Rainfall",
+					"update_interval" : 5,
+					"sensor_id" : "01000005"
+				},
+				{
+					"type": "ep_s_soil_acidity",
+					"name" : "Soil Acidity",
+					"update_interval" : 5,
+					"sensor_id" : "0a810201"
+				},
+				{
+					"type": "ep_a_do",
+					"name" : "Remote Control",
+					"update_interval" : 5,
+					"sensor_id" : "06000001"
+				}
+			]
+		},
+		{
+			"type" : "dev_fte",
+			"name" : "dev_fte_2",
+			"options" : 
+			{
+				"ip"   : "10.0.1.142",
+				"module" : "FTE-E.txt",
+				"community" : "public"
+			},
+			"endpoint" : 
+			[
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature1",
+					"update_interval" : 5,
+					"sensor_id" : "01020001"
+				},
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature2",
+					"update_interval" : 5,
+					"sensor_id" : "01020002"
+				},
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature3",
+					"update_interval" : 5,
+					"sensor_id" : "01020003"
+				},
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature4",
+					"update_interval" : 5,
+					"sensor_id" : "01020004"
+				},
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature5",
+					"update_interval" : 5,
+					"sensor_id" : "01020005"
+				},
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature6",
+					"update_interval" : 5,
+					"sensor_id" : "01020006"
+				},
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature7",
+					"update_interval" : 5,
+					"sensor_id" : "01020007"
+				},
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature8",
+					"update_interval" : 5,
+					"sensor_id" : "01020008"
+				},
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature9",
+					"update_interval" : 5,
+					"sensor_id" : "01020009"
+				},
+				{
+					"type": "ep_s_temperature",
+					"name" : "Temperature10",
+					"update_interval" : 5,
+					"sensor_id" : "0102000a"
+				}
+			]
+		}
+	]
+}
