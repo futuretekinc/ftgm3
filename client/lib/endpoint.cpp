@@ -221,11 +221,11 @@ RetValue	ShellCommandEndpointList( std::string* _arguments, uint32_t	_count, She
 				}
 			}
 
-			std::multimap<uint64_t, std::string >	fields_name_map;
+			std::multimap<uint32_t, std::string >	fields_name_map;
 
 			fields.Names(fields_name_map);
 		
-			for(std::map<uint64_t, std::string>::iterator it = fields_name_map.begin(); it != fields_name_map.end() ; it++)
+			for(std::map<uint32_t, std::string>::iterator it = fields_name_map.begin(); it != fields_name_map.end() ; it++)
 			{
 				fields_size.insert(fields_size.end(), std::pair<std::string, uint32_t>(it->second, it->second.size()));	
 			}

@@ -1330,8 +1330,8 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 			return	true;
 		}
 
-//		TRACE_INFO("  Topic : " << topic);
-//		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
+		TRACE_INFO("  Topic : " << topic);
+		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
 #if 1
 		if (message.GetMsgType() != MSG_TYPE_RCS_CONFIRM)
 		{

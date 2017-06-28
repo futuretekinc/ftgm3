@@ -454,40 +454,79 @@ uint32_t	RCSMessage::GetGatewayCount()
 {
 	return	gateway_list_.size();
 }
-#if 0
+
 JSONNode	RCSMessage::GetGateway(uint32_t index)
 {
-	return	gateway_list_[index];
+	for(std::list<JSONNode>::iterator it = gateway_list_.begin() ; it != gateway_list_.end() ; it++)
+	{
+		if (index == 0)
+		{
+			return	*it;	
+		}
+
+		index --;
+	}
+
+	return	JSONNode();
 }
-#endif
+
 uint32_t	RCSMessage::GetDeviceCount()
 {
 	return	device_list_.size();
 }
-#if 0
+
 JSONNode	RCSMessage::GetDevice(uint32_t index)
 {
-	return	device_list_[index];
+	for(std::list<JSONNode>::iterator it = device_list_.begin() ; it != device_list_.end() ; it++)
+	{
+		if (index == 0)
+		{
+			return	*it;	
+		}
+
+		index --;
+	}
+
+	return	JSONNode();
 }
 
-#endif
 uint32_t	RCSMessage::GetEndpointCount()
 {
 	return	endpoint_list_.size();
 }
-#if 0
+
 JSONNode	RCSMessage::GetEndpoint(uint32_t index)
 {
-	return	endpoint_list_[index];
+	for(std::list<JSONNode>::iterator it = endpoint_list_.begin() ; it != endpoint_list_.end() ; it++)
+	{
+		if (index == 0)
+		{
+			return	*it;	
+		}
+
+		index --;
+	}
+
+	return	JSONNode();
 }
-#endif
+
 uint32_t	RCSMessage::GetEPDataCount()
 {
 	return	epdata_list_.size();
 }
-#if 0
+
 JSONNode	RCSMessage::GetEPData(uint32_t index)
 {
-	return	epdata_list_[index];
+	for(std::list<JSONNode>::iterator it = epdata_list_.begin() ; it != epdata_list_.end() ; it++)
+	{
+		if (index == 0)
+		{
+			return	*it;	
+		}
+
+		index --;
+	}
+
+	return	JSONNode();
 }
-#endif
+
