@@ -38,8 +38,8 @@ public:
 
 	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties);
 
-	virtual	SNMPMaster::OID	GetOID(std::string const& _id);
-	virtual	SNMPMaster::OID	GetOID(std::string const& _name, uint32_t index);
+	virtual	SNMP::OID	GetOID(std::string const& _id);
+	virtual	SNMP::OID	GetOID(std::string const& _name, uint32_t index);
 
 	virtual	bool	InsertToDB(Kompex::SQLiteStatement*	_statement);
 
@@ -61,15 +61,15 @@ protected:
 
 			bool	ReadValue(std::string const& _endpoint_id, time_t& _time, std::string& _value);
 			bool	ReadValue(std::string const& _endpoint_id, time_t& _time, bool& _value);
-			bool	ReadValue(SNMPMaster::OID const& _oid, time_t& _time, std::string& _value);
-			bool	ReadValue(SNMPMaster::OID const& _oid, std::string& _value);
+			bool	ReadValue(SNMP::OID const& _oid, time_t& _time, std::string& _value);
+			bool	ReadValue(SNMP::OID const& _oid, std::string& _value);
 
 	std::string		module_;
 	std::string		community_;
 	uint32_t		timeout_;
 
-	SNMPSession		session_;
-	std::map<std::string, SNMPMaster::OID>	oid_map_;
+	SNMP::Session		session_;
+	std::map<std::string, SNMP::OID>	oid_map_;
 
 	std::string		async_value_;
 };

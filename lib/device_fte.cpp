@@ -130,7 +130,7 @@ bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& time, std::string& _
 		else
 		{
 
-			SNMPMaster::OID oid = GetOID(endpoint->GetType(), it->second);
+			SNMP::OID oid = GetOID(endpoint->GetType(), it->second);
 
 			ret_value = DeviceSNMP::ReadValue(oid, time, _value);
 		}
@@ -139,7 +139,7 @@ bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& time, std::string& _
 	return	ret_value;
 }
 
-SNMPMaster::OID DeviceFTE::GetOID(std::string const& _id)
+SNMP::OID DeviceFTE::GetOID(std::string const& _id)
 {
 	if (_id.size() < 8)
 	{
@@ -155,7 +155,7 @@ SNMPMaster::OID DeviceFTE::GetOID(std::string const& _id)
 		uint32_t	type = strtoul(type_string.c_str(), 0, 16) & 0x3F;
 		uint32_t	index = strtoul(index_string.c_str(), 0, 16);
 
-		SNMPMaster::OID oid;
+		SNMP::OID oid;
 		
 		oid.id[oid.length++] = 1;
 		oid.id[oid.length++] = 3;
@@ -180,9 +180,9 @@ SNMPMaster::OID DeviceFTE::GetOID(std::string const& _id)
 	return	oid_map_[_id];
 }
 
-SNMPMaster::OID DeviceFTE::GetOID(std::string const& _type, uint32_t _index)
+SNMP::OID DeviceFTE::GetOID(std::string const& _type, uint32_t _index)
 {
-	SNMPMaster::OID oid;
+	SNMP::OID oid;
 	uint32_t	type_index = 0;
 
 	if (_type == NODE_TYPE_EP_S_TEMPERATURE)

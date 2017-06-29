@@ -17,8 +17,8 @@ public:
 
 	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties);
 
-			SNMPMaster::OID 		GetOID(std::string const& _id);
-			SNMPMaster::OID 		GetOID(std::string const& _type, uint32_t _index);
+			SNMP::OID 		GetOID(std::string const& _id);
+			SNMP::OID 		GetOID(std::string const& _type, uint32_t _index);
 
 			bool		ReadValue(std::string const& _endpoint_id, time_t& _time, std::string& _value);
 

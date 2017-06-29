@@ -18,27 +18,16 @@ using namespace std;
 
 static Locker snmp_locker;
 static uint32_t object_count = 0;
-static	SNMPMaster	*snmp_master_ = NULL;
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type)
 : DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(1), session_()
 {
-	if (snmp_master_ == NULL)
-	{
-		snmp_master_ = new SNMPMaster;
-	}
-
 	trace.SetClassName(GetClassName());
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties)
 : DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(1), session_()
 {
-	if (snmp_master_ == NULL)
-	{
-		snmp_master_ = new SNMPMaster;
-	}
-
 	trace.SetClassName(GetClassName());
 	SetProperties(_properties, false, true);
 }
@@ -46,11 +35,6 @@ DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, JSONNo
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, JSONNode const& _properties)
 : DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(1), session_()
 {
-	if (snmp_master_ == NULL)
-	{
-		snmp_master_ = new SNMPMaster;
-	}
-
 	trace.SetClassName(GetClassName());
 	SetProperties(_properties, false, true);
 }
@@ -58,14 +42,9 @@ DeviceSNMP::DeviceSNMP(ObjectManager& _manager, JSONNode const& _properties)
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module)
 : DeviceIP(_manager, _type), module_(_module), community_("public"), timeout_(1), session_()
 {
-	if (snmp_master_ == NULL)
-	{
-		snmp_master_ = new SNMPMaster;
-	}
-
 	trace.SetClassName(GetClassName());
 
-	SNMPMaster::OID	unknown_oid;
+	SNMP::OID	unknown_oid;
 	oid_map_[""] = unknown_oid;
 
 	object_count++;
@@ -74,14 +53,9 @@ DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::s
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module, std::string const& _ip)
 : DeviceIP(_manager, _type, _ip), module_(_module), community_("public"), timeout_(1), session_()
 {
-	if (snmp_master_ == NULL)
-	{
-		snmp_master_ = new SNMPMaster;
-	}
-
 	trace.SetClassName(GetClassName());
 
-	SNMPMaster::OID	unknown_oid;
+	SNMP::OID	unknown_oid;
 	oid_map_[""] = unknown_oid;
 
 	object_count++;
@@ -106,17 +80,25 @@ bool		DeviceSNMP::IsIncludedIn(std::string const& _type)
 
 bool	DeviceSNMP::Open()
 {
-	return	snmp_master_->Open(this, ip_, community_);		
+	bool	ret_value;
+	
+	ret_value = session_.Open(ip_, community_);		
+	if (ret_value == true)
+	{
+		session_.SetTimeout(timeout_);	
+	}
+
+	return	ret_value;
 }
 
 bool	DeviceSNMP::Close()
 {
-	return	snmp_master_->Close(this);
+	return	session_.Close();
 }
 
 bool		DeviceSNMP::IsOpened()
 {
-	return	session_.session != NULL;
+	return	session_.IsOpened();
 }
 
 const	std::string&	DeviceSNMP::GetModule()
@@ -265,9 +247,9 @@ Endpoint*	DeviceSNMP::CreateEndpoint(JSONNode const& _properties)
 	return	endpoint;
 }
 
-SNMPMaster::OID DeviceSNMP::GetOID(std::string const& _id)
+SNMP::OID DeviceSNMP::GetOID(std::string const& _id)
 {
-	std::map<std::string, SNMPMaster::OID>::iterator it = oid_map_.find(_id);
+	std::map<std::string, SNMP::OID>::iterator it = oid_map_.find(_id);
 
 	if (it != oid_map_.end())
 	{
@@ -277,7 +259,7 @@ SNMPMaster::OID DeviceSNMP::GetOID(std::string const& _id)
 	return	oid_map_[""];
 }
 
-SNMPMaster::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
+SNMP::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 {
 	std::string name;
 
@@ -295,7 +277,7 @@ SNMPMaster::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 		name += "." + ToString(index);
 	}
 
-	SNMPMaster::OID	oid = DeviceSNMP::GetOID(name);
+	SNMP::OID	oid = DeviceSNMP::GetOID(name);
 	if (oid.length == 0)
 	{
 		read_objid(name.c_str(), oid.id, &oid.length);
@@ -327,10 +309,10 @@ bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& _time, std::string& _
 		}
 	}
 
-	SNMPMaster::OID oid = GetOID(_id);
+	SNMP::OID oid = GetOID(_id);
 	if (oid.length != 0)
 	{
-		//ret_value = snmp_master_.ReadValue(&session_, oid, timeout_, _time, _value);
+		ret_value = session_.ReadValue(oid, _time, _value);
 	}
 	else
 	{
@@ -362,7 +344,7 @@ bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& _time, bool& _value)
 
 }
 
-bool	DeviceSNMP::ReadValue(SNMPMaster::OID const& _oid, time_t& _time, std::string& _value)
+bool	DeviceSNMP::ReadValue(SNMP::OID const& _oid, time_t& _time, std::string& _value)
 {
 	if (!DeviceSNMP::IsOpened())
 	{
@@ -373,10 +355,10 @@ bool	DeviceSNMP::ReadValue(SNMPMaster::OID const& _oid, time_t& _time, std::stri
 		}
 	}
 
-	return	snmp_master_->ReadValue(&session_, _oid, timeout_, _time, _value);
+	return	session_.ReadValue(_oid, _time, _value);
 }
 
-bool	DeviceSNMP::ReadValue(SNMPMaster::OID const& _oid, std::string& _value)
+bool	DeviceSNMP::ReadValue(SNMP::OID const& _oid, std::string& _value)
 {
 	if (!DeviceSNMP::IsOpened())
 	{
@@ -389,7 +371,7 @@ bool	DeviceSNMP::ReadValue(SNMPMaster::OID const& _oid, std::string& _value)
 
 	time_t	time;
 
-	return	snmp_master_->ReadValue(&session_, _oid, timeout_, time, _value);	
+	return	session_.ReadValue(_oid,  time, _value);	
 }
 
 void	DeviceSNMP::Preprocess()
@@ -412,12 +394,12 @@ bool	DeviceSNMP::AddMIBPath(std::string const& _path)
 
 bool	DeviceSNMP::ReadAllMIBs()
 {
-	return	snmp_master_->ReadAllMIBs();
+	return	true;//snmp_master.ReadAllMIBs();
 }
 
 bool	DeviceSNMP::ReadMIB(std::string const& _file_name)
 {
-	return snmp_master_->ReadMIB(_file_name);
+	return true;//snmp_master.ReadMIB(_file_name);
 }
 
 bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
