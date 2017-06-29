@@ -123,14 +123,14 @@ extern	Locker		global_locker;
 
 #define	TRACE_INFO(x)	{	global_locker.Lock(); trace.Begin(INFO, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; global_locker.Unlock(); }
 #define	TRACE_WARN(x)	{	trace.Begin(WARNING, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; }
-#define	TRACE_ERROR(x)	{	trace.Begin(ERROR, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}
+#define	TRACE_ERROR(x)	{	global_locker.Lock(); trace.Begin(ERROR, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End; global_locker.Unlock(); }
 #define	TRACE_CRITICAL	{	trace.Begin(CRITICAL, __PRETTY_FUNCTION__, __LINE__) << x << Trace::End;}
 #define	TRACE_INFO_DUMP(buffer, len)	{	trace.Dump(INFO, __PRETTY_FUNCTION__, __LINE__, buffer, len) << Trace::End;	}
 #define	TRACE_INFO_JSON(x)	{	JSONNode json = libjson::parse(x); trace.Begin(INFO, __PRETTY_FUNCTION__, __LINE__) << json.write_formatted() << Trace::End;	}
 
-#define	TRACE_INFO2(x, y)	{	::trace.Begin(INFO, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
+#define	TRACE_INFO2(x, y)	{	global_locker.Lock(); ::trace.Begin(INFO, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; global_locker.Unlock();}
 #define	TRACE_WARN2(x, y)	{	::trace.Begin(WARNING, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
-#define	TRACE_ERROR2(x, y)	{	::trace.Begin(ERROR, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
+#define	TRACE_ERROR2(x, y)	{	global_locker.Lock(), ::trace.Begin(ERROR, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; global_locker.Unlock();}
 #define	TRACE_CRITICAL2(x, y){	::trace.Begin(CRITICAL, __PRETTY_FUNCTION__, __LINE__, x) << y << Trace::End; }
 #define	TRACE_INFO_DUMP2(x, buffer, len)	{	::trace.Dump(INFO, __PRETTY_FUNCTION__, __LINE__, x, buffer, len) << Trace::End;	}
 

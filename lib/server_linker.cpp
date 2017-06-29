@@ -155,6 +155,7 @@ ServerLinker::ServerLinker(ObjectManager* _manager)
 	global_up_name_(SERVER_LINKER_TOPIC_GLOBAL_UP_NAME),
 	global_down_name_(SERVER_LINKER_TOPIC_GLOBAL_DOWN_NAME),
 	retransmission_count_max_(SERVER_LINKER_RETRANSMISSION_COUNT_MAX),
+	enable_confirm_(false),
 	request_map_locker_()
 {
 	trace.SetClassName(GetClassName());
@@ -675,9 +676,7 @@ bool	ServerLinker::Send(RCSMessage const& _message)
 {
 	try
 	{
-		Produce	*produce = (new Produce(global_up_topic_, _message));
-
-		TRACE_INFO("New Produce = " << produce);
+		Produce	*produce = new Produce(global_up_topic_, _message);
 
 		Post(produce);
 	}
@@ -1152,37 +1151,44 @@ bool	ServerLinker::ConfirmRequest(RCSMessage const& _reply, std::string& _req_ty
 {
 	bool	ret_value = false;
 
-	request_map_locker_.Lock();
-
-	TRACE_INFO("Server Linker [" << this << "] request_map_ count : " << request_map_.size());
-
-	for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin() ; it != request_map_.end() ; it++)
+	if (enable_confirm_)
 	{
-		Produce*	produce = it->second;
-		RCSMessage&	message = produce->GetMessage();
-		TRACE_INFO("REQ ID : " << message.GetMsgID() <<  ", Reply ID : " << _reply.GetReqID());
+		request_map_locker_.Lock();
 
-		if (message.GetMsgID() == _reply.GetReqID())
+		//	TRACE_INFO("Server Linker [" << this << "] request_map_ count : " << request_map_.size());
+
+		for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin() ; it != request_map_.end() ; it++)
 		{
-			try
+			Produce*	produce = it->second;
+			RCSMessage&	message = produce->GetMessage();
+			//		TRACE_INFO("REQ ID : " << message.GetMsgID() <<  ", Reply ID : " << _reply.GetReqID());
+
+			if (message.GetMsgID() == _reply.GetReqID())
 			{
-				_req_type = JSONNodeGetMsgType(message.GetPayload());
+				try
+				{
+					_req_type = JSONNodeGetMsgType(message.GetPayload());
 
-				delete produce;
+					delete produce;
 
-				request_map_.erase(it);
+					request_map_.erase(it);
 
-				ret_value = true;
+					ret_value = true;
+				}
+				catch(ObjectNotFound& e)
+				{
+					TRACE_ERROR("Request type unknown");
+				}
+				break;
 			}
-			catch(ObjectNotFound& e)
-			{
-				TRACE_ERROR("Request type unknown");
-			}
-			break;
 		}
-	}
 
-	request_map_locker_.Unlock();
+		request_map_locker_.Unlock();
+	}
+	else
+	{
+		ret_value = true;	
+	}
 
 	return	ret_value;
 }
@@ -1331,26 +1337,28 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 			return	true;
 		}
 
-		TRACE_INFO("  Topic : " << topic);
-		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
-#if 1
-		if (message.GetMsgType() != MSG_TYPE_RCS_CONFIRM)
-		{
-			uint64_t	expire_time = Date::GetCurrent().GetMicroSecond() + (request_timeout_ * TIME_SECOND);
-
-			request_map_locker_.Lock();
-			request_map_[expire_time] = _produce;
-			request_map_locker_.Unlock();
-		}
-		else
-		{
-			TRACE_INFO("The MsgID of ReqID [" << message.GetReqID() << "] is " << msg_id);
-		}
-#endif
 		link->IncreaseNumberOfOutGoingMessages();
 		link->Touch();
 
+		TRACE_INFO("  Topic : " << topic);
+		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
+
+		if (enable_confirm_)
+		{
+			if (message.GetMsgType() != MSG_TYPE_RCS_CONFIRM)
+			{
+				uint64_t	expire_time = Date::GetCurrent().GetMicroSecond() + (request_timeout_ * TIME_SECOND);
+
+				request_map_locker_.Lock();
+				request_map_[expire_time] = _produce;
+				request_map_locker_.Unlock();
+			}
+			else
+			{
+				TRACE_INFO("The MsgID of ReqID [" << message.GetReqID() << "] is " << msg_id);
+			}
+		}
 	}
 
-	return	false;
+	return	true;
 }

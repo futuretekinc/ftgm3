@@ -252,24 +252,37 @@ void	ServerLinkerMosq::Process()
 		}
 	}
 
-	
-	uint64_t	current = uint64_t(Date::GetCurrent().GetMicroSecond());
-
-	request_map_locker_.Lock();
-
-	if (request_map_.upper_bound(current) != request_map_.begin())
+	if (enable_confirm_)
 	{
-		for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin(); it != request_map_.upper_bound(current) ; it++)
+		uint64_t	current = uint64_t(Date::GetCurrent().GetMicroSecond());
+
+		request_map_locker_.Lock();
+
+		if (request_map_.upper_bound(current) != request_map_.begin())
 		{
-			Produce*	produce = it->second;
-			it->second = NULL;
-			if (produce->GetMessage().GetMsgType() != MSG_TYPE_RCS_KEEP_ALIVE)
+			for(std::map<uint64_t, Produce*>::iterator it = request_map_.begin(); it != request_map_.upper_bound(current) ; it++)
 			{
-				if (produce->GetTransmissionCount() < retransmission_count_max_)
+				Produce*	produce = it->second;
+				it->second = NULL;
+				if (produce->GetMessage().GetMsgType() != MSG_TYPE_RCS_KEEP_ALIVE)
 				{
-					TRACE_ERROR("Retransmission : " << produce << " - " <<  produce->GetTransmissionCount());
-					produce->IncTransmissionCount();
-					Post(produce);
+					if (produce->GetTransmissionCount() < retransmission_count_max_)
+					{
+						TRACE_ERROR("Retransmission : " << produce << " - " <<  produce->GetTransmissionCount());
+						produce->IncTransmissionCount();
+						Post(produce);
+					}
+					else
+					{
+						try
+						{
+							delete produce;
+						}
+						catch(std::exception& e)
+						{
+							TRACE_INFO("Woops : Failed to delete produce");
+						}
+					}
 				}
 				else
 				{
@@ -283,23 +296,12 @@ void	ServerLinkerMosq::Process()
 					}
 				}
 			}
-			else
-			{
-				try
-				{
-					delete produce;
-				}
-				catch(std::exception& e)
-				{
-					TRACE_INFO("Woops : Failed to delete produce");
-				}
-			}
+
+			request_map_.erase(request_map_.begin(), request_map_.upper_bound(current));
 		}
 
-		request_map_.erase(request_map_.begin(), request_map_.upper_bound(current));
+		request_map_locker_.Unlock();
 	}
-	
-	request_map_locker_.Unlock();
 
 	ProcessObject::Process();
 }

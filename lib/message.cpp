@@ -29,6 +29,8 @@ message_type_string[] =
 
 static Mutex								active_object_map_lock;
 static std::map<std::string,ActiveObject*>	active_object_map;
+static Locker								message_list_locker;
+static std::list<Message*>			message_list;
 
 Message::Message(const Message& _message)
 : type_(_message.type_), sender_(_message.sender_) 
@@ -36,6 +38,11 @@ Message::Message(const Message& _message)
 	time_ = Date::GetCurrent();
 
 	id_ = time_.GetMicroSecond();
+#if DEBUG_MESSAGE
+	message_list_locker.Lock();
+	message_list.push_back(this);
+	message_list_locker.Unlock();
+#endif
 }
 
 Message::Message(uint32_t	_type)
@@ -44,6 +51,12 @@ Message::Message(uint32_t	_type)
 	time_ = Date::GetCurrent();
 
 	id_ = time_.GetMicroSecond();
+
+#if DEBUG_MESSAGE
+	message_list_locker.Lock();
+	message_list.push_back(this);
+	message_list_locker.Unlock();
+#endif
 }
 
 Message::Message(uint32_t	_type, const std::string& _sender)
@@ -52,10 +65,37 @@ Message::Message(uint32_t	_type, const std::string& _sender)
 	time_ = Date::GetCurrent();
 
 	id_ = time_.GetMicroSecond();
+
+#if DEBUG_MESSAGE
+	message_list_locker.Lock();
+	message_list.push_back(this);
+	message_list_locker.Unlock();
+#endif
 }
 
 Message::~Message()
 {
+#if DEBUG_MESSAGE
+	message_list_locker.Lock();
+
+	bool	found = false;
+	std::cout << "Message List Count : " << message_list.size() << std::endl;
+	for(std::list<Message*>::iterator it = message_list.begin() ; it != message_list.end() ; it++)
+	{
+		if (this == (*it))
+		{
+			message_list.erase(it);
+			found = true;
+			break;	
+		}
+	}
+	message_list_locker.Unlock();
+
+	if (!found)
+	{
+		std::cerr << "Message invalid!" << std::endl;
+	}
+#endif
 }
 
 void	Message::RegisterRecipient(std::string const& _id, ActiveObject* _object)

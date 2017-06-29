@@ -112,27 +112,34 @@ bool	DeviceFTE::Detach(std::string const& _epid)
 
 bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& time, std::string& _value)
 {
-	TRACE_ENTRY;
+	bool	ret_value = false;
+
 	Endpoint*	endpoint = manager_.GetEndpoint(_epid);
 	if (endpoint == NULL)
 	{
 		TRACE_ERROR("The endpoint[" << _epid << "] is not attached");
 		return	false;	
 	}
-
-	std::map<std::string, uint32_t>::iterator it = endpoint_table_.find(_epid);
-	if (it == endpoint_table_.end())
+	else
 	{
-		TRACE_ERROR("The endpoint[" << _epid << "] has been abnormally attached");
-		return	false;	
+		std::map<std::string, uint32_t>::iterator it = endpoint_table_.find(_epid);
+		if (it == endpoint_table_.end())
+		{
+			TRACE_ERROR("The endpoint[" << _epid << "] has been abnormally attached");
+		}
+		else
+		{
+
+			SNMPMaster::OID oid = GetOID(endpoint->GetType(), it->second);
+
+			ret_value = DeviceSNMP::ReadValue(oid, time, _value);
+		}
 	}
 
-	OID oid = GetOID(endpoint->GetType(), it->second);
-
-	return	DeviceSNMP::ReadValue(oid, time, _value);
+	return	ret_value;
 }
 
-DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
+SNMPMaster::OID DeviceFTE::GetOID(std::string const& _id)
 {
 	if (_id.size() < 8)
 	{
@@ -148,7 +155,7 @@ DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
 		uint32_t	type = strtoul(type_string.c_str(), 0, 16) & 0x3F;
 		uint32_t	index = strtoul(index_string.c_str(), 0, 16);
 
-		OID oid;
+		SNMPMaster::OID oid;
 		
 		oid.id[oid.length++] = 1;
 		oid.id[oid.length++] = 3;
@@ -173,9 +180,9 @@ DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _id)
 	return	oid_map_[_id];
 }
 
-DeviceSNMP::OID DeviceFTE::GetOID(std::string const& _type, uint32_t _index)
+SNMPMaster::OID DeviceFTE::GetOID(std::string const& _type, uint32_t _index)
 {
-	OID oid;
+	SNMPMaster::OID oid;
 	uint32_t	type_index = 0;
 
 	if (_type == NODE_TYPE_EP_S_TEMPERATURE)

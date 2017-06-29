@@ -66,6 +66,7 @@ protected:
 	Timer			keep_alive_timer_;
 
 	bool			registered_;
+	Locker			locker_;
 };
 
 #endif

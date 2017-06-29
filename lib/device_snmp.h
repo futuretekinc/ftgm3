@@ -7,19 +7,11 @@
 #include <map>
 #include "device_ip.h"
 #include "property.h"
+#include "snmp_master.h"
 
 class	DeviceSNMP : public DeviceIP
 {
 public:
-	struct	OID
-	{
-		oid			id[MAX_OID_LEN];
-		size_t		length;
-		
-		OID();
-		operator std::string() const;
-	};
-
 	DeviceSNMP(ObjectManager& _manager, std::string const& _type);
 	DeviceSNMP(ObjectManager& _manager, JSONNode const& _properties);
 	DeviceSNMP(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties);
@@ -46,8 +38,8 @@ public:
 
 	virtual	Endpoint*	CreateEndpoint(JSONNode const& _properties);
 
-	virtual	OID		GetOID(std::string const& _id);
-	virtual	OID		GetOID(std::string const& _name, uint32_t index);
+	virtual	SNMPMaster::OID	GetOID(std::string const& _id);
+	virtual	SNMPMaster::OID	GetOID(std::string const& _name, uint32_t index);
 
 	virtual	bool	InsertToDB(Kompex::SQLiteStatement*	_statement);
 
@@ -57,6 +49,7 @@ public:
 	static	bool	ReadMIB(std::string const& _file_name);
 
 protected:
+	friend	class	SNMPMaster;
 
 			void	Preprocess();
 			void	Postprocess();
@@ -68,16 +61,17 @@ protected:
 
 			bool	ReadValue(std::string const& _endpoint_id, time_t& _time, std::string& _value);
 			bool	ReadValue(std::string const& _endpoint_id, time_t& _time, bool& _value);
-			bool	ReadValue(OID const& _oid, time_t& _time, std::string& _value);
-			bool	ReadValue(OID const& _oid, std::string& _value);
-	static	bool	Convert(struct variable_list *_variable, std::string& _value);
+			bool	ReadValue(SNMPMaster::OID const& _oid, time_t& _time, std::string& _value);
+			bool	ReadValue(SNMPMaster::OID const& _oid, std::string& _value);
 
 	std::string		module_;
 	std::string		community_;
 	uint32_t		timeout_;
 
-	struct snmp_session*	session_;
-	std::map<std::string, OID>	oid_map_;
+	SNMPSession		session_;
+	std::map<std::string, SNMPMaster::OID>	oid_map_;
+
+	std::string		async_value_;
 };
 
 #endif

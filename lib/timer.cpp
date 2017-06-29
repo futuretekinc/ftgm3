@@ -11,6 +11,11 @@ void	Timer::Set(const Date& _date)
 	reference_date_ = _date;
 }
 
+const Date&	Timer::ReferenceTime() const
+{
+	return	reference_date_;
+}
+
 Time	Timer::RemainTime() const
 {
 	Date	current;

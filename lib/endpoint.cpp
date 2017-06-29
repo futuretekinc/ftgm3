@@ -387,6 +387,7 @@ void	Endpoint::CorrectionProcess()
 	Device* device = manager_.GetDevice(parent_id_);
 	if(device != NULL)
 	{
+		TRACE_INFO("The endpoint[" << id_ << "] start to get value!");
 		if (device->ReadValue(GetID(), time, value))
 		{
 			if (IsValid(value))
@@ -405,6 +406,7 @@ void	Endpoint::CorrectionProcess()
 		{
 			TRACE_ERROR("Failed to read data from device[" << device->GetTraceName() << "]");	
 		}
+		TRACE_INFO("The endpoint[" << id_ << "] finished to get value!");
 	}
 }
 
@@ -451,28 +453,28 @@ bool	Endpoint::SetLastConfirmTime(Date const& _time)
 
 Date	Endpoint::GetDateOfFirstData()
 {
+	Date	date(0);
+
 	ValueMap::iterator it = value_map_.begin();
-	if (it == value_map_.end())
+	if (it != value_map_.end())
 	{
-		return	Date(0);	
+		date = it->first;	
 	}
-	else
-	{
-		return	it->first;	
-	}
+
+	return	date;
 }
 
 Date	Endpoint::GetDateOfLastData()
 {
+	Date	date(0);
+
 	ValueMap::reverse_iterator it = value_map_.rbegin();
-	if (it == value_map_.rend())
+	if (it != value_map_.rend())
 	{
-		return	Date(0);	
+		date = it->first;	
 	}
-	else
-	{
-		return	it->first;	
-	}
+
+	return	date;
 }
 
 bool	Endpoint::GetDataForPeriod(Date const& _begin, Date const& _end, ValueMap& _value_map)
@@ -535,6 +537,7 @@ bool	Endpoint::Add(time_t time, std::string const& _value)
 		}
 #endif
 	}
+
 	return	ret_value;
 }
 

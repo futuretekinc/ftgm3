@@ -12,83 +12,77 @@
 #include "endpoint.h"
 #include "KompexSQLiteStatement.h"
 #include "KompexSQLiteException.h"
+#include "snmp_master.h"
 
 using namespace std;
 
-static bool	snmp_initialized = false;
-static bool	mib_initialized = false;
+static Locker snmp_locker;
 static uint32_t object_count = 0;
-
-DeviceSNMP::OID::OID()
-{
-	memset(id, 0, sizeof(id));
-	length = 0;
-}
-
-DeviceSNMP::OID::operator string() const
-{
-	ostringstream	oss;
-
-	for(int i = 0 ; i < length ; i++)
-	{
-		oss << "." << id[i];
-	}
-
-	return	oss.str();
-}
+static	SNMPMaster	*snmp_master_ = NULL;
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type)
-: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(1), session_()
 {
+	if (snmp_master_ == NULL)
+	{
+		snmp_master_ = new SNMPMaster;
+	}
+
 	trace.SetClassName(GetClassName());
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties)
-: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(1), session_()
 {
+	if (snmp_master_ == NULL)
+	{
+		snmp_master_ = new SNMPMaster;
+	}
+
 	trace.SetClassName(GetClassName());
 	SetProperties(_properties, false, true);
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, JSONNode const& _properties)
-: DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+: DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(1), session_()
 {
+	if (snmp_master_ == NULL)
+	{
+		snmp_master_ = new SNMPMaster;
+	}
+
 	trace.SetClassName(GetClassName());
 	SetProperties(_properties, false, true);
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module)
-: DeviceIP(_manager, _type), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+: DeviceIP(_manager, _type), module_(_module), community_("public"), timeout_(1), session_()
 {
+	if (snmp_master_ == NULL)
+	{
+		snmp_master_ = new SNMPMaster;
+	}
+
 	trace.SetClassName(GetClassName());
 
-	if (!snmp_initialized)
-	{
-		init_snmp("ftgm");
-
-		OID	unknown_oid;
-		oid_map_[""] = unknown_oid;
-
-		snmp_initialized = true;
-	}
+	SNMPMaster::OID	unknown_oid;
+	oid_map_[""] = unknown_oid;
 
 	object_count++;
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module, std::string const& _ip)
-: DeviceIP(_manager, _type, _ip), module_(_module), community_("public"), timeout_(5 * TIME_SECOND), session_(NULL)
+: DeviceIP(_manager, _type, _ip), module_(_module), community_("public"), timeout_(1), session_()
 {
+	if (snmp_master_ == NULL)
+	{
+		snmp_master_ = new SNMPMaster;
+	}
+
 	trace.SetClassName(GetClassName());
 
-	if (!snmp_initialized)
-	{
-		init_snmp("ftgm");
-
-		OID	unknown_oid;
-		oid_map_[""] = unknown_oid;
-
-		snmp_initialized = true;
-	}
+	SNMPMaster::OID	unknown_oid;
+	oid_map_[""] = unknown_oid;
 
 	object_count++;
 }
@@ -98,15 +92,6 @@ DeviceSNMP::~DeviceSNMP()
 	Close();
 
 	object_count--;
-
-	if (object_count == 0)
-	{
-		if (mib_initialized)
-		{
-			shutdown_mib();
-			mib_initialized = false;
-		}
-	}
 }
 
 bool		DeviceSNMP::IsIncludedIn(std::string const& _type)
@@ -121,59 +106,17 @@ bool		DeviceSNMP::IsIncludedIn(std::string const& _type)
 
 bool	DeviceSNMP::Open()
 {
-	if (session_ == NULL)
-	{
-		snmp_session	session;
-		char			ip[IP_LENGTH_MAX + 1];
-		char			community[SNMP_COMMUNITY_LENGTH_MAX + 1];
-
-		snmp_sess_init(&session);
-
-		if (module_.size() != 0)
-		{
-			read_mib(module_.c_str());
-	//		read_all_mibs();
-		}
-
-		session.version = SNMP_VERSION_2c;
-
-		session.peername = ip;
-		strncpy(session.peername, std::string(ip_).c_str(), IP_LENGTH_MAX);
-
-		session.community = (uint8_t *)community;
-		strncpy((char *)session.community, community_.c_str(), SNMP_COMMUNITY_LENGTH_MAX);
-		session.community_len = community_.size();
-
-		session_ = snmp_open(&session);
-		if (session_ == NULL)
-		{
-			TRACE_ERROR("Failed to open session.");
-		}
-		else
-		{
-			TRACE_INFO("SNMP session[" << ip << ":" << community_<<  "] opened.");	
-		}
-
-	}
-
-	return	(session_ != NULL);
+	return	snmp_master_->Open(this, ip_, community_);		
 }
 
 bool	DeviceSNMP::Close()
 {
-	if (session_ != NULL)
-	{
-		snmp_close(session_);	
-	
-		session_ = NULL;
-	}
-
-	return	true;	
+	return	snmp_master_->Close(this);
 }
 
 bool		DeviceSNMP::IsOpened()
 {
-	return	session_ != NULL;
+	return	session_.session != NULL;
 }
 
 const	std::string&	DeviceSNMP::GetModule()
@@ -322,9 +265,9 @@ Endpoint*	DeviceSNMP::CreateEndpoint(JSONNode const& _properties)
 	return	endpoint;
 }
 
-DeviceSNMP::OID DeviceSNMP::GetOID(std::string const& _id)
+SNMPMaster::OID DeviceSNMP::GetOID(std::string const& _id)
 {
-	std::map<std::string, OID>::iterator it = oid_map_.find(_id);
+	std::map<std::string, SNMPMaster::OID>::iterator it = oid_map_.find(_id);
 
 	if (it != oid_map_.end())
 	{
@@ -334,7 +277,7 @@ DeviceSNMP::OID DeviceSNMP::GetOID(std::string const& _id)
 	return	oid_map_[""];
 }
 
-DeviceSNMP::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
+SNMPMaster::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 {
 	std::string name;
 
@@ -352,7 +295,7 @@ DeviceSNMP::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 		name += "." + ToString(index);
 	}
 
-	OID	oid = DeviceSNMP::GetOID(name);
+	SNMPMaster::OID	oid = DeviceSNMP::GetOID(name);
 	if (oid.length == 0)
 	{
 		read_objid(name.c_str(), oid.id, &oid.length);
@@ -371,70 +314,39 @@ DeviceSNMP::OID	DeviceSNMP::GetOID(std::string const& _name, uint32_t index)
 	return	oid;
 }
 
-bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& time, std::string& _value)
+bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& _time, std::string& _value)
 {
-	Open();
+	bool	ret_value = false;
 
-	if (session_ == NULL)
+	if (!DeviceSNMP::IsOpened())
 	{
-		TRACE_ERROR("Session is not opened.");
-		return	false;
-	}
-
-	OID oid = GetOID(_id);
-	if (oid.length == 0)
-	{
-		TRACE_ERROR("OID not found.");
-		Close();
-		return	false;
-	}
-
-	netsnmp_pdu*	response_pdu = NULL;
-	netsnmp_pdu*	request_pdu = snmp_pdu_create(SNMP_MSG_GET);
-	if (request_pdu == NULL)
-	{
-		Close();
-		return	false;
-	}
-
-	bool	ret = false;
-	request_pdu->time = 5;
-	snmp_add_null_var(request_pdu, oid.id, oid.length);   
-
-	if (snmp_synch_response(session_, request_pdu, &response_pdu) == STAT_SUCCESS)
-	{ 
-		if (response_pdu != NULL)
+		if (!Open())
 		{
-			if (response_pdu->errstat == SNMP_ERR_NOERROR)
-			{
-				time = Date::GetCurrent();
-				Convert(response_pdu->variables, _value);
-				ret = true;
-			}
+			TRACE_ERROR("Session is not opened.");
+			return	false;
 		}
+	}
+
+	SNMPMaster::OID oid = GetOID(_id);
+	if (oid.length != 0)
+	{
+		//ret_value = snmp_master_.ReadValue(&session_, oid, timeout_, _time, _value);
 	}
 	else
 	{
-		TRACE_ERROR("Failed to get SNMP!");
+		TRACE_ERROR("OID not found.");
 	}
 
-	if (response_pdu != NULL)
-	{
-		snmp_free_pdu(response_pdu);	
-	}
-
-	Close();
-
-	return	ret;
+	return	ret_value;
 }
 
-bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& time, bool& _value)
+bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& _time, bool& _value)
 {
 	try
 	{
 		std::string	value;
 
-		if (!ReadValue(_id, time, value))
+		if (!ReadValue(_id, _time, value))
 		{
 			return	false;	
 		}
@@ -450,161 +362,34 @@ bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& time, bool& _value)
 
 }
 
-bool	DeviceSNMP::ReadValue(OID const& _oid, time_t& time, std::string& _value)
+bool	DeviceSNMP::ReadValue(SNMPMaster::OID const& _oid, time_t& _time, std::string& _value)
 {
-	Open();
-
-	if (session_ == NULL)
+	if (!DeviceSNMP::IsOpened())
 	{
-		TRACE_ERROR("Session is not opened.");
-		return	false;
-	}
-
-	netsnmp_pdu*	response_pdu = NULL;
-	netsnmp_pdu*	request_pdu = snmp_pdu_create(SNMP_MSG_GET);
-	if (request_pdu == NULL)
-	{
-		Close();
-		return	false;
-	}
-
-	bool	ret = false;
-	request_pdu->time = 5;
-	snmp_add_null_var(request_pdu, _oid.id, _oid.length);   
-
-	if (snmp_synch_response(session_, request_pdu, &response_pdu) == STAT_SUCCESS)
-	{ 
-		if (response_pdu != NULL)
+		if (!Open())
 		{
-			if (response_pdu->errstat == SNMP_ERR_NOERROR)
-			{
-				time = Date::GetCurrent();
-				Convert(response_pdu->variables, _value);
-				ret = true;
-			}
+			TRACE_ERROR("Session is not opened.");
+			return	false;
 		}
 	}
-	else
-	{
-		TRACE_ERROR("Failed to get SNMP!");
-	}
 
-	if (response_pdu != NULL)
-	{
-		snmp_free_pdu(response_pdu);	
-	}
-
-	Close();
-
-	return	ret;
+	return	snmp_master_->ReadValue(&session_, _oid, timeout_, _time, _value);
 }
 
-bool	DeviceSNMP::ReadValue(OID const& _oid, std::string& _value)
+bool	DeviceSNMP::ReadValue(SNMPMaster::OID const& _oid, std::string& _value)
 {
-	Open();
-
-	if (session_ == NULL)
+	if (!DeviceSNMP::IsOpened())
 	{
-		TRACE_ERROR("Session is not opened.");
-		return	false;
-	}
-
-	netsnmp_pdu*	response_pdu = NULL;
-	netsnmp_pdu*	request_pdu = snmp_pdu_create(SNMP_MSG_GET);
-	if (request_pdu == NULL)
-	{ 
-		Close();
-		return	false;
-	}
-
-	bool	ret = false;
-	request_pdu->time = 5;
-	snmp_add_null_var(request_pdu, _oid.id, _oid.length);   
-
-	int snmp_ret = snmp_synch_response(session_, request_pdu, &response_pdu);
-	if ((snmp_ret != STAT_SUCCESS) || (response_pdu->errstat != SNMP_ERR_NOERROR))
-	{
-		TRACE_ERROR("Failed to get SNMP[" << std::string(_oid) << "]!");
-		if (response_pdu != NULL)
-		{	
-			TRACE_ERROR("Error : " << snmp_errstring(response_pdu->errstat) << "]!");
-		}
-	}
-	else
-	{ 
-		if (response_pdu != NULL)
+		if (!Open())
 		{
-			if (response_pdu->errstat == SNMP_ERR_NOERROR)
-			{
-				Convert(response_pdu->variables, _value);
-				ret = true;
-			}
+			TRACE_ERROR("Session is not opened.");
+			return	false;
 		}
 	}
 
-	if (response_pdu != NULL)
-	{
-		snmp_free_pdu(response_pdu);	
-	}
+	time_t	time;
 
-	Close();
-
-	return	ret;
-}
-
-bool	DeviceSNMP::Convert
-(
-	struct variable_list *_variable,
-	std::string& _value
-)
-{
-	if (_variable == NULL) 
-	{   
-		TRACE_ERROR2(NULL, "Failed to convert!");
-		return	false;
-	}
-
-	switch(_variable->type)
-	{   
-	case    ASN_INTEGER:
-		{   
-			int	value = 0;
-			switch (_variable->val_len)
-			{   
-				case    1:  value = (*(int8_t *)_variable->val.integer); break;
-				case    2:  value = (*(int16_t *)_variable->val.integer); break;
-				case    4:  value = (*(int32_t *)_variable->val.integer); break;
-			}   
-
-			_value = ToString(value);
-		}   
-		break;
-
-	case    ASN_OCTET_STR:
-		{   
-			if (_variable->val_len != 0)
-			{   
-				char* buffer = new char [_variable->val_len + 1]; 
-
-				memcpy(buffer, _variable->val.string, _variable->val_len);
-				buffer[_variable->val_len] = 0;
-
-				_value = buffer;
-				delete buffer;
-			}   
-		}   
-		break;
-	
-	default:
-		TRACE_ERROR2(NULL, "Failed to convert[" << (int)_variable->type << "]");
-		if (_variable->val_len != 0)
-		{
-			TRACE_INFO_DUMP2(NULL, (const char *)_variable->val.string, _variable->val_len);
-		}
-		return	false;
-	}   
-
-	return  true;
+	return	snmp_master_->ReadValue(&session_, _oid, timeout_, time, _value);	
 }
 
 void	DeviceSNMP::Preprocess()
@@ -619,11 +404,6 @@ void	DeviceSNMP::Postprocess()
 
 bool	DeviceSNMP::AddMIBPath(std::string const& _path)
 {
-	if (!mib_initialized)
-	{
-		init_mib();
-		mib_initialized = true;
-	}
 
 	add_mibdir(_path.c_str());
 
@@ -632,24 +412,12 @@ bool	DeviceSNMP::AddMIBPath(std::string const& _path)
 
 bool	DeviceSNMP::ReadAllMIBs()
 {
-	if (!mib_initialized)
-	{
-		init_mib();
-		mib_initialized = true;
-	}
-
-	return	(read_all_mibs() != 0);
+	return	snmp_master_->ReadAllMIBs();
 }
 
 bool	DeviceSNMP::ReadMIB(std::string const& _file_name)
 {
-	if (!mib_initialized)
-	{
-		init_mib();
-		mib_initialized = true;
-	}
-
-	return (read_mib(_file_name.c_str()) != 0);
+	return snmp_master_->ReadMIB(_file_name);
 }
 
 bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)

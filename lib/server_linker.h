@@ -225,7 +225,7 @@ protected:
 	bool				keep_alive_enable_;
 	uint32_t			keep_alive_interval_;
 
-	bool				request_confirm_;
+	bool				enable_confirm_;
 	uint64_t			request_timeout_;
 	Locker				request_map_locker_;
 	std::map<uint64_t, Produce*>		request_map_;

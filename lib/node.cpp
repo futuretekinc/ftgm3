@@ -11,7 +11,8 @@ Node::Node(ObjectManager& _manager, std::string const& _type)
 	type_(_type), 
 	keep_alive_interval_(OBJECT_KEEP_ALIVE_INTERVAL_SEC),
 	location_(""), 
-	registered_(false)
+	registered_(false),
+	locker_()
 {
 }
 

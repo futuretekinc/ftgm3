@@ -174,34 +174,27 @@ void	Device::Preprocess()
 
 void	Device::Process()
 {
-	std::string id;
-	Timer	timer;
-	bool	found = false;
-
 
 	for(std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin(); it != endpoint_schedule_list_.end() ; it++)
 	{
 		if (it->second.RemainTime() == 0)
 		{
-			id = it->first;
-			timer = it->second;
-			found = true;	
+			std::string	id = it->first;
+			Timer	timer = it->second;
+
 			endpoint_schedule_list_.erase(it);
-//			TRACE_INFO("Schedule expired : " << id);
+
+			Endpoint*	endpoint = manager_.GetEndpoint(id);
+			if (endpoint != NULL)
+			{
+				endpoint->CorrectionProcess();
+
+				timer += ((time_t(Date::GetCurrent())  - time_t(timer.reference_date_)) / endpoint->GetCorrectionInterval() + 1) * endpoint->GetCorrectionInterval() * TIME_SECOND;
+
+				AddSchedule(endpoint->GetID(), timer);
+			}
+
 			break;
-		}
-	}
-
-	if (found)
-	{
-		Endpoint*	endpoint = manager_.GetEndpoint(std::string(id));
-		if (endpoint != NULL)
-		{
-			endpoint->CorrectionProcess();
-
-			timer += Time(endpoint->GetCorrectionInterval() * TIME_SECOND);	
-
-			AddSchedule(id, timer);
 		}
 	}
 
@@ -244,7 +237,6 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 	{
 		if (it->second.RemainTime() > _timer.RemainTime())
 		{
-			TRACE_INFO("Endpoint[" << _id << "] inserted to scheduer at " << _timer.reference_date_.ToString() << "+" << _timer.time_.ToString());
 			endpoint_schedule_list_.insert(it, std::pair<std::string, Timer>(_id, _timer));	
 			last = false;
 			break;
@@ -253,7 +245,6 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 
 	if (last)
 	{
-		TRACE_INFO("Endpoint[" << _id << "] inserted to scheduer last at " << _timer.reference_date_.ToString() << "+" << _timer.time_.ToString());
 		endpoint_schedule_list_.insert(endpoint_schedule_list_.end(), std::pair<std::string, Timer>(_id, _timer));	
 	}
 

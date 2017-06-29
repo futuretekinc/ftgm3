@@ -9,6 +9,7 @@ public:
 	Timer();
 
 	void		Set(const Date& _date);
+	const Date&	ReferenceTime() const;
 	Time		RemainTime() const;
 	Time		OverTime() const;
 
