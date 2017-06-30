@@ -249,7 +249,6 @@ SNMP::OID DeviceFTE::GetOID(std::string const& _type, uint32_t _index)
 	oid.id[oid.length++] = 6;
 	oid.id[oid.length++] = _index + 1;
 
-	TRACE_INFO("GetOID(" << _type <<", " << _index << ") = " << std::string(oid));
 	return	oid;
 }
 

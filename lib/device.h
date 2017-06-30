@@ -43,9 +43,11 @@ public:
 
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 
-	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, std::string& _value) = 0;
-	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, bool& _value) = 0;
+	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, std::string& _value);
+	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, uint32_t& _value);
+	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, bool& _value);
 	virtual	bool		WriteValue(std::string const& _epid, std::string const& _value);
+	virtual	bool		WriteValue(std::string const& _epid, uint32_t _value);
 	virtual	bool		WriteValue(std::string const& _epid, bool _value);
 
 protected:

@@ -46,7 +46,7 @@ LIBS += -lshellftgm -lftgm -lmosquitto -lhl++ ../../spear/KompexSQLiteWrapper-So
 else
 INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../KompexSQLiteWrapper-Source_1.11.14/inc -I$(PROJ_ROOT)/..
 LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)
-LIBS += -lshellftgm -lftgm -lmosquitto -lhl++ ../../KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
+LIBS += -lshellftgm -lftgm -lmosquitto -lmodbus -lhl++ ../../KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
 endif
 endif
 

@@ -52,6 +52,9 @@ extern	const char*	NODE_TYPE_DEV_SIM;
 extern	const char*	NODE_TYPE_DEV_MODBUS;
 extern	const char*	NODE_TYPE_DEV_GTC_520A;
 
+extern	const char*	NODE_TYPE_DEV_MODBUS_TCP;
+extern	const char*	NODE_TYPE_DEV_ADAM_6051;
+
 extern	const char*	NODE_TYPE_EP_S_DISCRETE;
 extern	const char*	NODE_TYPE_EP_S_LINEAR;
 extern	const char*	NODE_TYPE_EP_S_TEMPERATURE;
@@ -222,6 +225,7 @@ TITLE_NAME(LOCATION, "location");
 TITLE_NAME(LOG, "log");
 TITLE_NAME(LOOP_INTERVAL, "loop_interval");
 TITLE_NAME(MAX_SESSION, "max_session");
+TITLE_NAME(MODEL, "model");
 TITLE_NAME(MODULE, "module");
 TITLE_NAME(MODE, "mode");
 TITLE_NAME(MQTT, "mqtt");

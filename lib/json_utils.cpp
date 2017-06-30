@@ -37,6 +37,11 @@ std::string	JSONNodeGetType(JSONNode const& _node)
 	return	JSONNodeGetString(_node, TITLE_NAME_TYPE);
 }
 
+std::string	JSONNodeGetModel(JSONNode const& _node)
+{
+	return	JSONNodeGetString(_node, TITLE_NAME_MODEL);
+}
+
 std::string	JSONNodeGetName(JSONNode const& _node)
 {
 	return	JSONNodeGetString(_node, TITLE_NAME_NAME);

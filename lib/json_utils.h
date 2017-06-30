@@ -9,6 +9,7 @@ std::string	JSONNodeGetName(JSONNode const& _node, std::string const& _default);
 time_t		JSONNodeGetTime(JSONNode const& _node);
 time_t		JSONNodeGetTime(JSONNode const& _node, time_t _default);
 std::string	JSONNodeGetType(JSONNode const& _node);
+std::string	JSONNodeGetModel(JSONNode const& _node);
 time_t		JSONNodeGetStartTime(JSONNode const& _node, time_t _default);
 time_t		JSONNodeGetEndTime(JSONNode const& _node, time_t _default);
 time_t		JSONNodeGetLastTime(JSONNode const& _node);

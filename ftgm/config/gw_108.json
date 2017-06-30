@@ -131,6 +131,23 @@
 					"sensor_id" : "0102000a"
 				}
 			]
+		},
+		{
+			"type" : "dev_adam_6051",
+			"name" : "dev_fte_3",
+			"options" : 
+			{
+				"ip"   : "10.0.1.231"
+			},
+			"endpoint" : 
+			[
+				{
+					"type": "ep_s_wind_speed",
+					"name" : "Wind Speed",
+					"update_interval" : 5,
+					"sensor_id" : "00000001"
+				}
+			]
 		}
 	]
 }

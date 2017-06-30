@@ -58,14 +58,22 @@ bool	Session::AsyncReadValue(OID const& _oid, time_t& _time, std::string& _value
 	{
 		finished_.Lock();
 
-		if (master_.AsyncRequestReadValue(session_, _oid, timeout_))
+	//	if (master_.AsyncRequestReadValue(session_, _oid, timeout_))
+		if (master_.AsyncRequestReadValue(*this, _oid, timeout_))
 		{
 			if (finished_.TryLock(timeout_))
 			{
-				_time = time_;
-				_value = value_;
+				if (success_)
+				{
+					_time = time_;
+					_value = value_;
 
-				ret_value = true;
+					ret_value = true;
+				}
+				else
+				{
+					TRACE_ERROR("Failed to request read value!");	
+				}
 			}
 		}
 		else

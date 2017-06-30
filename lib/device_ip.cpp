@@ -61,6 +61,29 @@ bool	DeviceIP::SetIP(const std::string& _ip, bool _check)
 }
 
 
+const uint16_t	DeviceIP::GetPort()
+{
+	return	port_;
+}
+
+bool	DeviceIP::SetPort(uint16_t _port, bool _check)
+{
+	if (!_check)
+	{
+		port_ = _port;
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_PORT, port_);
+
+		if (!lazy_store_)
+		{
+			ApplyChanges();	
+		}
+	}
+
+	return	true;
+}
+
+
 bool	DeviceIP::GetOptions(JSONNode& _options)
 {
 	JSONNode	options(JSON_NODE);

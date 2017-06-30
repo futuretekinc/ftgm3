@@ -19,6 +19,7 @@
 #include "endpoint_sensor_rainfall.h"
 #include "endpoint_sensor_gas.h"
 #include "endpoint_actuator_do.h"
+#include "endpoint_sensor_ygc_fs.h"
 #include "utils.h"
 
 Endpoint::Endpoint(ObjectManager& _manager, std::string const& _type)
@@ -47,6 +48,13 @@ Endpoint::Endpoint(ObjectManager& _manager, std::string const& _type, std::strin
 
 Endpoint::~Endpoint()
 {
+}
+
+const std::string&	Endpoint::GetModel() const
+{	
+	const static std::string model = "general";
+
+	return	model;
 }
 
 const std::string&	Endpoint::GetUnit() const
@@ -387,7 +395,6 @@ void	Endpoint::CorrectionProcess()
 	Device* device = manager_.GetDevice(parent_id_);
 	if(device != NULL)
 	{
-		TRACE_INFO("The endpoint[" << id_ << "] start to get value!");
 		if (device->ReadValue(GetID(), time, value))
 		{
 			if (IsValid(value))
@@ -406,7 +413,10 @@ void	Endpoint::CorrectionProcess()
 		{
 			TRACE_ERROR("Failed to read data from device[" << device->GetTraceName() << "]");	
 		}
-		TRACE_INFO("The endpoint[" << id_ << "] finished to get value!");
+	}
+	else
+	{
+		TRACE_ERROR("Failed to get device[" << parent_id_ << "]");	
 	}
 }
 
@@ -577,6 +587,15 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 		TRACE_INFO2(&_manager, "Endpoint Properties : " << _properties.write_formatted());
 
 		std::string type = JSONNodeGetType(_properties);
+		std::string model;
+
+		try
+		{
+			model = JSONNodeGetModel(_properties);
+		}
+		catch(ObjectNotFound& e)
+		{
+		}
 
 		if (type == NODE_TYPE_EP_S_TEMPERATURE)
 		{
@@ -605,7 +624,8 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 		}
 		else if (type == NODE_TYPE_EP_S_WIND_SPEED) 
 		{
-			endpoint = new EndpointSensorWindSpeed(_manager, _properties);
+		//	endpoint = new EndpointSensorWindSpeed(_manager, _properties);
+			endpoint = new EndpointSensorYGCFS(_manager, _properties);
 			TRACE_INFO2(NULL, "The Wind Spped endpoint[" << endpoint->GetID() <<"] created");
 		}
 		else if (type == NODE_TYPE_EP_S_SOIL_MOISTURE) 

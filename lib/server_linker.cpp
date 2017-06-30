@@ -156,6 +156,7 @@ ServerLinker::ServerLinker(ObjectManager* _manager)
 	global_down_name_(SERVER_LINKER_TOPIC_GLOBAL_DOWN_NAME),
 	retransmission_count_max_(SERVER_LINKER_RETRANSMISSION_COUNT_MAX),
 	enable_confirm_(false),
+	message_dump_(true),
 	request_map_locker_()
 {
 	trace.SetClassName(GetClassName());
@@ -1253,7 +1254,13 @@ void	ServerLinker::OnConsume(Consume* _consume)
 
 	RCSMessage&	message = _consume->GetMessage();	
 
-	TRACE_INFO("OnConsum : " << message.GetPayload().write_formatted());
+	if (message_dump_)
+	{
+		TRACE_INFO("[ Received Message ]" << std::endl 
+					<< std::setw(8) << "Topic" << " : " << _consume->GetTopic() << std::endl 
+					<< std::setw(8) << "Payload" << " : " << message.GetPayload().write_formatted());
+	}
+
 	if (message.GetMsgType() == MSG_TYPE_RCS_ADD)
 	{
 		RCSMessage	reply;
@@ -1340,8 +1347,12 @@ bool	ServerLinker::OnProduce(Produce* _produce)
 		link->IncreaseNumberOfOutGoingMessages();
 		link->Touch();
 
-		TRACE_INFO("  Topic : " << topic);
-		TRACE_INFO("Payload : " << message.GetPayload().write_formatted());
+		if (message_dump_)
+		{
+			TRACE_INFO("[ Send Message ]" << std::endl 
+						<< std::setw(8) << "Topic" << " : " << _produce->GetTopic() << std::endl 
+						<< std::setw(8) << "Payload" << " : " << message.GetPayload().write_formatted());
+		}
 
 		if (enable_confirm_)
 		{

@@ -8,6 +8,8 @@
 #include "device.h"
 #include "object_manager.h"
 #include "device_snmp.h"
+#include "device_modbus_tcp.h"
+#include "device_adam_6051.h"
 #include "device_fte.h"
 #include "device_sim.h"
 #include "device_gtc_520a.h"
@@ -303,6 +305,10 @@ Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
 		{
 			device = new DeviceGTC520A(_manager, _properties);
 		}
+		else if (type == std::string(DeviceADAM6051::Type()))
+		{
+			device = new DeviceADAM6051(_manager, _properties);
+		}
 		else
 		{
 			TRACE_ERROR2(NULL, "Failed to create device. Device type[" << type << "] is not supported!");
@@ -330,9 +336,29 @@ bool	Device::GetPropertyFieldList(std::list<std::string>& _field_list)
 	return	true;
 }
 
+bool	Device::ReadValue(std::string const& _epid, time_t& _time, std::string& _value)
+{
+	return	false;
+}
+
+bool	Device::ReadValue(std::string const& _epid, time_t& _time, uint32_t& _value)
+{
+	return	false;
+}
+
+bool	Device::ReadValue(std::string const& _epid, time_t& _time, bool& _value)
+{
+	return	false;
+}
+
 bool	Device::WriteValue(std::string const& _endpoint_id, std::string const& _value)
 {
 	return	false;	
+}
+
+bool	Device::WriteValue(std::string const& _epid, uint32_t _value)
+{
+	return	false;
 }
 
 bool	Device::WriteValue(std::string const& _endpoint_id, bool _value)

@@ -34,6 +34,8 @@ public:
 						Endpoint(ObjectManager& _manager, std::string const& _type, std::string const& _unit);
 	virtual				~Endpoint();	
 
+	virtual	const std::string&	GetModel() const;
+
 	const std::string&	GetUnit() const;
 			bool		SetUnit(std::string const& _unit, bool _check = false);
 

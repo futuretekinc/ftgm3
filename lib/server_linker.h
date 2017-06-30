@@ -186,7 +186,7 @@ const	std::string&	GetTopic()	{ return	topic_;	};
 			bool		ReportEPData(Endpoint* _ep);
 
 			bool		Error(std::string const& _req_id, std::string const& _err_msg);
-
+			bool		MessageDumpEnable(bool _enable);
 
 protected:
 			bool		SetGlobalUpTopic(std::string const& _version, std::string const& _name, std::string const& _id, bool _check = false);
@@ -240,6 +240,7 @@ protected:
 
 	std::string			hash_alg_name_;
 
+	bool				message_dump_;
 	std::string			error_string_;
 };
 

@@ -9,6 +9,9 @@
 
 class	DeviceSNMP;
 
+#define	MSG_TYPE_SNMP			0x00020000
+#define	MSG_TYPE_SNMP_GET		(MSG_TYPE_SNMP + 1)
+
 namespace SNMP
 {
 
@@ -20,6 +23,19 @@ struct	OID
 	OID();
 	operator std::string() const;
 };
+
+class	GetMessage : public Message
+{
+	friend class	Master;
+public:
+	GetMessage(snmp_session* _session, OID const& _oid, uint32_t _timeout);
+
+protected:
+	snmp_session* 	session_; 
+	OID				oid_;
+	uint32_t	 	timeout_;
+};
+
 
 class	Session;
 
@@ -41,13 +57,18 @@ protected:
 	bool	ReadValue(snmp_session* _session, OID const& _oid, uint32_t _timeout, time_t& _time, std::string& _value);
 	bool	SyncReadValue(snmp_session* _session, OID const& _oid, uint32_t _timeout, time_t& _time, std::string& _value);
 	bool	AsyncRequestReadValue(snmp_session* _session, OID const& _oid, uint32_t _timeout);
+	bool	AsyncRequestReadValue(Session& _session, OID const& _oid, uint32_t _timeout);
 
 	static	int		AsyncResponse(int operation, struct snmp_session *sp, int reqid, struct snmp_pdu *pdu, void *magic);
 	static	bool	Convert(struct variable_list *_variable, std::string& _value);
 
+			void	Preprocess();
 			void	Process();
 
+			bool	OnMessage(Message* _base);
+
 	Locker	locker_;
+	uint32_t			request_count_;
 
 	std::list<Session*>	session_list_;
 };
@@ -76,6 +97,7 @@ protected:
 	struct snmp_session*	session_;
 	uint32_t				timeout_;
 	Locker					finished_;
+	bool					success_;
 
 	time_t					time_;
 	std::string				value_;

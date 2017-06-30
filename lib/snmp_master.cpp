@@ -4,6 +4,7 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <string>
 #include <sstream>
+#include <iomanip>
 #include "time2.h"
 #include "device_snmp.h"
 #include "utils.h"
@@ -28,9 +29,18 @@ OID::operator std::string() const
 	return	oss.str();
 }
 
-Master::Master()
-: locker_()
+GetMessage::GetMessage(snmp_session* _session, OID const& _oid, uint32_t _timeout)
+: Message(MSG_TYPE_SNMP_GET), session_(_session), oid_(_oid), timeout_(_timeout)
 {
+}
+
+Master::Master()
+: ActiveObject(), locker_(), request_count_(0)
+{
+	name_ 	= "SNMP Master";
+	enable_ = true;
+	trace.SetClassName(GetClassName());
+
 	init_snmp("ftgm");
 	init_mib();
 }
@@ -244,13 +254,14 @@ bool	Master::AsyncRequestReadValue(snmp_session* _session, OID const& _oid, uint
 		int snmp_ret = snmp_send(_session, request_pdu);
 		locker_.Unlock();
 
-		if (snmp_ret != STAT_SUCCESS)
+		if (snmp_ret == 0)
 		{
-			TRACE_ERROR("Failed to get SNMP!");
+			TRACE_ERROR("Failed to get SNMP[" << snmp_ret << "]!");
 			snmp_free_pdu(request_pdu);
 		}
 		else
 		{
+			request_count_++;
 			ret_value = true;	
 		}
 	}
@@ -262,6 +273,15 @@ bool	Master::AsyncRequestReadValue(snmp_session* _session, OID const& _oid, uint
 	return	ret_value;
 }
 
+bool	Master::AsyncRequestReadValue(Session& _session, OID const& _oid, uint32_t _timeout)
+{
+	GetMessage	*message = new GetMessage(_session.session_, _oid, _timeout);
+
+	Post(message);
+
+	return	true;
+}
+
 /*
  * response handler
  */
@@ -270,16 +290,28 @@ int	Master::AsyncResponse(int operation, struct snmp_session *sp, int reqid, str
 {
 	Session *session= (Session*)_magic;
 
+	session->master_.locker_.Lock();
 	if (operation == NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE) 
 	{
 		if (_pdu->errstat == SNMP_ERR_NOERROR)
 		{
 			Convert(_pdu->variables, session->value_);
 			session->time_ = Date::GetCurrent();
-
+			session->success_ = true;
 			session->finished_.Unlock();
 		}
 	}
+	else
+	{
+		session->success_ = false;
+		session->finished_.Unlock();
+	}
+
+	if (session->master_.request_count_ > 0)
+	{
+		session->master_.request_count_--;
+	}
+	session->master_.locker_.Unlock();
 
 	return 1;
 }
@@ -339,28 +371,56 @@ bool	Master::Convert
 	return  true;
 }
 
+void	Master::Preprocess()
+{
+	ActiveObject::Preprocess();
+}
+
 void	Master::Process()
 {
-	int fds = 0, block = 1;
-	fd_set fdset;
-	struct timeval timeout;
+	if (request_count_ > 0)
+	{
+		int fds = 0, block = 1;
+		fd_set fdset;
+		struct timeval timeout;
 
-	FD_ZERO(&fdset);
-	snmp_select_info(&fds, &fdset, &timeout, &block);
-	fds = select(fds, &fdset, NULL, NULL, block ? NULL : &timeout);
-	if (fds < 0) 
-	{
-		perror("select failed");
-	}
-	else if (fds > 0)
-	{
-		snmp_read(&fdset);
-	}
-	else
-	{
-		snmp_timeout();
+		FD_ZERO(&fdset);
+		snmp_select_info(&fds, &fdset, &timeout, &block);
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 1000;
+		fds = select(fds, &fdset, NULL, NULL, block ? NULL : &timeout);
+		if (fds < 0) 
+		{
+//			TRACE_ERROR("Failed to select!");
+		}
+		else if (fds > 0)
+		{
+			snmp_read(&fdset);
+		}
+		else
+		{
+			snmp_timeout();
+		}
 	}
 
 	ActiveObject::Process();
 }
 
+
+bool	Master::OnMessage(Message* _base)
+{
+	if(_base->GetType() == MSG_TYPE_SNMP_GET)
+	{
+		GetMessage	*message = dynamic_cast<GetMessage *>(_base);
+		if (message != NULL)
+		{
+			AsyncRequestReadValue(message->session_, message->oid_, message->timeout_);
+		}
+	}
+	else
+	{
+		return	ActiveObject::OnMessage(_base);
+	}
+
+	return	true;
+}

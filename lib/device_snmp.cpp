@@ -312,7 +312,7 @@ bool	DeviceSNMP::ReadValue(std::string const& _id, time_t& _time, std::string& _
 	SNMP::OID oid = GetOID(_id);
 	if (oid.length != 0)
 	{
-		ret_value = session_.ReadValue(oid, _time, _value);
+		ret_value = session_.AsyncReadValue(oid, _time, _value);
 	}
 	else
 	{
@@ -355,7 +355,7 @@ bool	DeviceSNMP::ReadValue(SNMP::OID const& _oid, time_t& _time, std::string& _v
 		}
 	}
 
-	return	session_.ReadValue(_oid, _time, _value);
+	return	session_.AsyncReadValue(_oid, _time, _value);
 }
 
 bool	DeviceSNMP::ReadValue(SNMP::OID const& _oid, std::string& _value)
@@ -371,7 +371,7 @@ bool	DeviceSNMP::ReadValue(SNMP::OID const& _oid, std::string& _value)
 
 	time_t	time;
 
-	return	session_.ReadValue(_oid,  time, _value);	
+	return	session_.AsyncReadValue(_oid,  time, _value);	
 }
 
 void	DeviceSNMP::Preprocess()

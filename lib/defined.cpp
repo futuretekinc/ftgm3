@@ -21,6 +21,9 @@ const char*	NODE_TYPE_DEV_SIM				=	"dev_sim";
 const char*	NODE_TYPE_DEV_MODBUS			=	"dev_modbus";
 const char*	NODE_TYPE_DEV_GTC_520A			=	"dev_gtc_520a";
 
+const char*	NODE_TYPE_DEV_MODBUS_TCP		=	"dev_modbus_tcp";
+const char*	NODE_TYPE_DEV_ADAM_6051			=	"dev_adam_6051";
+
 const char*	NODE_TYPE_EP_S_DISCRETE			=	"ep_s_discrete";
 const char*	NODE_TYPE_EP_S_LINEAR			=	"ep_s_linear";
 const char*	NODE_TYPE_EP_S_TEMPERATURE		=	"ep_s_temperature";
