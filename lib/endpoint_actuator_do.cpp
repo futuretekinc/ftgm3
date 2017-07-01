@@ -4,27 +4,32 @@
 #include "device.h"
 #include "endpoint_actuator_do.h"
 
+static const char* class_name = "EPSDO";
+
 EndpointActuatorDO::EndpointActuatorDO(ObjectManager& _manager)
 : EndpointActuatorDiscrete(_manager, EndpointActuatorDO::Type())
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointActuatorDO::EndpointActuatorDO(ObjectManager& _manager, JSONNode const& _properties)
 : EndpointActuatorDiscrete(_manager, EndpointActuatorDO::Type())
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties , false, true);
 }
 
-std::string	EndpointActuatorDO::GetClassName()
+const char* EndpointActuatorDO::GetClassName()
 {
-	return	"EPSDO";
+	return	class_name;
 }
 
-const std::string EndpointActuatorDO::Type()
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char*	EndpointActuatorDO::Type()
 {
-	return	std::string(NODE_TYPE_EP_A_DO);
+	return	OBJECT_TYPE_EP_A_DO;
 }
 
 

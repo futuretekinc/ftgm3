@@ -9,9 +9,7 @@ public:
 	EndpointActuatorDiscrete(ObjectManager& _manager, std::string const& _type);
 	EndpointActuatorDiscrete(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties);
 
-			std::string	GetClassName();
-
-	const 	std::string 	Type();
+			const char*	GetClassName();
 
 	virtual	bool		IsValid(std::string const& _value);
 
@@ -24,6 +22,7 @@ public:
 			std::string	GetValueMax();
 			bool		SetValueMax(std::string const& _max, bool _check = false);
 
+	static const char*	Type();
 protected:
 	bool	value_;
 };

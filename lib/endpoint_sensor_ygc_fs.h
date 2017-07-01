@@ -12,14 +12,15 @@ public:
 	EndpointSensorYGCFS(ObjectManager& _manager);
 	EndpointSensorYGCFS(ObjectManager& _manager, JSONNode const& _properties);
 
-			std::string		GetClassName();
-	const 	std::string 	Type();
-	const 	std::string&	GetModel() const;
-
+			const char*	GetClassName();
 
 protected:
-	
 	void	CorrectionProcess();
+
+//	Static members
+public:
+	static	const char*	Type();
+	static	const char*	Model();
 };
 
 #endif

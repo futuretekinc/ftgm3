@@ -21,7 +21,6 @@ public:
 			bool		WriteValue(std::string const& _epid, std::string const& _value);
 			bool		WriteValue(std::string const& _epid, bool _value);
 
-	static	const std::string&	Type();
 protected:
 	virtual	bool		Attach(std::string const& _endpoint_id);
 	virtual	bool		Detach(std::string const& _endpoint_id);
@@ -29,6 +28,10 @@ protected:
 
 	std::map<std::string, double>		endpoint_sensor_value_table_;
 	std::map<std::string, std::string>	endpoint_actuator_value_table_;
+
+// Static functions	
+public:
+	static	const char*	Type();
 
 };
 

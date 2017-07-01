@@ -2,25 +2,30 @@
 #include "device.h"
 #include "endpoint_sensor_current.h"
 
+static const char*	class_name = "EPSCurrent";
+
 EndpointSensorCurrent::EndpointSensorCurrent(ObjectManager& _manager)
 : EndpointSensorLinear(_manager, EndpointSensorCurrent::Type(), ENDPOINT_SENSOR_CURRENT_UNIT, ENDPOINT_SENSOR_CURRENT_MIN, ENDPOINT_SENSOR_CURRENT_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointSensorCurrent::EndpointSensorCurrent(ObjectManager& _manager, JSONNode const& _properties)
 : EndpointSensorLinear(_manager, EndpointSensorCurrent::Type(), ENDPOINT_SENSOR_CURRENT_UNIT, ENDPOINT_SENSOR_CURRENT_MIN, ENDPOINT_SENSOR_CURRENT_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties , false, true);
 }
 
-std::string	EndpointSensorCurrent::GetClassName()
+const char*	EndpointSensorCurrent::GetClassName()
 {
-	return	"EPSCurrent";
+	return	class_name;
 }
 
-const std::string EndpointSensorCurrent::Type()
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char* EndpointSensorCurrent::Type()
 {
-	return	std::string(NODE_TYPE_EP_S_CURRENT);
+	return	OBJECT_TYPE_EP_S_CURRENT;
 }

@@ -48,9 +48,9 @@ RetValue	ShellCommandObject
 						id_len = 	object->GetID().size();
 					}
 
-					if (class_len < object->GetClassName().size())
+					if (class_len < strlen(object->GetClassName()))
 					{
-						class_len = 	object->GetClassName().size();
+						class_len =	strlen(object->GetClassName());
 					}
 				}
 			}

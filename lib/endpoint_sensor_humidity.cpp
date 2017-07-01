@@ -2,25 +2,30 @@
 #include "device.h"
 #include "endpoint_sensor_humidity.h"
 
+static const char*	class_name = "EPSHumidity";
+
 EndpointSensorHumidity::EndpointSensorHumidity(ObjectManager& _manager)
 : EndpointSensorLinear(_manager, EndpointSensorHumidity::Type(), ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointSensorHumidity::EndpointSensorHumidity(ObjectManager& _manager, JSONNode const& _properties)
 : EndpointSensorLinear(_manager, EndpointSensorHumidity::Type(), ENDPOINT_SENSOR_HUMIDITY_UNIT, ENDPOINT_SENSOR_HUMIDITY_MIN, ENDPOINT_SENSOR_HUMIDITY_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties , false, true);
 }
 
-std::string	EndpointSensorHumidity::GetClassName()
+const char*	EndpointSensorHumidity::GetClassName()
 {
-	return	"EPSHumidity";
+	return	class_name;
 }
 
-const std::string EndpointSensorHumidity::Type()
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char* EndpointSensorHumidity::Type()
 {
-	return	std::string (NODE_TYPE_EP_S_HUMIDITY);
+	return	OBJECT_TYPE_EP_S_HUMIDITY;
 }

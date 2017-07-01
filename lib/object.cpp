@@ -12,7 +12,8 @@
 #include <hashlib++/hashlibpp.h>
 #include "exception.h"
 
-static std::map<std::string, Object*>	object_map;
+static const char*	class_name = "Object";
+static std::multimap<std::string, Object*>	object_map;
 
 Object::Object()
 : parent_id_(""), enable_(false), trace(this), lazy_store_(false)
@@ -30,7 +31,7 @@ Object::Object()
 
 		name_ = std::string(id_);
 
-		object_map[id_] = this;
+		object_map.insert(std::pair<std::string, Object*>(id_,this));
 	}
 	catch(std::exception& e)
 	{
@@ -53,7 +54,7 @@ Object::Object(std::string const& _id)
 
 		name_ = std::string(id_);
 
-		object_map[id_] = this;
+		object_map.insert(std::pair<std::string, Object*>(id_,this));
 	}
 	catch(std::exception& e)
 	{
@@ -69,25 +70,9 @@ Object::~Object()
 }
 
 
-std::string		Object::GetClassName()
+const char*	Object::GetClassName()
 {
-	//if (class_name_.size() == 0)
-	{
-		uint32_t	i = 0;
-		std::string	name = typeid(*this).name();
-
-		for(i = 0 ; i < name.size() ; i++)
-		{
-			if (!isdigit(name[i]))
-			{
-				break;
-			}
-		}
-
-		class_name_ = name.substr(i, name.size() - i);
-	}
-
-	return	class_name_;
+	return	class_name;
 }
 
 const	std::string&	Object::GetID() const

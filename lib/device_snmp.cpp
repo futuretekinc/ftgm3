@@ -435,10 +435,8 @@ bool	DeviceSNMP::InsertToDB(Kompex::SQLiteStatement*	_statement)
 	return	true;
 }
 
-const std::string&	DeviceSNMP::Type()
+const char*	DeviceSNMP::Type()
 {
-	static	std::string	type_(NODE_TYPE_DEV_SNMP);
-
-	return	type_;
+	return	OBJECT_TYPE_DEV_SNMP;
 }
 

@@ -2,26 +2,31 @@
 #include "device.h"
 #include "endpoint_sensor_windspeed.h"
 
+static const char* class_name = "EPSWindSpeed";	
+
 EndpointSensorWindSpeed::EndpointSensorWindSpeed(ObjectManager& _manager)
 : EndpointSensorLinear(_manager, EndpointSensorWindSpeed::Type(), ENDPOINT_SENSOR_WIND_SPEED_UNIT, ENDPOINT_SENSOR_WIND_SPEED_MIN, ENDPOINT_SENSOR_WIND_SPEED_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointSensorWindSpeed::EndpointSensorWindSpeed(ObjectManager& _manager, JSONNode const& _properties)
 : EndpointSensorLinear(_manager, EndpointSensorWindSpeed::Type(), ENDPOINT_SENSOR_WIND_SPEED_UNIT, ENDPOINT_SENSOR_WIND_SPEED_MIN, ENDPOINT_SENSOR_WIND_SPEED_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties, false, true);
 }
 
-std::string EndpointSensorWindSpeed::GetClassName() 
+const char* EndpointSensorWindSpeed::GetClassName() 
 {	
-	return	"EPSWindSpeed";	
+	return	class_name;
 }
 
-const 	std::string 	EndpointSensorWindSpeed::Type()
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char* EndpointSensorWindSpeed::Type()
 {
-	return	std::string(NODE_TYPE_EP_S_WIND_SPEED);
+	return	OBJECT_TYPE_EP_S_WIND_SPEED;
 }
 

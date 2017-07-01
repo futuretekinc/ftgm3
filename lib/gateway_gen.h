@@ -10,7 +10,7 @@ public:
 
 	virtual	bool		IsIncludedIn(std::string const& _type);
 
-	static	const	std::string&	Type();
+	static	const char*	Type();
 };
 
 #endif

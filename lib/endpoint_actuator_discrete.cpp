@@ -6,27 +6,24 @@
 #include "utils.h"
 #include "endpoint_actuator_discrete.h"
 
+static const char* class_name = "EPSDiscrete";
+
 EndpointActuatorDiscrete::EndpointActuatorDiscrete(ObjectManager& _manager, std::string const& _type)
 : EndpointActuator(_manager, _type), value_(false)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointActuatorDiscrete::EndpointActuatorDiscrete(ObjectManager& _manager, std::string const& _type,  JSONNode const& _properties)
 : EndpointActuator(_manager, _type),value_(false)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties , false, true);
 }
 
-std::string	EndpointActuatorDiscrete::GetClassName()
+const char*	EndpointActuatorDiscrete::GetClassName()
 {
 	return	"EPSDiscrete";
-}
-
-const std::string EndpointActuatorDiscrete::Type()
-{
-	return	std::string(NODE_TYPE_EP_A_DISCRETE);
 }
 
 bool	EndpointActuatorDiscrete::IsValid(std::string const& _value)
@@ -117,4 +114,11 @@ bool	EndpointActuatorDiscrete::SetValueMax(std::string const& _value, bool _chec
 	return	true;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char* EndpointActuatorDiscrete::Type()
+{
+	return	OBJECT_TYPE_EP_A_DISCRETE;
+}
 

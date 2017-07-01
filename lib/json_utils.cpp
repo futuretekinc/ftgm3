@@ -272,3 +272,21 @@ JSONNode	JSONNodeLoadFromFile(std::string const& _file_name)
 
 	return	node;
 }
+
+bool	JSONNodeDelField(JSONNode& _node, std::string const& _name)
+{
+	JSONNode::iterator it = _node.find(_name);
+	if (it == _node.end())
+	{
+		return	false;
+	}
+
+	_node.erase(it);
+
+	return	true;
+}
+
+bool		JSONNodeDelType(JSONNode& _node)
+{
+	return	JSONNodeDelField(_node, TITLE_NAME_TYPE);
+}

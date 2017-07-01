@@ -9,9 +9,9 @@ public:
 	EndpointSensorDI(ObjectManager& _manager);
 	EndpointSensorDI(ObjectManager& _manager, JSONNode const& _properties);
 
-			std::string	GetClassName();
+			const char*	GetClassName();
 
-	const 	std::string 	Type();
+	static 	const char*	Type();
 };
 
 #endif

@@ -9,8 +9,13 @@ public:
 	EndpointSensorTemperature(ObjectManager& _manager);
 	EndpointSensorTemperature(ObjectManager& _manager, JSONNode const& _properties);
 
-			std::string		GetClassName();
-	const 	std::string 	Type();
+			const char*	GetClassName();
+
+protected:
+
+// Static member functions
+public:
+	static	const char*	Type();
 };
 
 #endif

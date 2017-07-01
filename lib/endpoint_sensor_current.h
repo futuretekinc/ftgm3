@@ -9,9 +9,13 @@ public:
 	EndpointSensorCurrent(ObjectManager& _manager);
 	EndpointSensorCurrent(ObjectManager& _manager, JSONNode const& _properties);
 
-			std::string	GetClassName();
+			const char*	GetClassName();
 
-	const 	std::string 	Type();
+protected:
+
+// Static member functions
+public:
+	static const char*	Type();
 };
 
 #endif

@@ -9,9 +9,13 @@ public:
 	EndpointSensorSoilMoisture(ObjectManager& _manager);
 	EndpointSensorSoilMoisture(ObjectManager& _manager, JSONNode const& _properties);
 
-			std::string		GetClassName();
-	const 	std::string 	Type();
+			const char*	GetClassName();
 
+protected:
+
+//	Static members
+public:
+	static	const char*	Type();
 };
 
 #endif

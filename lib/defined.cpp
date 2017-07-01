@@ -12,35 +12,42 @@ uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC	=	(10);
 uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN=	(10);
 uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX=	(60 * 60);
 
-const char*	NODE_TYPE_GW_GEN				=	"gw_gen";
+const char* OBJECT_TYPE_NODE				=	"node";
 
-const char*	NODE_TYPE_DEV_SNMP				=	"dev_snmp";
-const char*	NODE_TYPE_DEV_FTE				=	"dev_fte";
-const char*	NODE_TYPE_DEV_SIM				=	"dev_sim";
+const char* OBJECT_TYPE_GATEWAY				=	"gateway";
+const char*	OBJECT_TYPE_GW_GEN				=	"gw_gen";
 
-const char*	NODE_TYPE_DEV_MODBUS			=	"dev_modbus";
-const char*	NODE_TYPE_DEV_GTC_520A			=	"dev_gtc_520a";
+const char* OBJECT_TYPE_DEVICE				=	"device";
+const char*	OBJECT_TYPE_DEV_SNMP			=	"dev_snmp";
+const char*	OBJECT_TYPE_DEV_FTE				=	"dev_fte";
+const char*	OBJECT_TYPE_DEV_SIM				=	"dev_sim";
 
-const char*	NODE_TYPE_DEV_MODBUS_TCP		=	"dev_modbus_tcp";
-const char*	NODE_TYPE_DEV_ADAM_6051			=	"dev_adam_6051";
+const char*	OBJECT_TYPE_DEV_MODBUS			=	"dev_modbus";
+const char*	OBJECT_TYPE_DEV_GTC_520A		=	"dev_gtc_520a";
 
-const char*	NODE_TYPE_EP_S_DISCRETE			=	"ep_s_discrete";
-const char*	NODE_TYPE_EP_S_LINEAR			=	"ep_s_linear";
-const char*	NODE_TYPE_EP_S_TEMPERATURE		=	"ep_s_temperature";
-const char*	NODE_TYPE_EP_S_HUMIDITY			=	"ep_s_humidity";
-const char*	NODE_TYPE_EP_S_VOLTAGE			=	"ep_s_voltage";
-const char*	NODE_TYPE_EP_S_CURRENT			=	"ep_s_current";
-const char*	NODE_TYPE_EP_S_DI				=	"ep_s_di";
-const char*	NODE_TYPE_EP_S_PRESSURE			=	"ep_s_pressure";
-const char*	NODE_TYPE_EP_S_WIND_SPEED		=	"ep_s_wind_speed";
-const char*	NODE_TYPE_EP_S_SOIL_MOISTURE	=	"ep_s_soil_moisture";
-const char*	NODE_TYPE_EP_S_RAINFALL			=	"ep_s_rainfall";
-const char*	NODE_TYPE_EP_S_GAS				=	"ep_s_gas";
-const char* NODE_TYPE_EP_S_SOIL_ACIDITY		=	"ep_s_soil_acidity";
+const char*	OBJECT_TYPE_DEV_MODBUS_TCP		=	"dev_modbus_tcp";
+const char*	OBJECT_TYPE_DEV_ADAM_6051		=	"dev_adam_6051";
 
-const char*	NODE_TYPE_EP_A_DISCRETE			=	"ep_a_discrete";
-const char*	NODE_TYPE_EP_A_LINEAR			=	"ep_a_linear";
-const char*	NODE_TYPE_EP_A_DO				=	"ep_a_do";
+const char* OBJECT_TYPE_ENDPOINT			=	"endpoint";
+const char* OBJECT_TYPE_ENDPOINT_SENSOR		=	"en_sensor";
+const char*	OBJECT_TYPE_EP_S_DISCRETE		=	"ep_s_discrete";
+const char*	OBJECT_TYPE_EP_S_LINEAR			=	"ep_s_linear";
+const char*	OBJECT_TYPE_EP_S_TEMPERATURE	=	"ep_s_temperature";
+const char*	OBJECT_TYPE_EP_S_HUMIDITY		=	"ep_s_humidity";
+const char*	OBJECT_TYPE_EP_S_VOLTAGE		=	"ep_s_voltage";
+const char*	OBJECT_TYPE_EP_S_CURRENT		=	"ep_s_current";
+const char*	OBJECT_TYPE_EP_S_DI				=	"ep_s_di";
+const char*	OBJECT_TYPE_EP_S_PRESSURE		=	"ep_s_pressure";
+const char*	OBJECT_TYPE_EP_S_WIND_SPEED		=	"ep_s_wind_speed";
+const char*	OBJECT_TYPE_EP_S_SOIL_MOISTURE	=	"ep_s_soil_moisture";
+const char*	OBJECT_TYPE_EP_S_RAINFALL		=	"ep_s_rainfall";
+const char*	OBJECT_TYPE_EP_S_GAS			=	"ep_s_gas";
+const char* OBJECT_TYPE_EP_S_SOIL_ACIDITY	=	"ep_s_soil_acidity";
+
+const char* OBJECT_TYPE_ENDPOINT_ACUTATOR	=	"ep_actuator";
+const char*	OBJECT_TYPE_EP_A_DISCRETE		=	"ep_a_discrete";
+const char*	OBJECT_TYPE_EP_A_LINEAR			=	"ep_a_linear";
+const char*	OBJECT_TYPE_EP_A_DO				=	"ep_a_do";
 
 uint32_t	ENDPOINT_REPORT_INTERVAL		=	(30);
 uint32_t	ENDPOINT_UPDATE_INTERVAL		=	(5);

@@ -28,7 +28,7 @@ public:
 	Object(std::string const& _id);
 	virtual	~Object();
 
-	virtual	std::string	GetClassName();
+	virtual	const char*	GetClassName();
 
 	const std::string&	GetID() const;
 			bool		SetID(std::string const& _id, bool _check = false);
@@ -84,7 +84,6 @@ public:
 protected:
 
 	std::string	parent_id_;
-	std::string	class_name_;
 	std::string	id_;
 	std::string	name_;	
 	Date		date_;

@@ -19,8 +19,10 @@ public:
 
 	Node(ObjectManager& _manager, std::string const& _type);
 
-	virtual	std::string 	GetType() const;
-	virtual	bool		SetType(std::string const& _type, bool _check = false);
+	virtual	std::string GetType() const;
+	//virtual	bool		SetType(std::string const& _type, bool _check = false);
+
+	virtual	std::string	GetModel();
 
 	virtual	bool		IsIncludedIn(std::string const& _type);
 
@@ -36,7 +38,7 @@ public:
 			bool		GetRegistered();
 
 			bool		SetLocation(std::string const& _location, bool _check = false);
-	const	std::string&	GetLocation();
+			std::string	GetLocation();
 
 	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
 
@@ -52,8 +54,8 @@ public:
 			void		Preprocess();
 			void		Process();
 
-	static	const	std::string&	Type();
-	static	bool		IsValidType(std::string const& _type);
+	static  const char*	Type();
+
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 	static	bool		IsIncludeIn(Object* _object);
 

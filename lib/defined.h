@@ -43,35 +43,40 @@ extern	uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC;
 extern	uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN;
 extern	uint32_t	OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX;
 
-extern	const char*	NODE_TYPE_GW_GEN;
+extern	const char* OBJECT_TYPE_NODE;
 
-extern	const char*	NODE_TYPE_DEV_SNMP;
-extern	const char*	NODE_TYPE_DEV_FTE;
-extern	const char*	NODE_TYPE_DEV_SIM;
+extern	const char* OBJECT_TYPE_GATEWAY;
+extern	const char*	OBJECT_TYPE_GW_GEN;
 
-extern	const char*	NODE_TYPE_DEV_MODBUS;
-extern	const char*	NODE_TYPE_DEV_GTC_520A;
+extern	const char* OBJECT_TYPE_DEVICE;
+extern	const char*	OBJECT_TYPE_DEV_SNMP;
+extern	const char*	OBJECT_TYPE_DEV_FTE;
+extern	const char*	OBJECT_TYPE_DEV_SIM;
 
-extern	const char*	NODE_TYPE_DEV_MODBUS_TCP;
-extern	const char*	NODE_TYPE_DEV_ADAM_6051;
+extern	const char*	OBJECT_TYPE_DEV_MODBUS;
+extern	const char*	OBJECT_TYPE_DEV_GTC_520A;
 
-extern	const char*	NODE_TYPE_EP_S_DISCRETE;
-extern	const char*	NODE_TYPE_EP_S_LINEAR;
-extern	const char*	NODE_TYPE_EP_S_TEMPERATURE;
-extern	const char*	NODE_TYPE_EP_S_HUMIDITY;
-extern	const char*	NODE_TYPE_EP_S_VOLTAGE;
-extern	const char*	NODE_TYPE_EP_S_CURRENT;
-extern	const char*	NODE_TYPE_EP_S_DI;
-extern	const char*	NODE_TYPE_EP_S_PRESSURE;
-extern	const char*	NODE_TYPE_EP_S_WIND_SPEED;
-extern	const char*	NODE_TYPE_EP_S_SOIL_MOISTURE;
-extern	const char*	NODE_TYPE_EP_S_RAINFALL;
-extern	const char*	NODE_TYPE_EP_S_GAS;
-extern	const char* NODE_TYPE_EP_S_SOIL_ACIDITY;
+extern	const char*	OBJECT_TYPE_DEV_MODBUS_TCP;
+extern	const char*	OBJECT_TYPE_DEV_ADAM_6051;
 
-extern	const char*	NODE_TYPE_EP_A_LINEAR;
-extern	const char*	NODE_TYPE_EP_A_DISCRETE;
-extern	const char*	NODE_TYPE_EP_A_DO;
+extern	const char* OBJECT_TYPE_ENDPOINT;
+extern	const char*	OBJECT_TYPE_EP_S_DISCRETE;
+extern	const char*	OBJECT_TYPE_EP_S_LINEAR;
+extern	const char*	OBJECT_TYPE_EP_S_TEMPERATURE;
+extern	const char*	OBJECT_TYPE_EP_S_HUMIDITY;
+extern	const char*	OBJECT_TYPE_EP_S_VOLTAGE;
+extern	const char*	OBJECT_TYPE_EP_S_CURRENT;
+extern	const char*	OBJECT_TYPE_EP_S_DI;
+extern	const char*	OBJECT_TYPE_EP_S_PRESSURE;
+extern	const char*	OBJECT_TYPE_EP_S_WIND_SPEED;
+extern	const char*	OBJECT_TYPE_EP_S_SOIL_MOISTURE;
+extern	const char*	OBJECT_TYPE_EP_S_RAINFALL;
+extern	const char*	OBJECT_TYPE_EP_S_GAS;
+extern	const char* OBJECT_TYPE_EP_S_SOIL_ACIDITY;
+
+extern	const char*	OBJECT_TYPE_EP_A_LINEAR;
+extern	const char*	OBJECT_TYPE_EP_A_DISCRETE;
+extern	const char*	OBJECT_TYPE_EP_A_DO;
 
 extern	uint32_t	ENDPOINT_REPORT_INTERVAL;
 extern	uint32_t	ENDPOINT_UPDATE_INTERVAL;

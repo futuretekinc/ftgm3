@@ -9,8 +9,7 @@ public:
 	EndpointSensorLinear(ObjectManager& _manager, std::string const& _type, std::string const& _unit, double _min, double _max);
 	EndpointSensorLinear(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties, std::string const& _unit, double _min, double _max);
 
-			std::string		GetClassName();
-	const 	std::string 	Type();
+			const char*	GetClassName();
 
 			bool		IsValid(std::string const& _value);
 
@@ -28,6 +27,8 @@ public:
 
 			bool		GetProperties(JSONNode& _properties, Fields const& _fields);
 			bool		SetProperty(JSONNode const& _property, bool _check = false);
+
+	static	const char*	Type();
 
 protected:
 	virtual	bool		Add(time_t time, std::string const& _value);

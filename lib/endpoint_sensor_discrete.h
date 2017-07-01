@@ -9,8 +9,7 @@ public:
 	EndpointSensorDiscrete(ObjectManager& _manager, std::string const& _type);
 	EndpointSensorDiscrete(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties);
 
-			std::string		GetClassName();
-	const 	std::string 	Type();
+			const char*	GetClassName();
 
 			bool		IsValid(std::string const& _value);
 
@@ -25,6 +24,8 @@ public:
 
 			bool		GetProperties(JSONNode& _properties, Fields const& _fields);
 			bool		SetProperty(JSONNode const& _property, bool _check = false);
+
+	static const char*	Type();
 
 protected:
 			bool		value_;

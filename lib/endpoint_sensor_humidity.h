@@ -9,9 +9,12 @@ public:
 	EndpointSensorHumidity(ObjectManager& _manager);
 	EndpointSensorHumidity(ObjectManager& _manager, JSONNode const& _properties);
 
-			std::string	GetClassName();
+			const char*	GetClassName();
 
-	const 	std::string 	Type();
+protected:
+
+public:
+	static	const char*	Type();
 };
 
 #endif

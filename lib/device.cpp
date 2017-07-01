@@ -275,13 +275,6 @@ bool	Device::RemoveSchedule(std::string const& _id)
 	return	removed;
 }
 
-bool	Device::IsValidType(std::string const& _type)
-{
-	return	(std::string(_type) == std::string(DeviceSNMP::Type())) 
-			|| (std::string(_type) == std::string(DeviceFTE::Type()))
-			|| (std::string(_type) == std::string(DeviceSIM::Type()));
-}
-
 Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
 {
 	Device*	device = NULL;
@@ -365,3 +358,12 @@ bool	Device::WriteValue(std::string const& _endpoint_id, bool _value)
 {
 	return	false;	
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char*	Device::Type()
+{
+	return	OBJECT_TYPE_DEVICE;
+}
+

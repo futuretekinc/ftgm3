@@ -2,25 +2,30 @@
 #include "device.h"
 #include "endpoint_sensor_di.h"
 
+static const char* class_name = "EP_S_DI";
+
 EndpointSensorDI::EndpointSensorDI(ObjectManager& _manager)
 : EndpointSensorDiscrete(_manager, EndpointSensorDI::Type())
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointSensorDI::EndpointSensorDI(ObjectManager& _manager, JSONNode const& _properties)
 : EndpointSensorDiscrete(_manager, EndpointSensorDI::Type())
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties , false, true);
 }
 
-std::string	EndpointSensorDI::GetClassName()
+const char* EndpointSensorDI::GetClassName()
 {
-	return	"EP_S_DI";
+	return	class_name;
 }
 
-const std::string EndpointSensorDI::Type()
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char* EndpointSensorDI::Type()
 {
-	return	std::string(NODE_TYPE_EP_S_DI);
+	return	OBJECT_TYPE_EP_S_DI;
 }

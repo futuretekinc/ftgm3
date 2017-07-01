@@ -19,10 +19,8 @@ bool	GatewayGen::IsIncludedIn(std::string const& _type)
 	return	Gateway::IsIncludedIn(_type);	
 }
 
-const	std::string&	GatewayGen::Type()
+const char*	GatewayGen::Type()
 {
-	static	std::string	type_(NODE_TYPE_GW_GEN);
-
-	return	type_;
+	return	OBJECT_TYPE_GW_GEN;
 }
 

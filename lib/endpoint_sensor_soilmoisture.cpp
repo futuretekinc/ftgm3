@@ -2,26 +2,31 @@
 #include "device.h"
 #include "endpoint_sensor_soilmoisture.h"
 
+static const char*	class_name = "EPSSoilMoisture";	
+
 EndpointSensorSoilMoisture::EndpointSensorSoilMoisture(ObjectManager& _manager)
 : EndpointSensorLinear(_manager, EndpointSensorSoilMoisture::Type(), ENDPOINT_SENSOR_SOIL_MOISTURE_UNIT, ENDPOINT_SENSOR_SOIL_MOISTURE_MIN, ENDPOINT_SENSOR_SOIL_MOISTURE_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointSensorSoilMoisture::EndpointSensorSoilMoisture(ObjectManager& _manager, JSONNode const& _properties)
 : EndpointSensorLinear(_manager, EndpointSensorSoilMoisture::Type(), ENDPOINT_SENSOR_SOIL_MOISTURE_UNIT, ENDPOINT_SENSOR_SOIL_MOISTURE_MIN, ENDPOINT_SENSOR_SOIL_MOISTURE_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties, false, true);
 }
 
-std::string EndpointSensorSoilMoisture::GetClassName() 
+const char*	EndpointSensorSoilMoisture::GetClassName() 
 {	
-	return	"EPSSoilMoisture";	
+	return	class_name;
 }
 
-const 	std::string 	EndpointSensorSoilMoisture::Type()
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char* EndpointSensorSoilMoisture::Type()
 {
-	return	std::string(NODE_TYPE_EP_S_SOIL_MOISTURE);
+	return	OBJECT_TYPE_EP_S_SOIL_MOISTURE;
 }
 

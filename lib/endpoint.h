@@ -34,8 +34,6 @@ public:
 						Endpoint(ObjectManager& _manager, std::string const& _type, std::string const& _unit);
 	virtual				~Endpoint();	
 
-	virtual	const std::string&	GetModel() const;
-
 	const std::string&	GetUnit() const;
 			bool		SetUnit(std::string const& _unit, bool _check = false);
 
@@ -43,8 +41,8 @@ public:
 			bool		SetScale(float _scale);
 			bool		SetScale(std::string const& _scale, bool _check = false);
 
-			std::string	GetSensorID() const;
-			bool		SetSensorID(std::string const& _sensor_id, bool _check = false);
+			uint32_t	GetSensorID() const;
+			bool		SetSensorID(uint32_t _sensor_id, bool _check = false);
 
 			uint32_t	GetCorrectionInterval();
 			bool		SetCorrectionInterval(Time const& _interval);
@@ -91,8 +89,9 @@ public:
 	virtual	bool		Stop(bool _wait = false);
 
 	virtual	bool		IsRunning();
+
+	static	const char*	Type();
 	static	bool		IsIncludeIn(Object *_object);
-	static	bool		IsValidType(std::string const& _type);
 
 	static	Endpoint*	Create(ObjectManager& _manager, JSONNode const& _properties);
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
@@ -108,7 +107,7 @@ protected:
 	virtual	bool		Add(time_t time, bool _value);
 
 			bool		active_;
-			std::string	sensor_id_;
+			uint32_t	sensor_id_;
 			std::string	unit_;
 			float		scale_;
 			time_t		time_;

@@ -209,24 +209,6 @@ Gateway*	Gateway::Create(ObjectManager& _manager, JSONNode const& _properties)
 	return	gateway;
 }
 
-const	std::string&	Gateway::Type()
-{
-	static	std::string	type_("gateway");
-
-	return	type_;
-}
-
-bool		Gateway::IsValidType(std::string const& _type)
-{
-	if (_type == std::string(GatewayGen::Type()))
-	{
-		return	true;	
-	}
-
-	TRACE_ERROR2(NULL, "Gateway type[" << _type << "] invlaid");
-	return	false;
-}
-
 bool	Gateway::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
 	if (Node::GetPropertyFieldList(_field_list))
@@ -242,3 +224,12 @@ bool	Gateway::IsIncludeIn(Object *_object)
 {
 	return	dynamic_cast<Gateway*>(_object) != NULL;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char*	Gateway::Type()
+{
+	return	OBJECT_TYPE_GATEWAY;
+}
+

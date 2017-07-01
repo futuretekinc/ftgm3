@@ -37,7 +37,7 @@ public:
 	// Utility
 	virtual				operator JSONNode();
 
-	static	bool		IsValidType(std::string const& _type);
+	static	const char*	Type();
 
 	static	Device*		Create(ObjectManager& _manager, JSONNode const& _properties);
 

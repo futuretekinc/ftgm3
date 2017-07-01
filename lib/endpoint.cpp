@@ -50,13 +50,6 @@ Endpoint::~Endpoint()
 {
 }
 
-const std::string&	Endpoint::GetModel() const
-{	
-	const static std::string model = "general";
-
-	return	model;
-}
-
 const std::string&	Endpoint::GetUnit() const
 {
 	return	unit_;
@@ -114,12 +107,12 @@ bool	Endpoint::SetScale(float _scale)
 	return	true;
 }
 
-std::string	Endpoint::GetSensorID() const
+uint32_t	Endpoint::GetSensorID() const
 {
 	return	sensor_id_;
 }
 
-bool	Endpoint::SetSensorID(std::string const& _sensor_id, bool _check)
+bool	Endpoint::SetSensorID(uint32_t	_sensor_id, bool _check)
 {
 	if (!_check)
 	{
@@ -234,7 +227,7 @@ bool	Endpoint::SetProperty(JSONNode const& _property, bool _check)
 	}
 	else if (_property.name() == TITLE_NAME_SENSOR_ID)
 	{
-		ret_value = SetSensorID(_property.as_string(), _check);
+		ret_value = SetSensorID(_property.as_int(), _check);
 	}
 	else if ((_property.name() == TITLE_NAME_CORRECTION_INTERVAL) || (_property.name() == TITLE_NAME_UPDATE_INTERVAL))
 	{
@@ -558,110 +551,88 @@ bool	Endpoint::Add(time_t time, bool _value)
 	return	Add(time, value);
 }
 
-bool		Endpoint::IsValidType(std::string const& _type)
-{
-	if ((strcasecmp(_type.c_str(), NODE_TYPE_EP_S_TEMPERATURE) == 0) || 
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_HUMIDITY) == 0) ||
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_VOLTAGE) == 0) ||
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_CURRENT) == 0) ||
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_DI) == 0) ||
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_PRESSURE) == 0) ||
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_WIND_SPEED) == 0) ||
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_SOIL_MOISTURE) == 0) ||
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_RAINFALL) == 0) ||
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_S_GAS) == 0) ||
-	    (strcasecmp(_type.c_str(), NODE_TYPE_EP_A_DO) == 0))
-	{	
-		return	true;
-	}
-
-	return	false;
-}
-
 Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 {
 
 	Endpoint*	endpoint = NULL;
+
+	TRACE_INFO2(&_manager, "< Create Endpoint >" << std::endl << _properties.write_formatted());
+
 	try
 	{
-		TRACE_INFO2(&_manager, "Endpoint Properties : " << _properties.write_formatted());
+		std::string model = JSONNodeGetModel(_properties);
 
-		std::string type = JSONNodeGetType(_properties);
-		std::string model;
-
-		try
+		if (model == EndpointSensorYGCFS::Model())
 		{
-			model = JSONNodeGetModel(_properties);
-		}
-		catch(ObjectNotFound& e)
-		{
-		}
-
-		if (type == NODE_TYPE_EP_S_TEMPERATURE)
-		{
-			endpoint = new EndpointSensorTemperature(_manager, _properties);
-			TRACE_INFO2(NULL, "The temperature endpoint[" << endpoint->GetID() << "] created");
-		}
-		else if (type == NODE_TYPE_EP_S_HUMIDITY) 
-		{
-			endpoint = new EndpointSensorHumidity(_manager, _properties);
-			TRACE_INFO2(NULL, "The humidity endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else if (type == NODE_TYPE_EP_S_VOLTAGE)
-		{
-			endpoint = new EndpointSensorVoltage(_manager, _properties);
-			TRACE_INFO2(NULL, "The voltage endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else if (type == NODE_TYPE_EP_S_CURRENT)
-		{
-			endpoint = new EndpointSensorCurrent(_manager, _properties);
-			TRACE_INFO2(NULL, "The current endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else if (type == NODE_TYPE_EP_S_DI) 
-		{
-			endpoint = new EndpointSensorDI(_manager, _properties);
-			TRACE_INFO2(NULL, "The DI endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else if (type == NODE_TYPE_EP_S_WIND_SPEED) 
-		{
-		//	endpoint = new EndpointSensorWindSpeed(_manager, _properties);
 			endpoint = new EndpointSensorYGCFS(_manager, _properties);
-			TRACE_INFO2(NULL, "The Wind Spped endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else if (type == NODE_TYPE_EP_S_SOIL_MOISTURE) 
-		{
-			endpoint = new EndpointSensorSoilMoisture(_manager, _properties);
-			TRACE_INFO2(NULL, "The soil moisture endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else if (type == NODE_TYPE_EP_S_SOIL_ACIDITY) 
-		{
-			endpoint = new EndpointSensorSoilAcidity(_manager, _properties);
-			TRACE_INFO2(NULL, "The soil acidity endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else if (type == NODE_TYPE_EP_S_RAINFALL) 
-		{
-			endpoint = new EndpointSensorRainfall(_manager, _properties);
-			TRACE_INFO2(NULL, "The railfall endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else if (type == NODE_TYPE_EP_S_GAS) 
-		{
-			endpoint = new EndpointSensorGAS(_manager, _properties);
-			TRACE_INFO2(NULL, "The gas endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else if (type == NODE_TYPE_EP_A_DO)
-		{
-			endpoint = new EndpointActuatorDO(_manager, _properties);
-			TRACE_INFO2(NULL, "The DO endpoint[" << endpoint->GetID() <<"] created");
-		}
-		else
-		{
-			TRACE_ERROR2(NULL, "Failed to create endpoint because type[" << type <<"] is not supported.");
-
 		}
 	}
 	catch(ObjectNotFound& e)
 	{
-		TRACE_ERROR2(NULL, "Failed to create endpoint. Invalid arguments");
+		try
+		{
+			std::string type = JSONNodeGetType(_properties);
+
+			if (type == OBJECT_TYPE_EP_S_TEMPERATURE)
+			{
+				endpoint = new EndpointSensorTemperature(_manager, _properties);
+				TRACE_INFO2(NULL, "The temperature endpoint[" << endpoint->GetID() << "] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_HUMIDITY) 
+			{
+				endpoint = new EndpointSensorHumidity(_manager, _properties);
+				TRACE_INFO2(NULL, "The humidity endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_VOLTAGE)
+			{
+				endpoint = new EndpointSensorVoltage(_manager, _properties);
+				TRACE_INFO2(NULL, "The voltage endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_CURRENT)
+			{
+				endpoint = new EndpointSensorCurrent(_manager, _properties);
+				TRACE_INFO2(NULL, "The current endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_DI) 
+			{
+				endpoint = new EndpointSensorDI(_manager, _properties);
+				TRACE_INFO2(NULL, "The DI endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_SOIL_MOISTURE) 
+			{
+				endpoint = new EndpointSensorSoilMoisture(_manager, _properties);
+				TRACE_INFO2(NULL, "The soil moisture endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_SOIL_ACIDITY) 
+			{
+				endpoint = new EndpointSensorSoilAcidity(_manager, _properties);
+				TRACE_INFO2(NULL, "The soil acidity endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_RAINFALL) 
+			{
+				endpoint = new EndpointSensorRainfall(_manager, _properties);
+				TRACE_INFO2(NULL, "The railfall endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_GAS) 
+			{
+				endpoint = new EndpointSensorGAS(_manager, _properties);
+				TRACE_INFO2(NULL, "The gas endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_A_DO)
+			{
+				endpoint = new EndpointActuatorDO(_manager, _properties);
+				TRACE_INFO2(NULL, "The DO endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else
+			{
+				TRACE_ERROR2(NULL, "Failed to create endpoint because type[" << type <<"] is not supported.");
+
+			}
+		}
+		catch(ObjectNotFound& e)
+		{
+			TRACE_ERROR2(NULL, "Failed to create endpoint. Invalid arguments");
+		}
 	}
 
 	return	endpoint;
@@ -680,6 +651,13 @@ bool	Endpoint::GetPropertyFieldList(std::list<std::string>& _field_list)
 	return	true;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+// Defined static members
+///////////////////////////////////////////////////////////////////////////////////////
+const char*	Endpoint::Type()
+{
+	return	OBJECT_TYPE_ENDPOINT;
+}
 
 bool	Endpoint::IsIncludeIn(Object *_object)
 {

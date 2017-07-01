@@ -2,26 +2,28 @@
 #include "device.h"
 #include "endpoint_sensor_rainfall.h"
 
+static const char* class_name = "EPSRainfall";	
+
 EndpointSensorRainfall::EndpointSensorRainfall(ObjectManager& _manager)
 : EndpointSensorLinear(_manager, EndpointSensorRainfall::Type(), ENDPOINT_SENSOR_RAINFALL_UNIT, ENDPOINT_SENSOR_RAINFALL_MIN, ENDPOINT_SENSOR_RAINFALL_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointSensorRainfall::EndpointSensorRainfall(ObjectManager& _manager, JSONNode const& _properties)
 : EndpointSensorLinear(_manager, EndpointSensorRainfall::Type(), ENDPOINT_SENSOR_RAINFALL_UNIT, ENDPOINT_SENSOR_RAINFALL_MIN, ENDPOINT_SENSOR_RAINFALL_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties, false, true);
 }
 
-std::string EndpointSensorRainfall::GetClassName() 
+const char* EndpointSensorRainfall::GetClassName() 
 {	
-	return	"EPSRainfall";	
+	return	class_name;	
 }
 
-const 	std::string 	EndpointSensorRainfall::Type()
+const char*	EndpointSensorRainfall::Type()
 {
-	return	std::string(NODE_TYPE_EP_S_RAINFALL);
+	return	OBJECT_TYPE_EP_S_RAINFALL;
 }
 

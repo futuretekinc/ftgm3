@@ -3,27 +3,24 @@
 #include "device.h"
 #include "endpoint_sensor_linear.h"
 
+static const char* class_name = "EPSLinuear";
+
 EndpointSensorLinear::EndpointSensorLinear(ObjectManager& _manager, std::string const& _type, std::string const& _unit, double _min, double _max)
 : EndpointSensor(_manager, _type, _unit), value_(0), value_min_(_min), value_max_(_max)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointSensorLinear::EndpointSensorLinear(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties, std::string const& _unit, double _min, double _max)
 : EndpointSensor(_manager, _type, _unit),value_(0), value_min_(_min), value_max_(_max)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties, false, true);
 }
 
-std::string EndpointSensorLinear::GetClassName() 
+const char*	EndpointSensorLinear::GetClassName() 
 {	
-	return	"EPSLinear";	
-}
-
-const 	std::string 	EndpointSensorLinear::Type()
-{
-	return	std::string(NODE_TYPE_EP_S_LINEAR);
+	return	class_name;	
 }
 
 bool	EndpointSensorLinear::IsValid(std::string const& _value)
@@ -116,3 +113,12 @@ bool	EndpointSensorLinear::Add(time_t time, std::string const& _value)
 
 	return	true;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char*	EndpointSensorLinear::Type()
+{
+	return	OBJECT_TYPE_EP_S_LINEAR;
+}
+

@@ -21,6 +21,7 @@ std::string 	Node::GetType() const
 	return	type_;
 }
 
+#if 0
 bool	Node::SetType(std::string const& _type, bool _check)
 {
 	if (!_check)
@@ -29,6 +30,12 @@ bool	Node::SetType(std::string const& _type, bool _check)
 	}
 
 	return	true;
+}
+#endif
+
+std::string	Node::GetModel()
+{	
+	return	"general";
 }
 
 bool	Node::IsIncludedIn(std::string const& _type)
@@ -122,7 +129,7 @@ bool	Node::SetLocation(std::string const& _location, bool _check)
 	return	true;
 }
 
-const	std::string&	Node::GetLocation()
+std::string	Node::GetLocation()
 {
 	return	location_;
 }
@@ -233,7 +240,8 @@ bool	Node::SetProperty(JSONNode const& _property, bool _check)
 	{
 		if (_property.name() == TITLE_NAME_TYPE)
 		{
-			ret_value = SetType(_property.as_string(), _check);
+			// Readonly
+//			ret_value = SetType(_property.as_string(), _check);
 		}
 		else if (_property.name() == TITLE_NAME_LOCATION)
 		{
@@ -354,23 +362,6 @@ void	Node::Process()
 	ActiveObject::Process();
 }
 
-const	std::string&	Node::Type()
-{
-	static	std::string type("node");
-
-	return	type;
-}
-
-bool		Node::IsValidType(std::string const& _type)
-{
-	if (_type == std::string(Node::Type()))
-	{
-		return	true;	
-	}
-
-	return	false;
-}
-
 bool	Node::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
 	_field_list.push_back(TITLE_NAME_ID);
@@ -392,3 +383,12 @@ bool	Node::IsIncludeIn(Object *_object)
 {
 	return	dynamic_cast<Node*>(_object) != NULL;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char*	Node::Type()
+{
+	return	OBJECT_TYPE_NODE;
+}
+

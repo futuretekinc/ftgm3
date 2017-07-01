@@ -5,8 +5,10 @@
 #include "device_gtc_520a.h"
 
 
+static const char*	class_name = "DeviceGTC520A";
+
 DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager)
-: DeviceModbus(_manager, NODE_TYPE_DEV_GTC_520A, true), correction_interval_(1)
+: DeviceModbus(_manager, OBJECT_TYPE_DEV_GTC_520A, true), correction_interval_(1)
 {
 	serial_.SetBaudrate(9600);
 	serial_.SetParityBit("even");
@@ -14,7 +16,7 @@ DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager)
 }
 
 DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager, JSONNode const& _properties)
-: DeviceModbus(_manager, NODE_TYPE_DEV_GTC_520A, true), correction_interval_(1)
+: DeviceModbus(_manager, OBJECT_TYPE_DEV_GTC_520A, true), correction_interval_(1)
 {
 	TRACE_INFO("GTE520A Created");
 
@@ -25,30 +27,33 @@ DeviceGTC520A::DeviceGTC520A(ObjectManager& _manager, JSONNode const& _propertie
 	SetProperties(_properties, false, true);
 }
 
-bool	DeviceGTC520A::ReadValue(std::string const& _id, time_t& _time, std::string& _value)
+const char*	DeviceGTC520A::GetClassName()
+{
+	return	class_name;
+}
+
+bool	DeviceGTC520A::ReadValue(std::string const& _epid, time_t& _time, std::string& _value)
 {
 	try
 	{
-		Endpoint*	endpoint = manager_.GetEndpoint(_id);
+		Endpoint*	endpoint = manager_.GetEndpoint(_epid);
 		if (endpoint == NULL)
 		{
-			THROW_OBJECT_NOT_FOUND("The endpoint[" << _id << "] is not attached");
+			THROW_OBJECT_NOT_FOUND("The endpoint[" << _epid << "] is not attached");
 			return	false;	
 		}
-		if (endpoint->GetSensorID() == "30001")
+
+		uint32_t	type 	= endpoint->GetSensorID() / 10000;
+		uint32_t	index 	= endpoint->GetSensorID() % 10000 - 1; 
+
+		if ((type != 3) || (index > 1))
 		{
-			_time = time_;
-			_value = ToString(registers_[0]);
+			TRACE_ERROR("Invalid sensro id!");
+			return	false;
 		}
-		else if (endpoint->GetSensorID() == "30002")
-		{
-			_time = time_;
-			_value = ToString(registers_[1]);
-		}
-		else
-		{
-			return	false;	
-		}
+
+		_time = time_;
+		_value = ToString(registers_[index]);
 
 		return	true;
 	}
@@ -83,10 +88,11 @@ void	DeviceGTC520A::Process()
 	DeviceModbus::Process();
 }
 
-const	std::string&	DeviceGTC520A::Type()
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char*	DeviceGTC520A::Type()
 {
-	static	std::string	type_(NODE_TYPE_DEV_GTC_520A);
-
-	return	type_;
+	return	OBJECT_TYPE_DEV_GTC_520A;
 }
 

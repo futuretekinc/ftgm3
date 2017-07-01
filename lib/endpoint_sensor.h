@@ -13,6 +13,7 @@ public:
 	EndpointSensor(ObjectManager& _manager, std::string const& _type, std::string const& _unit);
 
 	static	bool		IsIncludeIn(Object *_object);
+	
 protected:
 
 			void		Preprocess();

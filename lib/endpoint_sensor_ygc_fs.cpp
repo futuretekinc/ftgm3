@@ -1,37 +1,31 @@
 #include "defined.h"
+#include "trace.h"
 #include "device.h"
 #include "utils.h"
 #include "object_manager.h"
 #include "endpoint_sensor_ygc_fs.h"
 
+static const char* class_name = "EPSWindSpeedYGCFS";	
+static const char* model_name = "YGC-FS";	
+
 EndpointSensorYGCFS::EndpointSensorYGCFS(ObjectManager& _manager)
 : EndpointSensorLinear(_manager, EndpointSensorYGCFS::Type(), ENDPOINT_SENSOR_WIND_SPEED_UNIT, ENDPOINT_SENSOR_WIND_SPEED_MIN, ENDPOINT_SENSOR_WIND_SPEED_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
+	TRACE_INFO("The Wind Spped endpoint[" << id_ <<"] created");
 }
 
 EndpointSensorYGCFS::EndpointSensorYGCFS(ObjectManager& _manager, JSONNode const& _properties)
 : EndpointSensorLinear(_manager, EndpointSensorYGCFS::Type(), ENDPOINT_SENSOR_WIND_SPEED_UNIT, ENDPOINT_SENSOR_WIND_SPEED_MIN, ENDPOINT_SENSOR_WIND_SPEED_MAX)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties, false, true);
+	TRACE_INFO("The Wind Spped endpoint[" << id_ <<"] created");
 }
 
-std::string EndpointSensorYGCFS::GetClassName() 
+const char* EndpointSensorYGCFS::GetClassName() 
 {	
-	return	"EPSWindSpeedYGCFS";	
-}
-
-const 	std::string 	EndpointSensorYGCFS::Type()
-{
-	return	std::string(NODE_TYPE_EP_S_WIND_SPEED);
-}
-
-const std::string&	EndpointSensorYGCFS::GetModel() const
-{	
-	const static std::string model = "YGC-FS";
-
-	return	model;
+	return	class_name;
 }
 
 void	EndpointSensorYGCFS::CorrectionProcess()
@@ -81,3 +75,17 @@ void	EndpointSensorYGCFS::CorrectionProcess()
 		TRACE_ERROR("Failed to get device[" << parent_id_ << "]");	
 	}
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char*	EndpointSensorYGCFS::Type()
+{
+	return	OBJECT_TYPE_EP_S_WIND_SPEED;
+}
+
+const char* EndpointSensorYGCFS::Model()
+{	
+	return	model_name;
+}
+

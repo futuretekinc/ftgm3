@@ -43,11 +43,6 @@ public:
 
 	virtual	bool	InsertToDB(Kompex::SQLiteStatement*	_statement);
 
-	static	const std::string&	Type();
-	static	bool	AddMIBPath(std::string const& _path);
-	static	bool	ReadAllMIBs();
-	static	bool	ReadMIB(std::string const& _file_name);
-
 protected:
 	friend	class	SNMPMaster;
 
@@ -72,6 +67,14 @@ protected:
 	std::map<std::string, SNMP::OID>	oid_map_;
 
 	std::string		async_value_;
+
+//	Static functions
+public:
+	static	const char*	Type();
+	static	bool		AddMIBPath(std::string const& _path);
+	static	bool		ReadAllMIBs();
+	static	bool		ReadMIB(std::string const& _file_name);
+
 };
 
 #endif

@@ -29,13 +29,6 @@ DeviceSIM::DeviceSIM(ObjectManager& _manager, std::string const& _ip)
 	trace.SetClassName(GetClassName());
 }
 
-const	std::string&	DeviceSIM::Type()
-{
-	static	std::string type_(NODE_TYPE_DEV_SIM);
-
-	return	type_;
-}
-
 bool		DeviceSIM::IsIncludedIn(std::string const& _type)
 {
 	if (_type == DeviceSIM::Type())
@@ -65,20 +58,7 @@ bool	DeviceSIM::Attach(std::string const& _epid)
 		return	false;
 	}
 
-	std::string	sensor_id = endpoint->GetSensorID();
-
-	if (sensor_id.size() < 8)
-	{
-		TRACE_ERROR("Failed to attach endpoint because sensor id[" << sensor_id << "] is invalid!");
-		return	false;
-	}
-
-	uint32_t	index = strtoul(sensor_id.substr(sensor_id.size() - 2, 2).c_str(), 0, 16) - 1;
-	if (index > 255)
-	{
-		TRACE_ERROR("Failed to attach endpoint because sensor id is invalid!");
-		return	false;
-	}
+	uint32_t	index = endpoint->GetSensorID() & 0xFF;
 
 	if (dynamic_cast<EndpointSensor*>(endpoint))
 	{
@@ -105,21 +85,6 @@ bool	DeviceSIM::Detach(std::string const& _epid)
 	Endpoint*	endpoint = manager_.GetEndpoint(_epid);
 	if (endpoint == NULL)
 	{
-		return	false;
-	}
-
-	std::string	sensor_id = endpoint->GetSensorID();
-
-	if (sensor_id.size() < 8)
-	{
-		TRACE_ERROR("Failed to attach endpoint because sensor id is invalid!");
-		return	false;
-	}
-
-	uint32_t	index = strtoul(sensor_id.substr(sensor_id.size() - 2, 2).c_str(), 0, 16) - 1;
-	if (index > 255)
-	{
-		TRACE_ERROR("Failed to attach endpoint because sensor id is invalid!");
 		return	false;
 	}
 
@@ -295,5 +260,13 @@ bool	DeviceSIM::WriteValue(std::string const& _epid, bool _value)
 		TRACE_ERROR("Exception : " << e.what());	
 	}
 	return	true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char*	DeviceSIM::Type()
+{
+	return	OBJECT_TYPE_DEV_SIM;
 }
 

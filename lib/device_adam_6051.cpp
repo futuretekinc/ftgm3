@@ -7,12 +7,12 @@
 
 
 DeviceADAM6051::DeviceADAM6051(ObjectManager& _manager)
-: DeviceModbusTCP(_manager, NODE_TYPE_DEV_ADAM_6051), correction_interval_(1)
+: DeviceModbusTCP(_manager, OBJECT_TYPE_DEV_ADAM_6051), correction_interval_(1)
 {
 }
 
 DeviceADAM6051::DeviceADAM6051(ObjectManager& _manager, JSONNode const& _properties)
-: DeviceModbusTCP(_manager, NODE_TYPE_DEV_ADAM_6051), correction_interval_(1)
+: DeviceModbusTCP(_manager, OBJECT_TYPE_DEV_ADAM_6051), correction_interval_(1)
 {
 	TRACE_INFO("Advantech ADAM6051 Created");
 
@@ -31,7 +31,7 @@ bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, uint32_t& 
 			return	false;	
 		}
 
-		uint32_t	index = strtoul(endpoint->GetSensorID().c_str(), 0, 10);
+		uint32_t	index = endpoint->GetSensorID();
 		if (index < 28)
 		{
 			int16_t	values[2];
@@ -41,7 +41,7 @@ bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, uint32_t& 
 				TRACE_ERROR("Failed to read input registers!");
 				return	false;	
 			}
-			_value = ((uint32_t)values[0] << 16) + values[1];
+			_value = ((uint32_t)values[1] << 16) + values[0];
 		}
 	}
 	catch(ObjectNotFound& e)
@@ -62,7 +62,7 @@ bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, std::strin
 			return	false;	
 		}
 
-		uint32_t	index = strtoul(endpoint->GetSensorID().c_str(), 0, 10);
+		uint32_t	index = endpoint->GetSensorID();
 		if (index < 28)
 		{
 			int16_t	values[2];
@@ -72,7 +72,7 @@ bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, std::strin
 				TRACE_ERROR("Failed to read input registers!");
 				return	false;	
 			}
-			uint32_t	value = ((uint32_t)values[0] << 16) + values[1];
+			uint32_t	value = ((uint32_t)values[1] << 16) + values[0];
 
 			_value = ToString(value);
 
@@ -112,7 +112,7 @@ void	DeviceADAM6051::Process()
 
 const	std::string&	DeviceADAM6051::Type()
 {
-	static	std::string	type_(NODE_TYPE_DEV_ADAM_6051);
+	static	std::string	type_(OBJECT_TYPE_DEV_ADAM_6051);
 
 	return	type_;
 }

@@ -379,12 +379,10 @@ RetValue	ShellCommandEndpoint
 				}
 
 				title_len = (title_len + 3) / 4 * 4;
-
 				for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
 				{
 					_shell->Out() << std::setw(title_len) << it->name() << " : " <<  it->as_string() << std::endl;
 				}
-
 				_shell->Out() << std::setw(title_len) << TITLE_NAME_COUNT << " : " << endpoint->GetDataCount() << std::endl;
 				_shell->Out() << std::setw(title_len) << TITLE_NAME_VALUE << " : " << endpoint->GetValue() << std::endl;
 				_shell->Out() << std::setw(title_len) << TITLE_NAME_START_TIME << " : " << endpoint->GetDateOfFirstData() << std::endl;

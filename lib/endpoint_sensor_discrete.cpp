@@ -4,27 +4,24 @@
 #include "utils.h"
 #include "endpoint_sensor_discrete.h"
 
+static const char*	class_name = "EPSDiscrete";
+
 EndpointSensorDiscrete::EndpointSensorDiscrete(ObjectManager& _manager, std::string const& _type)
 : EndpointSensor(_manager, _type)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 }
 
 EndpointSensorDiscrete::EndpointSensorDiscrete(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties)
 : EndpointSensor(_manager, _type)
 {
-	trace.SetClassName(GetClassName());
+	trace.SetClassName(class_name);
 	SetProperties(_properties, false, true);
 }
 
-std::string EndpointSensorDiscrete::GetClassName() 
+const char* EndpointSensorDiscrete::GetClassName() 
 {	
-	return	"EPSDiscrete";	
-}
-
-const 	std::string 	EndpointSensorDiscrete::Type()
-{
-	return	std::string(NODE_TYPE_EP_S_DISCRETE);
+	return	class_name;
 }
 
 bool	EndpointSensorDiscrete::IsValid(std::string const& _value)
@@ -111,5 +108,13 @@ bool	EndpointSensorDiscrete::SetProperty(JSONNode const& _property, bool _check)
 	}
 
 	return	ret_value;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//	Define static members
+////////////////////////////////////////////////////////////////////////////////
+const char* EndpointSensorDiscrete::Type()
+{
+	return	OBJECT_TYPE_EP_S_DISCRETE;
 }
 
