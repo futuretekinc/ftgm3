@@ -20,23 +20,15 @@ DeviceADAM6051::DeviceADAM6051(ObjectManager& _manager, JSONNode const& _propert
 	SetProperties(_properties, false, true);
 }
 
-bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, uint32_t& _value)
+bool	DeviceADAM6051::ReadValue(uint32_t	_index, time_t& _time, uint32_t& _value)
 {
 	try
 	{
-		Endpoint*	endpoint = manager_.GetEndpoint(_id);
-		if (endpoint == NULL)
-		{
-			THROW_OBJECT_NOT_FOUND("The endpoint[" << _id << "] is not attached");
-			return	false;	
-		}
-
-		uint32_t	index = endpoint->GetSensorID();
-		if (index < 28)
+		if (_index < 14)
 		{
 			int16_t	values[2];
 
-			if (!ReadInputRegisters(index, values, 2))
+			if (!ReadInputRegisters(_index * 2, values, 2))
 			{
 				TRACE_ERROR("Failed to read input registers!");
 				return	false;	
@@ -49,6 +41,30 @@ bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, uint32_t& 
 		TRACE_ERROR(e.what());
 		return	false;	
 	}
+
+	return	true;
+}
+
+bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, uint32_t& _value)
+{
+	try
+	{
+		Endpoint*	endpoint = manager_.GetEndpoint(_id);
+		if (endpoint == NULL)
+		{
+			THROW_OBJECT_NOT_FOUND("The endpoint[" << _id << "] is not attached");
+			return	false;	
+		}
+
+		return	ReadValue(endpoint->GetSensorID(), _time, _value);
+	}
+	catch(ObjectNotFound& e)
+	{
+		TRACE_ERROR(e.what());
+		return	false;	
+	}
+
+	return	true;
 }
 
 bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, std::string& _value)
@@ -84,6 +100,8 @@ bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, std::strin
 		TRACE_ERROR(e.what());
 		return	false;	
 	}
+
+	return	true;
 }
 
 void	DeviceADAM6051::Preprocess()
@@ -104,7 +122,7 @@ void	DeviceADAM6051::Process()
 			time_ = Date::GetCurrent();
 		}
 
-		correction_timer_ += correction_interval_ * TIME_SECOND;
+		correction_timer_.Add(correction_interval_);
 	}
 
 	DeviceModbusTCP::Process();

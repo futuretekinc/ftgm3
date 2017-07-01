@@ -85,7 +85,7 @@ bool	ActiveObject::Start(uint32_t _wait_for_init_time)
 
 	if (enable_)
 	{
-		timer += _wait_for_init_time * TIME_MILLISECOND;
+		timer.Add(0, _wait_for_init_time);
 
 		if (!thread_.joinable())
 		{
@@ -159,14 +159,14 @@ void	ActiveObject::Run()
 bool	ActiveObject::SetLoopInterval(uint32_t _interval)
 {
 	loop_interval_ = _interval;
-
+#if 0
 	JSONNodeUpdate(updated_properties_, TITLE_NAME_LOOP_INTERVAL, loop_interval_);
 
 	if (!lazy_store_)
 	{
 		ApplyChanges();	
 	}
-
+#endif
 	return	true;
 }
 
@@ -174,14 +174,15 @@ bool	ActiveObject::SetLoopInterval(std::string const& _interval, bool _check)
 {
 	if (!_check)
 	{
-		loop_interval_ = strtoul(_interval.c_str(), 0, 10);
-
+		loop_interval_ = strtod(_interval.c_str(), 0);
+#if 0
 		JSONNodeUpdate(updated_properties_, TITLE_NAME_LOOP_INTERVAL, loop_interval_);
 
 		if (!lazy_store_)
 		{
 			ApplyChanges();	
 		}
+#endif
 	}
 
 	return	true;
@@ -194,10 +195,12 @@ bool	ActiveObject::GetProperties(JSONNode& _properties, Fields const& _fields)
 		return	false;	
 	}
 
+#if 0
 	if (_fields.loop_interval)
 	{
 		_properties.push_back(JSONNode(TITLE_NAME_LOOP_INTERVAL, loop_interval_));
 	}
+#endif
 
 	return	true;
 }
@@ -284,7 +287,7 @@ void *ActiveObject::ThreadMain(void *data)
 
 	while(!_object->stop_)
 	{
-		loop_timer += _object->loop_interval_;
+		loop_timer.Add(_object->loop_interval_);
 
 		_object->Process();
 

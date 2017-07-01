@@ -40,7 +40,8 @@
 				bool	_update_interval,
 				bool	_time_of_expire,
 				bool	_value,
-				bool	_stat);
+				bool	_stat,
+				bool	_model);
 		Fields(uint32_t _flags);
 
 		bool	Set(std::string const& _field);
@@ -78,6 +79,7 @@
 		bool	time_of_expire:1;
 		bool	value:1;
 		bool	stat:1;
+		bool	model:1;
 	};
 
 Fields	operator+(Fields& _fields1, Fields& _fields2);
@@ -108,6 +110,7 @@ extern	uint32_t	PROPERTY_UPDATE_INTERVAL_FLAG;
 extern	uint32_t	PROPERTY_TIME_OF_EXPIRE_FLAG;
 extern	uint32_t	PROPERTY_VALUE_FLAG;
 extern	uint32_t	PROPERTY_STAT_FLAG;
+extern	uint32_t	PROPERTY_MODEL_FLAG;
 
 extern Fields	PROPERTY_CORRECTION_INTERVAL;
 extern Fields	PROPERTY_DATE;
@@ -135,6 +138,7 @@ extern Fields	PROPERTY_UPDATE_INTERVAL;
 extern Fields	PROPERTY_TIME_OF_EXPIRE;
 extern Fields	PROPERTY_VALUE;
 extern Fields	PROPERTY_STATE;
+extern Fields	PROPERTY_MODEL;
 
 extern Fields	PROPERTY_CLEAR;
 extern Fields	PROPERTY_ALL;

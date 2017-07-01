@@ -290,11 +290,9 @@ bool	Endpoint::Start(uint32_t _wait_for_init_time)
 				Device* device = manager_.GetDevice(parent_id_ );
 				if (device != NULL)
 				{
-					Timer	timer;
-
 					TRACE_INFO("Endpoint starts in passive mode.");
 					stop_ = false;
-					device->AddSchedule(id_, timer);
+					device->AddSchedule(id_, time_t(Date::GetCurrent()));
 				}
 				else
 				{
@@ -555,24 +553,29 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 {
 
 	Endpoint*	endpoint = NULL;
+	std::string model;
+	std::string type;
 
 	TRACE_INFO2(&_manager, "< Create Endpoint >" << std::endl << _properties.write_formatted());
 
 	try
 	{
-		std::string model = JSONNodeGetModel(_properties);
+		type = JSONNodeGetType(_properties);
+
+		try
+		{
+			model = JSONNodeGetModel(_properties);
+		}
+		catch(ObjectNotFound& e)
+		{
+		}
 
 		if (model == EndpointSensorYGCFS::Model())
 		{
 			endpoint = new EndpointSensorYGCFS(_manager, _properties);
 		}
-	}
-	catch(ObjectNotFound& e)
-	{
-		try
+		else
 		{
-			std::string type = JSONNodeGetType(_properties);
-
 			if (type == OBJECT_TYPE_EP_S_TEMPERATURE)
 			{
 				endpoint = new EndpointSensorTemperature(_manager, _properties);
@@ -629,10 +632,10 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 
 			}
 		}
-		catch(ObjectNotFound& e)
-		{
-			TRACE_ERROR2(NULL, "Failed to create endpoint. Invalid arguments");
-		}
+	}
+	catch(ObjectNotFound& e)
+	{
+		TRACE_ERROR2(NULL, "Failed to create endpoint. Invalid arguments");
 	}
 
 	return	endpoint;

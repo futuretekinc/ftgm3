@@ -10,6 +10,8 @@ public:
 	DeviceADAM6051(ObjectManager& _manager);
 	DeviceADAM6051(ObjectManager& _manager, JSONNode const& _properties);
 
+	bool	ReadValue(uint32_t	_index, time_t& _time, uint32_t& _value);
+
 	bool	ReadValue(std::string const& _id, time_t& _time, std::string& _value);
 	bool	ReadValue(std::string const& _id, time_t& _time, uint32_t& _value);
 

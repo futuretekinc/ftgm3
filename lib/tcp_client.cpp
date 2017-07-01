@@ -244,7 +244,7 @@ bool		TCPClient::RequestAndReply(std::string const& _request, std::string& _repl
 	{   
 		Timer   timer;
 
-		timer += _timeout;
+		timer.Add(_timeout);
 		while(timer.RemainTime() > 0)
 		{   
 			if (GetReceivedPacketCount() > 0)

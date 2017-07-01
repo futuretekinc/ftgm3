@@ -49,7 +49,11 @@ bool	DeviceIP::SetIP(const std::string& _ip, bool _check)
 	{
 		ip_ = _ip;
 
-		JSONNodeUpdate(updated_properties_, TITLE_NAME_IP, ip_);
+		JSONNode	options;
+
+		GetOptions(options);
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_OPTIONS, options.write());
 
 		if (!lazy_store_)
 		{
@@ -72,7 +76,11 @@ bool	DeviceIP::SetPort(uint16_t _port, bool _check)
 	{
 		port_ = _port;
 
-		JSONNodeUpdate(updated_properties_, TITLE_NAME_PORT, port_);
+		JSONNode	options;
+
+		GetOptions(options);
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_OPTIONS, options.write());
 
 		if (!lazy_store_)
 		{
@@ -95,6 +103,7 @@ bool	DeviceIP::GetOptions(JSONNode& _options)
 	}
 
 	options.push_back(JSONNode(TITLE_NAME_IP, ip_));
+	options.push_back(JSONNode(TITLE_NAME_PORT, port_));
 
 	_options = options;
 
@@ -108,6 +117,10 @@ bool	DeviceIP::SetOption(JSONNode const& _property, bool _check)
 	if (_property.name() == TITLE_NAME_IP)
 	{
 		ret_value = SetIP(_property.as_string(), _check);
+	}
+	else if (_property.name() == TITLE_NAME_PORT)
+	{
+		ret_value = SetPort(_property.as_int(), _check);
 	}
 	else
 	{

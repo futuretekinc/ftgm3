@@ -946,7 +946,7 @@ void	ObjectManager::Process()
 			}
 		}
 
-		endpoint_report_timer_ += Time(endpoint_report_interval_ * TIME_SECOND);
+		endpoint_report_timer_.Add(endpoint_report_interval_);
 
 	}
 

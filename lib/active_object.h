@@ -44,7 +44,7 @@ protected:
 
 	Thread			thread_;
 	bool			stop_;
-	uint32_t		loop_interval_;
+	double			loop_interval_;
 	MessageQueue	message_queue_;
 
 	static	void*	ThreadMain(void* _object);

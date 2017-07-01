@@ -31,7 +31,7 @@ bool	DeviceModbus::RequestAndWait(uint8_t* _request, uint32_t _request_len, uint
 		return	false;
 	}
 
-	response_timeout += timeout_;
+	response_timeout.Add(timeout_);
 	_response_len = 0;
 	while(response_timeout.RemainTime() > 0)
 	{

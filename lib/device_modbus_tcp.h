@@ -18,6 +18,7 @@ protected:
 
 			bool	IsConnected();
 			bool	Connect();
+			bool	Disconnect();
 
 			bool	ReadHoldingRegisters(uint16_t address, int16_t* values, uint16_t count);
 			bool	ReadInputRegisters(uint16_t address, int16_t* values, uint16_t count);
@@ -26,5 +27,7 @@ protected:
 
 	uint32_t	timeout_;
 	modbus_t*	modbus_;
+	uint32_t	request_retry_count_;
+	uint32_t	request_fail_count_;
 };
 #endif

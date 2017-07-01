@@ -4,7 +4,7 @@
 #include "time2.h"
 
 ServerLinkerTest::ServerLinkerTest()
-: ServerLinker(), interval_(1000000)
+: ServerLinker(), interval_(1)
 {
 }
 
@@ -14,14 +14,14 @@ void	ServerLinkerTest::Preprocess()
 	ServerLinker::Preprocess();
 
 	timer_.Set(Date::GetCurrent());
-	timer_ += interval_;
+	timer_.Add(interval_);
 }
 
 void	ServerLinkerTest::Process()
 {
 	if (timer_.RemainTime() == 0)
 	{
-		timer_ += interval_;
+		timer_.Add(interval_);
 
 		Date	date;	
 		for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)

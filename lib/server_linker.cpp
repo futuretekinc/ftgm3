@@ -156,7 +156,7 @@ ServerLinker::ServerLinker(ObjectManager* _manager)
 	global_down_name_(SERVER_LINKER_TOPIC_GLOBAL_DOWN_NAME),
 	retransmission_count_max_(SERVER_LINKER_RETRANSMISSION_COUNT_MAX),
 	enable_confirm_(false),
-	message_dump_(true),
+	message_dump_(false),
 	request_map_locker_()
 {
 	trace.SetClassName(GetClassName());

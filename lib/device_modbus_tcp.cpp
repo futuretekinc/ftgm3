@@ -3,7 +3,7 @@
 
 
 DeviceModbusTCP::DeviceModbusTCP(ObjectManager& _manager, std::string const& _type)
-: DeviceIP(_manager, _type), modbus_(NULL)
+: DeviceIP(_manager, _type), modbus_(NULL), request_fail_count_(0), request_retry_count_(5)
 {
 	port_ = 502;
 }
@@ -38,6 +38,19 @@ bool	DeviceModbusTCP::ReadHoldingRegisters(uint16_t address, int16_t* values, ui
 		}
 	}
 
+	if (modbus_read_input_registers(modbus_, address, count, (uint16_t *)values) != count)
+	{
+		request_fail_count_++;
+		TRACE_ERROR("Failed to read holding register[" << request_fail_count_ << " - " << modbus_strerror(errno) << "]");
+
+		if (request_retry_count_ <= request_fail_count_)
+		{
+			Disconnect();	
+		}
+
+		return	false;
+	}
+
 	return	true;
 }
 
@@ -54,7 +67,14 @@ bool	DeviceModbusTCP::ReadInputRegisters(uint16_t address, int16_t* values, uint
 
 	if (modbus_read_input_registers(modbus_, address, count, (uint16_t *)values) != count)
 	{
-		TRACE_ERROR("Failed to read input register[" << errno << "]");
+		request_fail_count_++;
+		TRACE_ERROR("Failed to read input register[" << request_fail_count_ << " - " << modbus_strerror(errno) << "]");
+
+		if (request_retry_count_ <= request_fail_count_)
+		{
+			Disconnect();	
+		}
+
 		return	false;
 	}
 
@@ -95,14 +115,31 @@ bool	DeviceModbusTCP::Connect()
 		if (modbus_connect(modbus) == 0)
 		{
 			modbus_ = modbus;
-
+			request_fail_count_ = 0;
+			
+			TRACE_INFO("Connected to the device[" << ip_ << ":" << port_ << "] using modbus/tcp");
 			return	true;
 		}
 
 		modbus_free(modbus);
 
-		TRACE_ERROR("MODBUS connectino error[" << ip_.c_str() << ":" << port_ << "]");
+		TRACE_ERROR("Failed to connect with MODBUS/TCP![" << ip_ << ":" << port_ << "]");
 		return	false;
+	}
+
+	return	true;
+}
+
+bool	DeviceModbusTCP::Disconnect()
+{
+	if (modbus_ != NULL)
+	{
+		modbus_close(modbus_);
+		modbus_free(modbus_);
+
+		modbus_ = NULL;
+
+		TRACE_ERROR("MODBUS disconnected!");
 	}
 
 	return	true;

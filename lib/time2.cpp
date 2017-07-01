@@ -149,6 +149,13 @@ void	Date::Set(uint32_t _seconds)
 	value_ = _seconds * TIME_SECOND;
 }
 
+const	Date&	Date::Add(uint32_t _seconds, uint32_t _milliseconds)
+{
+	value_ += _seconds * (uint64_t)TIME_SECOND + _milliseconds * (uint64_t)TIME_MILLISECOND;
+
+	return	*this;
+}
+
 Date	Date::operator+(const Time& _time)
 {
 	Date	date;
@@ -207,6 +214,13 @@ const	Date&	Date::operator-=(const Time& _time)
 const	Date&	Date::operator+=(const Time& _time)
 {
 	value_ += _time.value_;
+
+	return	*this;
+}
+
+const	Date&	Date::operator+=(uint32_t _seconds)
+{
+	value_ += _seconds * (uint64_t)TIME_SECOND;
 
 	return	*this;
 }

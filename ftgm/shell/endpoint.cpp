@@ -358,38 +358,44 @@ RetValue	ShellCommandEndpoint
 		}
 		else
 		{
-			Endpoint*	endpoint = object_manager->GetEndpoint(_arguments[1]);
-			if (endpoint == NULL)
+			for(uint32_t i = 1 ; i < _count ; i++)
 			{
-				_shell->Out() << "Endpoint[" << _arguments[1] << " not found!" << std::endl;
-				ret_value = RET_VALUE_INVALID_ARGUMENTS;
-			}
-			else
-			{
-				JSONNode	properties;
-				uint32_t	title_len = 16;
-
-				endpoint->GetProperties(properties);
-				for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
+				Endpoint*	endpoint = object_manager->GetEndpoint(_arguments[i]);
+				if (endpoint == NULL)
 				{
-					if (title_len < it->name().length())
+					_shell->Out() << "Endpoint[" << _arguments[1] << " not found!" << std::endl;
+					ret_value = RET_VALUE_INVALID_ARGUMENTS;
+				}
+				else
+				{
+					JSONNode	properties;
+					uint32_t	title_len = 16;
+
+					endpoint->GetProperties(properties);
+					for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
 					{
-						title_len = it->name().length();
+						if (title_len < it->name().length())
+						{
+							title_len = it->name().length();
+						}
 					}
-				}
 
-				title_len = (title_len + 3) / 4 * 4;
-				for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
-				{
-					_shell->Out() << std::setw(title_len) << it->name() << " : " <<  it->as_string() << std::endl;
-				}
-				_shell->Out() << std::setw(title_len) << TITLE_NAME_COUNT << " : " << endpoint->GetDataCount() << std::endl;
-				_shell->Out() << std::setw(title_len) << TITLE_NAME_VALUE << " : " << endpoint->GetValue() << std::endl;
-				_shell->Out() << std::setw(title_len) << TITLE_NAME_START_TIME << " : " << endpoint->GetDateOfFirstData() << std::endl;
-				_shell->Out() << std::setw(title_len) << TITLE_NAME_END_TIME << " : " << endpoint->GetDateOfLastData() << std::endl;
-				_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_REPORT_TIME << " : " << endpoint->GetLastReportTime() << std::endl;
-				_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_CONFIRM_TIME << " : " << endpoint->GetLastConfirmTime() << std::endl;
+					title_len = (title_len + 3) / 4 * 4;
 
+					_shell->Out() << "///////////////////////////////////////////////////////" << std::endl;
+					_shell->Out() << "// Endpoint[" << _arguments[i] << "]" << std::endl;
+					_shell->Out() << "///////////////////////////////////////////////////////" << std::endl;
+					for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
+					{
+						_shell->Out() << std::setw(title_len) << it->name() << " : " <<  it->as_string() << std::endl;
+					}
+					_shell->Out() << std::setw(title_len) << TITLE_NAME_COUNT << " : " << endpoint->GetDataCount() << std::endl;
+					_shell->Out() << std::setw(title_len) << TITLE_NAME_VALUE << " : " << endpoint->GetValue() << std::endl;
+					_shell->Out() << std::setw(title_len) << TITLE_NAME_START_TIME << " : " << endpoint->GetDateOfFirstData() << std::endl;
+					_shell->Out() << std::setw(title_len) << TITLE_NAME_END_TIME << " : " << endpoint->GetDateOfLastData() << std::endl;
+					_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_REPORT_TIME << " : " << endpoint->GetLastReportTime() << std::endl;
+					_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_CONFIRM_TIME << " : " << endpoint->GetLastConfirmTime() << std::endl << std::endl;
+				}
 			}
 
 		}

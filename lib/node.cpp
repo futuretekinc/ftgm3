@@ -199,6 +199,11 @@ bool	Node::GetProperties(JSONNode& _properties, Fields const& _fields)
 		_properties.push_back(JSONNode(TITLE_NAME_TYPE, type_));
 	}
 
+	if (_fields.model)
+	{
+		_properties.push_back(JSONNode(TITLE_NAME_MODEL, GetModel()));
+	}
+
 	if (_fields.location)
 	{
 		_properties.push_back(JSONNode(TITLE_NAME_LOCATION, location_));
@@ -242,6 +247,10 @@ bool	Node::SetProperty(JSONNode const& _property, bool _check)
 		{
 			// Readonly
 //			ret_value = SetType(_property.as_string(), _check);
+		}
+		else if (_property.name() == TITLE_NAME_MODEL)
+		{
+			// Readonly
 		}
 		else if (_property.name() == TITLE_NAME_LOCATION)
 		{
@@ -349,7 +358,7 @@ void	Node::Process()
 	{
 		if (keep_alive_timer_.RemainTime() == 0)
 		{
-			keep_alive_timer_ += Time((uint64_t)keep_alive_interval_ * TIME_SECOND);	
+			keep_alive_timer_.Add(keep_alive_interval_);	
 			manager_.KeepAlive(this);
 		}
 	}
@@ -366,6 +375,7 @@ bool	Node::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
 	_field_list.push_back(TITLE_NAME_ID);
 	_field_list.push_back(TITLE_NAME_TYPE);
+	_field_list.push_back(TITLE_NAME_MODEL);
 	_field_list.push_back(TITLE_NAME_NAME);
 	_field_list.push_back(TITLE_NAME_TIME);
 	_field_list.push_back(TITLE_NAME_ENABLE);

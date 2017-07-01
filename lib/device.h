@@ -46,6 +46,11 @@ public:
 	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, std::string& _value);
 	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, uint32_t& _value);
 	virtual	bool		ReadValue(std::string const& _epid, time_t& _time, bool& _value);
+
+	virtual	bool		ReadValue(uint32_t _index, time_t& _time, bool& _value);
+	virtual	bool		ReadValue(uint32_t _index, time_t& _time, uint32_t& _value);
+	virtual	bool		ReadValue(uint32_t _index, time_t& _time, std::string& _value);
+
 	virtual	bool		WriteValue(std::string const& _epid, std::string const& _value);
 	virtual	bool		WriteValue(std::string const& _epid, uint32_t _value);
 	virtual	bool		WriteValue(std::string const& _epid, bool _value);
@@ -62,13 +67,13 @@ protected:
 			bool		Detach(std::string const& _epid);
 			bool		Detach();
 
-			bool		AddSchedule(std::string const& _id, Timer const& _timer);
+			bool		AddSchedule(std::string const& _id, time_t _time);
 			bool		RemoveSchedule(std::string const& _id);
 
 	std::list<std::string>	epid_list_;
 	
-	Locker								endpoint_schedule_list_lock_;
-	std::multimap<std::string, Timer>	endpoint_schedule_list_;
+	Locker							endpoint_schedule_list_lock_;
+	std::multimap<time_t, std::string>	endpoint_schedule_list_;
 };
 
 #endif

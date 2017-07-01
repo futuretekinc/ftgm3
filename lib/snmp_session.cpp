@@ -5,7 +5,7 @@ using namespace SNMP;
 static Master	_master;
 
 Session::Session()
-: master_(_master), session_(0) , finished_()
+: master_(_master), session_(0) , finished_(), locker_()
 {
 }
 
@@ -42,26 +42,34 @@ uint32_t	Session::GetTimeout()
 
 bool	Session::ReadValue(OID const& _oid, time_t& _time, std::string& _value)
 {
+	bool	ret_value = false;
+
 	if (session_ == NULL)
 	{
 		return	false;
 	}
 
-	return	master_.ReadValue(session_, _oid, timeout_, _time, _value);
+	locker_.Lock();
+
+	ret_value = master_.ReadValue(session_, _oid, timeout_, _time, _value);
+
+	locker_.Unlock();
+
+	return	ret_value;
 }
 
 bool	Session::AsyncReadValue(OID const& _oid, time_t& _time, std::string& _value)
 {
 	bool	ret_value = false;
 
+	//locker_.Lock();
 	if (session_ != NULL)
 	{
 		finished_.Lock();
-
-	//	if (master_.AsyncRequestReadValue(session_, _oid, timeout_))
+			
 		if (master_.AsyncRequestReadValue(*this, _oid, timeout_))
 		{
-			if (finished_.TryLock(timeout_))
+			if (finished_.TryLock(timeout_ * 1000))
 			{
 				if (success_)
 				{
@@ -75,18 +83,24 @@ bool	Session::AsyncReadValue(OID const& _oid, time_t& _time, std::string& _value
 					TRACE_ERROR("Failed to request read value!");	
 				}
 			}
+			else
+			{
+				TRACE_ERROR("Tiemout[" << timeout_ << "]! Failed to request read value!");	
+			}
 		}
 		else
 		{
 			TRACE_ERROR("Failed to request read value!");	
 		}
+
+		finished_.Unlock();
 	}
 	else
 	{
 		TRACE_ERROR("Failed to read value.");
 	}
 
-	finished_.Unlock();
+	//locker_.Unlock();
 
 	return	true;
 }

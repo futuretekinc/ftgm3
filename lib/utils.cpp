@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iomanip>
+#include <stdio.h>
 #include "defined.h"
 #include "exception.h"
 #include "utils.h"
@@ -306,11 +307,13 @@ bool	IsTrue(const std::string& _value)
 
 std::string	ToString(double _value, int precision )
 {
-	std::ostringstream	oss;
+	char	format[32];
+	char	buffer[32];
 
-	oss << std::setprecision(precision) << _value;
+	sprintf(format, "%%.0%df", precision);
+	sprintf(buffer, format, _value);
 
-	return	oss.str();
+	return	std::string(buffer);
 }
 
 std::string ToString(time_t _value)

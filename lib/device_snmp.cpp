@@ -19,28 +19,30 @@ using namespace std;
 static Locker snmp_locker;
 static uint32_t object_count = 0;
 
+#define	SNMP_TIMEOUT	5
+
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type)
-: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(1), session_()
+: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(SNMP_TIMEOUT), session_()
 {
 	trace.SetClassName(GetClassName());
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties)
-: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(1), session_()
+: DeviceIP(_manager, _type), module_(""), community_("public"), timeout_(SNMP_TIMEOUT), session_()
 {
 	trace.SetClassName(GetClassName());
 	SetProperties(_properties, false, true);
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, JSONNode const& _properties)
-: DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(1), session_()
+: DeviceIP(_manager, DeviceSNMP::Type()), module_(""), community_("public"), timeout_(SNMP_TIMEOUT), session_()
 {
 	trace.SetClassName(GetClassName());
 	SetProperties(_properties, false, true);
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module)
-: DeviceIP(_manager, _type), module_(_module), community_("public"), timeout_(1), session_()
+: DeviceIP(_manager, _type), module_(_module), community_("public"), timeout_(SNMP_TIMEOUT), session_()
 {
 	trace.SetClassName(GetClassName());
 
@@ -51,7 +53,7 @@ DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::s
 }
 
 DeviceSNMP::DeviceSNMP(ObjectManager& _manager, std::string const& _type, std::string const& _module, std::string const& _ip)
-: DeviceIP(_manager, _type, _ip), module_(_module), community_("public"), timeout_(1), session_()
+: DeviceIP(_manager, _type, _ip), module_(_module), community_("public"), timeout_(SNMP_TIMEOUT), session_()
 {
 	trace.SetClassName(GetClassName());
 
@@ -112,7 +114,11 @@ bool	DeviceSNMP::SetModule(std::string const& _module, bool _check)
 	{
 		module_ = _module;
 
-		JSONNodeUpdate(updated_properties_, TITLE_NAME_MODULE, module_);
+		JSONNode	options;
+
+		GetOptions(options);
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_OPTIONS, options.write());
 
 		if (!lazy_store_)
 		{
@@ -134,7 +140,11 @@ bool	DeviceSNMP::SetCommunity(std::string const& _community, bool _check)
 	{
 		community_ = _community;
 
-		JSONNodeUpdate(updated_properties_, TITLE_NAME_COMMUNITY, community_);
+		JSONNode	options;
+
+		GetOptions(options);
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_OPTIONS, options.write());
 
 		if (!lazy_store_)
 		{
@@ -154,7 +164,12 @@ bool	DeviceSNMP::SetTimeout(uint32_t _timeout)
 {
 	timeout_ = _timeout;
 	
-	JSONNodeUpdate(updated_properties_, TITLE_NAME_TIMEOUT, timeout_);
+
+	JSONNode	options;
+
+	GetOptions(options);
+
+	JSONNodeUpdate(updated_properties_, TITLE_NAME_OPTIONS, options.write());
 
 	if (!lazy_store_)
 	{
@@ -172,7 +187,11 @@ bool	DeviceSNMP::SetTimeout(std::string const& _timeout, bool _check)
 	{
 		timeout_ = timeout;
 
-		JSONNodeUpdate(updated_properties_, TITLE_NAME_TIMEOUT, timeout_);
+		JSONNode	options;
+
+		GetOptions(options);
+
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_OPTIONS, options.write());
 
 		if (!lazy_store_)
 		{

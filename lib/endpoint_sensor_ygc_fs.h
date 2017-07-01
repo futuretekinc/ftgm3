@@ -14,6 +14,8 @@ public:
 
 			const char*	GetClassName();
 
+	virtual	std::string	GetModel();
+
 protected:
 	void	CorrectionProcess();
 

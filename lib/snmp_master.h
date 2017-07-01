@@ -96,6 +96,7 @@ protected:
 	Master&					master_;
 	struct snmp_session*	session_;
 	uint32_t				timeout_;
+	Locker					locker_;
 	Locker					finished_;
 	bool					success_;
 

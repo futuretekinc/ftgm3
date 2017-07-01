@@ -28,17 +28,23 @@ const char* EndpointSensorYGCFS::GetClassName()
 	return	class_name;
 }
 
+std::string	EndpointSensorYGCFS::GetModel()
+{
+	return	std::string(EndpointSensorYGCFS::Model());
+}
+
 void	EndpointSensorYGCFS::CorrectionProcess()
 {
 	time_t		time;
-	uint32_t	frequency;
+	uint32_t	counter;
 
 	Device* device = manager_.GetDevice(parent_id_);
 	if(device != NULL)
 	{
-		if (device->ReadValue(GetID(), time, frequency))
+		if (device->ReadValue(GetSensorID(), time, counter))
 		{
 			double	wind_speed = 0;
+			uint32_t	frequency = (counter % 65536) / 10;
 
 			if (frequency > 0)
 			{
@@ -58,7 +64,7 @@ void	EndpointSensorYGCFS::CorrectionProcess()
 				value_ = wind_speed;	
 			}
 
-			TRACE_INFO("WindSpeed : " << ToString(value_, 2) << " m/s");
+			TRACE_INFO("Counter : " << counter << ", Frequency : " << frequency << ", WindSpeed : " << ToString(value_, 2) << " m/s");
 
 			if (!Add(time, ToString(value_, 2)))
 			{

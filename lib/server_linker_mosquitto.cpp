@@ -490,7 +490,6 @@ void	ServerLinkerMosq::OnMessageCB(struct mosquitto *_mosq, void *_obj, const st
 		link->IncreaseNumberOfIncommingMessages();
 		link->Touch();
 
-		TRACE_INFO2(linker, _message->topic << " : " << _message->retain);
 		if (_message->payloadlen != 0)
 		{
 			std::string	payload = (char *)_message->payload;
@@ -509,7 +508,6 @@ void	ServerLinkerMosq::OnMessageCB(struct mosquitto *_mosq, void *_obj, const st
 				try
 				{
 					Consume	*consume = new Consume(_message->topic, payload);
-					TRACE_INFO2(linker, "New Consume : " << consume);
 					linker->Post(consume);
 				}
 				catch(std::exception& e)

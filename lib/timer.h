@@ -13,8 +13,11 @@ public:
 	Time		RemainTime() const;
 	Time		OverTime() const;
 
-	const Timer&	operator+=(const Time& _time);
-	const Timer&	operator+=(const uint64_t _microseconds);
+	bool		Add(double _seconds);
+	bool		Add(uint32_t _seconds);
+	bool		Add(uint32_t _seconds, uint32_t _milliseconds);
+//	const Timer&	operator+=(const Time& _time);
+//	const Timer&	operator+=(const uint64_t _microseconds);
 
 //protected:
 	Date	reference_date_;

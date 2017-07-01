@@ -165,7 +165,7 @@ void	Device::Preprocess()
 		if (endpoint != NULL)
 		{
 			endpoint->Start();	
-			usleep(500000);
+			usleep(100000);
 		}
 		else
 		{
@@ -177,12 +177,12 @@ void	Device::Preprocess()
 void	Device::Process()
 {
 
-	for(std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin(); it != endpoint_schedule_list_.end() ; it++)
+	for(std::map<time_t, std::string>::iterator it = endpoint_schedule_list_.begin(); it != endpoint_schedule_list_.end() ; it++)
 	{
-		if (it->second.RemainTime() == 0)
+		if (time_t(Date::GetCurrent()) >= it->first)
 		{
-			std::string	id = it->first;
-			Timer	timer = it->second;
+			time_t		time = it->first;
+			std::string	id 	= it->second;
 
 			endpoint_schedule_list_.erase(it);
 
@@ -191,9 +191,9 @@ void	Device::Process()
 			{
 				endpoint->CorrectionProcess();
 
-				timer += ((time_t(Date::GetCurrent())  - time_t(timer.reference_date_)) / endpoint->GetCorrectionInterval() + 1) * endpoint->GetCorrectionInterval() * TIME_SECOND;
+				time += ((time_t(Date::GetCurrent())  - time) / endpoint->GetCorrectionInterval() + 1) * endpoint->GetCorrectionInterval();
 
-				AddSchedule(endpoint->GetID(), timer);
+				AddSchedule(endpoint->GetID(), time);
 			}
 
 			break;
@@ -218,7 +218,7 @@ void	Device::Postprocess()
 
 }
 
-bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
+bool	Device::AddSchedule(std::string const& _id, time_t _time)
 {
 	bool	last = true;
 
@@ -235,20 +235,7 @@ bool	Device::AddSchedule(std::string const& _id, Timer const& _timer)
 
 	endpoint_schedule_list_lock_.Lock();
 
-	for(std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
-	{
-		if (it->second.RemainTime() > _timer.RemainTime())
-		{
-			endpoint_schedule_list_.insert(it, std::pair<std::string, Timer>(_id, _timer));	
-			last = false;
-			break;
-		}
-	}
-
-	if (last)
-	{
-		endpoint_schedule_list_.insert(endpoint_schedule_list_.end(), std::pair<std::string, Timer>(_id, _timer));	
-	}
+	endpoint_schedule_list_.insert(std::pair<time_t, std::string>(_time, _id));	
 
 	endpoint_schedule_list_lock_.Unlock();
 
@@ -260,9 +247,9 @@ bool	Device::RemoveSchedule(std::string const& _id)
 	bool	removed = false;
 	endpoint_schedule_list_lock_.Lock();
 
-	for(std::map<std::string, Timer>::iterator it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
+	for(std::map<time_t, std::string>::iterator it = endpoint_schedule_list_.begin() ; it != endpoint_schedule_list_.end() ; it++)
 	{
-		if (it->first == _id)
+		if (it->second == _id)
 		{
 			endpoint_schedule_list_.erase(it);
 			removed = true;
@@ -340,6 +327,21 @@ bool	Device::ReadValue(std::string const& _epid, time_t& _time, uint32_t& _value
 }
 
 bool	Device::ReadValue(std::string const& _epid, time_t& _time, bool& _value)
+{
+	return	false;
+}
+
+bool	Device::ReadValue(uint32_t _index, time_t& _time, bool& _value)
+{
+	return	false;
+}
+
+bool	Device::ReadValue(uint32_t _index, time_t& _time, uint32_t& _value)
+{
+	return	false;
+}
+
+bool	Device::ReadValue(uint32_t _index, time_t& _time, std::string& _value)
 {
 	return	false;
 }

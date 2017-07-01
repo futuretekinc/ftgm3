@@ -33,6 +33,7 @@ uint32_t	PROPERTY_UPDATE_INTERVAL_FLAG	= ((uint32_t)1) <<  22;
 uint32_t	PROPERTY_TIME_OF_EXPIRE_FLAG	= ((uint32_t)1) <<  23;
 uint32_t	PROPERTY_VALUE_FLAG				= ((uint32_t)1) <<  24;
 uint32_t	PROPERTY_STAT_FLAG				= ((uint32_t)1) <<  25;
+uint32_t	PROPERTY_MODEL_FLAG				= ((uint32_t)1) <<  26;
 
 Fields	PROPERTY_CORRECTION_INTERVAL(PROPERTY_CORRECTION_INTERVAL_FLAG);
 Fields	PROPERTY_DATE				(PROPERTY_DATE_FLAG);
@@ -60,12 +61,13 @@ Fields	PROPERTY_UPDATE_INTERVAL	(PROPERTY_UPDATE_INTERVAL_FLAG);
 Fields	PROPERTY_TIME_OF_EXPIRE		(PROPERTY_TIME_OF_EXPIRE_FLAG);
 Fields	PROPERTY_VALUE				(PROPERTY_VALUE_FLAG);
 Fields	PROPERTY_STAT				(PROPERTY_STAT_FLAG);
+Fields	PROPERTY_MODEL				(PROPERTY_MODEL_FLAG);
 
-Fields	PROPERTY_ALL				( true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false);
-Fields	PROPERTY_CREATE				( true,  true,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false);
-Fields	PROPERTY_ADD_CONFIRM		( true, false,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false);
-Fields	PROPERTY_GET				( true,  true,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false);
-Fields	PROPERTY_SET				( true,  true,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false);
+Fields	PROPERTY_ALL				( true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
+Fields	PROPERTY_CREATE				( true,  true,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
+Fields	PROPERTY_ADD_CONFIRM		( true, false,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
+Fields	PROPERTY_GET				( true,  true,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
+Fields	PROPERTY_SET				( true,  true,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
 
 Fields::Fields()
 {
@@ -95,14 +97,15 @@ Fields::Fields()
 	time_of_expire = false;
 	value = false;
 	stat = false;
+	model= false;
 }
 
 Fields::Fields( bool	_correction_interval, bool	_date, bool	_options, bool	_enable, bool	_id, bool	_ip, bool	_keep_alive_interval, bool	_location, bool	_loop_interval, bool	_name,
 				bool	_parent_id, bool	_registered, bool	_scale, bool	_sensor_id, bool	_snmp_module, bool	_snmp_community, bool	_time, bool	_timeout, bool	_type, bool	_value_min,
-				bool	_value_max, bool	_unit, bool	_update_interval, bool _time_of_expire, bool _value, bool _stat)
+				bool	_value_max, bool	_unit, bool	_update_interval, bool _time_of_expire, bool _value, bool _stat, bool _model)
 :correction_interval(_correction_interval), date(date), options(_options), enable(_enable), id(_id), ip(_ip), keep_alive_interval(_keep_alive_interval), location(_location), loop_interval(_loop_interval), name(_name),
 				parent_id(_parent_id), registered(_registered), scale(_scale), sensor_id(_sensor_id), snmp_module(_snmp_module), snmp_community(_snmp_community), time(_time), timeout(_timeout), type(_type),
-				value_min(_value_min), value_max(_value_max), unit(_unit), update_interval(_update_interval), time_of_expire(_time_of_expire), value(_value)
+				value_min(_value_min), value_max(_value_max), unit(_unit), update_interval(_update_interval), time_of_expire(_time_of_expire), value(_value), model(_model)
 {
 }
 
@@ -141,6 +144,7 @@ Fields	operator+(Fields& _field1, Fields& _fields2)
 	fields.time_of_expire = _field1.time_of_expire || _fields2.time_of_expire;
 	fields.value = _field1.value || _fields2.value;
 	fields.stat = _field1.stat || _fields2.stat;
+	fields.model = _field1.model || _fields2.model;
 
 	return	fields;
 }
@@ -173,6 +177,7 @@ Fields&	Fields::operator+=(Fields& _fields)
 	time_of_expire = time_of_expire || _fields.time_of_expire;
 	value = value|| _fields.value;
 	stat = stat || _fields.stat;
+	model = model || _fields.model;
 
 	return	*this;
 }
@@ -282,6 +287,10 @@ bool	Fields::Set(uint32_t _value)
 	if (_value & PROPERTY_STAT_FLAG)
 	{
 		stat = true;
+	}
+	if (_value & PROPERTY_MODEL_FLAG)
+	{
+		model = true;
 	}
 
 	return	true;
@@ -393,6 +402,10 @@ bool	Fields::Reset(uint32_t _value)
 	{
 		stat = false;
 	}
+	if (_value & PROPERTY_MODEL_FLAG)
+	{
+		model = false;
+	}
 
 	return	true;
 }
@@ -502,6 +515,10 @@ bool	Fields::Set(std::string const& _field)
 	else if (_field == TITLE_NAME_STAT)
 	{
 		stat = true;
+	}
+	else if (_field == TITLE_NAME_MODEL)
+	{
+		model = true;
 	}
 	else
 	{
@@ -618,6 +635,10 @@ bool	Fields::Reset(std::string const& _field)
 	{
 		stat = false;
 	}
+	if (_field == TITLE_NAME_MODEL)
+	{
+		model = false;
+	}
 	else
 	{
 		return	false;	
@@ -733,7 +754,11 @@ Fields::operator uint32_t()
 	}
 	if (stat)
 	{
-		stat |= PROPERTY_VALUE_FLAG;
+		value |= PROPERTY_STAT_FLAG;
+	}
+	if (model)
+	{
+		value |= PROPERTY_MODEL_FLAG;
 	}
 
 	return	value;
@@ -870,6 +895,11 @@ bool	Fields::Names(std::multimap<uint32_t, std::string>& _names)
 	if (stat)
 	{
 		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_STAT_FLAG, TITLE_NAME_STAT));
+	}
+
+	if (model)
+	{
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_MODEL_FLAG, TITLE_NAME_MODEL));
 	}
 
 	return	true;

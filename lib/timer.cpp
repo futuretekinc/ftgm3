@@ -42,6 +42,30 @@ Time	Timer::OverTime() const
 	return	Time(over);
 }
 
+bool	Timer::Add(double _seconds)
+{
+	uint64_t	value = (uint64_t)(_seconds * 1000000);
+
+	reference_date_.Add(value / 1000000,  value % 1000000);
+
+	return	true;
+}
+
+bool	Timer::Add(uint32_t _seconds)
+{
+	reference_date_.Add(_seconds);
+
+	return	true;
+}
+
+bool	Timer::Add(uint32_t _seconds, uint32_t _milliseconds)
+{
+	reference_date_.Add(_seconds, _milliseconds);
+
+	return	true;
+}
+
+/*
 const Timer& Timer::operator+=(const Time& _time)
 {
 	reference_date_ += _time;	
@@ -55,3 +79,4 @@ const Timer& Timer::operator+=(uint64_t _microseconds)
 
 	return *this;
 }
+*/

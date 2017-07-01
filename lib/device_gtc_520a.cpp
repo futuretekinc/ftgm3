@@ -82,7 +82,7 @@ void	DeviceGTC520A::Process()
 			time_ = Date::GetCurrent();
 		}
 
-		correction_timer_ += correction_interval_ * TIME_SECOND;
+		correction_timer_.Add(correction_interval_);
 	}
 
 	DeviceModbus::Process();

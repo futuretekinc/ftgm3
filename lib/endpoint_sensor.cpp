@@ -29,7 +29,7 @@ void	EndpointSensor::Process()
 	if (correction_timer_.RemainTime() == 0)
 	{
 		CorrectionProcess();
-		correction_timer_ += Time(correction_interval_ * TIME_SECOND);	
+		correction_timer_.Add(correction_interval_);	
 	}
 
 	Endpoint::Process();

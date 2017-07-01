@@ -1,6 +1,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "locker.h"
+#include "trace.h"
 
 Locker::Locker()
 {
@@ -39,6 +40,9 @@ bool	Locker::TryLock(uint32_t _timeout)
 
 		if (_timeout < (current_time - start_time) / 1000)
 		{
+			TRACE_INFO2(NULL, "     Timeout : " << _timeout);
+			TRACE_INFO2(NULL, "  Start Time : " << start_time);
+			TRACE_INFO2(NULL, "Current Time : " << current_time);
 			break;
 		}
 
