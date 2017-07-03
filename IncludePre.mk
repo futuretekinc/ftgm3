@@ -1,6 +1,6 @@
 # IncludePre.mk
 
-TARGET="FTM-50"
+TARGET=
 
 ifeq ($(RELEASE), 1)
 OBJS_DIR = Release

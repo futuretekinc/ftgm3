@@ -790,7 +790,7 @@ bool	ObjectManager::UpdateProperties(Endpoint* _endpoint)
 
 void	ObjectManager::Preprocess()
 {
-	data_manager_.Start(100);
+	data_manager_.Start(10000);
 
 	uint32_t count = data_manager_.GetGatewayCount();
 	TRACE_INFO("Gateway Count : " << count);
@@ -898,8 +898,8 @@ void	ObjectManager::Preprocess()
 		}
 	}
 
-	rcs_server_.Start(100);
-	server_linker_.Start(100);
+	rcs_server_.Start(10000);
+	server_linker_.Start(10000);
 
 	if (auto_start_)
 	{

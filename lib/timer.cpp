@@ -58,9 +58,9 @@ bool	Timer::Add(uint32_t _seconds)
 	return	true;
 }
 
-bool	Timer::Add(uint32_t _seconds, uint32_t _milliseconds)
+bool	Timer::Add(uint32_t _seconds, uint32_t _microseconds)
 {
-	reference_date_.Add(_seconds, _milliseconds);
+	reference_date_.Add(_seconds, _microseconds);
 
 	return	true;
 }

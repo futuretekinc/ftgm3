@@ -285,6 +285,7 @@ void *ActiveObject::ThreadMain(void *data)
 	_object->Preprocess();
 	_object->stop_ = false;
 
+	TRACE_INFO2(_object, "Object[" <<_object->GetName() << ": " << _object->loop_interval_);
 	while(!_object->stop_)
 	{
 		loop_timer.Add(_object->loop_interval_);

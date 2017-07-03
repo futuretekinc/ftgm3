@@ -148,7 +148,7 @@ Trace& Trace::Begin(TraceLevel _level, std::string const& _pretty_function, uint
 	ostringstream	os;
 
 	Date	date;
-	os << "[" << date << "]";
+	os << "[" << date << "." << std::setw(6) << std::setfill('0') << date.GetMicroSecond() % 1000000 << std::setfill(' ') << "]";
 	os << "[" << setw(master_.GetFunctionNameSize()) << function.substr(0, master_.GetFunctionNameSize()) << "]";
 	os << "[" << setw(master_.GetFunctionLineSize()) <<_line << "]";
 	if (object_ != NULL)

@@ -15,7 +15,7 @@ public:
 
 	bool		Add(double _seconds);
 	bool		Add(uint32_t _seconds);
-	bool		Add(uint32_t _seconds, uint32_t _milliseconds);
+	bool		Add(uint32_t _seconds, uint32_t _microseconds);
 //	const Timer&	operator+=(const Time& _time);
 //	const Timer&	operator+=(const uint64_t _microseconds);
 

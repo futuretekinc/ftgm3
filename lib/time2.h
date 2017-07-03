@@ -50,7 +50,7 @@ public:
 
 	virtual	const std::string	ToString() const;
 
-	const	Date&	Add(uint32_t _seconds, uint32_t _milliseconds = 0);
+	const	Date&	Add(uint32_t _seconds, uint32_t _microseconds = 0);
 			Date	operator+(const Time& _time);
 			Date	operator-(const Time& _time);
 			Time	operator-(const Date& _date);
