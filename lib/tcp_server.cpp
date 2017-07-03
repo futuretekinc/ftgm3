@@ -21,7 +21,7 @@
 //
 ///////////////////////////////////////////////////////
 TCPServer::TCPServer(ObjectManager* _manager)
-: ProcessObject(), manager_(_manager), port_(8888), max_session_count_(10), timeout_(60 * TIME_SECOND), onMessageCallback_(NULL)
+: ProcessObject(), manager_(_manager), port_(8888), max_session_count_(10), timeout_(60), onMessageCallback_(NULL)
 {
 	trace.SetClassName(GetClassName());
 	enable_	= true;

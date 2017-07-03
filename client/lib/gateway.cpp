@@ -95,7 +95,7 @@ RetValue	ShellCommandGateway
 			}
 			else
 			{
-				_shell->Out() << "Failed to get gateway[" << _arguments[i] <<" properties." << std::endl;
+				_shell->Out() << "Failed to get gateway[" << _arguments[i] <<"] properties." << std::endl;
 			}
 
 		}
