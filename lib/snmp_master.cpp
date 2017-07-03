@@ -34,6 +34,11 @@ GetMessage::GetMessage(snmp_session* _session, OID const& _oid, uint32_t _timeou
 {
 }
 
+SetMessage::SetMessage(snmp_session* _session, OID const& _oid, uint32_t _timeout, std::string const& _value)
+: Message(MSG_TYPE_SNMP_SET), session_(_session), oid_(_oid), timeout_(_timeout), value_(_value)
+{
+}
+
 Master::Master()
 : ActiveObject(), locker_(), request_count_(0)
 {
@@ -172,8 +177,11 @@ bool	Master::ReadValue(snmp_session* _session, OID const& _oid, uint32_t _timeou
 				if (response_pdu->errstat == SNMP_ERR_NOERROR)
 				{
 					_time = Date::GetCurrent();
-					Master::Convert(response_pdu->variables, _value);
-					ret_value = true;
+					ret_value = Master::Convert(response_pdu->variables, _value);
+					if (!ret_value)
+					{
+						TRACE_ERROR("Failed to convert object[" << std::string(_oid) << "] value[" << _value <<"]");	
+					}
 				}
 			}
 		}
@@ -221,8 +229,11 @@ bool	Master::SyncReadValue(snmp_session* _session, OID const& _oid, uint32_t _ti
 				if (response_pdu->errstat == SNMP_ERR_NOERROR)
 				{
 					_time = Date::GetCurrent();
-					Master::Convert(response_pdu->variables, _value);
-					ret_value = true;
+					ret_value = Master::Convert(response_pdu->variables, _value);
+					if (!ret_value)
+					{
+						TRACE_ERROR("Failed to convert object[" << std::string(_oid) << "] value[" << _value <<"]");	
+					}
 				}
 			}
 		}
@@ -273,9 +284,95 @@ bool	Master::AsyncRequestReadValue(snmp_session* _session, OID const& _oid, uint
 	return	ret_value;
 }
 
+bool	Master::AsyncRequestWriteValue(snmp_session* _session, OID const& _oid, uint32_t _timeout, uint32_t _value)
+{
+	bool	ret_value = false;
+
+	netsnmp_pdu*	request_pdu = snmp_pdu_create(SNMP_MSG_SET);
+	if (request_pdu != NULL)
+	{
+		std::ostringstream	oss;
+
+		oss << _value;
+
+		request_pdu->time = _timeout;
+		snmp_add_var(request_pdu, _oid.id, _oid.length, 's', oss.str().c_str());   
+
+		locker_.Lock();
+		int snmp_ret = snmp_send(_session, request_pdu);
+		locker_.Unlock();
+
+		if (snmp_ret == 0)
+		{
+			TRACE_ERROR("Failed to get SNMP[" << snmp_ret << "]!");
+			snmp_free_pdu(request_pdu);
+		}
+		else
+		{
+			request_count_++;
+			ret_value = true;	
+		}
+	}
+	else
+	{
+		TRACE_ERROR("Failed to create SNMP PDU!");	
+	}
+
+	return	ret_value;
+}
+
+bool	Master::AsyncRequestWriteValue(snmp_session* _session, OID const& _oid, uint32_t _timeout, std::string const& _value)
+{
+	bool	ret_value = false;
+
+	netsnmp_pdu*	request_pdu = snmp_pdu_create(SNMP_MSG_SET);
+	if (request_pdu != NULL)
+	{
+		request_pdu->time = _timeout;
+		snmp_add_var(request_pdu, _oid.id, _oid.length, 's', _value.c_str());   
+
+		locker_.Lock();
+		int snmp_ret = snmp_send(_session, request_pdu);
+		locker_.Unlock();
+
+		if (snmp_ret == 0)
+		{
+			TRACE_ERROR("Failed to get SNMP[" << snmp_ret << "]!");
+			snmp_free_pdu(request_pdu);
+		}
+		else
+		{
+			request_count_++;
+			ret_value = true;	
+		}
+	}
+	else
+	{
+		TRACE_ERROR("Failed to create SNMP PDU!");	
+	}
+
+	return	ret_value;
+}
+
 bool	Master::AsyncRequestReadValue(Session& _session, OID const& _oid, uint32_t _timeout)
 {
 	GetMessage	*message = new GetMessage(_session.session_, _oid, _timeout);
+
+	Post(message);
+
+	return	true;
+}
+
+
+bool	Master::AsyncRequestWriteValue(Session& _session, OID const& _oid, uint32_t _timeout, uint32_t _value)
+{
+	TRACE_ERROR("Not supported");
+	return	false;
+}
+
+bool	Master::AsyncRequestWriteValue(Session& _session, OID const& _oid, uint32_t _timeout, std::string const& _value)
+{
+	SetMessage	*message = new SetMessage(_session.session_, _oid, _timeout, _value);
 
 	Post(message);
 
@@ -290,14 +387,14 @@ int	Master::AsyncResponse(int operation, struct snmp_session *sp, int reqid, str
 {
 	Session *session= (Session*)_magic;
 
+	TRACE_INFO2(NULL, "Async Response received!");
 	session->master_.locker_.Lock();
 	if (operation == NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE) 
 	{
 		if (_pdu->errstat == SNMP_ERR_NOERROR)
 		{
-			Convert(_pdu->variables, session->value_);
+			session->success_ = Convert(_pdu->variables, session->value_);
 			session->time_ = Date::GetCurrent();
-			session->success_ = true;
 			session->finished_.Unlock();
 		}
 	}
@@ -415,6 +512,14 @@ bool	Master::OnMessage(Message* _base)
 		if (message != NULL)
 		{
 			AsyncRequestReadValue(message->session_, message->oid_, message->timeout_);
+		}
+	}
+	else if(_base->GetType() == MSG_TYPE_SNMP_SET)
+	{
+		SetMessage	*message = dynamic_cast<SetMessage *>(_base);
+		if (message != NULL)
+		{
+			AsyncRequestWriteValue(message->session_, message->oid_, message->timeout_, message->value_);
 		}
 	}
 	else

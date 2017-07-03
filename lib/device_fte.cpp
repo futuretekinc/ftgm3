@@ -60,6 +60,68 @@ bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& time, std::string& _
 		SNMP::OID oid = GetOID(endpoint->GetType(), endpoint->GetSensorID());
 
 		ret_value = DeviceSNMP::ReadValue(oid, time, _value);
+		if (ret_value)
+		{
+			TRACE_INFO("The endpoint[" << std::string(oid) << "] : " << _value);	
+		}
+		else
+		{
+			TRACE_INFO("Failed to read value from The endpoint[" << std::string(oid));
+		}
+	}
+	else
+	{
+		TRACE_ERROR("The endpoint[" << _epid << "] is not attached");
+	}
+
+	return	ret_value;
+}
+
+bool	DeviceFTE::WriteValue(std::string const& _epid, std::string const& _value)
+{
+	bool	ret_value = false;
+
+	Endpoint*	endpoint = manager_.GetEndpoint(_epid);
+	if (endpoint != NULL)
+	{
+		SNMP::OID oid = GetOID(endpoint->GetType(), endpoint->GetSensorID());
+
+		ret_value = DeviceSNMP::WriteValue(oid, _value);
+		if (ret_value)
+		{
+			TRACE_INFO("The endpoint[" << std::string(oid) << "] : " << _value);	
+		}
+		else
+		{
+			TRACE_INFO("Failed to write value from The endpoint[" << std::string(oid) << "]");
+		}
+	}
+	else
+	{
+		TRACE_ERROR("The endpoint[" << _epid << "] is not attached");
+	}
+
+	return	ret_value;
+}
+
+bool	DeviceFTE::WriteValue(std::string const& _epid, bool _value)
+{
+	bool	ret_value = false;
+
+	Endpoint*	endpoint = manager_.GetEndpoint(_epid);
+	if (endpoint != NULL)
+	{
+		SNMP::OID oid = GetOID(endpoint->GetType(), endpoint->GetSensorID());
+
+		ret_value = DeviceSNMP::WriteValue(oid, _value);
+		if (ret_value)
+		{
+			TRACE_INFO("The endpoint[" << std::string(oid) << "] : " << _value);	
+		}
+		else
+		{
+			TRACE_INFO("Failed to write value from The endpoint[" << std::string(oid) << "]");
+		}
 	}
 	else
 	{

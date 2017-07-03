@@ -9,7 +9,7 @@
 			"name" : "dev_00405c901868",
 			"options" : 
 			{
-				"ip"   : "10.0.1.26",
+				"ip"   : "10.0.1.220",
 				"module" : "FTE-E.txt",
 				"community" : "public"
 			},
@@ -19,19 +19,19 @@
 					"type": "ep_s_temperature",
 					"name" : "Temperature",
 					"update_interval" : 10,
-					"sensor_id" : "01020001"
+					"sensor_id" : 0
 				},
 				{
 					"type": "ep_s_humidity",
 					"name" : "Humidity",
 					"update_interval" : 10,
-					"sensor_id" : "02800101"
+					"sensor_id" : 0 
 				},
 				{
 					"type": "ep_s_soil_acidity",
 					"name" : "Soil Acidity",
 					"update_interval" : 10,
-					"sensor_id" : "0a810201"
+					"sensor_id" : 0
 				}
 			]
 		},
@@ -40,7 +40,7 @@
 			"name" : "dev_00405c901869",
 			"options" : 
 			{
-				"ip"   : "10.0.1.27",
+				"ip"   : "10.0.1.221",
 				"module" : "FTE-E.txt",
 				"community" : "public"
 			},
@@ -50,8 +50,57 @@
 					"type": "ep_s_soil_moisture",
 					"name" : "Soil Moisture",
 					"update_interval" : 10,
-					"sensor_id" : "02800101"
+					"sensor_id" : 0
 				}
+			]
+		},
+		{
+			"type" : "dev_fte",
+			"name" : "dev_00405c695ed2",
+			"options" : 
+			{
+				"ip"   : "10.0.1.222",
+				"module" : "FTE-E.txt",
+				"community" : "public"
+			},
+			"endpoint" : 
+			[
+				{
+					"type": "ep_a_do",
+					"name" : "DO0",
+					"update_interval" : 10,
+					"sensor_id" : 0
+				},
+				{
+					"type": "ep_a_do",
+					"name" : "DO1",
+					"update_interval" : 10,
+					"sensor_id" : 1
+				},
+				{
+					"type": "ep_a_do",
+					"name" : "DO2",
+					"update_interval" : 10,
+					"sensor_id" : 2
+				},
+				{
+					"type": "ep_a_do",
+					"name" : "DO3",
+					"update_interval" : 10,
+					"sensor_id" : 3
+				},
+				{
+					"type": "ep_a_do",
+					"name" : "DO4",
+					"update_interval" : 10,
+					"sensor_id" : 4
+				},
+				{
+					"type": "ep_a_do",
+					"name" : "DO5",
+					"update_interval" : 10,
+					"sensor_id" : 5
+				},
 			]
 		}
 	]

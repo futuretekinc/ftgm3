@@ -22,6 +22,8 @@ public:
 			SNMP::OID 	GetOID(std::string const& _type, uint32_t _index);
 
 			bool		ReadValue(std::string const& _endpoint_id, time_t& _time, std::string& _value);
+			bool		WriteValue(std::string const& _epid, std::string const& _value);
+			bool		WriteValue(std::string const& _epid, bool _value);
 
 	static	const char*	Type();
 

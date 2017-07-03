@@ -104,3 +104,48 @@ bool	Session::AsyncReadValue(OID const& _oid, time_t& _time, std::string& _value
 
 	return	true;
 }
+
+bool	Session::AsyncWriteValue(OID const& _oid, std::string const& _value)
+{
+	bool	ret_value = false;
+
+	TRACE_ENTRY;
+	//locker_.Lock();
+	if (session_ != NULL)
+	{
+		finished_.Lock();
+			
+		if (master_.AsyncRequestWriteValue(*this, _oid, timeout_, _value))
+		{
+			if (finished_.TryLock(timeout_ * 1000))
+			{
+				if (success_)
+				{
+					ret_value = true;
+				}
+				else
+				{
+					TRACE_ERROR("Failed to request read value!");	
+				}
+			}
+			else
+			{
+				TRACE_ERROR("Tiemout[" << timeout_ << "]! Failed to request read value!");	
+			}
+		}
+		else
+		{
+			TRACE_ERROR("Failed to request read value!");	
+		}
+
+		finished_.Unlock();
+	}
+	else
+	{
+		TRACE_ERROR("Failed to read value.");
+	}
+
+	//locker_.Unlock();
+
+	return	true;
+}

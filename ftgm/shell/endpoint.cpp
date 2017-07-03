@@ -323,6 +323,23 @@ RetValue	ShellCommandEndpoint
 
 			endpoint->SetProperties(properties, false, false);	
 		}
+		else if (_arguments[1] == "value")
+		{
+			JSONNode	properties;
+
+			if (_count < 4)
+			{
+				throw InvalidArgument("The paramater is insufficient.");
+			}
+
+			Endpoint*	endpoint = object_manager->GetEndpoint(_arguments[2]);
+			if (endpoint == NULL)
+			{
+				throw ObjectNotFound(_arguments[2]);
+			}
+
+			endpoint->SetValue(_arguments[3]);	
+		}
 		else if (_arguments[1] == "data")
 		{
 			JSONNode	properties;

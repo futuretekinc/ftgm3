@@ -393,6 +393,102 @@ bool	DeviceSNMP::ReadValue(SNMP::OID const& _oid, std::string& _value)
 	return	session_.AsyncReadValue(_oid,  time, _value);	
 }
 
+bool	DeviceSNMP::WriteValue(std::string const& _id, std::string const& _value)
+{
+	bool	ret_value = false;
+
+	if (!DeviceSNMP::IsOpened())
+	{
+		if (!Open())
+		{
+			TRACE_ERROR("Session is not opened.");
+			return	false;
+		}
+	}
+
+	SNMP::OID oid = GetOID(_id);
+	if (oid.length != 0)
+	{
+		ret_value = session_.AsyncWriteValue(oid, _value);
+	}
+	else
+	{
+		TRACE_ERROR("OID not found.");
+	}
+
+	return	ret_value;
+}
+
+bool	DeviceSNMP::WriteValue(std::string const& _id, bool _value)
+{
+	bool	ret_value = false;
+
+	if (!DeviceSNMP::IsOpened())
+	{
+		if (!Open())
+		{
+			TRACE_ERROR("Session is not opened.");
+			return	false;
+		}
+	}
+
+	SNMP::OID oid = GetOID(_id);
+	if (oid.length != 0)
+	{
+		if (_value)
+		{
+			TRACE_ENTRY;
+			ret_value = session_.AsyncWriteValue(oid, "1");
+		}
+		else
+		{
+			TRACE_ENTRY;
+			ret_value = session_.AsyncWriteValue(oid, "0");
+		}
+	}
+	else
+	{
+		TRACE_ERROR("OID not found.");
+	}
+
+	return	ret_value;
+}
+
+bool	DeviceSNMP::WriteValue(SNMP::OID const& _oid, std::string const& _value)
+{
+	if (!DeviceSNMP::IsOpened())
+	{
+		if (!Open())
+		{
+			TRACE_ERROR("Session is not opened.");
+			return	false;
+		}
+	}
+
+	return	session_.AsyncWriteValue(_oid,  _value);	
+}
+
+bool	DeviceSNMP::WriteValue(SNMP::OID const& _oid, bool _value)
+{
+	if (!DeviceSNMP::IsOpened())
+	{
+		if (!Open())
+		{
+			TRACE_ERROR("Session is not opened.");
+			return	false;
+		}
+	}
+
+	if (_value)
+	{
+		return	session_.AsyncWriteValue(_oid,  "1");	
+	}
+	else
+	{
+		return	session_.AsyncWriteValue(_oid,  "0");	
+	}
+}
+
 void	DeviceSNMP::Preprocess()
 {
 	Device::Preprocess();

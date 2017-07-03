@@ -348,16 +348,19 @@ bool	Device::ReadValue(uint32_t _index, time_t& _time, std::string& _value)
 
 bool	Device::WriteValue(std::string const& _endpoint_id, std::string const& _value)
 {
+	TRACE_ENTRY;
 	return	false;	
 }
 
 bool	Device::WriteValue(std::string const& _epid, uint32_t _value)
 {
+	TRACE_ENTRY;
 	return	false;
 }
 
 bool	Device::WriteValue(std::string const& _endpoint_id, bool _value)
 {
+	TRACE_ENTRY;
 	return	false;	
 }
 

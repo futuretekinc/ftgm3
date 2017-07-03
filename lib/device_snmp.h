@@ -59,6 +59,11 @@ protected:
 			bool	ReadValue(SNMP::OID const& _oid, time_t& _time, std::string& _value);
 			bool	ReadValue(SNMP::OID const& _oid, std::string& _value);
 
+			bool	WriteValue(std::string const& _id, std::string const& _value);
+			bool	WriteValue(std::string const& _id, bool _value);
+			bool	WriteValue(SNMP::OID const& _oid, std::string const& _value);
+			bool	WriteValue(SNMP::OID const& _oid, bool _value);
+
 	std::string		module_;
 	std::string		community_;
 	uint32_t		timeout_;
