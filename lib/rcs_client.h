@@ -23,7 +23,7 @@ public:
 
 			bool		SetDumpPacket(bool _dump_packet);
 
-			bool	Start();
+			bool	Start(uint32_t _timeout);
 			bool	Stop(bool _wait = false);
 
 			bool	Connect();

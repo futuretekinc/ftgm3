@@ -78,7 +78,7 @@ ServerLinkerMosq::DownLinkMosq::DownLinkMosq(ServerLinkerMosq* _linker, std::str
 {
 }
 
-bool	ServerLinkerMosq::DownLinkMosq::Start()
+bool	ServerLinkerMosq::DownLinkMosq::Connect()
 {
 	ServerLinkerMosq*	mosq_linker = dynamic_cast<ServerLinkerMosq*>(linker_);
 	if (mosq_linker == NULL)
@@ -389,12 +389,12 @@ bool	ServerLinkerMosq::InternalDisconnect()
 
 	for(std::map<std::string, UpLink*>::iterator it = up_link_map_.begin(); it != up_link_map_.end() ; it++)
 	{
-		it->second->Stop();
+		it->second->Disconnect();
 	}
 
 	for(std::map<std::string, DownLink*>::iterator it = down_link_map_.begin(); it != down_link_map_.end() ; it++)
 	{
-		it->second->Stop();
+		it->second->Disconnect();
 	}
 
 	return	true;
@@ -410,13 +410,13 @@ void ServerLinkerMosq::OnConnectCB(struct mosquitto *mosq, void *obj, int result
 	TRACE_INFO2(linker, "Up Link Count : " << linker->up_link_map_.size());
 	for(std::map<std::string, UpLink*>::iterator it = linker->up_link_map_.begin(); it != linker->up_link_map_.end() ; it++)
 	{
-		it->second->Start();
+		it->second->Connect();
 	}
 
 	TRACE_INFO2(linker, "Down Link Count : " << linker->down_link_map_.size());
 	for(std::map<std::string, DownLink*>::iterator it = linker->down_link_map_.begin() ; it != linker->down_link_map_.end() ; it++)
 	{
-		it->second->Start();
+		it->second->Connect();
 	}
 }
 
@@ -429,12 +429,12 @@ void ServerLinkerMosq::OnDisconnectCB(struct mosquitto *_mosq, void *_obj, int _
 	TRACE_INFO2(linker, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 	for(std::map<std::string, UpLink*>::iterator it = linker->up_link_map_.begin(); it != linker->up_link_map_.end() ; it++)
 	{
-		it->second->Stop();
+		it->second->Disconnect();
 	}
 
 	for(std::map<std::string, DownLink*>::iterator it = linker->down_link_map_.begin() ; it != linker->down_link_map_.end() ; it++)
 	{
-		it->second->Stop();
+		it->second->Disconnect();
 	}
 
 	linker->broker_connected_ = false;

@@ -83,7 +83,7 @@ ServerLinker::UpLink::UpLink(ServerLinker* _linker, std::string const& _topic)
 {
 }
 
-bool	ServerLinker::UpLink::Start()
+bool	ServerLinker::UpLink::Connect()
 {
 	Touch();
 	
@@ -91,7 +91,7 @@ bool	ServerLinker::UpLink::Start()
 	return	true;
 }
 
-bool	ServerLinker::UpLink::Stop()
+bool	ServerLinker::UpLink::Disconnect()
 {
 	return	true;
 }
@@ -121,7 +121,7 @@ ServerLinker::DownLink::DownLink(ServerLinker* _linker, std::string const& _topi
 {
 }
 
-bool	ServerLinker::DownLink::Start()
+bool	ServerLinker::DownLink::Connect()
 {
 	TRACE_INFO("Subscribe[" << topic_ << "] connected!!!");
 	connected_ = true;
@@ -129,7 +129,7 @@ bool	ServerLinker::DownLink::Start()
 	return	true;
 }
 
-bool	ServerLinker::DownLink::Stop()
+bool	ServerLinker::DownLink::Disconnect()
 {
 	TRACE_INFO("Subscribe[" << topic_ << "] disconnected!!!");
 	connected_ = false;
@@ -521,7 +521,7 @@ ServerLinker::UpLink*	ServerLinker::AddUpLink(std::string const& _topic)
 
 			if (IsConnected())
 			{
-				link->Start();
+				link->Connect();
 			}
 		}
 		catch(std::exception& e)
@@ -585,7 +585,7 @@ ServerLinker::DownLink*	ServerLinker::AddDownLink(std::string const& _topic)
 
 			if (IsConnected())
 			{
-				link->Start();
+				link->Connect();
 			}
 		}
 		catch(std::exception& e)

@@ -54,16 +54,32 @@ bool	RCSClient::OnMessage(Message* _message)
 	return	ProcessObject::OnMessage(_message);
 }
 
-bool	RCSClient::Start()
+bool	RCSClient::Start(uint32_t _timeout)
 {
-	tcp_client_.Start();
+	Date	start_date;
+
+	if (!tcp_client_.Start(_timeout))
+	{
+		TRACE_ERROR("The TCP client start initialization timeout!");	
+		return	false;
+	}
 
 	if (!Connect())
 	{
 		TRACE_ERROR("Failed to connect!");	
+		return	false;
 	}
 
-	return	ProcessObject::Start();
+	Date		current_date;
+	uint32_t	elapsed_time = uint64_t(current_date - start_date) / 1000;
+		
+	if (elapsed_time >= _timeout)
+	{
+		TRACE_ERROR("The RCS client start initialization timeout!");	
+		return	false;
+	}
+
+	return	ProcessObject::Start(_timeout - elapsed_time );
 }
 
 bool	RCSClient::Stop(bool _wait)

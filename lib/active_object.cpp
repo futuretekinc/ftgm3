@@ -78,31 +78,43 @@ Object::Stat	ActiveObject::GetStat() const
 	}
 }
 
-bool	ActiveObject::Start(uint32_t _wait_for_init_time)
+bool	ActiveObject::Start(uint32_t _timeout)
 {
 	bool	ret_value = true;
-	Timer	timer;
 
 	if (enable_)
 	{
-		timer.Add(0, _wait_for_init_time);
-
-		if (!thread_.joinable())
+		if (locker_.TryLock(_timeout))
 		{
-			thread_.create(ActiveObject::ThreadMain, (void *)this);
-			TRACE_INFO("Object[" << GetTraceName() << "] has been started.");
-			while(timer.RemainTime() != 0)
+			if (activated_.TryLock(0))
 			{
-				if ((!stop_) && IsRunning())
+				activated_.Unlock();
+
+				waiting_for_initialization_.Lock();
+				thread_.create(ActiveObject::ThreadMain, (void *)this);
+
+				if (waiting_for_initialization_.TryLock(_timeout))
 				{
-					break;
+					TRACE_INFO("Object[" << GetTraceName() << "] has been started.");
 				}
-				usleep(TIME_MILLISECOND);
+				else
+				{
+					TRACE_ERROR("The object[" << GetTraceName() <<"] has exceeded initialization wait time.");
+				}
+				waiting_for_initialization_.Unlock();
 			}
+			else
+			{
+				TRACE_INFO("The object[" << GetTraceName() << "] is already activated.");
+				ret_value = false;
+			}
+		
+			locker_.Unlock();
 		}
 		else
 		{
-			TRACE_INFO("Already started!");
+			TRACE_INFO("The object[" << GetTraceName() << "] exceeded the start initialization time.");
+			ret_value = false;
 		}
 	}
 	else
@@ -119,15 +131,28 @@ bool	ActiveObject::Stop(bool _wait)
 	bool	ret_value = true;
 	try
 	{
-		if (thread_.joinable())
+		if (locker_.TryLock(0))
 		{
-			TRACE_INFO("Object[" << GetTraceName() << "] stopped");
-			stop_ = true;
-
-			if (_wait)
+			if (!activated_.TryLock(0))
 			{
-				thread_.join();
+				TRACE_INFO("Object[" << GetTraceName() << "] stopped");
+				stop_ = true;
+
+				if (_wait)
+				{
+					thread_.join();
+				}
 			}
+			else
+			{
+				activated_.Unlock();
+				TRACE_INFO("The object[" << GetTraceName() << "] is not activated!");
+			}
+		}
+		else
+		{
+			TRACE_INFO("The object[" << GetTraceName() << "] exceeded the cleanup time.");
+			ret_value = false;
 		}
 	}
 	catch(exception& e)
@@ -139,9 +164,12 @@ bool	ActiveObject::Stop(bool _wait)
 	return	ret_value;
 }
 
-void	ActiveObject::Run()
+bool	ActiveObject::Run(uint32_t _timeout)
 {
-	Start();
+	if (!Start(_timeout))
+	{
+		return	false;
+	}
 
 	while(!thread_.joinable())
 	{
@@ -154,6 +182,8 @@ void	ActiveObject::Run()
 	}
 
 	thread_.join();
+
+	return	true;
 }
 
 bool	ActiveObject::SetLoopInterval(uint32_t _interval)
@@ -282,8 +312,13 @@ void *ActiveObject::ThreadMain(void *data)
 	Timer	loop_timer;
 	ActiveObject* _object = (ActiveObject*)data;
 
+	TRACE_INFO2(_object, "The object[" << _object->GetTraceName() << "] start to activate.");
+	_object->activated_.Lock();
+
 	_object->Preprocess();
 	_object->stop_ = false;
+	TRACE_INFO2(_object, "The object[" << _object->GetTraceName() << "] has completed initialization.");
+	_object->waiting_for_initialization_.Unlock();
 
 	TRACE_INFO2(_object, "Object[" <<_object->GetName() << ": " << _object->loop_interval_);
 	while(!_object->stop_)
@@ -297,6 +332,7 @@ void *ActiveObject::ThreadMain(void *data)
 
 	TRACE_INFO2(_object, "Entry post process");
 	_object->Postprocess();
+	_object->activated_.Unlock();
 }
 
 bool	ActiveObject::IsIncludeIn(Object *_object)

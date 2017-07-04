@@ -105,7 +105,10 @@ bool	Master::Open(Session& _session, std::string const& _ip, std::string const& 
 
 		if (session_list_.size() == 1)
 		{
-			Start();	
+			if (!Start(100))
+			{
+				TRACE_ERROR("SNMP Master start initialization timeout!");	
+			}
 		}
 	}
 

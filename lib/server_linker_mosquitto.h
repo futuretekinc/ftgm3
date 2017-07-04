@@ -24,7 +24,7 @@ public:
 	public:
 					DownLinkMosq(ServerLinkerMosq* _linker, std::string const& _topic);
 
-			bool		Start();
+			bool		Connect();
 	};
 
 						ServerLinkerMosq(ObjectManager* _manager= NULL);

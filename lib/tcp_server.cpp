@@ -221,7 +221,10 @@ void	TCPServer::Process()
 				session_map_locker_.Unlock();
 
 
-				session->Start();	
+				if (!session->Start(10))
+				{
+					TRACE_ERROR("TCP session start initialization timeout!");	
+				}
 
 				TRACE_INFO("New session created[" << inet_ntoa(client.sin_addr) << ":" << ntohs(client.sin_port) << "]");
 			}

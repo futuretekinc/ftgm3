@@ -49,6 +49,10 @@ const char*	OBJECT_TYPE_EP_A_DISCRETE		=	"ep_a_discrete";
 const char*	OBJECT_TYPE_EP_A_LINEAR			=	"ep_a_linear";
 const char*	OBJECT_TYPE_EP_A_DO				=	"ep_a_do";
 
+uint32_t	GATEWAY_START_INITIALIZATION_TIMEOUT=	1000;
+
+uint32_t	DEVICE_START_INITIALIZATION_TIMEOUT=	1000;	//ms
+
 uint32_t	ENDPOINT_REPORT_INTERVAL		=	(30);
 uint32_t	ENDPOINT_UPDATE_INTERVAL		=	(5);
 uint32_t	ENDPOINT_VALUE_COUNT			=	(24*60*10);

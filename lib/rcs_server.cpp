@@ -59,7 +59,13 @@ TCPSession*	RCSServer::CreateSession(int	_socket, struct sockaddr_in *_addr_info
 
 	manager_->Attach(rcs);
 	rcs->SetTrace(true);
-	rcs->Start();
+	if (!rcs->Start(10))
+	{
+		
+		TRACE_ERROR("RCS server start initialization timeout!");	
+		delete rcs;
+		rcs = NULL;
+	}
 
 	return	rcs;
 }

@@ -74,8 +74,8 @@ const	std::string&	GetTopic()	{ return	topic_;	};
 	public:
 					UpLink(ServerLinker* _linker, std::string const& _topic);
 
-		virtual	bool	Start();
-		virtual	bool	Stop();
+		virtual	bool	Connect();
+		virtual	bool	Disconnect();
 		virtual	bool	Send(std::string const& _message);
 		virtual	bool	Send(std::string const& _message, std::string& _msg_id);
 
@@ -100,8 +100,8 @@ const	std::string&	GetTopic()	{ return	topic_;	};
 	public:
 					DownLink(ServerLinker* _linker, std::string const& _topic);
 
-		virtual	bool		Start();
-		virtual	bool		Stop();
+		virtual	bool	Connect();
+		virtual	bool	Disconnect();
 
 			uint32_t	IncreaseNumberOfIncommingMessages()	{	return	++number_of_incomming_messages_;	};
 			uint32_t	IncreaseNumberOfErrorMessages()		{	return	++number_of_error_messages_;	};
@@ -160,7 +160,8 @@ const	std::string&	GetTopic()	{ return	topic_;	};
 			uint32_t	GetDownLink(std::vector<DownLink*>& _link_array);
 			uint32_t	GetDownLink(std::list<std::string>& _topic_list);
 
-	virtual	bool		Start(uint32_t _wait_for_init_time = 1000);
+	virtual	bool		Start(uint32_t _timeout = 1000);
+
 	virtual	bool		Connect(uint32_t _delay_sec = 0);
 	virtual	bool		Disconnect();
 			bool		IsConnected();

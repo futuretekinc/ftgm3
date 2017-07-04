@@ -155,7 +155,7 @@ void	Gateway::Preprocess()
 		Device*	device = manager_.GetDevice(*it);
 		if (device != NULL)
 		{
-			device->Start();	
+			device->Start(DEVICE_START_INITIALIZATION_TIMEOUT);	
 		}
 		else
 		{

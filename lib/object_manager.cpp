@@ -907,24 +907,7 @@ void	ObjectManager::Preprocess()
 		{
 			if(it->second->GetEnable())
 			{
-				it->second->Start();	
-			}
-		}
-
-		for(std::map<std::string, Device*>::iterator it = device_map_.begin(); it != device_map_.end() ; it++)
-		{
-			if(it->second->GetEnable())
-			{
-				it->second->Start();	
-			}
-		}
-
-		for(std::map<std::string, Endpoint*>::iterator it = endpoint_map_.begin(); it != endpoint_map_.end() ; it++)
-		{
-			if(it->second->GetEnable())
-			{
-				it->second->Start();	
-				usleep(500000);
+				it->second->Start(GATEWAY_START_INITIALIZATION_TIMEOUT);	
 			}
 		}
 	}
