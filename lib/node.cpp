@@ -1,6 +1,7 @@
 #include "defined.h"
 #include "exception.h"
 #include "json.h"
+#include "property.h"
 #include "object_manager.h"
 #include "node.h"
 #include "utils.h"
@@ -77,7 +78,7 @@ bool	Node::SetID(std::string const& _id, bool _check)
 
 bool	Node::SetKeepAliveInterval(uint32_t	_interval)
 {
-	if ((_interval < OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN) || (OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX	< _interval))
+	if ((_interval != 0) && ((_interval < OBJECT_KEEP_ALIVE_INTERVAL_SEC_MIN) || (OBJECT_KEEP_ALIVE_INTERVAL_SEC_MAX	< _interval)))
 	{
 		return	false;	
 	}
@@ -187,6 +188,34 @@ bool	Node::GetRegistered()
 	return	registered_;
 }
 
+bool	Node::GetProperty(uint32_t _type, JSONNode& _property)
+{
+	switch(_type)
+	{
+	case	PROPERTY_TYPE_FLAG:			_property = JSONNode(TITLE_NAME_TYPE, type_); break;
+	case	PROPERTY_MODEL_FLAG: 		_property = JSONNode(TITLE_NAME_MODEL, GetModel()); break;
+	case	PROPERTY_LOCATION_FLAG:		_property = JSONNode(TITLE_NAME_LOCATION, location_); break;
+	case	PROPERTY_KEEP_ALIVE_INTERVAL_FLAG: _property = JSONNode(TITLE_NAME_KEEP_ALIVE_INTERVAL, keep_alive_interval_); break;
+	case	PROPERTY_REGISTERED_FLAG: 	_property = JSONNode(TITLE_NAME_REGISTERED, registered_); break;
+	case	PROPERTY_TIME_OF_EXPIRE_FLAG:_property = JSONNode(TITLE_NAME_TIME_OF_EXPIRE, TimeOfExpire()); break;
+	case	PROPERTY_OPTIONS_FLAG:
+		{
+			JSONNode	options;
+
+			GetOptions(options);
+		
+			_property = JSONNode(TITLE_NAME_OPTIONS, options.write());
+		}
+		break;
+
+	default:
+		return	ActiveObject::GetProperty(_type, _property);
+	}
+
+	return	true;
+}
+
+#if 0
 bool	Node::GetProperties(JSONNode& _properties, Fields const& _fields)
 {
 	if (!ActiveObject::GetProperties(_properties, _fields))
@@ -235,7 +264,7 @@ bool	Node::GetProperties(JSONNode& _properties, Fields const& _fields)
 
 	return	true;
 }
-
+#endif
 
 bool	Node::SetProperty(JSONNode const& _property, bool _check)
 {

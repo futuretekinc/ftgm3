@@ -2,25 +2,36 @@
 
 using namespace SNMP;
 
-static Master	_master;
+static Master*	_master = NULL;
 
 Session::Session()
-: master_(_master), session_(0) , finished_(), locker_()
+: session_(0) , finished_(), locker_()
 {
+	if (_master == NULL)
+	{
+		_master = new Master;	
+	}
+
+	master_ = _master;
+
+	master_->Attach(this);
 }
 
 Session::~Session()
 {
+	Close();
+
+	master_->Detach(this);
 }
 
 bool	Session::Open(std::string const& _ip, std::string const& _community)
 {
-	return	master_.Open(*this, _ip, _community);
+	return	master_->Open(this, _ip, _community);
 }
 
 bool	Session::Close()
 {
-	return	master_.Close(*this);
+	return	master_->Close(this);
 }
 
 bool	Session::IsOpened()
@@ -51,7 +62,7 @@ bool	Session::ReadValue(OID const& _oid, time_t& _time, std::string& _value)
 
 	locker_.Lock();
 
-	ret_value = master_.ReadValue(session_, _oid, timeout_, _time, _value);
+	ret_value = master_->ReadValue(session_, _oid, timeout_, _time, _value);
 
 	locker_.Unlock();
 
@@ -67,7 +78,7 @@ bool	Session::AsyncReadValue(OID const& _oid, time_t& _time, std::string& _value
 	{
 		finished_.Lock();
 			
-		if (master_.AsyncRequestReadValue(*this, _oid, timeout_))
+		if (master_->AsyncRequestReadValue(*this, _oid, timeout_))
 		{
 			if (finished_.TryLock(timeout_ * 1000))
 			{
@@ -102,7 +113,7 @@ bool	Session::AsyncReadValue(OID const& _oid, time_t& _time, std::string& _value
 
 	//locker_.Unlock();
 
-	return	true;
+	return	ret_value;
 }
 
 bool	Session::AsyncWriteValue(OID const& _oid, std::string const& _value)
@@ -115,7 +126,7 @@ bool	Session::AsyncWriteValue(OID const& _oid, std::string const& _value)
 	{
 		finished_.Lock();
 			
-		if (master_.AsyncRequestWriteValue(*this, _oid, timeout_, _value))
+		if (master_->AsyncRequestWriteValue(*this, _oid, timeout_, _value))
 		{
 			if (finished_.TryLock(timeout_ * 1000))
 			{
@@ -147,5 +158,5 @@ bool	Session::AsyncWriteValue(OID const& _oid, std::string const& _value)
 
 	//locker_.Unlock();
 
-	return	true;
+	return	ret_value;
 }

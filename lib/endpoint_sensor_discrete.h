@@ -22,9 +22,6 @@ public:
 			std::string	GetValueMax();
 			bool		SetValueMax(std::string const& _max, bool _check = false);
 
-			bool		GetProperties(JSONNode& _properties, Fields const& _fields);
-			bool		SetProperty(JSONNode const& _property, bool _check = false);
-
 	static const char*	Type();
 
 protected:

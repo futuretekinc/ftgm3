@@ -218,6 +218,12 @@ bool	ActiveObject::SetLoopInterval(std::string const& _interval, bool _check)
 	return	true;
 }
 
+bool	ActiveObject::GetProperty(uint32_t _type, JSONNode& _property)
+{
+	return	Object::GetProperty(_type, _property);
+}
+
+#if 0
 bool	ActiveObject::GetProperties(JSONNode& _properties, Fields const& _fields)
 {
 	if (!Object::GetProperties(_properties, _fields))
@@ -234,7 +240,7 @@ bool	ActiveObject::GetProperties(JSONNode& _properties, Fields const& _fields)
 
 	return	true;
 }
-
+#endif
 
 bool	ActiveObject::SetProperty(JSONNode const& _property, bool _check)
 {

@@ -61,7 +61,7 @@ public:
 	virtual	bool		SetValueMax(std::string const& _max, bool _check = false) = 0;
 
 
-	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		GetProperty(uint32_t _type, JSONNode& _property);
 
 	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
 

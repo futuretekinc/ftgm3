@@ -50,7 +50,7 @@ Endpoint*	DeviceFTE::CreateEndpoint(JSONNode const& _properties)
 	return	endpoint;
 }
 
-bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& time, std::string& _value)
+bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& _time, std::string& _value)
 {
 	bool	ret_value = false;
 
@@ -59,7 +59,7 @@ bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& time, std::string& _
 	{
 		SNMP::OID oid = GetOID(endpoint->GetType(), endpoint->GetSensorID());
 
-		ret_value = DeviceSNMP::ReadValue(oid, time, _value);
+		ret_value = DeviceSNMP::ReadValue(oid, _time, _value);
 		if (ret_value)
 		{
 			TRACE_INFO("The endpoint[" << std::string(oid) << "] : " << _value);	

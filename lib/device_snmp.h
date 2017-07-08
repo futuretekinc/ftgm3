@@ -22,16 +22,15 @@ public:
 			bool	IsIncludedIn(std::string const& _type);
 
 	const	std::string&	GetModule();
-			bool			SetModule(std::string const& _module, bool _check  = false);
+			bool		SetModule(std::string const& _module, bool _check  = false);
 	const	std::string&	GetCommunity();
-			bool			SetCommunity(std::string const& _community, bool _check = false);
-			uint32_t		GetTimeout();
-			bool			SetTimeout(uint32_t _timeout);
-			bool			SetTimeout(std::string const& _timeout, bool _check =false);
+			bool		SetCommunity(std::string const& _community, bool _check = false);
+			uint32_t	GetTimeout();
+			bool		SetTimeout(uint32_t _timeout);
+			bool		SetTimeout(std::string const& _timeout, bool _check =false);
 
-	virtual	bool	GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL) ;
-
-	virtual	bool	SetProperty(JSONNode const& _property, bool _check = false);
+	virtual	bool		GetProperty(uint32_t _type, JSONNode& _property) ;
+	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
 
 	virtual	bool		GetOptions(JSONNode& _properties);
 	virtual	bool		SetOption(JSONNode& _properties, bool _check = false);

@@ -202,9 +202,9 @@ bool	DeviceSNMP::SetTimeout(std::string const& _timeout, bool _check)
 	return	true;
 }
 
-bool	DeviceSNMP::GetProperties(JSONNode & _properties, Fields const& _fields)
+bool	DeviceSNMP::GetProperty(uint32_t _type, JSONNode & _property)
 {
-	return	DeviceIP::GetProperties(_properties, _fields);
+	return	DeviceIP::GetProperty(_type, _property);
 }
 
 bool	DeviceSNMP::SetProperty(JSONNode const& _property, bool _check)

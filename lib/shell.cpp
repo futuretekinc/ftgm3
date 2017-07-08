@@ -201,6 +201,32 @@ bool		Shell::OnMessage(Message* _message)
 	return	ActiveObject::OnMessage(_message);
 }
 
+
+bool	Shell::ShowProperties(JSONNode const& _properties)
+{
+	uint32_t	title_len = 16;
+
+	for(JSONNode::const_iterator it = _properties.begin() ; it != _properties.end() ; it++)
+	{   
+		if (title_len < it->name().length())
+		{   
+			title_len = it->name().length();
+		}   
+	}   
+
+	title_len = (title_len + 3) / 4 * 4;
+
+	for(JSONNode::const_iterator it = _properties.begin() ; it != _properties.end() ; it++)
+	{   
+		Out() << std::setw(title_len) << it->name() << " : " <<  it->as_string() << std::endl;
+	}   
+
+	return	true;
+}
+
+//////////////////////////////////////////////////////////////////
+//	Protected function
+//////////////////////////////////////////////////////////////////
 int		Shell::Parser
 (
 	const 	std::string& 	_command_line, 

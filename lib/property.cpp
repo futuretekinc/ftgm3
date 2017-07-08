@@ -7,106 +7,93 @@
 #include "device.h"
 #include "endpoint.h"
  
-uint32_t	PROPERTY_CORRECTION_INTERVAL_FLAG	= ((uint32_t)1) << 0 ;
-uint32_t	PROPERTY_DATE_FLAG				= ((uint32_t)1) <<  1;
-uint32_t	PROPERTY_OPTIONS_FLAG			= ((uint32_t)1) <<  2;
-uint32_t	PROPERTY_ENABLE_FLAG			= ((uint32_t)1) <<  3;	
-uint32_t	PROPERTY_ID_FLAG				= ((uint32_t)1) <<  4;
-uint32_t	PROPERTY_IP_FLAG				= ((uint32_t)1) <<  5;
-uint32_t	PROPERTY_KEEP_ALIVE_INTERVAL_FLAG	= ((uint32_t)1) << 6;
-uint32_t	PROPERTY_LOCATION_FLAG			= ((uint32_t)1) <<  7;
-uint32_t	PROPERTY_LOOP_INTERVAL_FLAG		= ((uint32_t)1) <<  8;
-uint32_t	PROPERTY_NAME_FLAG				= ((uint32_t)1) <<  9;
-uint32_t	PROPERTY_PARENT_ID_FLAG			= ((uint32_t)1) <<  10;	
-uint32_t	PROPERTY_REGISTERED_FLAG		= ((uint32_t)1) <<  11;
-uint32_t	PROPERTY_SCALE_FLAG				= ((uint32_t)1) <<  12;
-uint32_t	PROPERTY_SENSOR_ID_FLAG			= ((uint32_t)1) <<  13;
-uint32_t	PROPERTY_SNMP_MODULE_FLAG		= ((uint32_t)1) <<  14;
-uint32_t	PROPERTY_SNMP_COMMUNITY_FLAG	= ((uint32_t)1) <<  15;
-uint32_t	PROPERTY_TIME_FLAG				= ((uint32_t)1) <<  16;
-uint32_t	PROPERTY_TIMEOUT_FLAG			= ((uint32_t)1) <<  17;
-uint32_t	PROPERTY_TYPE_FLAG				= ((uint32_t)1) <<  18;
-uint32_t	PROPERTY_VALUE_MIN_FLAG			= ((uint32_t)1) <<  19;
-uint32_t	PROPERTY_VALUE_MAX_FLAG			= ((uint32_t)1) <<  20;
-uint32_t	PROPERTY_UNIT_FLAG				= ((uint32_t)1) <<  21;
-uint32_t	PROPERTY_UPDATE_INTERVAL_FLAG	= ((uint32_t)1) <<  22;
-uint32_t	PROPERTY_TIME_OF_EXPIRE_FLAG	= ((uint32_t)1) <<  23;
-uint32_t	PROPERTY_VALUE_FLAG				= ((uint32_t)1) <<  24;
-uint32_t	PROPERTY_STAT_FLAG				= ((uint32_t)1) <<  25;
-uint32_t	PROPERTY_MODEL_FLAG				= ((uint32_t)1) <<  26;
-
-Fields	PROPERTY_CORRECTION_INTERVAL(PROPERTY_CORRECTION_INTERVAL_FLAG);
-Fields	PROPERTY_DATE				(PROPERTY_DATE_FLAG);
-Fields	PROPERTY_OPTIONS			(PROPERTY_OPTIONS_FLAG);
-Fields	PROPERTY_ENABLE				(PROPERTY_ENABLE_FLAG);
 Fields	PROPERTY_ID					(PROPERTY_ID_FLAG);
-Fields	PROPERTY_IP					(PROPERTY_IP_FLAG);
-Fields	PROPERTY_KEEP_ALIVE_INTERVAL(PROPERTY_KEEP_ALIVE_INTERVAL_FLAG);
-Fields	PROPERTY_LOCATION			(PROPERTY_LOCATION_FLAG);
-Fields	PROPERTY_LOOP_INTERVAL		(PROPERTY_LOOP_INTERVAL_FLAG);
-Fields	PROPERTY_NAME				(PROPERTY_NAME_FLAG);
-Fields	PROPERTY_PARENT_ID			(PROPERTY_PARENT_ID_FLAG);
-Fields	PROPERTY_REGISTERED			(PROPERTY_REGISTERED_FLAG);
-Fields	PROPERTY_SCALE				(PROPERTY_SCALE_FLAG);
-Fields	PROPERTY_SENSOR_ID			(PROPERTY_SENSOR_ID_FLAG);
-Fields	PROPERTY_SNMP_MODULE		(PROPERTY_SNMP_MODULE_FLAG);
-Fields	PROPERTY_SNMP_COMMUNITY		(PROPERTY_SNMP_COMMUNITY_FLAG);
-Fields	PROPERTY_TIME				(PROPERTY_TIME_FLAG);
-Fields	PROPERTY_TIMEOUT			(PROPERTY_TIMEOUT_FLAG);
 Fields	PROPERTY_TYPE				(PROPERTY_TYPE_FLAG);
+Fields	PROPERTY_MODEL				(PROPERTY_MODEL_FLAG);
+Fields	PROPERTY_NAME				(PROPERTY_NAME_FLAG);
+Fields	PROPERTY_TIME				(PROPERTY_TIME_FLAG);
+Fields	PROPERTY_ENABLE				(PROPERTY_ENABLE_FLAG);
+Fields	PROPERTY_STAT				(PROPERTY_STAT_FLAG);
+Fields	PROPERTY_LOCATION			(PROPERTY_LOCATION_FLAG);
+Fields	PROPERTY_REGISTERED			(PROPERTY_REGISTERED_FLAG);
+Fields	PROPERTY_PARENT_ID			(PROPERTY_PARENT_ID_FLAG);
+
+Fields	PROPERTY_IP					(PROPERTY_IP_FLAG);
+Fields	PROPERTY_SENSOR_ID			(PROPERTY_SENSOR_ID_FLAG);
+Fields	PROPERTY_UNIT				(PROPERTY_UNIT_FLAG);
+Fields	PROPERTY_SCALE				(PROPERTY_SCALE_FLAG);
 Fields	PROPERTY_VALUE_MIN			(PROPERTY_VALUE_MIN_FLAG);
 Fields	PROPERTY_VALUE_MAX			(PROPERTY_VALUE_MAX_FLAG);
-Fields	PROPERTY_UNIT				(PROPERTY_UNIT_FLAG);
+
+Fields	PROPERTY_OPTIONS			(PROPERTY_OPTIONS_FLAG);
+
+
+Fields	PROPERTY_SNMP_MODULE		(PROPERTY_SNMP_MODULE_FLAG);
+Fields	PROPERTY_SNMP_COMMUNITY		(PROPERTY_SNMP_COMMUNITY_FLAG);
+Fields	PROPERTY_TIMEOUT			(PROPERTY_TIMEOUT_FLAG);
+
+Fields	PROPERTY_CORRECTION_INTERVAL(PROPERTY_CORRECTION_INTERVAL_FLAG);
+Fields	PROPERTY_KEEP_ALIVE_INTERVAL(PROPERTY_KEEP_ALIVE_INTERVAL_FLAG);
+Fields	PROPERTY_LOOP_INTERVAL		(PROPERTY_LOOP_INTERVAL_FLAG);
+
 Fields	PROPERTY_UPDATE_INTERVAL	(PROPERTY_UPDATE_INTERVAL_FLAG);
 Fields	PROPERTY_TIME_OF_EXPIRE		(PROPERTY_TIME_OF_EXPIRE_FLAG);
 Fields	PROPERTY_VALUE				(PROPERTY_VALUE_FLAG);
-Fields	PROPERTY_STAT				(PROPERTY_STAT_FLAG);
-Fields	PROPERTY_MODEL				(PROPERTY_MODEL_FLAG);
 
-Fields	PROPERTY_ALL				( true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
-Fields	PROPERTY_CREATE				( true,  true,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
-Fields	PROPERTY_ADD_CONFIRM		( true, false,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
-Fields	PROPERTY_GET				( true,  true,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
-Fields	PROPERTY_SET				( true,  true,  true,  true,  true,  true,  true,  true, false,  true,  true,  true,  true,  true,  true,  true, true,  true,  true,  true,   true,  true,  true, false, false, false, true);
+Fields	PROPERTY_BASIC	= PROPERTY_ID
+						+ PROPERTY_TYPE
+						+ PROPERTY_NAME
+						+ PROPERTY_MODEL
+						+ PROPERTY_TIME
+						+ PROPERTY_ENABLE
+						+ PROPERTY_LOCATION
+						+ PROPERTY_REGISTERED
+						+ PROPERTY_PARENT_ID
+						+ PROPERTY_IP				
+						+ PROPERTY_SENSOR_ID
+						+ PROPERTY_UNIT
+						+ PROPERTY_SCALE	
+						+ PROPERTY_VALUE_MIN
+						+ PROPERTY_VALUE_MAX
+						+ PROPERTY_OPTIONS
+						+ PROPERTY_SNMP_MODULE
+						+ PROPERTY_SNMP_COMMUNITY
+						+ PROPERTY_TIMEOUT
+						+ PROPERTY_KEEP_ALIVE_INTERVAL
+						+ PROPERTY_CORRECTION_INTERVAL
+						+ PROPERTY_LOOP_INTERVAL;
+
+
+//const Fields	PROPERTY_ALL	= PROPERTY_BASIC;
 
 Fields::Fields()
 {
-	correction_interval = false;
-	date = false;
-	options = false;
-	enable = false;
 	id = false;
-	ip = false;
-	keep_alive_interval = false;
-	location = false;
-	loop_interval = false;
-	name = false;
-	parent_id = false;
-	registered = false;
-	scale = false;
-	sensor_id = false;
-	snmp_module = false;
-	snmp_community = false;
-	time = false;
-	timeout = false;
 	type = false;
+	name = false;
+	model= false;
+	enable = false;
+	stat = false;
+	location = false;
+	registered = false;
+	parent_id = false;
+	ip = false;
+	sensor_id = false;
+	unit = false;
+	scale = false;
 	value_min = false;
 	value_max = false;
-	unit = false;
+	options = false;
+	time = false;
+	snmp_module = false;
+	snmp_community = false;
+	timeout = false;
+	correction_interval = false;
+	keep_alive_interval = false;
+	loop_interval = false;
 	update_interval = false;
 	time_of_expire = false;
 	value = false;
-	stat = false;
-	model= false;
-}
-
-Fields::Fields( bool	_correction_interval, bool	_date, bool	_options, bool	_enable, bool	_id, bool	_ip, bool	_keep_alive_interval, bool	_location, bool	_loop_interval, bool	_name,
-				bool	_parent_id, bool	_registered, bool	_scale, bool	_sensor_id, bool	_snmp_module, bool	_snmp_community, bool	_time, bool	_timeout, bool	_type, bool	_value_min,
-				bool	_value_max, bool	_unit, bool	_update_interval, bool _time_of_expire, bool _value, bool _stat, bool _model)
-:correction_interval(_correction_interval), date(date), options(_options), enable(_enable), id(_id), ip(_ip), keep_alive_interval(_keep_alive_interval), location(_location), loop_interval(_loop_interval), name(_name),
-				parent_id(_parent_id), registered(_registered), scale(_scale), sensor_id(_sensor_id), snmp_module(_snmp_module), snmp_community(_snmp_community), time(_time), timeout(_timeout), type(_type),
-				value_min(_value_min), value_max(_value_max), unit(_unit), update_interval(_update_interval), time_of_expire(_time_of_expire), value(_value), model(_model)
-{
 }
 
 Fields::Fields(uint32_t _flags)
@@ -114,70 +101,33 @@ Fields::Fields(uint32_t _flags)
 	Set(_flags);
 }
 
-Fields	operator+(Fields& _field1, Fields& _fields2)
+Fields	operator+(Fields& _fields1, Fields& _fields2)
 {
-	Fields	fields;
+	uint32_t	flags;
+	uint32_t	flags1, flags2;
 
-	fields.correction_interval = _field1.correction_interval || _fields2.correction_interval;
-	fields.date = _field1.date || _fields2.date;
-	fields.options= _field1.options || _fields2.options;
-	fields.enable = _field1.enable || _fields2.enable;
-	fields.id = _field1.id || _fields2.id;
-	fields.ip = _field1.ip || _fields2.ip;
-	fields.keep_alive_interval = _field1.keep_alive_interval || _fields2.keep_alive_interval;
-	fields.location = _field1.location || _fields2.location;
-	fields.loop_interval = _field1.loop_interval || _fields2.loop_interval;
-	fields.name = _field1.name || _fields2.name;
-	fields.parent_id = _field1.parent_id || _fields2.parent_id;
-	fields.registered = _field1.registered || _fields2.registered;
-	fields.scale = _field1.scale || _fields2.scale;
-	fields.sensor_id = _field1.sensor_id || _fields2.sensor_id;
-	fields.snmp_module = _field1.snmp_module || _fields2.snmp_module;
-	fields.snmp_community = _field1.snmp_community || _fields2.snmp_community;
-	fields.time = _field1.time || _fields2.time;
-	fields.timeout = _field1.timeout || _fields2.timeout;
-	fields.type = _field1.type || _fields2.type;
-	fields.value_min = _field1.value_min || _fields2.value_min;
-	fields.value_max = _field1.value_max || _fields2.value_max;
-	fields.unit = _field1.unit ||  _fields2.unit;
-	fields.update_interval = _field1.update_interval || _fields2.update_interval;
-	fields.time_of_expire = _field1.time_of_expire || _fields2.time_of_expire;
-	fields.value = _field1.value || _fields2.value;
-	fields.stat = _field1.stat || _fields2.stat;
-	fields.model = _field1.model || _fields2.model;
+	flags1 = uint32_t(_fields1);
+	flags2 = uint32_t(_fields2);
+
+	flags = flags1 | flags2;
+
+	Fields	fields(flags);
 
 	return	fields;
 }
 
-Fields&	Fields::operator+=(Fields& _fields)
+Fields&	Fields::operator+=(Fields& _fields2)
 {
-	correction_interval = correction_interval || _fields.correction_interval;
-	date = date || _fields.date;
-	options = options || _fields.options;
-	enable = enable || _fields.enable;
-	id = id || _fields.id;
-	ip = ip || _fields.ip;
-	keep_alive_interval = keep_alive_interval || _fields.keep_alive_interval;
-	location = location || _fields.location;
-	loop_interval = loop_interval || _fields.loop_interval;
-	name = name || _fields.name;
-	parent_id = parent_id || _fields.parent_id;
-	registered = registered || _fields.registered;
-	scale = scale || _fields.scale;
-	sensor_id = sensor_id || _fields.sensor_id;
-	snmp_module = snmp_module || _fields.snmp_module;
-	snmp_community = snmp_community || _fields.snmp_community;
-	time = time || _fields.time;
-	timeout = timeout || _fields.timeout;
-	type = type || _fields.type;
-	value_min = value_min || _fields.value_min;
-	value_max = value_max || _fields.value_max;
-	unit = unit ||  _fields.unit;
-	update_interval = update_interval || _fields.update_interval;
-	time_of_expire = time_of_expire || _fields.time_of_expire;
-	value = value|| _fields.value;
-	stat = stat || _fields.stat;
-	model = model || _fields.model;
+	uint32_t	flags;
+	uint32_t	flags1;
+	uint32_t	flags2;
+
+	flags1 = uint32_t(*this);
+	flags2 = uint32_t(_fields2);
+
+	flags = flags1 | flags2;
+
+	Set(flags);
 
 	return	*this;
 }
@@ -187,10 +137,6 @@ bool	Fields::Set(uint32_t _value)
 	if (_value & PROPERTY_CORRECTION_INTERVAL_FLAG)
 	{
 		correction_interval = true;
-	}
-	if (_value & PROPERTY_DATE_FLAG)
-	{
-		date = true;
 	}
 	if (_value & PROPERTY_OPTIONS_FLAG)
 	{
@@ -302,10 +248,6 @@ bool	Fields::Reset(uint32_t _value)
 	{
 		correction_interval = false;
 	}
-	if (_value & PROPERTY_DATE_FLAG)
-	{
-		date = false;
-	}
 	if (_value & PROPERTY_OPTIONS_FLAG)
 	{
 		options = false;
@@ -415,10 +357,6 @@ bool	Fields::Set(std::string const& _field)
 	if (_field == TITLE_NAME_CORRECTION_INTERVAL)
 	{
 		correction_interval = true;
-	}
-	else if (_field == TITLE_NAME_DATE)
-	{
-		date = true;
 	}
 	else if (_field == TITLE_NAME_OPTIONS)
 	{
@@ -535,10 +473,6 @@ bool	Fields::Reset(std::string const& _field)
 	{
 		correction_interval = false;
 	}
-	else if (_field == TITLE_NAME_DATE)
-	{
-		date = false;
-	}
 	else if (_field == TITLE_NAME_OPTIONS)
 	{
 		options = false;
@@ -648,17 +582,13 @@ bool	Fields::Reset(std::string const& _field)
 }
 
 
-Fields::operator uint32_t()
+Fields::operator uint32_t() const
 {
 	uint32_t	value = 0;
 
 	if (correction_interval)
 	{
 		value |= PROPERTY_CORRECTION_INTERVAL_FLAG;
-	}
-	if (date)
-	{
-		value |= PROPERTY_DATE_FLAG;
 	}
 	if (options)
 	{
@@ -770,11 +700,6 @@ bool	Fields::Names(std::multimap<uint32_t, std::string>& _names)
 	if (correction_interval)
 	{
 		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_CORRECTION_INTERVAL_FLAG, TITLE_NAME_CORRECTION_INTERVAL));
-	}
-
-	if (date)
-	{
-		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_DATE_FLAG, TITLE_NAME_DATE));
 	}
 
 	if (options)

@@ -252,7 +252,7 @@ RetValue	ShellCommandServerLinker
 			if ((_arguments[1] == MSG_TYPE_RCS_ADD) || (_arguments[1] == MSG_TYPE_RCS_SET))
 			{
 				payload.SetMsgType(_arguments[1]);	
-				fields = PROPERTY_ALL;
+				fields.Set(PROPERTY_ALL_FLAG);
 			}
 			else if ((_arguments[1] == MSG_TYPE_RCS_DEL) || (_arguments[1] == MSG_TYPE_RCS_GET))
 			{

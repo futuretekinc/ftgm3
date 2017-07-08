@@ -60,7 +60,8 @@ public:
 			bool		ClearUpdatedProperties();
 
 	virtual	bool		GetProperty(JSONNode& _property);
-	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		GetProperty(uint32_t _type, JSONNode& _property);
+	virtual	bool		GetProperties(JSONNode& _properties, uint32_t _fields = PROPERTY_STATIC_FLAG);
 
 	virtual	bool		SetProperty(JSONNode const& _property, bool _check = false);
 	virtual	bool		SetProperties(JSONNode const& _properties, bool _check, bool create);

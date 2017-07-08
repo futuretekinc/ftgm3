@@ -63,8 +63,12 @@ public:
 	bool	ReadAllMIBs();
 	bool	ReadMIB(std::string const& _file_name);
 
-	bool	Open(Session& _session, std::string const& _ip, std::string const& _community);
-	bool	Close(Session& _session);
+	bool	Attach(Session* _session);
+	bool	Detach(Session* _session);
+
+	bool	Open(Session* _session, std::string const& _ip, std::string const& _community);
+	bool	Close(Session* _session);
+	uint32_t	GetSessionCount();
 
 protected:
 
@@ -113,7 +117,7 @@ public:
 
 protected:
 
-	Master&					master_;
+	Master*					master_;
 	struct snmp_session*	session_;
 	uint32_t				timeout_;
 	Locker					locker_;

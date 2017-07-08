@@ -389,31 +389,46 @@ bool	Object::GetProperty(JSONNode& _property)
 	return	ret_value;
 }
 
-bool	Object::GetProperties(JSONNode& _properties, Fields const& _fields)
+bool	Object::GetProperty(uint32_t _type, JSONNode& _property)
 {
-	if (_fields.id)
+	bool	ret_value = true;
+
+	switch(_type)
 	{
-		_properties.push_back(JSONNode(TITLE_NAME_ID, id_));
+	case	PROPERTY_ID_FLAG: 		_property = JSONNode(TITLE_NAME_ID, id_); break;
+	case	PROPERTY_NAME_FLAG: 	_property = JSONNode(TITLE_NAME_NAME, name_); break;
+	case	PROPERTY_TIME_FLAG: 	_property = JSONNode(TITLE_NAME_TIME, time_t(date_)); break;
+	case	PROPERTY_PARENT_ID_FLAG:_property = JSONNode(TITLE_NAME_PARENT_ID, parent_id_); break;
+	case 	PROPERTY_ENABLE_FLAG:	_property = JSONNode(TITLE_NAME_ENABLE, enable_); break;
+	default:
+		{
+			TRACE_ERROR("The " << _type << " configuration is not supported!");
+			ret_value = false;
+		}
+		break;
 	}
 
-	if (_fields.name)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_NAME, name_));
-	}
-	
-	if (_fields.time)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_TIME, time_t(date_)));
-	}
+	return	ret_value;
+}
 
-	if (_fields.enable)
+bool	Object::GetProperties(JSONNode& _properties, uint32_t _fields)
+{
+	TRACE_INFO("Properties Flags : " << std::setbase(16) << _fields << std::setbase(10));
+	for(uint32_t flag = 0x1 ; flag != 0 ; flag <<= 1)
 	{
-		_properties.push_back(JSONNode(TITLE_NAME_ENABLE, enable_));
-	}
+		if (_fields & flag)
+		{
+			JSONNode	property;
 
-	if (_fields.parent_id)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_PARENT_ID, parent_id_));
+			if (GetProperty(flag, property))
+			{
+				_properties.push_back(property);	
+			}
+			else
+			{
+				TRACE_ERROR("Invalid property[" << flag << "]");
+			}
+		}
 	}
 
 	return	true;
@@ -479,10 +494,7 @@ bool	Object::SetProperties(JSONNode const& _config, bool _check, bool _create)
 	{
 		JSONNode	trace_config = JSONNodeGetTraceNode(_config);
 
-		if (SetProperty(trace_config, _check) == false)
-		{	
-			ret_value = false;
-		}
+		ret_value = SetProperty(trace_config, _check);
 	}
 	catch(ObjectNotFound& e)
 	{
@@ -502,8 +514,8 @@ bool	Object::SetProperties(JSONNode const& _config, bool _check, bool _create)
 						if (SetProperty(*it, _check) == false)
 						{	
 							TRACE_ERROR("SetProperty : " << it->name() << "-" << it->write());
-							ret_value = false;
-							break;
+//							ret_value = false;
+//							break;
 						}
 					}
 					else
@@ -512,16 +524,16 @@ bool	Object::SetProperties(JSONNode const& _config, bool _check, bool _create)
 						if (SetProperty(*it, _check) == false)
 						{	
 							TRACE_ERROR("SetProperty : " << it->name() << "-" << it->as_string());
-							ret_value = false;
-							break;
+//							ret_value = false;
+//							break;
 						}
 					}
 				}
 				catch(InvalidArgument& e)
 				{
 					TRACE_ERROR(e.what());	
-					ret_value = false;
-					break;
+//					ret_value = false;
+//					break;
 				}
 			}
 		}

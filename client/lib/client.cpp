@@ -42,7 +42,7 @@ RetValue	ShellCommandConnect
 	if (client->Connect())
 	{
 		_shell->Out() << "Client started" << std::endl;
-		client->Start();
+		client->Start(100);
 	}
 	else
 	{

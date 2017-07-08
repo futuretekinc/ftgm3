@@ -40,7 +40,8 @@ public:
 			bool		SetLocation(std::string const& _location, bool _check = false);
 			std::string	GetLocation();
 
-	virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
+	virtual	bool		GetProperty(uint32_t _type, JSONNode& _property);
+	//virtual	bool		GetProperties(JSONNode& _properties, Fields const& _fields = PROPERTY_ALL);
 
 			bool		SetProperty(JSONNode const& _property, bool _check = false);
 

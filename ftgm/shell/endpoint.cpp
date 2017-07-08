@@ -7,6 +7,7 @@
 
 
 bool	ShellCommandEndpointList(Shell* _shell);
+bool	ShellCommandEndpointInfo(Shell* _shell, std::string const& _id);
 
 RetValue	ShellCommandEndpoint
 (
@@ -28,8 +29,8 @@ RetValue	ShellCommandEndpoint
 		{
 			_shell->Out() << "Endpoint count : " << object_manager->GetEndpointCount() << std::endl;
 
-			std::list<Endpoint*>	snmp_list;
-			if (object_manager->GetEndpointList(snmp_list) != 0)
+			std::list<Endpoint*>	ep_list;
+			if (object_manager->GetEndpointList(ep_list) != 0)
 			{
 				uint32_t	id_len = 32;
 				uint32_t	name_len = 16;
@@ -37,7 +38,7 @@ RetValue	ShellCommandEndpoint
 				uint32_t	stat_len = 16;
 				uint32_t	value_len = 8;
 
-				for(std::list<Endpoint*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+				for(std::list<Endpoint*>::iterator it = ep_list.begin() ; it != ep_list.end() ; it++)
 				{
 					uint32_t	len;
 
@@ -77,7 +78,7 @@ RetValue	ShellCommandEndpoint
 				_shell->Out() << " " << std::setw(value_len) << "Value";
 				_shell->Out() << std::endl;
 
-				for(std::list<Endpoint*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+				for(std::list<Endpoint*>::iterator it = ep_list.begin() ; it != ep_list.end() ; it++)
 				{
 					Endpoint *endpoint = dynamic_cast<Endpoint*>(*it);
 
@@ -377,42 +378,7 @@ RetValue	ShellCommandEndpoint
 		{
 			for(uint32_t i = 1 ; i < _count ; i++)
 			{
-				Endpoint*	endpoint = object_manager->GetEndpoint(_arguments[i]);
-				if (endpoint == NULL)
-				{
-					_shell->Out() << "Endpoint[" << _arguments[1] << " not found!" << std::endl;
-					ret_value = RET_VALUE_INVALID_ARGUMENTS;
-				}
-				else
-				{
-					JSONNode	properties;
-					uint32_t	title_len = 16;
-
-					endpoint->GetProperties(properties);
-					for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
-					{
-						if (title_len < it->name().length())
-						{
-							title_len = it->name().length();
-						}
-					}
-
-					title_len = (title_len + 3) / 4 * 4;
-
-					_shell->Out() << "///////////////////////////////////////////////////////" << std::endl;
-					_shell->Out() << "// Endpoint[" << _arguments[i] << "]" << std::endl;
-					_shell->Out() << "///////////////////////////////////////////////////////" << std::endl;
-					for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
-					{
-						_shell->Out() << std::setw(title_len) << it->name() << " : " <<  it->as_string() << std::endl;
-					}
-					_shell->Out() << std::setw(title_len) << TITLE_NAME_COUNT << " : " << endpoint->GetDataCount() << std::endl;
-					_shell->Out() << std::setw(title_len) << TITLE_NAME_VALUE << " : " << endpoint->GetValue() << std::endl;
-					_shell->Out() << std::setw(title_len) << TITLE_NAME_START_TIME << " : " << endpoint->GetDateOfFirstData() << std::endl;
-					_shell->Out() << std::setw(title_len) << TITLE_NAME_END_TIME << " : " << endpoint->GetDateOfLastData() << std::endl;
-					_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_REPORT_TIME << " : " << endpoint->GetLastReportTime() << std::endl;
-					_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_CONFIRM_TIME << " : " << endpoint->GetLastConfirmTime() << std::endl << std::endl;
-				}
+				ShellCommandEndpointInfo(_shell,_arguments[i]);
 			}
 
 		}
@@ -444,9 +410,12 @@ Shell::Command	shell_ftgm_command_endpoint
 	"    Start endpoints.\n"
 	"  stop    <ID> [<ID> ...]\n"
 	"    Stop endpoints.\n"
+	"  <ID> [<ID> ...]\n"
+	"    Show endpoint information\n"
 	"PARAMETERS:\n"
 	"  TYPE    Type of endpoint\n"
-	"  ID      Endpoint ID\n",
+	"  ID      Endpoint ID\n"
+	"          Entering 'all' applies to all endpoints.\n",
 	"Management of endpoint",
 	ShellCommandEndpoint
 );
@@ -457,15 +426,15 @@ bool	ShellCommandEndpointList(Shell* _shell)
 
 	_shell->Out() << "Endpoint count : " << object_manager->GetEndpointCount() << std::endl;
 
-	std::list<Endpoint*>	snmp_list;
-	if (object_manager->GetEndpointList(snmp_list) != 0)
+	std::list<Endpoint*>	ep_list;
+	if (object_manager->GetEndpointList(ep_list) != 0)
 	{
 		uint32_t	id_len = 32;
 		uint32_t	name_len = 16;
 		uint32_t	type_len = 16;
 		uint32_t	stat_len = 16;
 
-		for(std::list<Endpoint*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+		for(std::list<Endpoint*>::iterator it = ep_list.begin() ; it != ep_list.end() ; it++)
 		{
 			uint32_t	len;
 
@@ -504,7 +473,7 @@ bool	ShellCommandEndpointList(Shell* _shell)
 		_shell->Out() << " " << std::setw(id_len) << "Device ID";
 		_shell->Out() << std::endl;
 
-		for(std::list<Endpoint*>::iterator it = snmp_list.begin() ; it != snmp_list.end() ; it++)
+		for(std::list<Endpoint*>::iterator it = ep_list.begin() ; it != ep_list.end() ; it++)
 		{
 			Endpoint *endpoint = dynamic_cast<Endpoint*>(*it);
 
@@ -514,6 +483,90 @@ bool	ShellCommandEndpointList(Shell* _shell)
 			_shell->Out() << " " << std::setw(stat_len) << ToString(endpoint->GetStat());
 			_shell->Out() << " " << std::setw(id_len) << endpoint->GetParentID();
 			_shell->Out() << std::endl;	
+		}
+	}
+
+	return	true;
+}
+
+bool	ShellCommandEndpointInfo(Shell* _shell, std::string const& _id)
+{
+	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
+
+	if (_id == "all")
+	{
+		std::list<Endpoint*>	ep_list;
+
+		object_manager->GetEndpointList(ep_list);
+
+		for(std::list<Endpoint*>::iterator it = ep_list.begin() ; it != ep_list.end(); it++)
+		{
+			JSONNode	properties;
+			uint32_t	title_len = 16;
+
+			(*it)->GetProperties(properties);
+			for(JSONNode::iterator property_it = properties.begin() ; property_it != properties.end() ; property_it++)
+			{
+				if (title_len < property_it->name().length())
+				{
+					title_len = property_it->name().length();
+				}
+			}
+
+			title_len = (title_len + 3) / 4 * 4;
+
+			_shell->Out() << "///////////////////////////////////////////////////////" << std::endl;
+			_shell->Out() << "// Endpoint[" << (*it)->GetID() << "]" << std::endl;
+			_shell->Out() << "/////property_//////////////////////////////////////////////////" << std::endl;
+			for(JSONNode::iterator property_it = properties.begin() ; property_it != properties.end() ; property_it++)
+			{
+				_shell->Out() << std::setw(title_len) << property_it->name() << " : " <<  property_it->as_string() << std::endl;
+			}
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_COUNT << " : " << (*it)->GetDataCount() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_VALUE << " : " << (*it)->GetValue() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_START_TIME << " : " << (*it)->GetDateOfFirstData() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_END_TIME << " : " << (*it)->GetDateOfLastData() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_REPORT_TIME << " : " << (*it)->GetLastReportTime() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_CONFIRM_TIME << " : " << (*it)->GetLastConfirmTime() << std::endl << std::endl;
+		}
+	}
+	else
+	{
+		Endpoint*	endpoint = object_manager->GetEndpoint(_id);
+		if (endpoint == NULL)
+		{
+			_shell->Out() << "Endpoint[" << _id << " not found!" << std::endl;
+			return	false;
+		}
+		else
+		{
+			JSONNode	properties;
+			uint32_t	title_len = 16;
+
+			endpoint->GetProperties(properties);
+			for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
+			{
+				if (title_len < it->name().length())
+				{
+					title_len = it->name().length();
+				}
+			}
+
+			title_len = (title_len + 3) / 4 * 4;
+
+			_shell->Out() << "///////////////////////////////////////////////////////" << std::endl;
+			_shell->Out() << "// Endpoint[" << _id << "]" << std::endl;
+			_shell->Out() << "///////////////////////////////////////////////////////" << std::endl;
+			for(JSONNode::iterator it = properties.begin() ; it != properties.end() ; it++)
+			{
+				_shell->Out() << std::setw(title_len) << it->name() << " : " <<  it->as_string() << std::endl;
+			}
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_COUNT << " : " << endpoint->GetDataCount() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_VALUE << " : " << endpoint->GetValue() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_START_TIME << " : " << endpoint->GetDateOfFirstData() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_END_TIME << " : " << endpoint->GetDateOfLastData() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_REPORT_TIME << " : " << endpoint->GetLastReportTime() << std::endl;
+			_shell->Out() << std::setw(title_len) << TITLE_NAME_LAST_CONFIRM_TIME << " : " << endpoint->GetLastConfirmTime() << std::endl << std::endl;
 		}
 	}
 

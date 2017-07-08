@@ -66,14 +66,59 @@ bool	Master::ReadMIB(std::string const& _file_name)
 }
 
 
-bool	Master::Open(Session& _session, std::string const& _ip, std::string const& _community)
+bool	Master::Attach(Session* _session)
+{
+	for(std::list<Session*>::iterator it = session_list_.begin() ; it != session_list_.end() ; it++)
+	{
+		if ((*it) == _session)
+		{
+			TRACE_ERROR("The session is already attached.");
+			return	false;	
+		}
+	}
+
+	session_list_.push_back(_session);
+
+	if (!IsRunning())
+	{
+		if (!Start(100))
+		{
+			TRACE_ERROR("SNMP Master start initialization timeout!");	
+		}
+	}
+	
+	return	true;
+}
+
+bool	Master::Detach(Session* _session)
+{
+	for(std::list<Session*>::iterator it = session_list_.begin() ; it != session_list_.end() ; it++)
+	{
+		if ((*it) == _session)
+		{
+			session_list_.erase(it);
+
+			if (session_list_.size() == 0)
+			{
+				Stop();	
+			}
+			return	true;	
+		}
+	}
+
+	TRACE_ERROR("The session is not exist.");
+
+	return	false;
+}
+
+bool	Master::Open(Session* _session, std::string const& _ip, std::string const& _community)
 {
 	snmp_session	session;
 	snmp_session*	session_;
 	char			ip[IP_LENGTH_MAX + 1];
 	char			community[SNMP_COMMUNITY_LENGTH_MAX + 1];
 
-	if (!_session.IsOpened())
+	if (!_session->IsOpened())
 	{
 		locker_.Lock();
 
@@ -89,65 +134,38 @@ bool	Master::Open(Session& _session, std::string const& _ip, std::string const& 
 		session.community_len = _community.size();
 
 		session.callback = AsyncResponse;
-		session.callback_magic	= (void *)&_session;
+		session.callback_magic	= (void *)_session;
 
-		_session.session_ = snmp_open(&session);
-
-		session_list_.push_back(&_session);
+		_session->session_ = snmp_open(&session);
 
 		locker_.Unlock();
 
-		if (_session.session_ == NULL)
+		if (_session->session_ == NULL)
 		{
 			TRACE_ERROR("Failed to open session.");
 			return	false;
 		}
 
-		if (session_list_.size() == 1)
-		{
-			if (!Start(100))
-			{
-				TRACE_ERROR("SNMP Master start initialization timeout!");	
-			}
-		}
 	}
 
 	return	true;
 }
 
-bool	Master::Close(Session& _session)
+bool	Master::Close(Session* _session)
 {
-	bool	found = false;
-
-	std::list<Session*>::iterator it = session_list_.begin();
-	for(;it != session_list_.end() ; it++)
+	if (_session->session_ != NULL)
 	{
-		if ((*it) == &_session)
-		{
-			break;	
-		}
-	}
+		snmp_close(_session->session_);
+		_session->session_ = NULL;
 
-	if (it == session_list_.end())
-	{
-		return	false;
-	}
-
-	session_list_.erase(it);
-
-	if (_session.session_ != NULL)
-	{
-		snmp_close(_session.session_);
-		_session.session_ = NULL;
-
-	}
-
-	if (session_list_.size() == 0)
-	{
-		Stop();
 	}
 
 	return	true;
+}
+
+uint32_t	Master::GetSessionCount()
+{
+	return	session_list_.size();
 }
 
 bool	Master::ReadValue(snmp_session* _session, OID const& _oid, uint32_t _timeout, time_t& _time, std::string& _value)
@@ -391,13 +409,13 @@ int	Master::AsyncResponse(int operation, struct snmp_session *sp, int reqid, str
 	Session *session= (Session*)_magic;
 
 	TRACE_INFO2(NULL, "Async Response received!");
-	session->master_.locker_.Lock();
+	session->master_->locker_.Lock();
 	if (operation == NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE) 
 	{
 		if (_pdu->errstat == SNMP_ERR_NOERROR)
 		{
 			session->success_ = Convert(_pdu->variables, session->value_);
-			session->time_ = Date::GetCurrent();
+			session->time_ = time_t(Date::GetCurrent());
 			session->finished_.Unlock();
 		}
 	}
@@ -407,11 +425,11 @@ int	Master::AsyncResponse(int operation, struct snmp_session *sp, int reqid, str
 		session->finished_.Unlock();
 	}
 
-	if (session->master_.request_count_ > 0)
+	if (session->master_->request_count_ > 0)
 	{
-		session->master_.request_count_--;
+		session->master_->request_count_--;
 	}
-	session->master_.locker_.Unlock();
+	session->master_->locker_.Unlock();
 
 	return 1;
 }

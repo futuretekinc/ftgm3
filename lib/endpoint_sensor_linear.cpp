@@ -75,9 +75,17 @@ bool		EndpointSensorLinear::SetValueMax(std::string const& _value, bool _check)
 	return	true;
 }
 
-bool	EndpointSensorLinear::GetProperties(JSONNode& _properties, Fields const& _fields)
+bool	EndpointSensorLinear::GetProperty(uint32_t _type, JSONNode& _property)
 {
-	return	EndpointSensor::GetProperties(_properties, _fields);
+	switch(_type)
+	{
+	case	PROPERTY_VALUE_MIN_FLAG:	_property = JSONNode(TITLE_NAME_VALUE_MIN, GetValueMin()); break;
+	case	PROPERTY_VALUE_MAX_FLAG:	_property = JSONNode(TITLE_NAME_VALUE_MAX, GetValueMax()); break;
+	default:
+		return	EndpointSensor::GetProperty(_type, _property);
+	}
+
+	return	true;
 }
 
 bool	EndpointSensorLinear::SetProperty(JSONNode const& _property, bool _check)

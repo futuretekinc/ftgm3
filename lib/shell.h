@@ -40,6 +40,15 @@ public:
 		Command*	GetCommand(const std::string& _name);
 		uint32_t	GetCommandWidth();
 
+
+			bool	ShowProperties(JSONNode const& _properties);
+
+
+
+
+
+
+
 			bool	OnMessage(Message* _message);
 protected:
 	static int		Parser(const std::string& _command_line, std::string* _arguments, int _max_count);

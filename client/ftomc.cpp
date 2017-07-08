@@ -63,9 +63,9 @@ int main
 
 	client.SetDumpPacket(true);
 
-	client.Start();
+	client.Start(100);
 	Shell	shell(object_manager_shell_commands, object_manager_shell_command_count, &client);
-	shell.Run();
+	shell.Run(100);
 
 	return	0;	
 }

@@ -25,7 +25,7 @@ public:
 			double		GetFloatValueMax()	{	return	value_max_;	}
 			bool		SetValueMax(std::string const& _max, bool _check = false);
 
-			bool		GetProperties(JSONNode& _properties, Fields const& _fields);
+			bool		GetProperty(uint32_t _type, JSONNode& _property);
 			bool		SetProperty(JSONNode const& _property, bool _check = false);
 
 	static	const char*	Type();

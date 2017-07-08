@@ -6,10 +6,10 @@
 	[
 		{
 			"type" : "dev_fte",
-			"name" : "dev_00405c901868",
+			"name" : "192.168.100.20",
 			"options" : 
 			{
-				"ip"   : "10.0.1.220",
+				"ip"   : "192.168.100.20",
 				"module" : "FTE-E.txt",
 				"community" : "public"
 			},
@@ -31,16 +31,16 @@
 					"type": "ep_s_soil_acidity",
 					"name" : "Soil Acidity",
 					"update_interval" : 10,
-					"sensor_id" : 0
+					"sensor_id" : 2
 				}
 			]
 		},
 		{
 			"type" : "dev_fte",
-			"name" : "dev_00405c901869",
+			"name" : "192.168.100.21",
 			"options" : 
 			{
-				"ip"   : "10.0.1.221",
+				"ip"   : "192.168.100.21",
 				"module" : "FTE-E.txt",
 				"community" : "public"
 			},
@@ -56,10 +56,10 @@
 		},
 		{
 			"type" : "dev_fte",
-			"name" : "dev_00405c695ed2",
+			"name" : "192.168.100.22",
 			"options" : 
 			{
-				"ip"   : "10.0.1.222",
+				"ip"   : "192.168.100.22",
 				"module" : "FTE-E.txt",
 				"community" : "public"
 			},
@@ -100,8 +100,26 @@
 					"name" : "DO5",
 					"update_interval" : 10,
 					"sensor_id" : 5
-				},
+				}
 			]
-		}
+		},
+		{
+			"type" : "dev_adam_6051",
+			"name" : "192.168.100.23",
+			"options" : 
+			{
+				"ip"   : "192.168.100.23"
+			},
+			"endpoint" : 
+			[
+				{
+					"type": "ep_s_wind_speed",
+					"model" : "YGC-FS",
+					"name" : "Wind Speed",
+					"update_interval" : 10,
+					"sensor_id" : 7
+				}
+			]
+		},
 	]
 }

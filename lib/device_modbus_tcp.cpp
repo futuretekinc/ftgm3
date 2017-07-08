@@ -10,6 +10,7 @@ DeviceModbusTCP::DeviceModbusTCP(ObjectManager& _manager, std::string const& _ty
 
 void	DeviceModbusTCP::Preprocess()
 {
+	Device::Preprocess();
 }
 
 bool	DeviceModbusTCP::ReadValue(std::string const& _epid, time_t& _time, std::string& _value)

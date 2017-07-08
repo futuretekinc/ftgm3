@@ -37,9 +37,9 @@ Endpoint*	Device::CreateEndpoint(JSONNode const& _properties)
 }
 
 
-bool	Device::GetProperties(JSONNode& _properties, Fields const& _fields) 
+bool	Device::GetProperty(uint32_t _type, JSONNode& _property) 
 {
-	return	Node::GetProperties(_properties, _fields);
+	return	Node::GetProperty(_type, _property);
 }
 
 
@@ -267,6 +267,8 @@ Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
 	Device*	device = NULL;
 	try
 	{
+		TRACE_INFO2(&_manager, "< Create Device >" << std::endl << _properties.write_formatted());
+
 		std::string	type = JSONNodeGetType(_properties);
 
 		if (type == std::string(DeviceSNMP::Type()))

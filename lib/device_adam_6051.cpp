@@ -34,6 +34,7 @@ bool	DeviceADAM6051::ReadValue(uint32_t	_index, time_t& _time, uint32_t& _value)
 				return	false;	
 			}
 			_value = ((uint32_t)values[1] << 16) + values[0];
+			_time = time_t(Date::GetCurrent());
 		}
 	}
 	catch(ObjectNotFound& e)
@@ -79,11 +80,11 @@ bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, std::strin
 		}
 
 		uint32_t	index = endpoint->GetSensorID();
-		if (index < 28)
+		if (index < 14)
 		{
 			int16_t	values[2];
 
-			if (!ReadInputRegisters(index, values, 2))
+			if (!ReadInputRegisters(index*2, values, 2))
 			{
 				TRACE_ERROR("Failed to read input registers!");
 				return	false;	
@@ -91,8 +92,9 @@ bool	DeviceADAM6051::ReadValue(std::string const& _id, time_t& _time, std::strin
 			uint32_t	value = ((uint32_t)values[1] << 16) + values[0];
 
 			_value = ToString(value);
+			_time = time_t(Date::GetCurrent());
 
-			TRACE_INFO("Value : " << value);
+			TRACE_INFO("Value[" << index << "] : " << value);
 		}
 	}
 	catch(ObjectNotFound& e)

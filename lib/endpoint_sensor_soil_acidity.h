@@ -11,6 +11,7 @@ public:
 
 			const char*	GetClassName();
 
+		void	CorrectionProcess();
 protected:
 
 //	Static members

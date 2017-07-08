@@ -131,7 +131,7 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				gateway->GetProperties(result, PROPERTY_ALL);
+				gateway->GetProperties(result);
 			}
 
 			response.AddGateway(result);	
@@ -147,7 +147,7 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				device->GetProperties(result, PROPERTY_ALL);
+				device->GetProperties(result);
 			}
 
 			response.AddDevice(result);	
@@ -163,7 +163,7 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				endpoint->GetProperties(result, PROPERTY_ALL);
+				endpoint->GetProperties(result);
 			}
 
 			response.AddEndpoint(result);	
@@ -306,7 +306,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				gateway->GetProperties(result, PROPERTY_ALL);
+				gateway->GetProperties(result);
 			}
 
 			response.AddGateway(result);
@@ -331,7 +331,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				device->GetProperties(result, PROPERTY_ALL);
+				device->GetProperties(result);
 			}
 
 			response.AddDevice(result);
@@ -393,7 +393,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 					}
 					else
 					{
-						endpoint->GetProperties(result, PROPERTY_ALL);
+						endpoint->GetProperties(result);
 					}
 				}
 			}
@@ -484,7 +484,7 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				gateway->GetProperties(result, PROPERTY_ALL);
+				gateway->GetProperties(result);
 			}
 
 			response.AddGateway(result);
@@ -503,7 +503,7 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				device->GetProperties(result, PROPERTY_ALL);
+				device->GetProperties(result);
 			}
 
 			response.AddDevice(result);
@@ -522,7 +522,7 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				endpoint->GetProperties(result, PROPERTY_ALL);
+				endpoint->GetProperties(result);
 			}
 
 			response.AddEndpoint(result);

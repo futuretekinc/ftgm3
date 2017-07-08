@@ -104,7 +104,7 @@ RetValue	ShellCommandGateway
 
 				for(std::list<Gateway*>::iterator it = gateway_list.begin(); it != gateway_list.end() ; it++)
 				{
-					(*it)->Start();
+					(*it)->Start(GATEWAY_START_INITIALIZATION_TIMEOUT);
 					std::cout << "The gateway[" << (*it)->GetTraceName() << "] is started!" << std::endl;
 				}
 			}
@@ -119,7 +119,7 @@ RetValue	ShellCommandGateway
 					}
 					else
 					{
-						gateway->Start();
+						gateway->Start(GATEWAY_START_INITIALIZATION_TIMEOUT);
 						std::cout << "The gateway[" << _arguments[i] << "] has started!" << std::endl;
 					}
 				}

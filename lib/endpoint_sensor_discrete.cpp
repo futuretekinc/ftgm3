@@ -87,29 +87,6 @@ bool		EndpointSensorDiscrete::SetValueMax(std::string const& _value, bool _check
 	return	true;
 }
 
-bool	EndpointSensorDiscrete::GetProperties(JSONNode& _properties, Fields const& _fields)
-{
-	return	EndpointSensor::GetProperties(_properties, _fields);
-}
-
-bool	EndpointSensorDiscrete::SetProperty(JSONNode const& _property, bool _check)
-{
-	bool	ret_value = true;
-
-	if (_property.name() == TITLE_NAME_VALUE_MIN)
-	{
-	}
-	else if (_property.name() == TITLE_NAME_VALUE_MAX)
-	{
-	}
-	else
-	{
-		ret_value = EndpointSensor::SetProperty(_property, _check);	
-	}
-
-	return	ret_value;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 //	Define static members
 ////////////////////////////////////////////////////////////////////////////////

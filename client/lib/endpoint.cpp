@@ -277,3 +277,119 @@ RetValue	ShellCommandEndpointList( std::string* _arguments, uint32_t	_count, She
 	}
 
 }
+
+RetValue	ShellCommandEndpointInfo( std::string* _arguments, uint32_t	_count, Shell* _shell)
+{
+
+	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
+	std::vector<JSONNode>		endpoint_id_vector;
+	Fields		fields;
+	uint32_t	epid_offset = 0;
+	std::map<std::string, uint32_t>	fields_size;
+
+	if (_count > 1)
+	{
+		for(uint32_t i = 0 ; i < _count ; i++)
+		{
+			if (_arguments[i].substr(0, 2) != "--")
+			{
+				epid_offset = i;
+				break;
+			}
+			else if (_arguments[i].size() < 3)
+			{
+				THROW_INVALID_ARGUMENT("Invalid argment!");
+			}
+
+			fields.Set(_arguments[i].substr(2, _arguments[i].size() - 2));
+		}
+	}
+	else
+	{
+		fields = default_fields;	
+	}
+
+	if (epid_offset == _count)
+	{
+		if (client->GetEndpoint(endpoint_id_vector) == false)
+		{
+			_shell->Out() << "Failed to get endpoint list." << std::endl;
+		}
+	}
+	else
+	{
+		for(uint32_t i = epid_offset ; i < _count ; i++)
+		{
+			JSONNode	node;
+			node.push_back(JSONNode(TITLE_NAME_ID, _arguments[i]));
+			endpoint_id_vector.push_back(node);
+		}
+	}
+
+	if (endpoint_id_vector.size() != 0)
+	{
+		std::vector<JSONNode>	endpoint_properties_vector;
+		JSONNode	properties;
+
+		for(uint32_t i = 0 ; i < endpoint_id_vector.size() ; i++)
+		{
+			std::string	id = JSONNodeGetID(endpoint_id_vector[i]);
+
+			if (client->GetEndpoint(id, fields, properties))
+			{
+				endpoint_properties_vector.push_back(properties);
+			}
+		}
+
+		std::multimap<uint32_t, std::string >	fields_name_map;
+
+		fields.Names(fields_name_map);
+
+		for(std::map<uint32_t, std::string>::iterator it = fields_name_map.begin(); it != fields_name_map.end() ; it++)
+		{
+			fields_size.insert(fields_size.end(), std::pair<std::string, uint32_t>(it->second, it->second.size()));	
+		}
+
+		for(uint32_t i = 0 ; i < endpoint_properties_vector.size() ; i++)
+		{
+			for(std::map<std::string, uint32_t>::iterator it = fields_size.begin() ; it != fields_size.end() ; it++)
+			{
+				JSONNode::iterator property_it = endpoint_properties_vector[i].find(it->first);
+				if (property_it != endpoint_properties_vector[i].end())
+				{
+					if (fields_size[it->first] < property_it->as_string().size())
+					{
+						fields_size[it->first] = property_it->as_string().size();
+					}
+				}
+			}
+		}
+
+		uint32_t i = 0;
+		for(std::map<std::string, uint32_t>::iterator it = fields_size.begin() ; it != fields_size.end() ; it++)
+		{
+			_shell->Out() << setw(it->second+1) << it->first;
+		}
+		_shell->Out() << std::endl;
+
+		for(uint32_t i = 0 ; i < endpoint_properties_vector.size() ; i++)
+		{
+			for(std::map<std::string, uint32_t>::iterator it = fields_size.begin() ; it != fields_size.end() ; it++)
+			{
+				JSONNode::iterator property_it = endpoint_properties_vector[i].find(it->first);
+				if (property_it != endpoint_properties_vector[i].end())
+				{
+					_shell->Out() << std::setw(it->second+1) << property_it->as_string();
+				}
+				else
+				{
+					_shell->Out() << std::setw(it->second+1) << "";
+				}
+			}
+			_shell->Out() << std::endl;
+		}
+
+	}
+
+	return	RET_VALUE_OK;
+}

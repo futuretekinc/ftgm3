@@ -38,6 +38,7 @@ void	EndpointSensorYGCFS::CorrectionProcess()
 	time_t		time;
 	uint32_t	counter;
 
+	TRACE_ENTRY;
 	Device* device = manager_.GetDevice(parent_id_);
 	if(device != NULL)
 	{

@@ -74,14 +74,14 @@ int	main(int argc, char *argv[])
 
 		if (debug_mode)
 		{
-			object_manager.Start(10);
+			object_manager.Start(5000);
 
 			//	signal(SIGINT, sigterm);
 			// 	signal(SIGTERM, sigterm);
 
 			Shell	shell(shell_ftgm_commands, shell_ftgm_command_count, &object_manager);
 
-			shell.Run(10);
+			shell.Run(1000);
 
 			object_manager.Stop(true);
 		}
@@ -89,7 +89,7 @@ int	main(int argc, char *argv[])
 		{
 			if (!fork())
 			{
-				object_manager.Run(10);
+				object_manager.Run(5000);
 #if 0
 				object_manager.Start();
 					

@@ -122,7 +122,7 @@ RetValue	ShellCommandDevice
 
 				for(std::list<Device*>::iterator it = device_list.begin(); it != device_list.end() ; it++)
 				{
-					(*it)->Start();
+					(*it)->Start(DEVICE_START_INITIALIZATION_TIMEOUT);
 					std::cout << "The device[" << (*it)->GetTraceName() << "] is started!" << std::endl;
 				}
 			}
@@ -137,7 +137,7 @@ RetValue	ShellCommandDevice
 					}
 					else
 					{
-						device->Start();
+						device->Start(DEVICE_START_INITIALIZATION_TIMEOUT);
 						std::cout << "The device[" << _arguments[i] << "] has started!" << std::endl;
 					}
 				}

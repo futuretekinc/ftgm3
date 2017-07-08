@@ -16,6 +16,7 @@
 #define	MSG_STR(name, value)				const char* 	MSG_STR_##name=value
 #define	MSG_TYPE_RCS(name, value)			const char* 	MSG_TYPE_RCS_##name=value
 #define	RET_CONST(name, value)				const char* 	RET_CONST_##name=value
+#define	CMD_TYPE_SHELL(name, value)			const char* 	CMD_TYPE_SHELL_##name=value
 #else
 #define	DEFAULT_CONST(name, value)			extern	const char* 	DEFAULT_CONST_##name
 #define	TITLE_NAME(name, value)				extern	const char* 	TITLE_NAME_##name
@@ -26,6 +27,7 @@
 #define	MSG_STR(name, value)				extern	const char* 	MSG_STR_##name
 #define	MSG_TYPE_RCS(name, value)			extern	const char* 	MSG_TYPE_RCS_##name
 #define	RET_CONST(name, value)				extern	const char* 	RET_CONST_##name
+#define	CMD_TYPE_SHELL(name, value)			extern 	const char* 	CMD_TYPE_SHELL_##name
 #endif
 
 #define	ID_LENGTH_MAX		32
@@ -292,8 +294,16 @@ MSG_TYPE_RCS(DEL, 		"del");
 MSG_TYPE_RCS(GET, 		"get");
 MSG_TYPE_RCS(SET, 		"set");
 MSG_TYPE_RCS(LIST, 		"list");
+MSG_TYPE_RCS(INFO, 		"info");
 MSG_TYPE_RCS(CONFIRM,	"confirm");
 MSG_TYPE_RCS(ERROR, 	"error");
+
+CMD_TYPE_SHELL(ADD, 	"add");
+CMD_TYPE_SHELL(DEL, 	"del");
+CMD_TYPE_SHELL(GET, 	"get");
+CMD_TYPE_SHELL(SET, 	"set");
+CMD_TYPE_SHELL(LIST, 	"list");
+CMD_TYPE_SHELL(INFO, 	"info");
 
 #endif
 

@@ -32,6 +32,7 @@ Endpoint::Endpoint(ObjectManager& _manager, std::string const& _type)
 	last_report_date_(),
 	last_confirm_date_()
 {
+	keep_alive_interval_ = 0;
 }
 
 Endpoint::Endpoint(ObjectManager& _manager, std::string const& _type, std::string const& _unit)
@@ -44,6 +45,7 @@ Endpoint::Endpoint(ObjectManager& _manager, std::string const& _type, std::strin
 	last_confirm_date_(),
 	unit_(_unit)
 {
+	keep_alive_interval_ = 0;
 }
 
 Endpoint::~Endpoint()
@@ -178,38 +180,22 @@ uint32_t	Endpoint::GetCorrectionInterval()
 	return	correction_interval_;
 }
 
-bool	Endpoint::GetProperties(JSONNode& _properties, Fields const& _fields)
+bool	Endpoint::GetProperty(uint32_t _type, JSONNode& _property)
 {
-	if (!Node::GetProperties(_properties, _fields))
-	{	
-		return	false;
-	}
-
-	if (_fields.sensor_id)
+	switch(_type)
 	{
-		_properties.push_back(JSONNode(TITLE_NAME_SENSOR_ID, sensor_id_));
+	case	PROPERTY_SENSOR_ID_FLAG: 			_property = JSONNode(TITLE_NAME_SENSOR_ID, sensor_id_); break;
+	case	PROPERTY_UNIT_FLAG:	 				_property = JSONNode(TITLE_NAME_UNIT, unit_); break;
+	case	PROPERTY_SCALE_FLAG:				_property = JSONNode(TITLE_NAME_SCALE, scale_);	break;
+	case	PROPERTY_CORRECTION_INTERVAL_FLAG: 	_property = JSONNode(TITLE_NAME_CORRECTION_INTERVAL, correction_interval_);	break;
+	case	PROPERTY_VALUE_FLAG: 				_property = JSONNode(TITLE_NAME_VALUE, GetValue());	break;
+	default:	
+		{
+			return	Node::GetProperty(_type, _property);
+		}
+		break;
 	}
-
-	if (_fields.unit)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_UNIT, unit_));
-	}
-
-	if (_fields.scale)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_SCALE, scale_));
-	}
-
-	if (_fields.correction_interval)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_CORRECTION_INTERVAL, correction_interval_));
-	}
-
-	if (_fields.value)
-	{
-		_properties.push_back(JSONNode(TITLE_NAME_VALUE, GetValue()));
-	}
-
+	
 	return	true;	
 }
 
@@ -514,11 +500,11 @@ uint32_t	Endpoint::GetData(uint32_t _count, ValueMap& _value_map)
 	return	_value_map.size();
 }
 
-bool	Endpoint::Add(time_t time, std::string const& _value)
+bool	Endpoint::Add(time_t _time, std::string const& _value)
 {
 	bool	ret_value = false;
 
-	ret_value = value_map_.Add(time, _value);
+	ret_value = value_map_.Add(_time, _value);
 	if (ret_value == true)
 	{
 #if 0
@@ -616,6 +602,11 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 				endpoint = new EndpointSensorRainfall(_manager, _properties);
 				TRACE_INFO2(NULL, "The railfall endpoint[" << endpoint->GetID() <<"] created");
 			}
+			else if (type == OBJECT_TYPE_EP_S_WIND_SPEED) 
+			{
+				endpoint = new EndpointSensorWindSpeed(_manager, _properties);
+				TRACE_INFO2(NULL, "The wind speed endpoint[" << endpoint->GetID() <<"] created");
+			}
 			else if (type == OBJECT_TYPE_EP_S_GAS) 
 			{
 				endpoint = new EndpointSensorGAS(_manager, _properties);
@@ -649,6 +640,8 @@ bool	Endpoint::GetPropertyFieldList(std::list<std::string>& _field_list)
 		_field_list.push_back(TITLE_NAME_SCALE);
 		_field_list.push_back(TITLE_NAME_CORRECTION_INTERVAL);
 		_field_list.push_back(TITLE_NAME_SENSOR_ID);
+		_field_list.push_back(TITLE_NAME_VALUE_MIN);
+		_field_list.push_back(TITLE_NAME_VALUE_MAX);
 	}
 
 	return	true;
