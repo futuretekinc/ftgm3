@@ -37,6 +37,8 @@ public:
 			bool	GetGateway(std::string const& _id , Fields const& _fields, JSONNode& _properties);
 			bool	GetGateway(std::list<std::string>& _fields, std::vector<JSONNode>& _vector);
 			bool	SetGateway(JSONNode const& _properties);
+			bool	StartGateway(std::string const& _id);
+			bool	StopGateway(std::string const& _id);
 
 			bool	AddDevice(JSONNode const& _properties);
 			bool	DelDevice(std::string const& _id);
@@ -45,6 +47,8 @@ public:
 			bool	GetDevice(std::string const& _id , Fields const& _fields, JSONNode& _properties);
 			bool	GetDevice(std::list<std::string>& _fields, std::vector<JSONNode>& _vector);
 			bool	SetDevice(JSONNode const& _properties);
+			bool	StartDevice(std::string const& _id);
+			bool	StopDevice(std::string const& _id);
 
 			bool	AddEndpoint(JSONNode const& _properties);
 			bool	DelEndpoint(std::string const& _id);
@@ -53,6 +57,8 @@ public:
 			bool	GetEndpoint(std::string const& _id , Fields const& _fields, JSONNode& _properties);
 			bool	GetEndpoint(std::list<std::string>& _fields, std::vector<JSONNode>& _vector);
 			bool	SetEndpoint(JSONNode const& _properties);
+			bool	StartEndpoint(std::string const& _id);
+			bool	StopEndpoint(std::string const& _id);
 
 			bool	DelEPData(std::string const& _id, uint32_t _count);
 			bool	DelEPData(std::string const& _id, time_t _start, time_t _end);

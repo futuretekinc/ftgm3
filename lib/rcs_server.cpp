@@ -17,6 +17,7 @@
 #include "utils.h"
 #include "json.h"
 #include "exception.h"
+#include "property.h"
 
 /////////////////////////////////////////////////////
 //
@@ -91,6 +92,14 @@ bool	RCSServer::ServiceCall(RCSMessage& _request, RCSMessage& _response)
 		else if (_request.GetMsgType() == MSG_TYPE_RCS_SET)
 		{
 			result = Set(_request, _response);	
+		}
+		else if (_request.GetMsgType() == MSG_TYPE_RCS_START)
+		{
+			result = CmdStart(_request, _response);	
+		}
+		else if (_request.GetMsgType() == MSG_TYPE_RCS_STOP)
+		{
+			result = CmdStop(_request, _response);	
 		}
 		else if (_request.GetMsgType() == MSG_TYPE_RCS_LIST)
 		{
@@ -467,7 +476,11 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 {
 	JSONNode	payload  = _request.GetPayload();
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
+	uint32_t	gateway_fields 	= _request.GetGatewayFields();
+	uint32_t	device_fields 	= _request.GetDeviceFields();
+	uint32_t	endpoint_fields = _request.GetEndpointFields();
 
+	TRACE_INFO("<RCSServer::Get>" << std::endl <<  payload.write_formatted() );
 	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
@@ -484,7 +497,7 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				gateway->GetProperties(result);
+				gateway->GetProperties(result, gateway_fields);
 			}
 
 			response.AddGateway(result);
@@ -503,7 +516,7 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				device->GetProperties(result);
+				device->GetProperties(result, device_fields);
 			}
 
 			response.AddDevice(result);
@@ -522,7 +535,7 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
-				endpoint->GetProperties(result);
+				endpoint->GetProperties(result, endpoint_fields);
 			}
 
 			response.AddEndpoint(result);
@@ -585,6 +598,130 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 
 	_response = response;
 
+	return	true;
+}
+
+bool	RCSServer::CmdStart(RCSMessage& _request, RCSMessage& _response)
+{
+	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
+	JSONNode	payload  = _request.GetPayload();
+
+	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
+	{
+		if (it->name() == TITLE_NAME_GATEWAY)
+		{
+			JSONNode	result(JSON_NODE);
+			std::string id = JSONNodeGetID(*it);
+			
+			if (manager_->StartGateway(id))
+			{
+				result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			}
+			else
+			{
+				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+			}
+
+			response.AddGateway(result);
+		}
+		else if (it->name() == TITLE_NAME_DEVICE)
+		{
+			JSONNode	result(JSON_NODE);
+			std::string id = JSONNodeGetID(*it);
+
+			if (manager_->StartDevice(id))
+			{
+				result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			}
+			else
+			{
+				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+			}
+
+			response.AddDevice(result);
+		}
+		else if (it->name() == TITLE_NAME_ENDPOINT)
+		{
+			JSONNode	result(JSON_NODE);
+			std::string id = JSONNodeGetID(*it);
+
+			if (manager_->StartEndpoint(id))
+			{
+				result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			}
+			else
+			{
+				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+			}
+
+			response.AddEndpoint(result);
+		}
+	}	
+
+	_response = response;
+	
+	return	true;
+}
+
+bool	RCSServer::CmdStop(RCSMessage& _request, RCSMessage& _response)
+{
+	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
+	JSONNode	payload  = _request.GetPayload();
+
+	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
+	{
+		if (it->name() == TITLE_NAME_GATEWAY)
+		{
+			JSONNode	result(JSON_NODE);
+			std::string id = JSONNodeGetID(*it);
+			
+			if (manager_->StopGateway(id))
+			{
+				result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			}
+			else
+			{
+				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+			}
+
+			response.AddGateway(result);
+		}
+		else if (it->name() == TITLE_NAME_DEVICE)
+		{
+			JSONNode	result(JSON_NODE);
+			std::string id = JSONNodeGetID(*it);
+
+			if (manager_->StopDevice(id))
+			{
+				result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			}
+			else
+			{
+				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+			}
+
+			response.AddDevice(result);
+		}
+		else if (it->name() == TITLE_NAME_ENDPOINT)
+		{
+			JSONNode	result(JSON_NODE);
+			std::string id = JSONNodeGetID(*it);
+
+			if (manager_->StopEndpoint(id))
+			{
+				result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			}
+			else
+			{
+				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+			}
+
+			response.AddEndpoint(result);
+		}
+	}	
+
+	_response = response;
+	
 	return	true;
 }
 

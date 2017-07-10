@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+uint32_t		JSONNodeGet(JSONNode const& _node, std::string const& field, uint32_t _default);
+int32_t		JSONNodeGet(JSONNode const& _node, std::string const& field, int32_t _default);
+
 std::string	JSONNodeGetID(JSONNode const& _node);
 std::string	JSONNodeGetName(JSONNode const& _node);
 std::string	JSONNodeGetName(JSONNode const& _node, std::string const& _default);

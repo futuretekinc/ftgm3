@@ -12,5 +12,5 @@ TARGET_SRCS = $(wildcard *.cpp)
 DEPEND_LIBS = 
 
 CFLAGS := $(CFLAGS) -I. -I./shell
-LIBS := $(LIBS) -lftomc_shell 
+LIBS := $(LIBS) -lftgmc_shell 
 include $(PROJ_ROOT)/IncludePost.mk

@@ -293,6 +293,8 @@ MSG_TYPE_RCS(ADD, 		"add");
 MSG_TYPE_RCS(DEL, 		"del");
 MSG_TYPE_RCS(GET, 		"get");
 MSG_TYPE_RCS(SET, 		"set");
+MSG_TYPE_RCS(START,		"start");
+MSG_TYPE_RCS(STOP,		"stop");
 MSG_TYPE_RCS(LIST, 		"list");
 MSG_TYPE_RCS(INFO, 		"info");
 MSG_TYPE_RCS(CONFIRM,	"confirm");

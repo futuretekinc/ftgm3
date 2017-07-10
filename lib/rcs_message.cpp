@@ -12,6 +12,8 @@
 #include "md5.h"
 #include "sha256.h"
 #include "utils.h"
+#include "property.h"
+#include "json_utils.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //	Class RCSMessage
@@ -66,6 +68,8 @@ RCSMessage::RCSMessage(std::string const& _msg_type)
 RCSMessage::RCSMessage(JSONNode const& _payload)
 :	gateway_is_null_(false), device_is_null_(false), endpoint_is_null_(false)
 {
+	JSONNode	node;
+
 	if (!GetValue(_payload, TITLE_NAME_MSG_ID, msg_id_, false))
 	{
 		TRACE_ERROR("RCS message id is invalid!");
@@ -105,6 +109,7 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 			throw InvalidArgument("RCS message gateway is invalid!");
 		}
 	}
+	gateway_fields_ = JSONNodeGet(_payload, TITLE_NAME_GATEWAY_FIELDS, PROPERTY_STATIC_FLAG);
 
 	it = _payload.find(TITLE_NAME_DEVICE);
 	if (it != _payload.end())
@@ -125,6 +130,7 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 			throw InvalidArgument("RCS message device is invalid!");
 		}
 	}
+	device_fields_ = JSONNodeGet(_payload, TITLE_NAME_DEVICE_FIELDS, PROPERTY_STATIC_FLAG);
 
 	it = _payload.find(TITLE_NAME_ENDPOINT);
 	if (it != _payload.end())
@@ -145,6 +151,10 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 			throw InvalidArgument("RCS message endpoint is invalid!");
 		}
 	}
+
+	uint32_t	value = JSONNodeGet(_payload, TITLE_NAME_ENDPOINT_FIELDS, PROPERTY_STATIC_FLAG);
+
+	endpoint_fields_ = value;
 
 	it = _payload.find(TITLE_NAME_DATA);
 	if (it != _payload.end())

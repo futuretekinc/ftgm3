@@ -298,6 +298,48 @@ bool	RCSClient::SetGateway(JSONNode const& _properties)
 	return	false;
 }
 
+bool	RCSClient::StartGateway(std::string const& _id)
+{
+	RCSMessage	request(MSG_TYPE_RCS_START);
+	RCSMessage	response;
+
+	request.AddGatewayID(_id);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received or invalid.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::StopGateway(std::string const& _id)
+{
+	RCSMessage	request(MSG_TYPE_RCS_STOP);
+	RCSMessage	response;
+
+	request.AddGatewayID(_id);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received or invalid.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
 bool	RCSClient::AddDevice(JSONNode const& _properties)
 {
 	RCSMessage	request(MSG_TYPE_RCS_ADD);
@@ -466,6 +508,48 @@ bool	RCSClient::SetDevice(JSONNode const& _properties)
 	return	false;
 }
 
+bool	RCSClient::StartDevice(std::string const& _id)
+{
+	RCSMessage	request(MSG_TYPE_RCS_START);
+	RCSMessage	response;
+
+	request.AddDeviceID(_id);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received or invalid.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::StopDevice(std::string const& _id)
+{
+	RCSMessage	request(MSG_TYPE_RCS_STOP);
+	RCSMessage	response;
+
+	request.AddDeviceID(_id);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received or invalid.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
 bool	RCSClient::AddEndpoint(JSONNode const& _properties)
 {
 	RCSMessage	request(MSG_TYPE_RCS_ADD);
@@ -623,6 +707,48 @@ bool	RCSClient::SetEndpoint(JSONNode const& _properties)
 	if (!RemoteCall(request, response))
 	{
 		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::StartEndpoint(std::string const& _id)
+{
+	RCSMessage	request(MSG_TYPE_RCS_START);
+	RCSMessage	response;
+
+	request.AddEndpointID(_id);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received or invalid.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::StopEndpoint(std::string const& _id)
+{
+	RCSMessage	request(MSG_TYPE_RCS_STOP);
+	RCSMessage	response;
+
+	request.AddEndpointID(_id);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received or invalid.");	
 		return	false;
 	}
 
@@ -858,6 +984,7 @@ bool	RCSClient::RemoteCall(RCSMessage& _request, RCSMessage& _response)
 
 	_request.Make();
 
+	TRACE_INFO("<RmoteCall>" << std::endl << _request.GetPayload().write_formatted());
 	std::string	receive_buffer;
 
 	if (!tcp_client_.RequestAndReply(_request.GetPayload().write(), receive_buffer))

@@ -55,6 +55,8 @@ struct	Fields
 	bool	model:1;
 };
 
+std::ostream& operator <<(std::ostream& os, Fields const& _fields);
+
 Fields	operator+(Fields& _fields1, Fields& _fields2);
 
 #define	PROPERTY_ID_FLAG					(((uint32_t)1) <<  0)
@@ -110,6 +112,8 @@ Fields	operator+(Fields& _fields1, Fields& _fields2);
 							PROPERTY_TIMEOUT_FLAG|\
 							PROPERTY_CORRECTION_INTERVAL_FLAG|\
 							PROPERTY_KEEP_ALIVE_INTERVAL_FLAG)
+
+#define	PROPERTY_ALL_FLAG ((uint32_t)0xFFFFFFFF)
 
 extern Fields	PROPERTY_CORRECTION_INTERVAL;
 extern Fields	PROPERTY_DATE;

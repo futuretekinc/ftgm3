@@ -40,6 +40,8 @@ public:
 			uint32_t	GetNodeList(std::list<Node*>& _list);
 			uint32_t	GetNodeList(std::string const& _type, std::list<Node*>& _list);
 			Node*		GetNode(std::string const& _id);
+			bool		StartNode(std::string const& _id);
+			bool		StopNode(std::string const& _id);
 
 			bool		Attach(Gateway* _device);
 			bool		Detach(Gateway* _device);
@@ -50,6 +52,8 @@ public:
 			uint32_t	GetGatewayList(std::string const& _type, std::list<Gateway*>& _device_list);
 			Gateway*	GetGateway(std::string const& _id);
 			Gateway*	GetMasterGateway();
+			bool		StartGateway(std::string const& _id);
+			bool		StopGateway(std::string const& _id);
 
 			bool		Attach(Device* _device);
 			bool		Detach(Device* _device);
@@ -59,6 +63,8 @@ public:
 			uint32_t	GetDeviceList(std::list<Device*>& _device_list);
 			uint32_t	GetDeviceList(std::string const& _type, std::list<Device*>& _device_list);
 			Device*		GetDevice(std::string const& _id);
+			bool		StartDevice(std::string const& _id);
+			bool		StopDevice(std::string const& _id);
 
 			bool		Attach(Endpoint* _endpoint);
 			bool		Detach(Endpoint* _endpoint);
@@ -67,6 +73,8 @@ public:
 			uint32_t	GetEndpointCount();
 			uint32_t	GetEndpointList(std::list<Endpoint*>& _endpoint_list);
 			Endpoint*	GetEndpoint(std::string const& _id);
+			bool		StartEndpoint(std::string const& _id);
+			bool		StopEndpoint(std::string const& _id);
 
 			// Data Manager
 			bool		Attach(DataManager* _data_manager);

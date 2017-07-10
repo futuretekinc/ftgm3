@@ -220,7 +220,32 @@ bool	ActiveObject::SetLoopInterval(std::string const& _interval, bool _check)
 
 bool	ActiveObject::GetProperty(uint32_t _type, JSONNode& _property)
 {
-	return	Object::GetProperty(_type, _property);
+	bool	ret_value = true;
+
+	if (_type == PROPERTY_STAT_FLAG)
+	{
+		if (GetState() == DISABLED)
+		{
+			_property = JSONNode(TITLE_NAME_STAT, ToString(GetState())); 
+		}
+		else
+		{
+			if (IsRunning())
+			{
+				_property = JSONNode(TITLE_NAME_STAT, "run");
+			}
+			else
+			{
+				_property = JSONNode(TITLE_NAME_STAT, "stop");
+			}
+		}
+	}
+	else
+	{
+		ret_value = Object::GetProperty(_type, _property);
+	}
+
+	return	ret_value;
 }
 
 #if 0

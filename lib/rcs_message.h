@@ -33,6 +33,7 @@ public:
 			bool			AddGatewayID(std::string const& _id);
 			bool			AddGatewayNull();
 			bool			AddGatewayFields(Fields _fields);
+	const	Fields&			GetGatewayFields()	{	return	gateway_fields_;	};
 			uint32_t		GetGatewayCount();
 			JSONNode		GetGateway(uint32_t index);
 
@@ -40,6 +41,7 @@ public:
 			bool			AddDeviceID(std::string const& _id);
 			bool			AddDeviceNull();
 			bool			AddDeviceFields(Fields _fields);
+	const	Fields&			GetDeviceFields()	{	return	device_fields_;	};
 			uint32_t		GetDeviceCount();
 			JSONNode		GetDevice(uint32_t index);
 
@@ -47,6 +49,7 @@ public:
 			bool			AddEndpointID(std::string const& _id);
 			bool			AddEndpointNull();
 			bool			AddEndpointFields(Fields _fields);
+	const	Fields&			GetEndpointFields()	{	return	endpoint_fields_;	};
 			uint32_t		GetEndpointCount();
 			JSONNode		GetEndpoint(uint32_t index);
 

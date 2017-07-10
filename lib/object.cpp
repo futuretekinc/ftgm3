@@ -400,6 +400,7 @@ bool	Object::GetProperty(uint32_t _type, JSONNode& _property)
 	case	PROPERTY_TIME_FLAG: 	_property = JSONNode(TITLE_NAME_TIME, time_t(date_)); break;
 	case	PROPERTY_PARENT_ID_FLAG:_property = JSONNode(TITLE_NAME_PARENT_ID, parent_id_); break;
 	case 	PROPERTY_ENABLE_FLAG:	_property = JSONNode(TITLE_NAME_ENABLE, enable_); break;
+	case 	PROPERTY_STAT_FLAG:		_property = JSONNode(TITLE_NAME_STAT, ToString(GetState())); break;
 	default:
 		{
 			TRACE_ERROR("The " << _type << " configuration is not supported!");
@@ -413,7 +414,6 @@ bool	Object::GetProperty(uint32_t _type, JSONNode& _property)
 
 bool	Object::GetProperties(JSONNode& _properties, uint32_t _fields)
 {
-	TRACE_INFO("Properties Flags : " << std::setbase(16) << _fields << std::setbase(10));
 	for(uint32_t flag = 0x1 ; flag != 0 ; flag <<= 1)
 	{
 		if (_fields & flag)

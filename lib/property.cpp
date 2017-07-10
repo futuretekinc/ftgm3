@@ -98,6 +98,33 @@ Fields::Fields()
 
 Fields::Fields(uint32_t _flags)
 {
+	id = false;
+	type = false;
+	name = false;
+	model= false;
+	enable = false;
+	stat = false;
+	location = false;
+	registered = false;
+	parent_id = false;
+	ip = false;
+	sensor_id = false;
+	unit = false;
+	scale = false;
+	value_min = false;
+	value_max = false;
+	options = false;
+	time = false;
+	snmp_module = false;
+	snmp_community = false;
+	timeout = false;
+	correction_interval = false;
+	keep_alive_interval = false;
+	loop_interval = false;
+	update_interval = false;
+	time_of_expire = false;
+	value = false;
+
 	Set(_flags);
 }
 
@@ -132,111 +159,148 @@ Fields&	Fields::operator+=(Fields& _fields2)
 	return	*this;
 }
 
+std::ostream& operator <<(std::ostream& os, Fields const& _fields)
+{
+	os << std::setw(8) << std::setfill('0')<< std::setbase(16) << uint32_t(_fields) << std::setfill(' ') << std::setw(0) << std::setbase(10);
+
+	return	os;
+}
+
 bool	Fields::Set(uint32_t _value)
 {
-	if (_value & PROPERTY_CORRECTION_INTERVAL_FLAG)
-	{
-		correction_interval = true;
-	}
-	if (_value & PROPERTY_OPTIONS_FLAG)
-	{
-		options = true;
-	}
-	if (_value & PROPERTY_ENABLE_FLAG)
-	{
-		enable = true;
-	}
+	//#define	PROPERTY_ID_FLAG					(((uint32_t)1) <<  0)
 	if (_value & PROPERTY_ID_FLAG)
 	{
 		id = true;
 	}
-	if (_value & PROPERTY_IP_FLAG)
-	{
-		ip = true;
-	}
-	if (_value & PROPERTY_KEEP_ALIVE_INTERVAL_FLAG)
-	{
-		keep_alive_interval = true;
-	}
-	if (_value & PROPERTY_LOCATION_FLAG)
-	{
-		location = true;
-	}
-	if (_value & PROPERTY_LOOP_INTERVAL_FLAG)
-	{
-		loop_interval = true;
-	}
-	if (_value & PROPERTY_NAME_FLAG)
-	{
-		name = true;
-	}
-	if (_value & PROPERTY_PARENT_ID_FLAG)
-	{
-		parent_id = true;
-	}
-	if (_value & PROPERTY_REGISTERED_FLAG)
-	{
-		registered = true;
-	}
-	if (_value & PROPERTY_SCALE_FLAG)
-	{
-		scale = true;
-	}
-	if (_value & PROPERTY_SENSOR_ID_FLAG)
-	{
-		sensor_id = true;
-	}
-	if (_value & PROPERTY_SNMP_MODULE_FLAG)
-	{
-		snmp_module = true;
-	}
-	if (_value & PROPERTY_SNMP_COMMUNITY_FLAG)
-	{
-		snmp_community = true;
-	}
-	if (_value & PROPERTY_TIME_FLAG)
-	{
-		time = true;
-	}
-	if (_value & PROPERTY_TIMEOUT_FLAG)
-	{
-		timeout = true;
-	}
+	//#define	PROPERTY_TYPE_FLAG					(((uint32_t)1) <<  1)
 	if (_value & PROPERTY_TYPE_FLAG)
 	{
 		type = true;
 	}
-	if (_value & PROPERTY_VALUE_MIN_FLAG)
+	//#define	PROPERTY_MODEL_FLAG					(((uint32_t)1) <<  2)
+	if (_value & PROPERTY_MODEL_FLAG)
 	{
-		value_min = true;
+		model = true;
 	}
-	if (_value & PROPERTY_VALUE_MAX_FLAG)
+	//#define	PROPERTY_NAME_FLAG					(((uint32_t)1) <<  3)
+	if (_value & PROPERTY_NAME_FLAG)
 	{
-		value_max = true;
+		name = true;
 	}
-	if (_value & PROPERTY_UNIT_FLAG)
+	//#define	PROPERTY_TIME_FLAG					(((uint32_t)1) <<  4)
+	if (_value & PROPERTY_TIME_FLAG)
 	{
-		unit = true;
+		time = true;
 	}
-	if (_value & PROPERTY_UPDATE_INTERVAL_FLAG)
+	//#define	PROPERTY_ENABLE_FLAG				(((uint32_t)1) <<  5)	
+	if (_value & PROPERTY_ENABLE_FLAG)
 	{
-		update_interval = true;
+		enable = true;
 	}
-	if (_value & PROPERTY_TIME_OF_EXPIRE_FLAG)
-	{
-		time_of_expire = true;
-	}
-	if (_value & PROPERTY_VALUE_FLAG)
-	{
-		value = true;
-	}
+	//#define	PROPERTY_STAT_FLAG					(((uint32_t)1) <<  6)
 	if (_value & PROPERTY_STAT_FLAG)
 	{
 		stat = true;
 	}
-	if (_value & PROPERTY_MODEL_FLAG)
+	//#define	PROPERTY_LOCATION_FLAG				(((uint32_t)1) <<  7)
+	if (_value & PROPERTY_LOCATION_FLAG)
 	{
-		model = true;
+		location = true;
+	}
+	//#define	PROPERTY_REGISTERED_FLAG			(((uint32_t)1) <<  8)
+	if (_value & PROPERTY_REGISTERED_FLAG)
+	{
+		registered = true;
+	}
+	//#define	PROPERTY_PARENT_ID_FLAG				(((uint32_t)1) <<  9)	
+	if (_value & PROPERTY_PARENT_ID_FLAG)
+	{
+		parent_id = true;
+	}
+	
+	//#define	PROPERTY_IP_FLAG					(((uint32_t)1) <<  10)
+	if (_value & PROPERTY_IP_FLAG)
+	{
+		ip = true;
+	}
+	//#define	PROPERTY_SENSOR_ID_FLAG				(((uint32_t)1) <<  11)
+	if (_value & PROPERTY_SENSOR_ID_FLAG)
+	{
+		sensor_id = true;
+	}
+	//#define	PROPERTY_UNIT_FLAG					(((uint32_t)1) <<  12)
+	if (_value & PROPERTY_UNIT_FLAG)
+	{
+		unit = true;
+	}
+	//#define	PROPERTY_SCALE_FLAG					(((uint32_t)1) <<  13)
+	if (_value & PROPERTY_SCALE_FLAG)
+	{
+		scale = true;
+	}
+	//#define	PROPERTY_VALUE_MIN_FLAG				(((uint32_t)1) <<  14)
+	if (_value & PROPERTY_VALUE_MIN_FLAG)
+	{
+		value_min = true;
+	}
+	//#define	PROPERTY_VALUE_MAX_FLAG				(((uint32_t)1) <<  15)
+	if (_value & PROPERTY_VALUE_MAX_FLAG)
+	{
+		value_max = true;
+	}
+	//
+	//#define	PROPERTY_OPTIONS_FLAG				(((uint32_t)1) <<  16)
+	if (_value & PROPERTY_OPTIONS_FLAG)
+	{
+		options = true;
+	}
+	
+	//#define	PROPERTY_SNMP_MODULE_FLAG			(((uint32_t)1) <<  17)
+	if (_value & PROPERTY_SNMP_MODULE_FLAG)
+	{
+		snmp_module = true;
+	}
+	//#define	PROPERTY_SNMP_COMMUNITY_FLAG		(((uint32_t)1) <<  18)
+	if (_value & PROPERTY_SNMP_COMMUNITY_FLAG)
+	{
+		snmp_community = true;
+	}
+	//#define	PROPERTY_TIMEOUT_FLAG				(((uint32_t)1) <<  19)
+	if (_value & PROPERTY_TIMEOUT_FLAG)
+	{
+		timeout = true;
+	}
+	
+	//#define	PROPERTY_CORRECTION_INTERVAL_FLAG	(((uint32_t)1) <<  20)
+	if (_value & PROPERTY_CORRECTION_INTERVAL_FLAG)
+	{
+		correction_interval = true;
+	}
+	//#define	PROPERTY_KEEP_ALIVE_INTERVAL_FLAG	(((uint32_t)1) <<  21)
+	if (_value & PROPERTY_KEEP_ALIVE_INTERVAL_FLAG)
+	{
+		keep_alive_interval = true;
+	}
+	//#define	PROPERTY_LOOP_INTERVAL_FLAG			(((uint32_t)1) <<  22)
+	if (_value & PROPERTY_LOOP_INTERVAL_FLAG)
+	{
+		loop_interval = true;
+	}
+	//#define	PROPERTY_UPDATE_INTERVAL_FLAG		(((uint32_t)1) <<  23)
+	if (_value & PROPERTY_UPDATE_INTERVAL_FLAG)
+	{
+		update_interval = true;
+	}
+	//#define	PROPERTY_TIME_OF_EXPIRE_FLAG		(((uint32_t)1) <<  24)
+	if (_value & PROPERTY_TIME_OF_EXPIRE_FLAG)
+	{
+		time_of_expire = true;
+	}
+	//#define	PROPERTY_VALUE_FLAG					(((uint32_t)1) <<  25)
+	if (_value & PROPERTY_VALUE_FLAG)
+	{
+		value = true;
 	}
 
 	return	true;
@@ -584,114 +648,144 @@ bool	Fields::Reset(std::string const& _field)
 
 Fields::operator uint32_t() const
 {
-	uint32_t	value = 0;
+	uint32_t	flags = 0;
 
-	if (correction_interval)
-	{
-		value |= PROPERTY_CORRECTION_INTERVAL_FLAG;
-	}
-	if (options)
-	{
-		value |= PROPERTY_OPTIONS_FLAG;
-	}
-	if (enable)
-	{
-		value |= PROPERTY_ENABLE_FLAG;
-	}
+	//	PROPERTY_ID_FLAG					(((uint32_t)1) <<  0)
 	if (id)
 	{
-		value |= PROPERTY_ID_FLAG;
+		flags |= PROPERTY_ID_FLAG;
 	}
-	if (ip)
-	{
-		value |= PROPERTY_IP_FLAG;
-	}
-	if (keep_alive_interval)
-	{
-		value |= PROPERTY_KEEP_ALIVE_INTERVAL_FLAG;
-	}
-	if (location)
-	{
-		value |= PROPERTY_LOCATION_FLAG;
-	}
-	if (loop_interval)
-	{
-		value |= PROPERTY_LOOP_INTERVAL_FLAG;
-	}
-	if (name)
-	{
-		value |= PROPERTY_NAME_FLAG;
-	}
-	if (parent_id)
-	{
-		value |= PROPERTY_PARENT_ID_FLAG;
-	}
-	if (registered)
-	{
-		value |= PROPERTY_REGISTERED_FLAG;
-	}
-	if (scale)
-	{
-		value |= PROPERTY_SCALE_FLAG;
-	}
-	if (sensor_id)
-	{
-		value |= PROPERTY_SENSOR_ID_FLAG;
-	}
-	if (snmp_module)
-	{
-		value |= PROPERTY_SNMP_MODULE_FLAG;
-	}
-	if (snmp_community)
-	{
-		value |=PROPERTY_SNMP_COMMUNITY_FLAG;
-	}
-	if (time)
-	{
-		value |= PROPERTY_TIME_FLAG;
-	}
-	if (timeout)
-	{
-		value |= PROPERTY_TIMEOUT_FLAG;
-	}
+	//	PROPERTY_TYPE_FLAG					(((uint32_t)1) <<  1)
 	if (type)
 	{
-		value |= PROPERTY_TYPE_FLAG;
+		flags |= PROPERTY_TYPE_FLAG;
 	}
-	if (value_min)
-	{
-		value |= PROPERTY_VALUE_MIN_FLAG;
-	}
-	if (value_max)
-	{
-		value |= PROPERTY_VALUE_MAX_FLAG;
-	}
-	if (unit)
-	{
-		value |= PROPERTY_UNIT_FLAG;
-	}
-	if (update_interval)
-	{
-		value |= PROPERTY_UPDATE_INTERVAL_FLAG;
-	}
-	if (time_of_expire)
-	{
-		value |= PROPERTY_TIME_OF_EXPIRE_FLAG;
-	}
-	if (value)
-	{
-		value |= PROPERTY_VALUE_FLAG;
-	}
-	if (stat)
-	{
-		value |= PROPERTY_STAT_FLAG;
-	}
+	//	PROPERTY_MODEL_FLAG					(((uint32_t)1) <<  2)
 	if (model)
 	{
-		value |= PROPERTY_MODEL_FLAG;
+		flags |= PROPERTY_MODEL_FLAG;
+	}
+	//	PROPERTY_NAME_FLAG					(((uint32_t)1) <<  3)
+	if (name)
+	{
+		flags |= PROPERTY_NAME_FLAG;
+	}
+	//	PROPERTY_TIME_FLAG					(((uint32_t)1) <<  4)
+	if (time)
+	{
+		flags |= PROPERTY_TIME_FLAG;
+	}
+	//	PROPERTY_ENABLE_FLAG				(((uint32_t)1) <<  5)	
+	if (enable)
+	{
+		flags |= PROPERTY_ENABLE_FLAG;
+	}
+	//	PROPERTY_STAT_FLAG					(((uint32_t)1) <<  6)
+	if (stat)
+	{
+		flags |= PROPERTY_STAT_FLAG;
+	}
+	//	PROPERTY_LOCATION_FLAG				(((uint32_t)1) <<  7)
+	if (location)
+	{
+		flags |= PROPERTY_LOCATION_FLAG;
+	}
+	//	PROPERTY_REGISTERED_FLAG			(((uint32_t)1) <<  8)
+	if (registered)
+	{
+		flags |= PROPERTY_REGISTERED_FLAG;
+	}
+	//	PROPERTY_PARENT_ID_FLAG				(((uint32_t)1) <<  9)	
+	if (parent_id)
+	{
+		flags |= PROPERTY_PARENT_ID_FLAG;
 	}
 
-	return	value;
+	//	PROPERTY_IP_FLAG					(((uint32_t)1) <<  10)
+	if (ip)
+	{
+		flags |= PROPERTY_IP_FLAG;
+	}
+	//	PROPERTY_SENSOR_ID_FLAG				(((uint32_t)1) <<  11)
+	if (sensor_id)
+	{
+		flags |= PROPERTY_SENSOR_ID_FLAG;
+	}
+	//	PROPERTY_UNIT_FLAG					(((uint32_t)1) <<  12)
+	if (unit)
+	{
+		flags |= PROPERTY_UNIT_FLAG;
+	}
+	//	PROPERTY_SCALE_FLAG					(((uint32_t)1) <<  13)
+	if (scale)
+	{
+		flags |= PROPERTY_SCALE_FLAG;
+	}
+	//	PROPERTY_VALUE_MIN_FLAG				(((uint32_t)1) <<  14)
+	if (value_min)
+	{
+		flags |= PROPERTY_VALUE_MIN_FLAG;
+	}
+	//	PROPERTY_VALUE_MAX_FLAG				(((uint32_t)1) <<  15)
+	if (value_max)
+	{
+		flags |= PROPERTY_VALUE_MAX_FLAG;
+	}
+
+	//	PROPERTY_OPTIONS_FLAG				(((uint32_t)1) <<  16)
+	if (options)
+	{
+		flags |= PROPERTY_OPTIONS_FLAG;
+	}
+
+	//	PROPERTY_SNMP_MODULE_FLAG			(((uint32_t)1) <<  17)
+	if (snmp_module)
+	{
+		flags |= PROPERTY_SNMP_MODULE_FLAG;
+	}
+	//	PROPERTY_SNMP_COMMUNITY_FLAG		(((uint32_t)1) <<  18)
+	if (snmp_community)
+	{
+		flags |=PROPERTY_SNMP_COMMUNITY_FLAG;
+	}
+	//	PROPERTY_TIMEOUT_FLAG				(((uint32_t)1) <<  19)
+	if (timeout)
+	{
+		flags |= PROPERTY_TIMEOUT_FLAG;
+	}
+
+	//	PROPERTY_CORRECTION_INTERVAL_FLAG	(((uint32_t)1) <<  20)
+	if (correction_interval)
+	{
+		flags |= PROPERTY_CORRECTION_INTERVAL_FLAG;
+	}
+	//	PROPERTY_KEEP_ALIVE_INTERVAL_FLAG	(((uint32_t)1) <<  21)
+	if (keep_alive_interval)
+	{
+		flags |= PROPERTY_KEEP_ALIVE_INTERVAL_FLAG;
+	}
+	//	PROPERTY_LOOP_INTERVAL_FLAG			(((uint32_t)1) <<  22)
+	if (loop_interval)
+	{
+		flags |= PROPERTY_LOOP_INTERVAL_FLAG;
+	}
+	//	PROPERTY_UPDATE_INTERVAL_FLAG		(((uint32_t)1) <<  23)
+	if (update_interval)
+	{
+		flags |= PROPERTY_UPDATE_INTERVAL_FLAG;
+	}
+	//	PROPERTY_TIME_OF_EXPIRE_FLAG		(((uint32_t)1) <<  24)
+	if (time_of_expire)
+	{
+		flags |= PROPERTY_TIME_OF_EXPIRE_FLAG;
+	}
+	//	PROPERTY_VALUE_FLAG					(((uint32_t)1) <<  25)
+	if (value)
+	{
+		flags |= PROPERTY_VALUE_FLAG;
+	}
+
+	return	flags;
 }
 
 

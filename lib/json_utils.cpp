@@ -3,6 +3,43 @@
 #include "exception.h"
 #include "utils.h"
 
+JSONNode	JSONNodeGet(JSONNode const& _node, std::string const& field)
+{
+	JSONNode::const_iterator it = _node.find(field);
+
+	if (it != _node.end())
+	{
+		return	*it;
+	}
+
+	throw ObjectNotFound(field);
+}
+
+uint32_t		JSONNodeGet(JSONNode const& _node, std::string const& field, uint32_t _default)
+{
+	JSONNode::const_iterator it = _node.find(field);
+
+	if (it != _node.end())
+	{
+		return	it->as_int();
+	}
+
+	return	_default;
+}
+
+int32_t		JSONNodeGet(JSONNode const& _node, std::string const& field, int32_t _default)
+{
+	JSONNode::const_iterator it = _node.find(field);
+
+	if (it != _node.end())
+	{
+		return	it->as_int();
+	}
+
+	return	_default;
+}
+
+
 std::string	JSONNodeGetString(JSONNode const& _node, std::string const& field)
 {
 	JSONNode::const_iterator it = _node.find(field);

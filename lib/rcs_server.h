@@ -31,6 +31,8 @@ public:
 	bool		Del(RCSMessage& _request, RCSMessage& _response);
 	bool		Get(RCSMessage& _request, RCSMessage& _response);
 	bool		Set(RCSMessage& _request, RCSMessage& _response);
+	bool		CmdStart(RCSMessage& _request, RCSMessage& _response);
+	bool		CmdStop(RCSMessage& _request, RCSMessage& _response);
 	bool		List(RCSMessage& _request, RCSMessage& _response);
 
 	bool		Confirm(RCSMessage& _reply, std::string& _req_type);

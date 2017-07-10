@@ -394,6 +394,42 @@ Gateway*		ObjectManager::GetMasterGateway()
 	return	NULL;
 }
 
+bool		ObjectManager::StartGateway(std::string const& _id)
+{
+	Gateway* gateway = GetGateway(_id);
+	if (gateway == NULL)
+	{
+		TRACE_ERROR("Failed to start gateway because the gateway[" << _id << "] coult not be found.");
+		return	false;	
+	}
+
+	if (!gateway->Start(1000))
+	{
+		TRACE_ERROR("Failed to start gateway.");
+		return	false;
+	}
+
+	return	true;
+}
+
+bool		ObjectManager::StopGateway(std::string const& _id)
+{
+	Gateway* gateway = GetGateway(_id);
+	if (gateway == NULL)
+	{
+		TRACE_ERROR("Failed to stop gateway because the gateway[" << _id << "] coult not be found.");
+		return	false;	
+	}
+
+	if (!gateway->Stop())
+	{
+		TRACE_ERROR("Failed to start gateway.");
+		return	false;
+	}
+
+	return	true;
+}
+
 Device*	ObjectManager::CreateDevice(JSONNode const& _properties, bool from_db)
 {
 	Device*		device = NULL;
@@ -546,6 +582,42 @@ Device*		ObjectManager::GetDevice(std::string const& _id)
 	return	NULL;
 }
 
+bool		ObjectManager::StartDevice(std::string const& _id)
+{
+	Device * device = GetDevice(_id);
+	if (device == NULL)
+	{
+		TRACE_ERROR("Failed to start device because the device[" << _id << "] coult not be found.");
+		return	false;	
+	}
+
+	if (!device->Start(1000))
+	{
+		TRACE_ERROR("Failed to start device");
+		return	false;
+	}
+
+	return	true;
+}
+
+bool		ObjectManager::StopDevice(std::string const& _id)
+{
+	Device* device = GetDevice(_id);
+	if (device == NULL)
+	{
+		TRACE_ERROR("Failed to stop device because the device[" << _id << "] coult not be found.");
+		return	false;	
+	}
+
+	if (!device->Stop())
+	{
+		TRACE_ERROR("Failed to stop device.");
+		return	false;
+	}
+
+	return	true;
+}
+
 Endpoint*	ObjectManager::CreateEndpoint(JSONNode const& _properties, bool from_db)
 {
 	Endpoint*	endpoint = Endpoint::Create(*this, _properties);		
@@ -634,6 +706,42 @@ Endpoint*		ObjectManager::GetEndpoint(std::string const& _id)
 	TRACE_ERROR("Endpoint [" << _id << "] not found!");
 
 	return	NULL;
+}
+
+bool		ObjectManager::StartEndpoint(std::string const& _id)
+{
+	Endpoint * endpoint = GetEndpoint(_id);
+	if (endpoint == NULL)
+	{
+		TRACE_ERROR("Failed to start endpoint because the endpoint[" << _id << "] coult not be found.");
+		return	false;	
+	}
+
+	if (!endpoint->Start(1000))
+	{
+		TRACE_ERROR("Failed to start endpoint");
+		return	false;
+	}
+
+	return	true;
+}
+
+bool		ObjectManager::StopEndpoint(std::string const& _id)
+{
+	Endpoint* endpoint = GetEndpoint(_id);
+	if (endpoint == NULL)
+	{
+		TRACE_ERROR("Failed to stop endpoint because the endpoint[" << _id << "] coult not be found.");
+		return	false;	
+	}
+
+	if (!endpoint->Stop())
+	{
+		TRACE_ERROR("Failed to stop endpoint.");
+		return	false;
+	}
+
+	return	true;
 }
 
 bool	ObjectManager::IDChanged(Node* _node, std::string const& _old_id)
