@@ -340,6 +340,95 @@ bool	RCSClient::StopGateway(std::string const& _id)
 	return	false;
 }
 
+bool	RCSClient::GetGatewayList(std::vector<std::string>& _id_list)
+{
+	RCSMessage	request(MSG_TYPE_RCS_LIST);
+	RCSMessage	response;
+
+	request.AddGatewayID("");
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		for(uint32_t i = 0 ; i < response.GetGatewayCount(); i++)
+		{
+			try
+			{
+				_id_list.push_back(JSONNodeGetID(response.GetGateway(i)));
+			}
+			catch(ObjectNotFound& e)
+			{
+			}
+		}
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::SetGatewayEnable(std::string const& _id, bool _enable)
+{
+	RCSMessage	request(MSG_TYPE_RCS_SET);
+	RCSMessage	response;
+
+	JSONNode	node;
+
+	node.push_back(JSONNode(TITLE_NAME_ID, _id));
+	node.push_back(JSONNode(TITLE_NAME_ENABLE, (_enable)?"true":"false"));
+
+	request.AddGateway(node);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::SetGatewayEnable(std::vector<std::string> const& _id_list, bool _enable)
+{
+	RCSMessage	request(MSG_TYPE_RCS_SET);
+	RCSMessage	response;
+
+	for(uint32_t i = 0 ; i < _id_list.size() ; i++)
+	{
+		JSONNode	node;
+
+		node.push_back(JSONNode(TITLE_NAME_ID, _id_list[i]));
+		node.push_back(JSONNode(TITLE_NAME_ENABLE, (_enable)?"true":"false"));
+
+		request.AddGateway(node);
+	}
+
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+
+
 bool	RCSClient::AddDevice(JSONNode const& _properties)
 {
 	RCSMessage	request(MSG_TYPE_RCS_ADD);
@@ -549,6 +638,95 @@ bool	RCSClient::StopDevice(std::string const& _id)
 
 	return	false;
 }
+
+
+bool	RCSClient::GetDeviceList(std::vector<std::string>& _id_list)
+{
+	RCSMessage	request(MSG_TYPE_RCS_LIST);
+	RCSMessage	response;
+
+	request.AddDeviceID("");
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		for(uint32_t i = 0 ; i < response.GetDeviceCount(); i++)
+		{
+			try
+			{
+				_id_list.push_back(JSONNodeGetID(response.GetDevice(i)));
+			}
+			catch(ObjectNotFound& e)
+			{
+			}
+		}
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::SetDeviceEnable(std::string const& _id, bool _enable)
+{
+	RCSMessage	request(MSG_TYPE_RCS_SET);
+	RCSMessage	response;
+
+	JSONNode	node;
+
+	node.push_back(JSONNode(TITLE_NAME_ID, _id));
+	node.push_back(JSONNode(TITLE_NAME_ENABLE, (_enable)?"true":"false"));
+
+	request.AddDevice(node);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::SetDeviceEnable(std::vector<std::string> const& _id_list, bool _enable)
+{
+	RCSMessage	request(MSG_TYPE_RCS_SET);
+	RCSMessage	response;
+
+	for(uint32_t i = 0 ; i < _id_list.size() ; i++)
+	{
+		JSONNode	node;
+
+		node.push_back(JSONNode(TITLE_NAME_ID, _id_list[i]));
+		node.push_back(JSONNode(TITLE_NAME_ENABLE, (_enable)?"true":"false"));
+
+		request.AddDevice(node);
+	}
+
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
 
 bool	RCSClient::AddEndpoint(JSONNode const& _properties)
 {
@@ -760,6 +938,92 @@ bool	RCSClient::StopEndpoint(std::string const& _id)
 	return	false;
 }
 
+bool	RCSClient::GetEndpointList(std::vector<std::string>& _id_list)
+{
+	RCSMessage	request(MSG_TYPE_RCS_LIST);
+	RCSMessage	response;
+
+	request.AddEndpointID("");
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		for(uint32_t i = 0 ; i < response.GetEndpointCount(); i++)
+		{
+			try
+			{
+				_id_list.push_back(JSONNodeGetID(response.GetEndpoint(i)));
+			}
+			catch(ObjectNotFound& e)
+			{
+			}
+		}
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::SetEndpointEnable(std::string const& _id, bool _enable)
+{
+	RCSMessage	request(MSG_TYPE_RCS_SET);
+	RCSMessage	response;
+
+	JSONNode	node;
+
+	node.push_back(JSONNode(TITLE_NAME_ID, _id));
+	node.push_back(JSONNode(TITLE_NAME_ENABLE, (_enable)?"true":"false"));
+
+	request.AddEndpoint(node);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
+
+bool	RCSClient::SetEndpointEnable(std::vector<std::string> const& _id_list, bool _enable)
+{
+	RCSMessage	request(MSG_TYPE_RCS_SET);
+	RCSMessage	response;
+
+	for(uint32_t i = 0 ; i < _id_list.size() ; i++)
+	{
+		JSONNode	node;
+
+		node.push_back(JSONNode(TITLE_NAME_ID, _id_list[i]));
+		node.push_back(JSONNode(TITLE_NAME_ENABLE, (_enable)?"true":"false"));
+
+		request.AddEndpoint(node);
+	}
+
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		return	true;
+	}
+
+	return	false;
+}
 
 bool	RCSClient::DelEPData(std::string const& _id, uint32_t _count)
 {

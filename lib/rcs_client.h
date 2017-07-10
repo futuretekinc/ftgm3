@@ -39,6 +39,9 @@ public:
 			bool	SetGateway(JSONNode const& _properties);
 			bool	StartGateway(std::string const& _id);
 			bool	StopGateway(std::string const& _id);
+			bool	GetGatewayList(std::vector<std::string>& _id_list);
+			bool	SetGatewayEnable(std::string const& _id, bool _enable);
+			bool	SetGatewayEnable(std::vector<std::string> const& _id_list, bool _enable);
 
 			bool	AddDevice(JSONNode const& _properties);
 			bool	DelDevice(std::string const& _id);
@@ -49,7 +52,10 @@ public:
 			bool	SetDevice(JSONNode const& _properties);
 			bool	StartDevice(std::string const& _id);
 			bool	StopDevice(std::string const& _id);
-
+			bool	GetDeviceList(std::vector<std::string>& _id_list);
+			bool	SetDeviceEnable(std::string const& _id, bool _enable);
+			bool	SetDeviceEnable(std::vector<std::string> const& _id_list, bool _enable);
+		
 			bool	AddEndpoint(JSONNode const& _properties);
 			bool	DelEndpoint(std::string const& _id);
 			bool	GetEndpoint(std::vector<JSONNode>& _vector);
@@ -59,12 +65,18 @@ public:
 			bool	SetEndpoint(JSONNode const& _properties);
 			bool	StartEndpoint(std::string const& _id);
 			bool	StopEndpoint(std::string const& _id);
+			bool	GetEndpointList(std::vector<std::string>& _id_list);
+			bool	SetEndpointEnable(std::string const& _id, bool _enable);
+			bool	SetEndpointEnable(std::vector<std::string> const& _id_list, bool _enable);
 
 			bool	DelEPData(std::string const& _id, uint32_t _count);
 			bool	DelEPData(std::string const& _id, time_t _start, time_t _end);
 			bool	GetEPData(std::string const& _id, uint32_t _count, std::multimap<time_t, std::string>& _value_map);
 			bool	GetEPData(std::string const& _id, time_t _start, time_t _end, std::multimap<time_t, std::string>& _value_map);
 			bool	SetEPData(std::string const& _id, time_t _time_of_expire, std::string& _value );
+
+			bool	RemoteCall(JSONNode& _request, JSONNode& _result);
+			bool	RemoteCall(RCSMessage& _request, RCSMessage& _result);
 
 	virtual	bool	OnMessage(Message* _message);
 
@@ -73,8 +85,6 @@ protected:
 	virtual	void	Process();
 	virtual	void	Postprocess();
 
-			bool	RemoteCall(JSONNode& _request, JSONNode& _result);
-			bool	RemoteCall(RCSMessage& _request, RCSMessage& _result);
 
 	std::string		secret_code_;
 	TCPClient		tcp_client_;

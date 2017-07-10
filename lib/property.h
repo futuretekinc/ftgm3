@@ -24,6 +24,7 @@ struct	Fields
 	bool	Names(std::multimap<uint32_t, std::string>& _names);
 
 	Fields&	operator+=(Fields& _fields);
+	Fields&	operator+=(std::string const& _name);
 	operator uint32_t() const;
 
 	bool	correction_interval:1;
@@ -96,7 +97,6 @@ Fields	operator+(Fields& _fields1, Fields& _fields2);
 							PROPERTY_NAME_FLAG	|\
 							PROPERTY_TIME_FLAG	|\
 							PROPERTY_ENABLE_FLAG|\
-							PROPERTY_STAT_FLAG	|\
 							PROPERTY_LOCATION_FLAG|\
 							PROPERTY_REGISTERED_FLAG|\
 							PROPERTY_PARENT_ID_FLAG	|\

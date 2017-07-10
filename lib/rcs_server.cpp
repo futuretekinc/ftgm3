@@ -297,117 +297,349 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
 		{
-			JSONNode	result;
-			std::string	id;
+			if (it->type() == JSON_NODE)
+			{
+				JSONNode	result;
+				std::string	id;
 
-			id = JSONNodeGetID(*it);
-			Gateway*	gateway = manager_->GetGateway(id);
-			if (gateway == NULL)
-			{
-				TRACE_ERROR("Object[" << id << "not found!");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else if (!gateway->SetProperties(*it, false, false))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
-			}
-			else
-			{
-				gateway->GetProperties(result);
-			}
-
-			response.AddGateway(result);
-		}
-		else if (it->name() == TITLE_NAME_DEVICE)
-		{
-			JSONNode	result;
-			std::string	id;
-
-			id = JSONNodeGetID(*it);
-			Device*	device = manager_->GetDevice(id);
-			if (device == NULL)
-			{
-				TRACE_ERROR("Object[" << id << "not found!");
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else if (!device->SetProperties(*it, false, false))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
-			}
-			else
-			{
-				device->GetProperties(result);
-			}
-
-			response.AddDevice(result);
-		}
-		else if (it->name() == TITLE_NAME_ENDPOINT)
-		{
-			JSONNode	result;
-			std::string	id;
-
-			id = JSONNodeGetID(*it);
-
-			result.push_back(JSONNode(TITLE_NAME_ID, id));
-
-			Endpoint*	endpoint= manager_->GetEndpoint(id);
-			if (endpoint == NULL)
-			{
-				TRACE_ERROR("Object[" << id << "not found!");
-				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
-			}
-			else
-			{
-				try
+				id = JSONNodeGetID(*it);
+				Gateway*	gateway = manager_->GetGateway(id);
+				if (gateway == NULL)
 				{
-					std::string	value = JSONNodeGetValue(*it);
-					time_t	expire_time	= JSONNodeGetTimeOfExpire(*it);
-					time_t	current_time= time_t(Date::GetCurrent());	
-
-					if (current_time > expire_time)
-					{
-						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_TIME_EXPIRED));
-					}
-					else
-					{
-						EndpointActuator*	actuator = dynamic_cast<EndpointActuator*>(endpoint);
-
-						if (actuator == NULL)
-						{
-							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
-						}
-						else
-						{
-							if (actuator->SetValue(value))
-							{
-								result.push_back(JSONNode(TITLE_NAME_VALUE, actuator->GetValue()));
-							}
-							else
-							{
-								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
-							}
-						}
-					}
-
+					TRACE_ERROR("Object[" << id << "not found!");
+					result.push_back(JSONNode(TITLE_NAME_ID, id));
+					result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
 				}
-				catch(ObjectNotFound& e)
+				else 
 				{
-					if (!endpoint->SetProperties(*it, false, false))
+					if (!gateway->SetProperties(*it, false, false))
 					{
+						result.push_back(JSONNode(TITLE_NAME_ID, id));
 						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 					}
 					else
 					{
-						endpoint->GetProperties(result);
+						gateway->SetProperties(*it, false, false);
+
+						Fields	fields;
+
+						for(JSONNode::iterator it2 = it->begin(); it2 != it->end() ; it2++)
+						{
+							fields.Set(it2->name());
+						}
+
+						gateway->GetProperties(result, fields);
+						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
 					}
 				}
-			}
 
-			response.AddEndpoint(result);
+				response.AddGateway(result);
+			}
+			else if (it->type() == JSON_ARRAY)
+			{
+				for (JSONNode::iterator it2 = it->begin() ; it2 != it->end() ; it2++)
+				{
+					JSONNode	result;
+					std::string	id;
+
+					id = JSONNodeGetID(*it2);
+					Gateway*	gateway = manager_->GetGateway(id);
+					if (gateway == NULL)
+					{
+						TRACE_ERROR("Object[" << id << "not found!");
+						result.push_back(JSONNode(TITLE_NAME_ID, id));
+						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
+					}
+					else
+					{		
+						if (!gateway->SetProperties(*it2, false, false))
+						{
+							result.push_back(JSONNode(TITLE_NAME_ID, id));
+							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
+						}
+						else
+						{
+							gateway->SetProperties(*it2, false, false);
+
+							Fields	fields;
+
+							for(JSONNode::iterator it3 = it2->begin(); it3 != it2->end() ; it3++)
+							{
+								fields.Set(it3->name());
+							}
+
+							gateway->GetProperties(result, fields);
+							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
+						}
+					}
+
+					response.AddGateway(result);
+				}
+			}
+		}
+		else if (it->name() == TITLE_NAME_DEVICE)
+		{
+			if (it->type() == JSON_NODE)
+			{
+				JSONNode	result;
+				std::string	id;
+
+				id = JSONNodeGetID(*it);
+				Device*	device = manager_->GetDevice(id);
+				if (device == NULL)
+				{
+					TRACE_ERROR("Object[" << id << "not found!");
+					result.push_back(JSONNode(TITLE_NAME_ID, id));
+					result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
+				}
+				else
+				{
+					if (!device->SetProperties(*it, false, false))
+					{
+						result.push_back(JSONNode(TITLE_NAME_ID, id));
+						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
+					}
+					else
+					{
+						device->SetProperties(*it, false, false);
+
+						Fields	fields;
+
+						for(JSONNode::iterator it2 = it->begin(); it2 != it->end() ; it2++)
+						{
+							fields.Set(it2->name());
+						}
+
+						device->GetProperties(result, fields);
+					}
+				}
+
+				response.AddDevice(result);
+			}
+			else if (it->type() == JSON_ARRAY)
+			{
+				for(JSONNode::iterator it2 = it->begin() ; it2 != it->end() ; it2++)
+				{
+					JSONNode	result;
+					std::string	id;
+
+					id = JSONNodeGetID(*it2);
+					Device*	device = manager_->GetDevice(id);
+					if (device == NULL)
+					{
+						TRACE_ERROR("Object[" << id << "not found!");
+						result.push_back(JSONNode(TITLE_NAME_ID, id));
+						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
+					}
+					else 
+					{
+						if (!device->SetProperties(*it2, false, false))
+						{
+							result.push_back(JSONNode(TITLE_NAME_ID, id));
+							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
+						}
+						else
+						{
+							device->SetProperties(*it2, false, false);
+
+							Fields	fields;
+
+							for(JSONNode::iterator it3 = it2->begin(); it3 != it2->end() ; it3++)
+							{
+								fields.Set(it3->name());
+							}
+
+							device->GetProperties(result, fields);
+						}
+					}
+
+					response.AddDevice(result);
+				}
+			}
+		}
+		else if (it->name() == TITLE_NAME_ENDPOINT)
+		{
+			if (it->type() == JSON_NODE)
+			{
+				JSONNode	result;
+				std::string	id;
+
+				id = JSONNodeGetID(*it);
+
+				result.push_back(JSONNode(TITLE_NAME_ID, id));
+
+				Endpoint*	endpoint= manager_->GetEndpoint(id);
+				if (endpoint == NULL)
+				{
+					TRACE_ERROR("Object[" << id << "not found!");
+					result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
+				}
+				else
+				{
+					if (JSONNodeIsExistField(*it, TITLE_NAME_VALUE))
+					{
+						try
+						{
+							std::string	value = JSONNodeGetValue(*it);
+							time_t	expire_time	= JSONNodeGetTimeOfExpire(*it);
+							time_t	current_time= time_t(Date::GetCurrent());	
+
+							if (current_time > expire_time)
+							{
+								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_TIME_EXPIRED));
+							}
+							else
+							{
+								EndpointActuator*	actuator = dynamic_cast<EndpointActuator*>(endpoint);
+
+								if (actuator == NULL)
+								{
+									result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
+								}
+								else
+								{
+									if (actuator->SetValue(value))
+									{
+										result.push_back(JSONNode(TITLE_NAME_VALUE, actuator->GetValue()));
+										result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
+									}
+									else
+									{
+										result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
+									}
+								}
+							}
+
+						}
+						catch(ObjectNotFound& e)
+						{
+							if (!endpoint->SetProperties(*it, false, false))
+							{
+								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
+							}
+							else
+							{
+								endpoint->GetProperties(result);
+							}
+						}
+					}
+					else
+					{
+						if (endpoint->SetProperties(*it, true, false))
+						{
+							endpoint->SetProperties(*it, false, false);
+
+							Fields	fields;
+
+							for(JSONNode::iterator it2 = it->begin(); it2 != it->end() ; it2++)
+							{
+								fields.Set(it2->name());
+							}
+
+							endpoint->GetProperties(result, fields);
+							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
+						}
+						else
+						{
+							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
+						}
+					}
+				}
+
+				response.AddEndpoint(result);
+			}
+			else
+			{
+				for(JSONNode::iterator it2 = it->begin() ; it2 != it->end() ; it2++)
+				{
+					JSONNode	result;
+					std::string	id;
+
+					id = JSONNodeGetID(*it2);
+
+					result.push_back(JSONNode(TITLE_NAME_ID, id));
+
+					Endpoint*	endpoint= manager_->GetEndpoint(id);
+					if (endpoint == NULL)
+					{
+						TRACE_ERROR("Object[" << id << "not found!");
+						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
+					}
+					else
+					{
+						if (JSONNodeIsExistField(*it2, TITLE_NAME_VALUE))
+						{
+							try
+							{
+								std::string	value = JSONNodeGetValue(*it2);
+								time_t	expire_time	= JSONNodeGetTimeOfExpire(*it2);
+								time_t	current_time= time_t(Date::GetCurrent());	
+
+								if (current_time > expire_time)
+								{
+									result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_TIME_EXPIRED));
+								}
+								else
+								{
+									EndpointActuator*	actuator = dynamic_cast<EndpointActuator*>(endpoint);
+
+									if (actuator == NULL)
+									{
+										result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
+									}
+									else
+									{
+										if (actuator->SetValue(value))
+										{
+											result.push_back(JSONNode(TITLE_NAME_VALUE, actuator->GetValue()));
+											result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
+										}
+										else
+										{
+											result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
+										}
+									}
+								}
+
+							}
+							catch(ObjectNotFound& e)
+							{
+								if (!endpoint->SetProperties(*it2, false, false))
+								{
+									result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
+								}
+								else
+								{
+									endpoint->GetProperties(result);
+								}
+							}
+						}
+						else
+						{
+							if (endpoint->SetProperties(*it2, true, false))
+							{
+								endpoint->SetProperties(*it2, false, false);
+
+								Fields	fields;
+
+								for(JSONNode::iterator it3 = it2->begin(); it3 != it2->end() ; it3++)
+								{
+									fields.Set(it3->name());
+								}
+
+								endpoint->GetProperties(result, fields);
+								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
+							}
+							else
+							{
+								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
+							}
+						}
+					}
+
+					response.AddEndpoint(result);
+				}
+			}
 		}
 		else if (it->name() == TITLE_NAME_DATA)
 		{
