@@ -1,0 +1,7 @@
+{
+	"type": "ep_s_wind_speed",
+	"model" : "YGC-FS",
+	"name" : "Wind Speed",
+	"update_interval" : 5,
+	"sensor_id" : 0
+}

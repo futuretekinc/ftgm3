@@ -73,37 +73,37 @@ TCPSession*	RCSServer::CreateSession(int	_socket, struct sockaddr_in *_addr_info
 
 bool	RCSServer::ServiceCall(RCSMessage& _request, RCSMessage& _response)
 {
-	bool	result = false;
+	bool	ret_value = false;
 
 	try
 	{
 		if (_request.GetMsgType() == MSG_TYPE_RCS_ADD)
 		{
-			result = Add(_request, _response);	
+			ret_value = Add(_request, _response);	
 		}
 		else if (_request.GetMsgType() == MSG_TYPE_RCS_DEL)
 		{
-			result = Del(_request, _response);	
+			ret_value = Del(_request, _response);	
 		}
 		else if (_request.GetMsgType() == MSG_TYPE_RCS_GET)
 		{
-			result = Get(_request, _response);	
+			ret_value = Get(_request, _response);	
 		}
 		else if (_request.GetMsgType() == MSG_TYPE_RCS_SET)
 		{
-			result = Set(_request, _response);	
+			ret_value = Set(_request, _response);	
 		}
 		else if (_request.GetMsgType() == MSG_TYPE_RCS_START)
 		{
-			result = CmdStart(_request, _response);	
+			ret_value = CmdStart(_request, _response);	
 		}
 		else if (_request.GetMsgType() == MSG_TYPE_RCS_STOP)
 		{
-			result = CmdStop(_request, _response);	
+			ret_value = CmdStop(_request, _response);	
 		}
 		else if (_request.GetMsgType() == MSG_TYPE_RCS_LIST)
 		{
-			result = List(_request, _response);	
+			ret_value = List(_request, _response);	
 		}
 	}
 	catch(ObjectNotFound& e)
@@ -119,7 +119,7 @@ bool	RCSServer::ServiceCall(RCSMessage& _request, RCSMessage& _response)
 		TRACE_ERROR(e.what());
 	}
 
-	return	result;	
+	return	ret_value;	
 }
 
 bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
@@ -845,11 +845,9 @@ bool	RCSServer::CmdStart(RCSMessage& _request, RCSMessage& _response)
 			JSONNode	result(JSON_NODE);
 			std::string id = JSONNodeGetID(*it);
 			
-			if (manager_->StartGateway(id))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));	
-			}
-			else
+			result.push_back(JSONNode(TITLE_NAME_ID, id));	
+
+			if (!manager_->StartGateway(id))
 			{
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}
@@ -861,11 +859,9 @@ bool	RCSServer::CmdStart(RCSMessage& _request, RCSMessage& _response)
 			JSONNode	result(JSON_NODE);
 			std::string id = JSONNodeGetID(*it);
 
-			if (manager_->StartDevice(id))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));	
-			}
-			else
+			result.push_back(JSONNode(TITLE_NAME_ID, id));	
+
+			if (!manager_->StartDevice(id))
 			{
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}
@@ -877,11 +873,8 @@ bool	RCSServer::CmdStart(RCSMessage& _request, RCSMessage& _response)
 			JSONNode	result(JSON_NODE);
 			std::string id = JSONNodeGetID(*it);
 
-			if (manager_->StartEndpoint(id))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));	
-			}
-			else
+			result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			if (!manager_->StartEndpoint(id))
 			{
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}
@@ -907,11 +900,8 @@ bool	RCSServer::CmdStop(RCSMessage& _request, RCSMessage& _response)
 			JSONNode	result(JSON_NODE);
 			std::string id = JSONNodeGetID(*it);
 			
-			if (manager_->StopGateway(id))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));	
-			}
-			else
+			result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			if (!manager_->StopGateway(id))
 			{
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}
@@ -923,11 +913,8 @@ bool	RCSServer::CmdStop(RCSMessage& _request, RCSMessage& _response)
 			JSONNode	result(JSON_NODE);
 			std::string id = JSONNodeGetID(*it);
 
-			if (manager_->StopDevice(id))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));	
-			}
-			else
+			result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			if (!manager_->StopDevice(id))
 			{
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}
@@ -939,11 +926,8 @@ bool	RCSServer::CmdStop(RCSMessage& _request, RCSMessage& _response)
 			JSONNode	result(JSON_NODE);
 			std::string id = JSONNodeGetID(*it);
 
-			if (manager_->StopEndpoint(id))
-			{
-				result.push_back(JSONNode(TITLE_NAME_ID, id));	
-			}
-			else
+			result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			if (!manager_->StopEndpoint(id))
 			{
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}

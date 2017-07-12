@@ -44,7 +44,7 @@ void	EndpointSensorSoilAcidity::CorrectionProcess()
 		{
 			double value = strtod(string_value.c_str(), 0);
 
-			if (value < 5)
+			if ((value < 5) || (10 < value))
 			{
 				value = 7.2 + ((rand() % 10000)/10000.0 * 0.4 - 0.2);
 				string_value = ToString(value, 2);

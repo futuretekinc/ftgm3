@@ -15,17 +15,28 @@
 
 using namespace std;
 
-static Fields	default_fields = PROPERTY_ID_FLAG | PROPERTY_NAME_FLAG | PROPERTY_TYPE_FLAG | PROPERTY_STAT_FLAG | PROPERTY_VALUE_FLAG;
+static Fields	default_fields = (PROPERTY_ID_FLAG	|\
+							PROPERTY_TYPE_FLAG	|\
+							PROPERTY_MODEL_FLAG	|\
+							PROPERTY_NAME_FLAG	|\
+							PROPERTY_TIME_FLAG	|\
+							PROPERTY_ENABLE_FLAG|\
+							PROPERTY_LOCATION_FLAG|\
+							PROPERTY_REGISTERED_FLAG|\
+							PROPERTY_UNIT_FLAG	|\
+							PROPERTY_OPTIONS_FLAG);
+							
 
-static RetValue	CmdEndpointAdd(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdEndpointDel(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdEndpointGet(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdEndpointSet(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdEndpointStart(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdEndpointStop(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdEndpointEnable(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdEndpointDisable(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdEndpointList(std::vector<std::string> const& _arguments, Shell* _shell);
+
+static RetValue	CmdEndpointAdd(Shell* _shell, std::string* _arguments, uint32_t _count);
+static RetValue	CmdEndpointDel(Shell* _shell, std::string* _arguments, uint32_t _count);
+static RetValue	CmdEndpointGet(Shell* _shell, std::string const& _id, std::string* _arguments, uint32_t _count);
+static RetValue	CmdEndpointSet(Shell* _shell, std::string const& _id, std::string* _arguments, uint32_t _count);
+static RetValue	CmdEndpointStart(Shell* _shell, std::string* _arguments, uint32_t _count);
+static RetValue	CmdEndpointStop(Shell* _shell, std::string* _arguments, uint32_t _count);
+static RetValue	CmdEndpointEnable(Shell* _shell, std::string* _arguments, uint32_t _count);
+static RetValue	CmdEndpointDisable(Shell* _shell, std::string* _arguments, uint32_t _count);
+static RetValue	CmdEndpointList(Shell* _shell, std::string* _arguments, uint32_t _count);
 static RetValue	CmdEndpoint (std::string* _arguments, uint32_t _count, Shell* _shell);
 
 Shell::Command	object_manager_command_endpoint
@@ -54,84 +65,139 @@ Shell::Command	object_manager_command_endpoint
 	CmdEndpoint
  );
 
+Shell::Command	object_manager_command_ep
+(
+	"ep", 
+	"ep\n"
+	"  Endpoint management.\n"
+	"COMMANDS:\n"
+	"  [empty]\n"
+	"    Show endpoint list.\n"
+	"  add [<PROPERTY> ...]\n"
+	"    Add new endpoint\n"
+	"  del <EPID> [<EPID> ...]\n"
+	"    Delete endpoint\n"
+	"  get <PROPERTY> [<PROPERTY> ...] <EPID> [<EPID> ...]\n"
+	"    Get endpoint properties\n"
+	"  set <EPID> <PROPERTY> <VALUE> [<PROPERTY> <VALUE> ...]\n"
+	"    Delete endpoint\n"
+	"  list [<PROPETY> ...]\n"
+	"    Show endpoint list.\n"
+	"PARAMETERS"
+	"  EPID      endpoint id\n"
+	"  PROPERTY  property type\n"
+	"  VALUE     property value\n",
+	"endpoint management.",
+	CmdEndpoint
+ );
+
 RetValue	CmdEndpoint ( std::string * _arguments, uint32_t _count, Shell* _shell)
 {
 	RetValue ret_value = RET_VALUE_OK;	
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
-	std::vector<std::string> arguments;
-
-	for(uint32_t i = 1 ; i < _count ; i++)
-	{
-		arguments.push_back(_arguments[i]);
-	}
 
 	if (_count == 1)
 	{
-		arguments.push_back(MSG_TYPE_RCS_LIST);
-		CmdEndpointList(arguments, _shell);
+		ret_value = CmdEndpointList(_shell, NULL, 0);
 	}
-	else if (arguments[0] == MSG_TYPE_RCS_ADD)
+	else if (_arguments[1] == MSG_TYPE_RCS_LIST)
 	{
-		ret_value = CmdEndpointAdd(arguments, _shell);	
+		ret_value = CmdEndpointList(_shell, &_arguments[2], _count - 1);
 	}
-	else if (arguments[0] == MSG_TYPE_RCS_DEL)
+	else if (_arguments[1] == MSG_TYPE_RCS_ADD)
 	{
-		ret_value = CmdEndpointDel(arguments, _shell);
+		if (_count < 3)
+		{
+			THROW_INVALID_ARGUMENT("Argument too few.");	
+		}
+		ret_value = CmdEndpointAdd(_shell, &_arguments[2], _count - 1);	
 	}
-	else if (arguments[0] == MSG_TYPE_RCS_GET)
+	else if (_arguments[1] == MSG_TYPE_RCS_DEL)
 	{
-		ret_value = CmdEndpointGet(arguments, _shell);
+		if (_count < 3)
+		{
+			THROW_INVALID_ARGUMENT("Argument too few.");	
+		}
+		ret_value = CmdEndpointDel(_shell, &_arguments[2], _count - 1);
 	}
-	else if (arguments[0] == MSG_TYPE_RCS_SET)
+	else if (_arguments[1] == MSG_TYPE_RCS_GET)
 	{
-		ret_value = CmdEndpointSet(arguments, _shell);
+		if (_count < 3)
+		{
+			THROW_INVALID_ARGUMENT("Argument too few.");	
+		}
+		ret_value = CmdEndpointGet(_shell, _arguments[2], &_arguments[3], _count - 2);
 	}
-	else if (arguments[0] == "enable")
+	else if (_arguments[1] == MSG_TYPE_RCS_SET)
 	{
-		ret_value = CmdEndpointEnable(arguments, _shell);
+		if (_count < 5)
+		{
+			THROW_INVALID_ARGUMENT("Argument too few.");	
+		}
+		ret_value = CmdEndpointSet(_shell, _arguments[2], &_arguments[3], _count - 2);
 	}
-	else if (arguments[0] == "disable")
+	else if (_arguments[1] == "enable")
 	{
-		ret_value = CmdEndpointDisable(arguments, _shell);
+		if (_count < 2)
+		{
+			THROW_INVALID_ARGUMENT("Argument too few.");	
+		}
+		ret_value = CmdEndpointEnable(_shell, &_arguments[2], _count - 1);
 	}
-	else if (arguments[0] == MSG_TYPE_RCS_START)
+	else if (_arguments[1] == "disable")
 	{
-		ret_value = CmdEndpointStart(arguments, _shell);
+		if (_count < 2)
+		{
+			THROW_INVALID_ARGUMENT("Argument too few.");	
+		}
+		ret_value = CmdEndpointDisable(_shell, &_arguments[2], _count - 1);
 	}
-	else if (arguments[0] == MSG_TYPE_RCS_STOP)
+	else if (_arguments[1] == MSG_TYPE_RCS_START)
 	{
-		ret_value = CmdEndpointStop(arguments, _shell);
+		if (_count < 2)
+		{
+			THROW_INVALID_ARGUMENT("Argument too few.");	
+		}
+		ret_value = CmdEndpointStart(_shell, &_arguments[2], _count - 1);
 	}
-	else if (arguments[0] == MSG_TYPE_RCS_LIST)
+	else if (_arguments[1] == MSG_TYPE_RCS_STOP)
 	{
-		CmdEndpointList(arguments, _shell);
+		if (_count < 2)
+		{
+			THROW_INVALID_ARGUMENT("Argument too few.");	
+		}
+		ret_value = CmdEndpointStop(_shell, &_arguments[2], _count - 1);
+	}
+	else if (_count == 2)
+	{
+		ret_value = CmdEndpointGet(_shell, _arguments[1], NULL, 0);
 	}
 	else
 	{
-		THROW_INVALID_ARGUMENT("Not supported subcommand[" << arguments[0] << "]!");	
+		THROW_INVALID_ARGUMENT("Not supported subcommand[" << _arguments[1] << "]!");	
 	}
 
 	return	RET_VALUE_OK;
 }
 
-RetValue	CmdEndpointAdd( std::vector<std::string> const& _arguments, Shell* _shell)
+RetValue	CmdEndpointAdd( Shell* _shell, std::string* _options, uint32_t _count)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	JSONNode	properties;
 
-	if (_arguments.size() % 2 != 1)
+	if (_count % 2 != 0)
 	{
 		throw InvalidArgument("Invalid argument");	
 	}
 
-	for(uint32_t i = 1 ; i < _arguments.size() - 1 ; i+= 2)
+	for(uint32_t i = 0 ; i < _count ; i+= 2)
 	{
-		if ((_arguments[i].length() < 3) || (_arguments[i].substr(0, 2) != "--"))
+		if ((_options[i].length() < 3) || (_options[i].substr(0, 2) != "--"))
 		{
 			throw InvalidArgument("Invalid argument");	
 		}
 
-		properties.push_back(JSONNode(_arguments[i].substr(2, _arguments[i].length() - 2), _arguments[i+1]));
+		properties.push_back(JSONNode(_options[i].substr(2, _options[i].length() - 2), _options[i+1]));
 	}
 
 
@@ -147,63 +213,62 @@ RetValue	CmdEndpointAdd( std::vector<std::string> const& _arguments, Shell* _she
 	return	RET_VALUE_OK;
 }
 
-RetValue	CmdEndpointDel( std::vector<std::string> const& _arguments, Shell* _shell)
+RetValue	CmdEndpointDel( Shell* _shell, std::string* _id_list, uint32_t _count)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 
-	if (_arguments.size() < 2)
+	if (_count < 1)
 	{
 		throw InvalidArgument("Invalid argument");	
 	}
 
-	for(uint32_t i = 1 ; i < _arguments.size() ; i++)
+	for(uint32_t i = 0 ; i < _count ; i++)
 	{
-		if (client->DelEndpoint(_arguments[i]))
+		if (client->DelEndpoint(_id_list[i]))
 		{
-			_shell->Out() << "The endpoint[" << _arguments[i] << "] has been deleted." << std::endl;		
+			_shell->Out() << "The endpoint[" << _id_list[i] << "] has been deleted." << std::endl;		
 		}
 		else
 		{
-			_shell->Out() << "Faild to delete endpoint[" << _arguments[i] << "]" << std::endl;		
+			_shell->Out() << "Faild to delete endpoint[" << _id_list[i] << "]" << std::endl;		
 		}
 	}
 
 	return	RET_VALUE_OK;
 }
 
-RetValue	CmdEndpointGet( std::vector<std::string> const& _arguments, Shell* _shell)
+RetValue	CmdEndpointGet( Shell* _shell, std::string const& _id, std::string* _options, uint32_t _count)
 {
 
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
-	Fields		fields = default_fields;	
+	Fields		fields;
 	std::map<std::string, uint32_t>	fields_size;
 
-	if (_arguments.size() < 2)
+	if (_count == 0)
 	{
-		THROW_INVALID_ARGUMENT("Invalid argment!");
+		fields = default_fields;	
 	}
 
-	for(uint32_t i = 2 ; i < _arguments.size() ; i++)
+	for(uint32_t i = 0 ; i < _count ; i++)
 	{
-		if ((_arguments[i].substr(0, 2) != "--") || (_arguments[i].size() < 3))
+		if ((_options[i].substr(0, 2) != "--") || (_options[i].size() < 3))
 		{
 			THROW_INVALID_ARGUMENT("Invalid argment!");
 		}
 		
-		if (_arguments[i] == "--all")
+		if (_options[i] == "--all")
 		{
 			fields.Set(PROPERTY_ALL_FLAG);
 		}
 		else
 		{
-			fields.Set(_arguments[i].substr(2, _arguments[i].size() - 2));
+			fields.Set(_options[i].substr(2, _options[i].size() - 2));
 		}
 	}
 
-
 	JSONNode	properties;
 
-	if (client->GetEndpoint(_arguments[1], fields, properties))
+	if (client->GetEndpoint(_id, fields, properties))
 	{
 		uint32_t	title_size = 16;
 
@@ -223,48 +288,48 @@ RetValue	CmdEndpointGet( std::vector<std::string> const& _arguments, Shell* _she
 	}
 	else
 	{
-		_shell->Out() << "Failed to get endpoint[" << _arguments[1] << "] properties." << std::endl;
+		_shell->Out() << "Failed to get endpoint[" << _id << "] properties." << std::endl;
 	}
 
 	return	RET_VALUE_OK;
 }
 
-RetValue	CmdEndpointSet( std::vector<std::string> const& _arguments, Shell* _shell)
+RetValue	CmdEndpointSet( Shell* _shell, std::string const& _id, std::string* _options, uint32_t _count)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	JSONNode	properties;
 
-	if ((_arguments.size() < 2) || ((_arguments.size() - 2) % 2 != 0))
+	if ((_count < 2) || (_count % 2 != 0))
 	{
 		THROW_INVALID_ARGUMENT("Invalid argment!");
 	}
 
-	properties.push_back(JSONNode(TITLE_NAME_ID, _arguments[1]));
+	properties.push_back(JSONNode(TITLE_NAME_ID, _id));
 
-	for(uint32_t i = 2 ; i + 1 < _arguments.size() ; i+=2)
+	for(uint32_t i = 0 ; i + 1 < _count ; i+=2)
 	{
-		if ((_arguments[i].substr(0, 2) != "--") || (_arguments[i].size() < 3))
+		if ((_options[i].substr(0, 2) != "--") || (_options[i].size() < 3))
 		{
 			throw InvalidArgument("Invalid argument");	
 		}
 
-		properties.push_back(JSONNode(_arguments[i].substr(2, _arguments[i].length() - 2), _arguments[i+1]));
+		properties.push_back(JSONNode(_options[i].substr(2, _options[i].length() - 2), _options[i+1]));
 	}
 
 	if (client->SetEndpoint(properties))
 	{
-		_shell->Out() << "The endpoint[" << _arguments[1] << "] properties changed." << std::endl;	
+		_shell->Out() << "The endpoint[" << _id << "] properties changed." << std::endl;	
 
 	}
 	else
 	{
-		_shell->Out() << "Failed to set endpoint[" << _arguments[1] << "] properties." << std::endl;	
+		_shell->Out() << "Failed to set endpoint[" << _id << "] properties." << std::endl;	
 	}
 
 	return	RET_VALUE_OK;
 }
 
-RetValue	CmdEndpointList( std::vector<std::string> const& _arguments, Shell* _shell)
+RetValue	CmdEndpointList( Shell* _shell, std::string* _options, uint32_t _count)
 {
 
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
@@ -272,25 +337,20 @@ RetValue	CmdEndpointList( std::vector<std::string> const& _arguments, Shell* _sh
 	Fields						fields = default_fields;	
 	std::map<std::string, uint32_t>	fields_size;
 
-	if (_arguments.size() < 1)
+	for(uint32_t i = 0 ; i < _count ; i++)
 	{
-		THROW_INVALID_ARGUMENT("Invalid argment!");
-	}
-
-	for(uint32_t i = 1 ; i < _arguments.size() ; i++)
-	{
-		if ((_arguments[i].substr(0, 2) != "--") || (_arguments[i].size() < 3))
+		if ((_options[i].substr(0, 2) != "--") || (_options[i].size() < 3))
 		{
 			THROW_INVALID_ARGUMENT("Invalid argment!");
 		}
 		
-		if (_arguments[i] == "--all")
+		if (_options[i] == "--all")
 		{
 			fields.Set(PROPERTY_ALL_FLAG);
 		}
 		else
 		{
-			fields.Set(_arguments[i].substr(2, _arguments[i].size() - 2));
+			fields.Set(_options[i].substr(2, _options[i].size() - 2));
 		}
 	}
 
@@ -368,25 +428,25 @@ RetValue	CmdEndpointList( std::vector<std::string> const& _arguments, Shell* _sh
 
 }
 
-RetValue	CmdEndpointStart( std::vector<std::string> const& _arguments, Shell* _shell)
+RetValue	CmdEndpointStart( Shell* _shell, std::string* _options, uint32_t _count)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	std::vector<std::string>	id_list;
 
-	if (_arguments.size() < 2)
+	if (_count < 1)
 	{
 		THROW_INVALID_ARGUMENT("Invalid argment!");
 	}
 	
-	if (_arguments[1] == "all")
+	if (_options[0] == "all")
 	{
 		client->GetEndpointList(id_list);
 	}
 	else
 	{
-		for(uint32_t i = 1 ; i < _arguments.size() ; i++)
+		for(uint32_t i = 0 ; i < _count ; i++)
 		{
-			id_list.push_back(_arguments[i]);	
+			id_list.push_back(_options[i]);	
 		}
 	}
 
@@ -405,25 +465,25 @@ RetValue	CmdEndpointStart( std::vector<std::string> const& _arguments, Shell* _s
 	return	RET_VALUE_OK;
 }
 
-RetValue	CmdEndpointStop( std::vector<std::string> const& _arguments, Shell* _shell)
+RetValue	CmdEndpointStop( Shell* _shell, std::string* _options, uint32_t _count)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	std::vector<std::string>	id_list;
 
-	if (_arguments.size() < 2)
+	if (_count < 0)
 	{
 		THROW_INVALID_ARGUMENT("Invalid argment!");
 	}
 
-	if (_arguments[1] == "all")
+	if (_options[0] == "all")
 	{
 		client->GetEndpointList(id_list);
 	}
 	else
 	{
-		for(uint32_t i = 1 ; i < _arguments.size() ; i++)
+		for(uint32_t i = 0 ; i < _count ; i++)
 		{
-			id_list.push_back(_arguments[i]);	
+			id_list.push_back(_options[i]);	
 		}
 	}
 
@@ -442,25 +502,25 @@ RetValue	CmdEndpointStop( std::vector<std::string> const& _arguments, Shell* _sh
 	return	RET_VALUE_OK;
 }
 
-RetValue	CmdEndpointEnable( std::vector<std::string> const& _arguments, Shell* _shell)
+RetValue	CmdEndpointEnable( Shell* _shell, std::string* _options, uint32_t _count)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	std::vector<std::string>	id_list;
 
-	if (_arguments.size() < 2)
+	if (_count < 0)
 	{
 		THROW_INVALID_ARGUMENT("Invalid argment!");
 	}
 
-	if (_arguments[1] == "all")
+	if (_options[0] == "all")
 	{
 		client->GetEndpointList(id_list);
 	}
 	else
 	{
-		for(uint32_t i = 1 ; i < _arguments.size() ; i++)
+		for(uint32_t i = 0 ; i < _count ; i++)
 		{
-			id_list.push_back(_arguments[i]);	
+			id_list.push_back(_options[i]);	
 		}
 	}
 
@@ -476,25 +536,25 @@ RetValue	CmdEndpointEnable( std::vector<std::string> const& _arguments, Shell* _
 	return	RET_VALUE_OK;
 }
 
-RetValue	CmdEndpointDisable( std::vector<std::string> const& _arguments, Shell* _shell)
+RetValue	CmdEndpointDisable( Shell* _shell, std::string* _options, uint32_t _count)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	std::vector<std::string>	id_list;
 
-	if (_arguments.size() < 2)
+	if (_count < 1)
 	{
 		THROW_INVALID_ARGUMENT("Invalid argment!");
 	}
 
-	if (_arguments[1] == "all")
+	if (_options[0] == "all")
 	{
 		client->GetEndpointList(id_list);
 	}
 	else
 	{
-		for(uint32_t i = 1 ; i < _arguments.size() ; i++)
+		for(uint32_t i = 0 ; i < _count ; i++)
 		{
-			id_list.push_back(_arguments[i]);	
+			id_list.push_back(_options[i]);	
 		}
 	}
 

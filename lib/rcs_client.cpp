@@ -139,7 +139,7 @@ bool	RCSClient::AddGateway(JSONNode const& _properties)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received or invalid.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -151,6 +151,32 @@ bool	RCSClient::AddGateway(JSONNode const& _properties)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
+	return	false;
+}
+
+bool	RCSClient::AddGateway(JSONNode const& _properties, JSONNode& _gateway)
+{
+	RCSMessage	request(MSG_TYPE_RCS_ADD);
+	RCSMessage	response;
+
+	request.AddGateway(_properties);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("Remote call message was not processed normally.");
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		_gateway = response.GetGateway(0);
+
+		TRACE_INFO("Gateway added." << std::endl << _gateway.write_formatted());
+		return	true;
+	}
+
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -163,15 +189,17 @@ bool	RCSClient::DelGateway(std::string const& _id)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received or invalid.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
 	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
 	{
+		TRACE_INFO("Gateway[" << _id << "] has been deleted.");
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -184,16 +212,18 @@ bool	RCSClient::GetGateway(std::string const& _id, JSONNode& _properties)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
 	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
 	{
 		_properties = response.GetGateway(0);
+		TRACE_INFO("< Gateway Information >" << std::endl << _properties.write_formatted());
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -207,16 +237,18 @@ bool	RCSClient::GetGateway(std::string const& _id, Fields const& _fields, JSONNo
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
 	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
 	{
 		_properties = response.GetGateway(0);
+		TRACE_INFO("< Gateway Information >" << std::endl << _properties.write_formatted());
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -236,7 +268,7 @@ bool	RCSClient::GetGateway(std::list<std::string>& _fields, std::vector<JSONNode
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -245,10 +277,12 @@ bool	RCSClient::GetGateway(std::list<std::string>& _fields, std::vector<JSONNode
 		for(uint32_t i = 0 ; i < response.GetGatewayCount(); i++)
 		{
 			_vector.push_back(response.GetGateway(i));
+			TRACE_INFO("< Gateway Information >" << std::endl << response.GetGateway(i).write_formatted());
 		}
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -261,7 +295,7 @@ bool	RCSClient::GetGateway(std::vector<JSONNode>& _vector)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -270,10 +304,12 @@ bool	RCSClient::GetGateway(std::vector<JSONNode>& _vector)
 		for(uint32_t i = 0 ; i < response.GetGatewayCount(); i++)
 		{
 			_vector.push_back(response.GetGateway(i));
+			TRACE_INFO("< Gateway Information >" << std::endl << response.GetGateway(i).write_formatted());
 		}
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -286,7 +322,7 @@ bool	RCSClient::SetGateway(JSONNode const& _properties)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -295,6 +331,7 @@ bool	RCSClient::SetGateway(JSONNode const& _properties)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -307,15 +344,27 @@ bool	RCSClient::StartGateway(std::string const& _id)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received or invalid.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
 	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
 	{
-		return	true;
+		try
+		{
+			std::string result = JSONNodeGetResult(response.GetPayload());
+			if (result == RET_CONST_OK)
+			{
+				return	true;
+			}
+		}
+		catch(ObjectNotFound& e)
+		{
+			TRACE_ERROR("Invalid field configuration.");
+		}
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -328,7 +377,7 @@ bool	RCSClient::StopGateway(std::string const& _id)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received or invalid.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -337,6 +386,7 @@ bool	RCSClient::StopGateway(std::string const& _id)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -349,7 +399,7 @@ bool	RCSClient::GetGatewayList(std::vector<std::string>& _id_list)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -368,6 +418,7 @@ bool	RCSClient::GetGatewayList(std::vector<std::string>& _id_list)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -385,7 +436,7 @@ bool	RCSClient::SetGatewayEnable(std::string const& _id, bool _enable)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -394,6 +445,7 @@ bool	RCSClient::SetGatewayEnable(std::string const& _id, bool _enable)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -415,16 +467,24 @@ bool	RCSClient::SetGatewayEnable(std::vector<std::string> const& _id_list, bool 
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
 	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
 	{
+		for(uint32_t j = 0 ; j < response.GetGatewayCount() ; j++)
+		{
+			JSONNode	gateway = response.GetGateway(j);	
+
+			TRACE_INFO("Gateway[" << j << "]" << std::endl << gateway.write_formatted());
+		}
+
 		return	true;
 	}
 
-	return	false;
+	TRACE_ERROR("The requested message has not been confirmed.");
+	return false;
 }
 
 
@@ -438,17 +498,73 @@ bool	RCSClient::AddDevice(JSONNode const& _properties)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received or invalid.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
 	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
 	{
-		JSONNode	device;
+		try
+		{
+			std::string result = JSONNodeGetResult(response.GetPayload());
+			
+			if (result == RET_CONST_OK)
+			{
+				JSONNode	device;
 
-		device = response.GetDevice(0);
-		return	true;
+				device = response.GetDevice(0);
+
+				TRACE_INFO("Device added." << std::endl << device.write_formatted());
+				return	true;
+			}
+		}
+		catch(ObjectNotFound& e)
+		{
+			TRACE_ERROR("Invalid field configuration.");
+			return	false;	
+		}
 	}
+
+	TRACE_ERROR("The requested message has not been confirmed.");
+
+	return	false;
+}
+
+bool	RCSClient::AddDevice(JSONNode const& _properties, JSONNode& _device)
+{
+	RCSMessage	request(MSG_TYPE_RCS_ADD);
+	RCSMessage	response;
+
+	request.AddDevice(_properties);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("Remote call message was not processed normally.");
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		try
+		{
+			std::string	result = JSONNodeGetResult(response.GetPayload());
+			
+			if (result == RET_CONST_OK)
+			{
+				_device = response.GetDevice(0);
+
+				TRACE_INFO("Device added." << std::endl << _device.write_formatted());
+				return	true;
+			}
+		}
+		catch(ObjectNotFound& e)
+		{
+			TRACE_ERROR("Invalid field configuration.");
+			return	false;	
+		}
+	}
+
+	TRACE_ERROR("The requested message has not been confirmed.");
 
 	return	false;
 }
@@ -462,7 +578,7 @@ bool	RCSClient::DelDevice(std::string const& _id)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received or invalid.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -471,6 +587,7 @@ bool	RCSClient::DelDevice(std::string const& _id)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -483,7 +600,7 @@ bool	RCSClient::GetDevice(std::string const& _id, JSONNode& _properties)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -493,6 +610,7 @@ bool	RCSClient::GetDevice(std::string const& _id, JSONNode& _properties)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -506,7 +624,7 @@ bool	RCSClient::GetDevice(std::string const& _id, Fields const& _fields, JSONNod
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -516,6 +634,7 @@ bool	RCSClient::GetDevice(std::string const& _id, Fields const& _fields, JSONNod
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -535,7 +654,7 @@ bool	RCSClient::GetDevice(std::list<std::string>& _fields, std::vector<JSONNode>
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -548,6 +667,7 @@ bool	RCSClient::GetDevice(std::list<std::string>& _fields, std::vector<JSONNode>
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -560,7 +680,7 @@ bool	RCSClient::GetDevice(std::vector<JSONNode>& _vector)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -573,6 +693,7 @@ bool	RCSClient::GetDevice(std::vector<JSONNode>& _vector)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -585,7 +706,7 @@ bool	RCSClient::SetDevice(JSONNode const& _properties)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -594,6 +715,7 @@ bool	RCSClient::SetDevice(JSONNode const& _properties)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -606,7 +728,7 @@ bool	RCSClient::StartDevice(std::string const& _id)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received or invalid.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -615,6 +737,7 @@ bool	RCSClient::StartDevice(std::string const& _id)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -627,7 +750,7 @@ bool	RCSClient::StopDevice(std::string const& _id)
 
 	if (!RemoteCall(request, response))
 	{
-		TRACE_ERROR("The response was not received or invalid.");	
+		TRACE_ERROR("Remote call message was not processed normally.");
 		return	false;
 	}
 
@@ -636,6 +759,7 @@ bool	RCSClient::StopDevice(std::string const& _id)
 		return	true;
 	}
 
+	TRACE_ERROR("The requested message has not been confirmed.");
 	return	false;
 }
 
@@ -743,11 +867,65 @@ bool	RCSClient::AddEndpoint(JSONNode const& _properties)
 
 	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
 	{
-		JSONNode	endpoint;
+		try
+		{
+			std::string result = JSONNodeGetResult(response.GetPayload());
+			
+			if (result == RET_CONST_OK)
+			{
+				JSONNode	endpoint;
 
-		endpoint = response.GetEndpoint(0);
-		return	true;
+				endpoint = response.GetEndpoint(0);
+
+				TRACE_INFO("Endpoint added" << std::endl << endpoint.write_formatted());
+				return	true;
+			}
+		}
+		catch(ObjectNotFound& e)
+		{
+			TRACE_ERROR("Invalid field configuration.");
+			return	false;	
+		}
 	}
+
+	TRACE_ERROR("Failed to add endpoint.");
+
+	return	false;
+}
+
+bool	RCSClient::AddEndpoint(JSONNode const& _properties, JSONNode& _endpoint)
+{
+	RCSMessage	request(MSG_TYPE_RCS_ADD);
+	RCSMessage	response;
+
+	request.AddEndpoint(_properties);
+
+	if (!RemoteCall(request, response))
+	{
+		TRACE_ERROR("The response was not received or invalid.");	
+		return	false;
+	}
+
+	if (response.GetMsgType() == MSG_TYPE_RCS_CONFIRM)	
+	{
+		try
+		{
+			std::string	result = JSONNodeGetResult(response.GetPayload());
+			
+			if (result == RET_CONST_OK)
+			{
+				_endpoint = response.GetEndpoint(0);
+				return	true;
+			}
+		}
+		catch(ObjectNotFound& e)
+		{
+			TRACE_ERROR("Invalid field configuration.");
+			return	false;	
+		}
+	}
+
+	TRACE_ERROR("Failed to add endpoint.");
 
 	return	false;
 }
@@ -770,6 +948,7 @@ bool	RCSClient::DelEndpoint(std::string const& _id)
 		return	true;
 	}
 
+	TRACE_ERROR("Remote call message was not processed normally.");
 	return	false;
 }
 
@@ -792,6 +971,7 @@ bool	RCSClient::GetEndpoint(std::string const& _id, JSONNode& _properties)
 		return	true;
 	}
 
+	TRACE_ERROR("Remote call message was not processed normally.");
 	return	false;
 }
 
@@ -815,6 +995,7 @@ bool	RCSClient::GetEndpoint(std::string const& _id, Fields const& _fields, JSONN
 		return	true;
 	}
 
+	TRACE_ERROR("Remote call message was not processed normally.");
 	return	false;
 }
 

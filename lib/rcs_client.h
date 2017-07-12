@@ -31,6 +31,7 @@ public:
 			bool	IsConnected();
 
 			bool	AddGateway(JSONNode const& _properties);
+			bool	AddGateway(JSONNode const& _properties, JSONNode& _gateway);
 			bool	DelGateway(std::string const& _id);
 			bool	GetGateway(std::vector<JSONNode>& _vector);
 			bool	GetGateway(std::string const& _id , JSONNode& _properties);
@@ -44,6 +45,7 @@ public:
 			bool	SetGatewayEnable(std::vector<std::string> const& _id_list, bool _enable);
 
 			bool	AddDevice(JSONNode const& _properties);
+			bool	AddDevice(JSONNode const& _properties, JSONNode& _device);
 			bool	DelDevice(std::string const& _id);
 			bool	GetDevice(std::vector<JSONNode>& _vector);
 			bool	GetDevice(std::string const& _id , JSONNode& _properties);
@@ -57,6 +59,7 @@ public:
 			bool	SetDeviceEnable(std::vector<std::string> const& _id_list, bool _enable);
 		
 			bool	AddEndpoint(JSONNode const& _properties);
+			bool	AddEndpoint(JSONNode const& _properties, JSONNode& _endpoint);
 			bool	DelEndpoint(std::string const& _id);
 			bool	GetEndpoint(std::vector<JSONNode>& _vector);
 			bool	GetEndpoint(std::string const& _id , JSONNode& _properties);

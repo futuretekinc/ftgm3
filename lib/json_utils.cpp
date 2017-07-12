@@ -193,6 +193,11 @@ std::string	JSONNodeGetMsgType(JSONNode const& _node)
 	return	JSONNodeGetString(_node, TITLE_NAME_MSG_TYPE);
 }
 
+std::string	JSONNodeGetResult(JSONNode const& _node)
+{
+	return	JSONNodeGetString(_node, TITLE_NAME_RESULT);
+}
+
 uint32_t	JSONNodeGetCount(JSONNode const& _node, uint32_t _default)
 {
 	JSONNode::const_iterator field = _node.find(TITLE_NAME_COUNT);
@@ -242,9 +247,15 @@ JSONNode	JSONNodeGetValueNode(JSONNode const& _node)
 
 bool		JSONNodeIsExistField(JSONNode const& _node, std::string const& _name)
 {
-	JSONNode::const_iterator field = _node.find(_name);
+	for(JSONNode::const_iterator it = _node.begin() ; it != _node.end() ; it++)
+	{
+		if (it->name() == _name)
+		{
+			return	true;	
+		}
+	}
 
-	return	(field != _node.end());
+	return	false;
 }
 
 bool		JSONNodeIsExistValue(JSONNode const& _node)
