@@ -4,7 +4,7 @@
 #include <list>
 #include "defined.h"
 #include "active_object.h"
-#include "librdkafka/rdkafkacpp.h"
+//#include "librdkafka/rdkafkacpp.h"
 #include "timer.h"
 #include "gateway.h"
 #include "device.h"
