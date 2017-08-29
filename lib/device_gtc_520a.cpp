@@ -73,6 +73,7 @@ void	DeviceGTC520A::Process()
 {
 	if(correction_timer_.RemainTime() == 0)
 	{
+		TRACE_INFO("GTC520A read register");
 		if (!ReadHoldingRegisters(0, registers_, 2))
 		{
 			TRACE_ERROR("Failed to read register");
@@ -83,6 +84,7 @@ void	DeviceGTC520A::Process()
 		}
 
 		correction_timer_.Add(correction_interval_);
+		TRACE_INFO("GTC520A Remain Time : " << correction_timer_.RemainTime());
 	}
 
 	DeviceModbus::Process();

@@ -88,7 +88,9 @@ public:
 			std::string	GetTopicNameGateway(std::string const& _id);
 			std::string	GetTopicNameDevice(std::string const& _id);
 			std::string	GetTopicNameEndpoint(std::string const& _id);
-
+			//add SY.KANG
+			bool    	InfoProcess(Node* _object);
+			//
 			DataManager&	GetDataManager()	{	return	data_manager_;	};
 			ServerLinkerMosq&	GetServerLinker()	{	return	server_linker_;	};
 			RCSServer&		GetRCSServer()		{	return	rcs_server_;	};

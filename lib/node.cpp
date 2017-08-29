@@ -381,6 +381,13 @@ void	Node::Preprocess()
 	}
 }
 
+//ADd SY.KANG
+void 	Node::InfoProcess()
+{
+	manager_.InfoProcess(this);
+}
+//
+
 void	Node::Process()
 {
 	if (keep_alive_interval_ != 0)

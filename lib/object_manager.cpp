@@ -1009,9 +1009,18 @@ void	ObjectManager::Preprocess()
 	rcs_server_.Start(10000);
 	server_linker_.Start(10000);
 
+	TRACE_INFO("Auto Start : " << auto_start_ );
 	if (auto_start_)
 	{
 		for(std::map<std::string, Gateway *>::iterator it = gateway_map_.begin(); it != gateway_map_.end() ; it++)
+		{
+			if(it->second->GetEnable())
+			{
+				it->second->Start(GATEWAY_START_INITIALIZATION_TIMEOUT);	
+			}
+		}
+
+		for(std::map<std::string, Device *>::iterator it = device_map_.begin(); it != device_map_.end() ; it++)
 		{
 			if(it->second->GetEnable())
 			{
@@ -1249,6 +1258,22 @@ bool	ObjectManager::OnMessage(Message* _base_message)
 	return	true;
 }
 
+
+//add SY.KANG
+bool	ObjectManager::InfoProcess(Node* _object)
+{
+	JSONNode	properties;
+	_object->GetProperties(properties, PROPERTY_ID + PROPERTY_IP);
+
+	RCSMessage message(MSG_TYPE_RCS_GW_INFO);
+
+	message.AddGateway(properties);
+	TRACE_INFO("OBJECT_MANAGER_INFO_PROCESS SUCCESS");
+	return server_linker_.Send(message);
+
+	
+}
+//
 
 bool	ObjectManager::KeepAlive(Node* _object)
 {

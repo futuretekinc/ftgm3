@@ -29,6 +29,8 @@ public:
 	virtual	~Object();
 
 	virtual	const char*	GetClassName();
+	
+
 
 	const std::string&	GetID() const;
 			bool		SetID(std::string const& _id, bool _check = false);
@@ -79,6 +81,9 @@ public:
 	std::string			GetTraceName() const;
 			void		SetTrace(bool	_enable);
 	Trace&				GetTrace();
+	
+	//add SY.KANG
+	std::string 		GetIP();
 
 	friend std::ostream&	operator<<(std::ostream& os, Object & _object);
 
@@ -93,6 +98,8 @@ protected:
 
 	JSONNode	updated_properties_;
 	Trace		trace;
+	//add SY.KANG
+	std::string	ip_;
 };
 
 std::string	ToString(Object::Stat _stat);

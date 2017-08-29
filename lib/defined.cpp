@@ -118,3 +118,7 @@ const char*	SERVER_LINKER_TOPIC_VERSION			=	"v1";
 const char*	SERVER_LINKER_TOPIC_ID 				=	"1";
 const char*	SERVER_LINKER_TOPIC_GLOBAL_UP_NAME 	=	"server";
 const char*	SERVER_LINKER_TOPIC_GLOBAL_DOWN_NAME=	"client";
+
+//add SY.KANG
+uint32_t	GATEWAY_INFO_INTERVAL_SEC		= (10*60);
+//

@@ -39,6 +39,9 @@ public:
 
 	static	Gateway*	Create(ObjectManager& _manager, JSONNode const& _properties);
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
+	//add SY.KANG
+	 	void    	InfoProcess();
+	//
 
 protected:
 
@@ -51,7 +54,10 @@ protected:
 	virtual	bool		Attach(std::string const& _device_id);
 			bool		Detach(std::string const& _device_id);
 			bool		Detach();
-
+			//add SY.KANG
+			uint32_t	gateway_info_interval_;
+			Timer		gateway_info_timer_;
+			//
 	std::list<std::string>	device_id_list_;
 };
 

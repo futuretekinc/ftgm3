@@ -1212,6 +1212,7 @@ bool	ServerLinker::OnMessage(Message* _message)
 				if (produce != NULL)
 				{
 					ret_value = OnProduce(produce);
+					TRACE_INFO("TEST_SERVER_LINKER_ONMESSAGE");
 				}
 				else
 				{

@@ -13,7 +13,10 @@
 #include "exception.h"
 
 Gateway::Gateway(ObjectManager& _manager, std::string const& _type)
-:	Node(_manager, _type)
+:	Node(_manager, _type),
+	//add SY.KANG
+	gateway_info_interval_(GATEWAY_INFO_INTERVAL_SEC)
+	//
 {
 }
 
@@ -150,6 +153,13 @@ void	Gateway::Preprocess()
 {
 	Node::Preprocess();
 
+	if(gateway_info_interval_ != 0)
+	{
+		Date date = Date::GetCurrent() + Time((uint64_t)gateway_info_interval_ * TIME_SECOND);
+		gateway_info_timer_.Set(date);
+
+	}
+
 	for(std::list<std::string>::iterator it = device_id_list_.begin(); it != device_id_list_.end(); it++)
 	{
 		Device*	device = manager_.GetDevice(*it);
@@ -164,9 +174,27 @@ void	Gateway::Preprocess()
 	}
 }
 
-void	Gateway::Process()
+//add SY.KANG
+void	Gateway::InfoProcess()
 {
+	if(gateway_info_interval_ != 0)
+	{
+		if(gateway_info_timer_.RemainTime() == 0)
+		{
+			gateway_info_timer_.Add(gateway_info_interval_);
+			Node::InfoProcess();
+		}
+	}
+}
+//
+
+void	Gateway::Process()
+{	
 	Node::Process();
+	
+	//add SY.KANG
+	InfoProcess();
+	//
 }
 
 void	Gateway::Postprocess()

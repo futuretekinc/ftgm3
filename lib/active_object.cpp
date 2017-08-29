@@ -357,7 +357,6 @@ void *ActiveObject::ThreadMain(void *data)
 		loop_timer.Add(_object->loop_interval_);
 
 		_object->Process();
-
 		usleep(loop_timer.RemainTime());
 	}
 

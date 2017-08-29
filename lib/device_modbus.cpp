@@ -7,7 +7,7 @@
 using namespace modbus;
 
 DeviceModbus::DeviceModbus(ObjectManager& _manager, std::string const& _type, bool _half)
-: DeviceSerial(_manager, _type, _half), timeout_(100000)
+: DeviceSerial(_manager, _type, _half), timeout_(1)
 {
 }
 

@@ -11,6 +11,11 @@
 #include "utils.h"
 #include <hashlib++/hashlibpp.h>
 #include "exception.h"
+#include <iostream>
+#include <string>
+#include <fstream>
+
+
 
 static const char*	class_name = "Object";
 static std::multimap<std::string, Object*>	object_map;
@@ -30,6 +35,7 @@ Object::Object()
 		id_ = md5->getHashFromString(oss.str());
 
 		name_ = std::string(id_);
+
 
 		object_map.insert(std::pair<std::string, Object*>(id_,this));
 	}
@@ -74,6 +80,27 @@ const char*	Object::GetClassName()
 {
 	return	class_name;
 }
+
+//Add SY.KANG
+std::string Object::GetIP()
+{
+	std::ifstream in;
+	std::string default_ip("0.0.0.0");
+
+	in.open("/usr/var/run/wanip_get/wanip.data");
+	if(!in.is_open())
+	{
+		ip_ = default_ip;	
+		return ip_;
+	}
+	
+	getline(in, ip_);
+	
+	in.close();
+
+	return ip_;	
+}
+//
 
 const	std::string&	Object::GetID() const
 {
@@ -401,6 +428,7 @@ bool	Object::GetProperty(uint32_t _type, JSONNode& _property)
 	case	PROPERTY_PARENT_ID_FLAG:_property = JSONNode(TITLE_NAME_PARENT_ID, parent_id_); break;
 	case 	PROPERTY_ENABLE_FLAG:	_property = JSONNode(TITLE_NAME_ENABLE, enable_); break;
 	case 	PROPERTY_STAT_FLAG:		_property = JSONNode(TITLE_NAME_STAT, ToString(GetState())); break;
+	case    PROPERTY_IP_FLAG :	_property = JSONNode(TITLE_NAME_IP, GetIP()); break; // add SY.KANG
 	default:
 		{
 			TRACE_ERROR("The " << _type << " configuration is not supported!");

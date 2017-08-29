@@ -59,7 +59,9 @@ public:
 
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 	static	bool		IsIncludeIn(Object* _object);
-
+	//add SY.KANG
+	void	InfoProcess();
+	//
 protected:
 	ObjectManager&	manager_;
 	std::string		type_;
