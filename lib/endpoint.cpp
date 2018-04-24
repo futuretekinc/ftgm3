@@ -11,6 +11,7 @@
 #include "endpoint_sensor_temperature.h"
 #include "endpoint_sensor_humidity.h"
 #include "endpoint_sensor_voltage.h"
+#include "endpoint_sensor_wave.h"
 #include "endpoint_sensor_current.h"
 #include "endpoint_sensor_di.h"
 #include "endpoint_sensor_windspeed.h"
@@ -18,7 +19,9 @@
 #include "endpoint_sensor_soil_acidity.h"
 #include "endpoint_sensor_rainfall.h"
 #include "endpoint_sensor_gas.h"
+#include "endpoint_sensor_mb_data.h"
 #include "endpoint_actuator_do.h"
+#include "endpoint_actuator_fx3dtempctr.h"
 #include "endpoint_sensor_ygc_fs.h"
 #include "utils.h"
 
@@ -503,7 +506,7 @@ uint32_t	Endpoint::GetData(uint32_t _count, ValueMap& _value_map)
 bool	Endpoint::Add(time_t _time, std::string const& _value)
 {
 	bool	ret_value = false;
-
+	
 	ret_value = value_map_.Add(_time, _value);
 	if (ret_value == true)
 	{
@@ -616,6 +619,16 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 			{
 				endpoint = new EndpointActuatorDO(_manager, _properties);
 				TRACE_INFO2(NULL, "The DO endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_A_FX3DTEMPCTR)
+			{
+				endpoint = new EndpointActuatorFX3DTempCTR(_manager, _properties);
+				TRACE_INFO2(NULL, "The FX3DTempControl endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_WAVE)
+			{
+				endpoint = new EndpointSensorWave(_manager, _properties);
+				TRACE_INFO2(NULL, "The Wave endpoint[" << endpoint->GetID() <<"] created");
 			}
 			else
 			{

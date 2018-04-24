@@ -12,7 +12,7 @@ EndpointSensorYGCFS::EndpointSensorYGCFS(ObjectManager& _manager)
 : EndpointSensorLinear(_manager, EndpointSensorYGCFS::Type(), ENDPOINT_SENSOR_WIND_SPEED_UNIT, ENDPOINT_SENSOR_WIND_SPEED_MIN, ENDPOINT_SENSOR_WIND_SPEED_MAX)
 {
 	trace.SetClassName(class_name);
-	TRACE_INFO("The Wind Spped endpoint[" << id_ <<"] created");
+	TRACE_INFO("The Wind Speed endpoint[" << id_ <<"] created");
 }
 
 EndpointSensorYGCFS::EndpointSensorYGCFS(ObjectManager& _manager, JSONNode const& _properties)
@@ -20,7 +20,7 @@ EndpointSensorYGCFS::EndpointSensorYGCFS(ObjectManager& _manager, JSONNode const
 {
 	trace.SetClassName(class_name);
 	SetProperties(_properties, false, true);
-	TRACE_INFO("The Wind Spped endpoint[" << id_ <<"] created");
+	TRACE_INFO("The Wind Speed endpoint[" << id_ <<"] created");
 }
 
 const char* EndpointSensorYGCFS::GetClassName() 

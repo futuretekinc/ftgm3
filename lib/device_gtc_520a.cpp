@@ -69,19 +69,27 @@ void	DeviceGTC520A::Preprocess()
 	DeviceModbus::Preprocess();
 }
 
+
+
 void	DeviceGTC520A::Process()
 {
+	float p = 0;
+
 	if(correction_timer_.RemainTime() == 0)
 	{
 		TRACE_INFO("GTC520A read register");
 		if (!ReadHoldingRegisters(0, registers_, 2))
 		{
 			TRACE_ERROR("Failed to read register");
+			time_ = Date::GetCurrent();
+			registers_[0] = 0;
+			registers_[1] = 0;
 		}
 		else
 		{
 			time_ = Date::GetCurrent();
 		}
+		
 
 		correction_timer_.Add(correction_interval_);
 		TRACE_INFO("GTC520A Remain Time : " << correction_timer_.RemainTime());

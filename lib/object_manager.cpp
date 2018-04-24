@@ -1263,7 +1263,7 @@ bool	ObjectManager::OnMessage(Message* _base_message)
 bool	ObjectManager::InfoProcess(Node* _object)
 {
 	JSONNode	properties;
-	_object->GetProperties(properties, PROPERTY_ID + PROPERTY_IP);
+	_object->GetWanIP(properties);
 
 	RCSMessage message(MSG_TYPE_RCS_GW_INFO);
 

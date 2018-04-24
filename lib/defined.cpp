@@ -24,9 +24,12 @@ const char*	OBJECT_TYPE_DEV_SIM				=	"dev_sim";
 
 const char*	OBJECT_TYPE_DEV_MODBUS			=	"dev_modbus";
 const char*	OBJECT_TYPE_DEV_GTC_520A		=	"dev_gtc_520a";
+const char*	OBJECT_TYPE_DEV_HS_1000M		=	"dev_hs_1000m";
+const char*	OBJECT_TYPE_DEV_MB7092			=	"dev_mb7092";
 
 const char*	OBJECT_TYPE_DEV_MODBUS_TCP		=	"dev_modbus_tcp";
 const char*	OBJECT_TYPE_DEV_ADAM_6051		=	"dev_adam_6051";
+const char*	OBJECT_TYPE_DEV_TURBOMAX		=	"dev_turbomax";
 
 const char* OBJECT_TYPE_ENDPOINT			=	"endpoint";
 const char* OBJECT_TYPE_ENDPOINT_SENSOR		=	"en_sensor";
@@ -35,6 +38,7 @@ const char*	OBJECT_TYPE_EP_S_LINEAR			=	"ep_s_linear";
 const char*	OBJECT_TYPE_EP_S_TEMPERATURE	=	"ep_s_temperature";
 const char*	OBJECT_TYPE_EP_S_HUMIDITY		=	"ep_s_humidity";
 const char*	OBJECT_TYPE_EP_S_VOLTAGE		=	"ep_s_voltage";
+const char*	OBJECT_TYPE_EP_S_WAVE		=	"ep_s_wave";
 const char*	OBJECT_TYPE_EP_S_CURRENT		=	"ep_s_current";
 const char*	OBJECT_TYPE_EP_S_DI				=	"ep_s_di";
 const char*	OBJECT_TYPE_EP_S_PRESSURE		=	"ep_s_pressure";
@@ -42,12 +46,14 @@ const char*	OBJECT_TYPE_EP_S_WIND_SPEED		=	"ep_s_wind_speed";
 const char*	OBJECT_TYPE_EP_S_SOIL_MOISTURE	=	"ep_s_soil_moisture";
 const char*	OBJECT_TYPE_EP_S_RAINFALL		=	"ep_s_rainfall";
 const char*	OBJECT_TYPE_EP_S_GAS			=	"ep_s_gas";
+const char*	OBJECT_TYPE_EP_S_MB_DATA		=	"ep_s_mb_data";
 const char* OBJECT_TYPE_EP_S_SOIL_ACIDITY	=	"ep_s_soil_acidity";
 
 const char* OBJECT_TYPE_ENDPOINT_ACUTATOR	=	"ep_actuator";
-const char*	OBJECT_TYPE_EP_A_DISCRETE		=	"ep_a_discrete";
-const char*	OBJECT_TYPE_EP_A_LINEAR			=	"ep_a_linear";
+const char*	OBJECT_TYPE_EP_A_TEMPCONTROL		=	"ep_a_tempcontrol";
+const char*	OBJECT_TYPE_EP_A_DISCRETE			=	"ep_a_discrete";
 const char*	OBJECT_TYPE_EP_A_DO				=	"ep_a_do";
+const char*	OBJECT_TYPE_EP_A_FX3DTEMPCTR			=	"ep_a_fx3dtempctr";
 
 uint32_t	GATEWAY_START_INITIALIZATION_TIMEOUT=	1000;
 
@@ -70,6 +76,10 @@ const char*	ENDPOINT_SENSOR_HUMIDITY_UNIT	= 	"%RH";
 double		ENDPOINT_SENSOR_VOLTAGE_MAX		= 	(380);
 double		ENDPOINT_SENSOR_VOLTAGE_MIN		= 	(0);
 const char*	ENDPOINT_SENSOR_VOLTAGE_UNIT	= 	"V";
+
+double		ENDPOINT_SENSOR_WAVE_MAX		= 	(800);
+double		ENDPOINT_SENSOR_WAVE_MIN		= 	(0);
+const char*	ENDPOINT_SENSOR_WAVE_UNIT	= 	"cm";
 
 double		ENDPOINT_SENSOR_CURRENT_MAX		= 	(100);
 double		ENDPOINT_SENSOR_CURRENT_MIN		= 	(0);
@@ -94,6 +104,11 @@ const char*	ENDPOINT_SENSOR_SOIL_ACIDITY_UNIT	= "";
 double		ENDPOINT_SENSOR_GAS_MAX			= 100;
 double		ENDPOINT_SENSOR_GAS_MIN			= 0;
 const char*	ENDPOINT_SENSOR_GAS_UNIT		= "%";
+
+uint32_t	ENDPOINT_SENSOR_MB_DATA_MAX		= 0xffff;
+uint32_t	ENDPOINT_SENSOR_MB_DATA_MIN		= 0x0000;
+const char*	ENDPOINT_SENSOR_MB_DATA_UNIT		= "";
+
 
 uint32_t	ENDPOINT_SENSOR_DI_MAX			= 	(1);
 uint32_t	ENDPOINT_SENSOR_DI_MIN			= 	(0);
@@ -120,5 +135,5 @@ const char*	SERVER_LINKER_TOPIC_GLOBAL_UP_NAME 	=	"server";
 const char*	SERVER_LINKER_TOPIC_GLOBAL_DOWN_NAME=	"client";
 
 //add SY.KANG
-uint32_t	GATEWAY_INFO_INTERVAL_SEC		= (10*60);
+uint32_t	GATEWAY_INFO_INTERVAL_SEC		= (60*5);
 //

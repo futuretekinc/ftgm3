@@ -81,26 +81,6 @@ const char*	Object::GetClassName()
 	return	class_name;
 }
 
-//Add SY.KANG
-std::string Object::GetIP()
-{
-	std::ifstream in;
-	std::string default_ip("0.0.0.0");
-
-	in.open("/usr/var/run/wanip_get/wanip.data");
-	if(!in.is_open())
-	{
-		ip_ = default_ip;	
-		return ip_;
-	}
-	
-	getline(in, ip_);
-	
-	in.close();
-
-	return ip_;	
-}
-//
 
 const	std::string&	Object::GetID() const
 {
@@ -258,7 +238,7 @@ bool	Object::SetDate(Date const& _date)
 {
 	date_ = _date;
 
-	JSONNodeUpdate(updated_properties_, TITLE_NAME_TIME, time_t(date_));
+	JSONNodeUpdate(updated_properties_, TITLE_NAME_TIME, ToString(time_t(date_)));
 
 	if (!lazy_store_)
 	{
@@ -280,7 +260,7 @@ bool	Object::SetDate(std::string const& _date, bool _check)
 			{
 				date_ = date;
 
-				JSONNodeUpdate(updated_properties_, TITLE_NAME_TIME, time_t(date_));
+				JSONNodeUpdate(updated_properties_, TITLE_NAME_TIME, ToString(time_t(date_)));
 
 				if (!lazy_store_)
 				{
@@ -392,7 +372,7 @@ bool	Object::GetProperty(JSONNode& _property)
 		}
 		else if (_property.name() == TITLE_NAME_TIME)
 		{
-			_property = time_t(date_);
+			_property = ToString(time_t(date_));
 		}
 		else if (_property.name() == TITLE_NAME_PARENT_ID)
 		{
@@ -424,11 +404,10 @@ bool	Object::GetProperty(uint32_t _type, JSONNode& _property)
 	{
 	case	PROPERTY_ID_FLAG: 		_property = JSONNode(TITLE_NAME_ID, id_); break;
 	case	PROPERTY_NAME_FLAG: 	_property = JSONNode(TITLE_NAME_NAME, name_); break;
-	case	PROPERTY_TIME_FLAG: 	_property = JSONNode(TITLE_NAME_TIME, time_t(date_)); break;
+	case	PROPERTY_TIME_FLAG: 	_property = JSONNode(TITLE_NAME_TIME, ToString(time_t(date_))); break;
 	case	PROPERTY_PARENT_ID_FLAG:_property = JSONNode(TITLE_NAME_PARENT_ID, parent_id_); break;
 	case 	PROPERTY_ENABLE_FLAG:	_property = JSONNode(TITLE_NAME_ENABLE, enable_); break;
 	case 	PROPERTY_STAT_FLAG:		_property = JSONNode(TITLE_NAME_STAT, ToString(GetState())); break;
-	case    PROPERTY_IP_FLAG :	_property = JSONNode(TITLE_NAME_IP, GetIP()); break; // add SY.KANG
 	default:
 		{
 			TRACE_ERROR("The " << _type << " configuration is not supported!");
@@ -689,4 +668,37 @@ std::string ToString(Object::Stat _stat)
 Trace&	Object::GetTrace()
 {
 	return	trace;
+}
+
+//Add SY.KANG
+std::string Object::GetIP()
+{
+	std::ifstream in;
+        std::string default_ip("0.0.0.0");
+				       
+	in.open("/usr/var/run/wanip_get/wanip.data");
+	if(!in.is_open())
+	{
+		wan_ip_ = default_ip;
+		return wan_ip_;
+	}
+
+	getline(in, wan_ip_);
+
+	in.close();
+
+	return wan_ip_;
+}
+
+bool	Object::GetWanIP(JSONNode& _property)
+{
+	JSONNode        property;
+	
+	property = JSONNode(TITLE_NAME_ID, id_);
+	_property.push_back(property);
+
+     	property = JSONNode(TITLE_NAME_IP, GetIP());
+	_property.push_back(property);
+	
+	return true;
 }

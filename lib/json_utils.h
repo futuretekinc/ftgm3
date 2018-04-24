@@ -23,6 +23,7 @@ std::string	JSONNodeGetMsgID(JSONNode const& _node);
 std::string	JSONNodeGetMsgID(JSONNode const& _node, std::string _default);
 std::string	JSONNodeGetMsgType(JSONNode const& _node);
 std::string	JSONNodeGetResult(JSONNode const& _node);
+std::string     JSONNodeGetDefault(JSONNode const& _node, std::string _default);
 
 bool		JSONNodeDelField(JSONNode& _node, std::string const& _name);
 bool		JSONNodeDelType(JSONNode& _node);

@@ -39,6 +39,54 @@ bool		DeviceFTE::IsIncludedIn(std::string const& _type)
 	return	DeviceSNMP::IsIncludedIn(_type);
 }
 
+
+std::string* DeviceFTE::Parsing(std::string strOrigin, std::string strTok, int size)
+{
+	int cutAt;
+  	int index = 0;
+	std::string* strResult = new std::string[size];
+	
+	while((cutAt = strOrigin.find_first_of(strTok)) != strOrigin.npos)
+	{
+		if(cutAt > 0)
+		{
+			strResult[index++] = strOrigin.substr(0,cutAt);
+		}
+	       	strOrigin = strOrigin.substr(cutAt + 1);
+    	}
+
+	if(strOrigin.length() > 0)
+  	{
+  		strResult[index++] = strOrigin.substr(0, cutAt);
+
+     	}
+     	return strResult;
+}
+
+bool DeviceFTE::ValueParsing(std::string& _value)
+{
+	std::string value_temp;
+	std::string etc = "\"{}:,";
+	std::string* rev_value = Parsing(_value, etc, 6);
+	
+	
+	
+	if(rev_value[0].compare("T") != 0)
+	{
+		return false;
+	}
+	if(rev_value[2].compare("C") != 0)
+	{
+		return false;
+	} 
+	if(rev_value[4].compare("H") != 0)
+	{
+		return false;
+	}
+	_value = rev_value[1] + "," + rev_value[3] + "," + rev_value[5];
+	return true;
+}
+
 Endpoint*	DeviceFTE::CreateEndpoint(JSONNode const& _properties)
 {
 	Endpoint* endpoint = manager_.CreateEndpoint(_properties);
@@ -58,8 +106,14 @@ bool	DeviceFTE::ReadValue(std::string const& _epid, time_t& _time, std::string& 
 	if (endpoint != NULL)
 	{
 		SNMP::OID oid = GetOID(endpoint->GetType(), endpoint->GetSensorID());
-
+		
 		ret_value = DeviceSNMP::ReadValue(oid, _time, _value);
+		
+		if(endpoint->GetType() == OBJECT_TYPE_EP_A_FX3DTEMPCTR)
+		{
+			ret_value = ValueParsing(_value);
+		}
+
 		if (ret_value)
 		{
 			TRACE_INFO("The endpoint[" << std::string(oid) << "] : " << _value);	
@@ -167,6 +221,10 @@ SNMP::OID DeviceFTE::GetOID(std::string const& _type, uint32_t _index)
 	else if ((_type == OBJECT_TYPE_EP_S_WIND_SPEED) || (_type == OBJECT_TYPE_EP_S_RAINFALL) || (_type == OBJECT_TYPE_EP_S_SOIL_ACIDITY))
 	{
 		type_index = 10;
+	}
+	else if (_type == OBJECT_TYPE_EP_A_FX3DTEMPCTR)
+	{
+		type_index = 127;
 	}
 
 	oid.id[oid.length++] = 1;

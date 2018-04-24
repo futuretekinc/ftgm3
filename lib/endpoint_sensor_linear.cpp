@@ -115,7 +115,6 @@ bool	EndpointSensorLinear::Add(time_t time, std::string const& _value)
 		time_ = time;
 
 		value_= strtod(_value.c_str(), 0); 
-
 		return	Endpoint::Add(time, _value);
 	}
 

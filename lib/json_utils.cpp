@@ -198,6 +198,11 @@ std::string	JSONNodeGetResult(JSONNode const& _node)
 	return	JSONNodeGetString(_node, TITLE_NAME_RESULT);
 }
 
+std::string	JSONNodeGetDefault(JSONNode const& _node, std::string _default)
+{
+	return JSONNodeGetString(_node, _default);
+}
+
 uint32_t	JSONNodeGetCount(JSONNode const& _node, uint32_t _default)
 {
 	JSONNode::const_iterator field = _node.find(TITLE_NAME_COUNT);

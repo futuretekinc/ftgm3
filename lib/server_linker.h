@@ -142,6 +142,13 @@ const	std::string&	GetTopic()	{ return	topic_;	};
 
 	const std::string&	GetBroker();
 			bool		SetBroker(std::string const& _broker, bool _check = false);
+			
+			//Add SY.KANG
+			bool		SetUsername(std::string const& _username, bool _check = false);
+			bool		SetPassword(std::string const& _password, bool _check = false);
+			bool		SetPort(std::string const& _port, bool _check = false);
+			bool		SetKeepAliveInterval(std::string const& _keep_alive_interval, bool _check = false);
+			//
 
 			bool		SetAutoConnection(bool _auto);
 			bool		SetAutoConnection(std::string const& _auto, bool _check = false);
@@ -213,6 +220,12 @@ protected:
 	bool				broker_connected_;
 	Time				broker_retry_interval_;
 	Timer				broker_retry_timeout_;
+	
+	//add SY.KANG
+	std::string			username_;
+	std::string			password_;
+	std::string			port_;
+	//
 
 	uint32_t			retransmission_count_max_;
 

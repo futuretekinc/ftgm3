@@ -4,6 +4,9 @@
 //#include <cstdint>
 #include <stdint.h>
 
+
+#define BROKER_PORT 9183
+
 #define	PROPERTY_VALUE_STRING_ONLY			1
 
 #ifdef	MAKE_BODY
@@ -57,9 +60,12 @@ extern	const char*	OBJECT_TYPE_DEV_SIM;
 
 extern	const char*	OBJECT_TYPE_DEV_MODBUS;
 extern	const char*	OBJECT_TYPE_DEV_GTC_520A;
+extern	const char*	OBJECT_TYPE_DEV_HS_1000M;
+extern	const char*	OBJECT_TYPE_DEV_MB7092;
 
 extern	const char*	OBJECT_TYPE_DEV_MODBUS_TCP;
 extern	const char*	OBJECT_TYPE_DEV_ADAM_6051;
+extern	const char*	OBJECT_TYPE_DEV_TURBOMAX;
 
 extern	const char* OBJECT_TYPE_ENDPOINT;
 extern	const char*	OBJECT_TYPE_EP_S_DISCRETE;
@@ -67,6 +73,7 @@ extern	const char*	OBJECT_TYPE_EP_S_LINEAR;
 extern	const char*	OBJECT_TYPE_EP_S_TEMPERATURE;
 extern	const char*	OBJECT_TYPE_EP_S_HUMIDITY;
 extern	const char*	OBJECT_TYPE_EP_S_VOLTAGE;
+extern	const char*	OBJECT_TYPE_EP_S_WAVE;
 extern	const char*	OBJECT_TYPE_EP_S_CURRENT;
 extern	const char*	OBJECT_TYPE_EP_S_DI;
 extern	const char*	OBJECT_TYPE_EP_S_PRESSURE;
@@ -74,11 +81,13 @@ extern	const char*	OBJECT_TYPE_EP_S_WIND_SPEED;
 extern	const char*	OBJECT_TYPE_EP_S_SOIL_MOISTURE;
 extern	const char*	OBJECT_TYPE_EP_S_RAINFALL;
 extern	const char*	OBJECT_TYPE_EP_S_GAS;
+extern	const char*	OBJECT_TYPE_EP_S_MB_DATA;
 extern	const char* OBJECT_TYPE_EP_S_SOIL_ACIDITY;
 
-extern	const char*	OBJECT_TYPE_EP_A_LINEAR;
+extern	const char*	OBJECT_TYPE_EP_A_TEMPCONTROL;
 extern	const char*	OBJECT_TYPE_EP_A_DISCRETE;
 extern	const char*	OBJECT_TYPE_EP_A_DO;
+extern	const char*	OBJECT_TYPE_EP_A_FX3DTEMPCTR;
 
 extern	uint32_t	GATEWAY_START_INITIALIZATION_TIMEOUT;
 extern	uint32_t	DEVICE_START_INITIALIZATION_TIMEOUT;
@@ -100,6 +109,10 @@ extern	double		ENDPOINT_SENSOR_VOLTAGE_MAX;
 extern 	double		ENDPOINT_SENSOR_VOLTAGE_MIN;
 extern 	const char*	ENDPOINT_SENSOR_VOLTAGE_UNIT;
 
+extern	double		ENDPOINT_SENSOR_WAVE_MAX;
+extern 	double		ENDPOINT_SENSOR_WAVE_MIN;
+extern 	const char*	ENDPOINT_SENSOR_WAVE_UNIT;
+
 extern 	double		ENDPOINT_SENSOR_CURRENT_MAX;
 extern 	double		ENDPOINT_SENSOR_CURRENT_MIN;
 extern 	const char*	ENDPOINT_SENSOR_CURRENT_UNIT;
@@ -119,6 +132,10 @@ extern 	const char*	ENDPOINT_SENSOR_SOIL_MOISTURE_UNIT;
 extern 	double		ENDPOINT_SENSOR_SOIL_ACIDITY_MAX;
 extern 	double		ENDPOINT_SENSOR_SOIL_ACIDITY_MIN;
 extern 	const char*	ENDPOINT_SENSOR_SOIL_ACIDITY_UNIT;
+
+extern 	uint32_t	ENDPOINT_SENSOR_MB_DATA_MAX;
+extern 	uint32_t	ENDPOINT_SENSOR_MB_DATA_MIN;
+extern 	const char*	ENDPOINT_SENSOR_MB_DATA_UNIT;
 
 extern 	uint32_t	ENDPOINT_SENSOR_DI_MAX;
 extern 	uint32_t	ENDPOINT_SENSOR_DI_MIN;
@@ -287,6 +304,11 @@ TITLE_NAME(VALUE_MIN, "value_min");
 TITLE_NAME(VERSION, "version");
 TITLE_NAME(WITH_DEVICE, "width_device");
 TITLE_NAME(WITH_ENDPOINT, "width_endpoint");
+
+//add SY.KANG
+TITLE_NAME(USERNAME, "username");
+TITLE_NAME(PASSWORD, "password");
+//
 
 DEFAULT_CONST(MSG_VERSION, "v1");
 #define	DEFAULT_CONST_MSG_PARTITION	0

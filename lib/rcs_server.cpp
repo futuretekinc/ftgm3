@@ -816,7 +816,7 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 
 					array.push_back(value);
 				}
-
+				result.push_back(JSONNode(TITLE_NAME_TYPE,endpoint->GetType()));
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
 				array.set_name(TITLE_NAME_VALUE);

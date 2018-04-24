@@ -337,7 +337,7 @@ bool	RCSMessage::Make()
 		{
 			JSONNode	node = epdata_list_.front();
 			node.set_name(TITLE_NAME_DATA);
-
+			TRACE_INFO("epdata 1");
 			payload_.push_back(node);
 		}
 		else if (epdata_list_.size() > 1)
@@ -348,6 +348,7 @@ bool	RCSMessage::Make()
 			{
 				array.push_back(*it);
 			}
+			TRACE_INFO("epdata 2");
 
 			array.set_name(TITLE_NAME_DATA);
 

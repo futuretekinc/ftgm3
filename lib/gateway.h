@@ -54,10 +54,6 @@ protected:
 	virtual	bool		Attach(std::string const& _device_id);
 			bool		Detach(std::string const& _device_id);
 			bool		Detach();
-			//add SY.KANG
-			uint32_t	gateway_info_interval_;
-			Timer		gateway_info_timer_;
-			//
 	std::list<std::string>	device_id_list_;
 };
 

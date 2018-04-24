@@ -7,13 +7,13 @@
 static const char*	class_name = "EPSDiscrete";
 
 EndpointSensorDiscrete::EndpointSensorDiscrete(ObjectManager& _manager, std::string const& _type)
-: EndpointSensor(_manager, _type)
+: EndpointSensor(_manager, _type), value_(false)
 {
 	trace.SetClassName(class_name);
 }
 
 EndpointSensorDiscrete::EndpointSensorDiscrete(ObjectManager& _manager, std::string const& _type, JSONNode const& _properties)
-: EndpointSensor(_manager, _type)
+: EndpointSensor(_manager, _type), value_(false)
 {
 	trace.SetClassName(class_name);
 	SetProperties(_properties, false, true);
@@ -57,12 +57,17 @@ bool		EndpointSensorDiscrete::SetValue(std::string const& _value, bool _check)
 			{
 				value_ = false;
 			}
+
+			TRACE_INFO("DI_DATA 01 :" << value_);
 		}
 		else
 		{
+
+			TRACE_INFO("DI_DATA 02 :" << value_);
 			return	false;	
 		}
 	}
+	TRACE_INFO("DI_CHECK_ERROR");
 
 	return	true;
 }
@@ -85,6 +90,20 @@ std::string	EndpointSensorDiscrete::GetValueMax()
 bool		EndpointSensorDiscrete::SetValueMax(std::string const& _value, bool _check)
 {
 	return	true;
+}
+
+bool	EndpointSensorDiscrete::Add(time_t time, std::string const& _value)
+{
+	if(time_ != time)
+	{
+		time_ = time;
+
+		SetValue(_value, false);
+
+		return Endpoint::Add(time, _value);
+	}
+
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -199,6 +199,22 @@ bool	ServerLinker::SetProperty(JSONNode const& _config, bool _check)
 	{
 		ret_value = SetBroker(_config.as_string(), _check);
 	}
+	else if (_config.name() == TITLE_NAME_PORT)
+	{
+		ret_value = SetPort(_config.as_string(), _check);
+	}
+	else if (_config.name() == TITLE_NAME_USERNAME)
+	{
+		ret_value = SetUsername(_config.as_string(), _check);
+	}
+	else if (_config.name() == TITLE_NAME_PASSWORD)
+	{
+		ret_value = SetPassword(_config.as_string(), _check);
+	}
+	else if (_config.name() == TITLE_NAME_KEEP_ALIVE_INTERVAL)
+	{
+		ret_value = SetKeepAliveInterval(_config.as_string(), _check);
+	}
 	else if (_config.name() == TITLE_NAME_TOPIC)
 	{
 		if (_config.type() == JSON_NODE)
@@ -243,6 +259,9 @@ ServerLinker::operator JSONNode() const
 	root.push_back(JSONNode(TITLE_NAME_HASH_ALG, hash_alg_name_));
 	root.push_back(JSONNode(TITLE_NAME_SECRET_KEY, secret_key_));
 	root.push_back(JSONNode(TITLE_NAME_BROKER, broker_));
+	root.push_back(JSONNode(TITLE_NAME_PORT, port_));
+	root.push_back(JSONNode(TITLE_NAME_USERNAME, username_));
+	root.push_back(JSONNode(TITLE_NAME_PASSWORD, password_));
 
 	JSONNode	topic;
 
@@ -423,6 +442,45 @@ bool	ServerLinker::SetBroker(std::string const& _broker, bool _check)
 	}
 
 	return	true;
+}
+
+bool	ServerLinker::SetPort(std::string const& _port, bool _check)
+{
+	if (!_check)
+	{
+		port_ = _port;
+	}
+
+	return	true;
+
+}
+
+bool	ServerLinker::SetUsername(std::string const& _username, bool _check)
+{
+	if(!_check)
+	{
+		username_ = _username;
+	}
+	return true;
+}
+
+bool	ServerLinker::SetPassword(std::string const& _password, bool _check)
+{
+	if(!_check)
+	{
+		password_ = _password;
+	}
+	return true;
+}
+
+
+bool    ServerLinker::SetKeepAliveInterval(std::string const& _keep_alive_interval, bool _check)
+{
+	if(!_check)
+	{
+		keep_alive_interval_ =  atoi(_keep_alive_interval.c_str());
+	}
+	return true;
 }
 
 const std::string&	ServerLinker::GetBroker()
@@ -712,7 +770,7 @@ bool	ServerLinker::ReportEPData(Endpoint* _ep)
 	}
 
 	JSONNode	node;
-
+	node.push_back(JSONNode(TITLE_NAME_TYPE,_ep->GetType()));
 	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
 	node.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
 
@@ -1035,7 +1093,6 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep)
 
 	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
 	node.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
-
 	JSONNode	array(JSON_ARRAY);
 	for(Endpoint::ValueMap::iterator it = value_map.begin(); it != value_map.end() ; it++)
 	{
@@ -1094,7 +1151,6 @@ bool	ServerLinker::AddEPData(JSONNode& _payload, Endpoint* _ep, uint32_t _lower_
 
 	node.push_back(JSONNode(TITLE_NAME_ID, _ep->GetID()));
 	node.push_back(JSONNode(TITLE_NAME_COUNT, value_map.size()));
-
 	JSONNode	array(JSON_ARRAY);
 	for(Endpoint::ValueMap::iterator it = value_map.begin(); it != value_map.end() ; it++)
 	{
@@ -1212,7 +1268,6 @@ bool	ServerLinker::OnMessage(Message* _message)
 				if (produce != NULL)
 				{
 					ret_value = OnProduce(produce);
-					TRACE_INFO("TEST_SERVER_LINKER_ONMESSAGE");
 				}
 				else
 				{

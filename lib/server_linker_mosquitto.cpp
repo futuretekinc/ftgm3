@@ -118,8 +118,6 @@ ServerLinkerMosq::ServerLinkerMosq(ObjectManager* _manager)
 	mosquitto_connect_callback_set(mosquitto_, OnConnectCB);
 	mosquitto_disconnect_callback_set(mosquitto_, OnDisconnectCB);
 	mosquitto_message_callback_set(mosquitto_, OnMessageCB);
-
-
 }
 
 ServerLinkerMosq::~ServerLinkerMosq()
@@ -182,6 +180,9 @@ ServerLinkerMosq::operator JSONNode() const
 	root.push_back(JSONNode(TITLE_NAME_HASH_ALG, hash_alg_name_));
 	root.push_back(JSONNode(TITLE_NAME_SECRET_KEY, secret_key_));
 	root.push_back(JSONNode(TITLE_NAME_BROKER, broker_));
+	root.push_back(JSONNode(TITLE_NAME_PORT, port_));
+	root.push_back(JSONNode(TITLE_NAME_USERNAME, username_));
+	root.push_back(JSONNode(TITLE_NAME_PASSWORD, password_));
 
 	JSONNode	topic;
 
@@ -339,7 +340,22 @@ bool	ServerLinkerMosq::InternalConnect(uint32_t _delay_sec)
 		{
 			TRACE_INFO("mosquitto_ : " << mosquitto_ );
 			TRACE_INFO("broker : " << broker_);
-			int	ret = mosquitto_connect(mosquitto_, broker_.c_str(), 1883, keep_alive_interval_);
+			TRACE_INFO("port : " << port_);
+			//add SY.KANG
+			TRACE_INFO("username : " << username_);
+			TRACE_INFO("password : " << password_);
+			if((username_.length() != 0) && (password_.length() != 0))
+			{
+				mosquitto_username_pw_set(mosquitto_, username_.c_str(), password_.c_str());
+				TRACE_INFO("MQTT USERNAME PASSWORD SET");
+			}
+			else
+			{
+				TRACE_INFO("MQTT USERNAME PASSWORD NOT SET");
+			}
+			//
+
+			int	ret = mosquitto_connect(mosquitto_, broker_.c_str(), atoi(port_.c_str()), keep_alive_interval_);
 			if (ret > 0)
 			{
 				TRACE_ERROR("Failed to connect to broker[" << broker_ << "] : " << ret);

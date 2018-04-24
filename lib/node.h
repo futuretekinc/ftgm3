@@ -69,9 +69,10 @@ protected:
 	std::string		location_;
 	uint32_t		keep_alive_interval_;
 	Timer			keep_alive_timer_;
-
+	
 	bool			registered_;
 	Locker			locker_;
+	Timer			gw_info_timer_;
 };
 
 #endif

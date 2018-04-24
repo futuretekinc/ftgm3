@@ -81,10 +81,9 @@ public:
 	std::string			GetTraceName() const;
 			void		SetTrace(bool	_enable);
 	Trace&				GetTrace();
-	
-	//add SY.KANG
-	std::string 		GetIP();
-
+	//Add SY.KANG
+	std::string GetIP();	
+	bool    GetWanIP(JSONNode& _property);
 	friend std::ostream&	operator<<(std::ostream& os, Object & _object);
 
 protected:
@@ -98,8 +97,8 @@ protected:
 
 	JSONNode	updated_properties_;
 	Trace		trace;
-	//add SY.KANG
-	std::string	ip_;
+	//Add SY.KANG
+	std::string	wan_ip_; 
 };
 
 std::string	ToString(Object::Stat _stat);

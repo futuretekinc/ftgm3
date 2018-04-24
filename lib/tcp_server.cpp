@@ -163,7 +163,8 @@ void	TCPServer::Preprocess()
 
 	struct sockaddr_in	server;
 
-	socket_ = socket(AF_INET, SOCK_STREAM, 0);
+	//socket_ = socket(AF_INET, SOCK_STREAM, 0);
+	socket_ = socket(PF_INET, SOCK_STREAM, 0);
 	if (socket_ == -1)
 	{
 		TRACE_ERROR("Failed to create socket.");
@@ -177,7 +178,7 @@ void	TCPServer::Preprocess()
 	}
 
 	server.sin_family 		= AF_INET;
-	server.sin_addr.s_addr	= INADDR_ANY;
+	server.sin_addr.s_addr	= htonl(INADDR_ANY);
 	server.sin_port 		= htons(port_);
 
 	ret_value = bind( socket_, (struct sockaddr *)&server, sizeof(server));

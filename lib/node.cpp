@@ -379,12 +379,26 @@ void	Node::Preprocess()
 		keep_alive_timer_.Set(date);
 		TRACE_INFO("live checker start [" << date << "]");
 	}
+
+	if(GATEWAY_INFO_INTERVAL_SEC != 0)
+	{
+		Date date = Date::GetCurrent() + Time((uint64_t)GATEWAY_INFO_INTERVAL_SEC * TIME_SECOND);
+		gw_info_timer_.Set(date);
+		TRACE_INFO("live checker start [" << date << "]");
+	}
 }
 
 //ADd SY.KANG
 void 	Node::InfoProcess()
 {
-	manager_.InfoProcess(this);
+	if(GATEWAY_INFO_INTERVAL_SEC != 0)
+	{
+		if(gw_info_timer_.RemainTime() == 0)
+		{
+			gw_info_timer_.Add(GATEWAY_INFO_INTERVAL_SEC);
+			manager_.InfoProcess(this);
+		}
+	}
 }
 //
 

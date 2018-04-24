@@ -27,6 +27,9 @@ public:
 
 	static	const char*	Type();
 
+	std::string* Parsing(std::string strOrigin, std::string strTok, int size);
+	bool ValueParsing(std::string& _value);
+
 protected:
 };
 

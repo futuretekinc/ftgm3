@@ -25,6 +25,7 @@ public:
 	static const char*	Type();
 
 protected:
+			bool Add(time_t time, std::string const& _value);
 			bool		value_;
 };
 

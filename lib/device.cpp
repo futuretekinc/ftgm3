@@ -10,9 +10,12 @@
 #include "device_snmp.h"
 #include "device_modbus_tcp.h"
 #include "device_adam_6051.h"
+#include "device_turbomax.h"
 #include "device_fte.h"
 #include "device_sim.h"
 #include "device_gtc_520a.h"
+#include "device_hs_1000m.h"
+#include "device_mb7092.h"
 #include "endpoint.h"
 #include "endpoint_sensor.h"
 
@@ -290,6 +293,18 @@ Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
 		else if (type == std::string(DeviceADAM6051::Type()))
 		{
 			device = new DeviceADAM6051(_manager, _properties);
+		}
+		else if(type == std::string(DeviceTurboMAX::Type()))
+		{
+			device = new DeviceTurboMAX(_manager, _properties);
+		}
+		else if(type == std::string(DeviceHS1000M::Type()))
+		{
+			device = new DeviceHS1000M(_manager, _properties);
+		}
+		else if(type == std::string(DeviceMB7092::Type()))
+		{
+			device = new DeviceMB7092(_manager, _properties);
 		}
 		else
 		{
