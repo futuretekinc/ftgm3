@@ -69,8 +69,7 @@ bool	ShellCommandGatewayList(Shell* _shell)
 
 RetValue	ShellCommandGateway
 (
-	std::string*	_arguments,
-	uint32_t		_count,
+	const std::vector<std::string>&	_arguments,
 	Shell*			_shell
 )
 {
@@ -83,7 +82,7 @@ RetValue	ShellCommandGateway
 		{
 			std::cout << "Object manager not attached!" << std::endl;	
 		}
-		else if (_count < 2)
+		else if (_arguments.size() < 2)
 		{
 			ShellCommandGatewayList(_shell);
 		}
@@ -92,7 +91,7 @@ RetValue	ShellCommandGateway
 		}
 		else if (_arguments[1] == "start")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				ret_value = RET_VALUE_INVALID_ARGUMENTS;
 			}
@@ -110,7 +109,7 @@ RetValue	ShellCommandGateway
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Gateway *gateway = object_manager->GetGateway(_arguments[i]);
 					if (gateway == NULL)
@@ -127,7 +126,7 @@ RetValue	ShellCommandGateway
 		}
 		else if (_arguments[1] == "stop")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				ret_value = RET_VALUE_INVALID_ARGUMENTS;
 			}
@@ -145,7 +144,7 @@ RetValue	ShellCommandGateway
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Gateway *gateway = object_manager->GetGateway(_arguments[i]);
 					if (gateway == NULL)
@@ -162,7 +161,7 @@ RetValue	ShellCommandGateway
 		}
 		else if (_arguments[1] == "enable")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				ret_value = RET_VALUE_INVALID_ARGUMENTS;
 			}
@@ -180,7 +179,7 @@ RetValue	ShellCommandGateway
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Gateway *gateway = object_manager->GetGateway(_arguments[i]);
 					if (gateway == NULL)
@@ -197,7 +196,7 @@ RetValue	ShellCommandGateway
 		}
 		else if (_arguments[1] == "set")
 		{
-			if (_count < 4)
+			if (_arguments.size() < 4)
 			{
 				throw std::invalid_argument("Invalid arguments!");
 			}
@@ -206,7 +205,7 @@ RetValue	ShellCommandGateway
 				JSONNode	properties;
 				Gateway *gateway = object_manager->GetGateway(_arguments[2]);
 
-				for(uint32_t i = 3 ; i + 1 < _count ; i += 2)
+				for(uint32_t i = 3 ; i + 1 < _arguments.size() ; i += 2)
 				{
 					if((_arguments[i].size() < 3) || (_arguments[i].substr(0,2) != "--"))
 					{

@@ -9,8 +9,7 @@
 
 RetValue	ShellCommandServerLinker
 (
-	std::string*	_arguments,
-	uint32_t		_count,
+	const std::vector<std::string>&	_arguments,
 	Shell*			_shell
 )
 {
@@ -44,7 +43,7 @@ RetValue	ShellCommandServerLinker
 		}
 		else if (_arguments[1] == "link")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				std::vector<ServerLinkerMosq::UpLink*>	up_link_array;
 
@@ -80,11 +79,11 @@ RetValue	ShellCommandServerLinker
 		{
 			std::map<std::string, Endpoint*>	endpoint_map;
 
-			for(uint32_t i = 2 ; i < _count ; )
+			for(uint32_t i = 2 ; i < _arguments.size() ; )
 			{
 				if (_arguments[i] == "--gw")
 				{
-					for(i++; i < _count ; i++)
+					for(i++; i < _arguments.size() ; i++)
 					{
 						if (_arguments[i] == "all")
 						{
@@ -145,7 +144,7 @@ RetValue	ShellCommandServerLinker
 				}
 				else if (_arguments[i] == "--dev")
 				{
-					for(i++; i < _count ; i++)
+					for(i++; i < _arguments.size() ; i++)
 					{
 						if (_arguments[i] == "all")
 						{
@@ -193,7 +192,7 @@ RetValue	ShellCommandServerLinker
 				}
 				else if (_arguments[i] == "--ep")
 				{
-					for(i++; i < _count ; i++)
+					for(i++; i < _arguments.size() ; i++)
 					{
 						if (_arguments[i] == "all")
 						{
@@ -244,7 +243,7 @@ RetValue	ShellCommandServerLinker
 
 			object_manager->GetServerLinker().Send(message);
 		}
-		else if (_count >= 4)
+		else if (_arguments.size() >= 4)
 		{
 			RCSMessage	payload;
 			Fields	fields;
@@ -267,13 +266,13 @@ RetValue	ShellCommandServerLinker
 				throw std::invalid_argument(oss.str());
 			}
 
-			for(uint32_t i = 2 ; i < _count ; )
+			for(uint32_t i = 2 ; i < _arguments.size() ; )
 			{
 				if (_arguments[i] == "--property")
 				{
 					fields = PROPERTY_ID;
 
-					for(i++; i < _count ; i++)
+					for(i++; i < _arguments.size() ; i++)
 					{
 						if (_arguments[i].substr(0,2) == "--")
 						{
@@ -293,7 +292,7 @@ RetValue	ShellCommandServerLinker
 				}
 				else if (_arguments[i] == "--gw")
 				{
-					for(i++; i < _count ; i++)
+					for(i++; i < _arguments.size() ; i++)
 					{
 						if (_arguments[i] == "all")
 						{
@@ -335,7 +334,7 @@ RetValue	ShellCommandServerLinker
 				}
 				else if (_arguments[i] == "--dev")
 				{
-					for(i++; i < _count ; i++)
+					for(i++; i < _arguments.size() ; i++)
 					{
 						if (_arguments[i] == "all")
 						{
@@ -377,7 +376,7 @@ RetValue	ShellCommandServerLinker
 				}
 				else if (_arguments[i] == "--ep")
 				{
-					for(i++; i < _count ; i++)
+					for(i++; i < _arguments.size() ; i++)
 					{
 						if (_arguments[i] == "all")
 						{
@@ -413,13 +412,13 @@ RetValue	ShellCommandServerLinker
 
 							endpoint->GetProperties(properties, fields);
 
-							payload.AddGateway(properties);
+							payload.AddEndpoint(properties);
 						}
 					}
 				}
 				else if (_arguments[i] == "--data")
 				{
-					for(i++; i < _count ; i++)
+					for(i++; i < _arguments.size() ; i++)
 					{
 						if (_arguments[i] == "all")
 						{
@@ -478,7 +477,7 @@ RetValue	ShellCommandServerLinker
 	}
 	catch(std::invalid_argument& e)
 	{
-		std::cout << "Invalid arguments!" << std::endl;
+		std::cout << "Invalid arguments[" << e.what() << "]" <<  std::endl;
 		ret_value = RET_VALUE_INVALID_ARGUMENTS;
 	}
 
@@ -496,6 +495,10 @@ Shell::Command	shell_ftgm_command_slc
 	"    Registration gateway\n"
 	"  get <TYPE> <ID>\n"
 	"    Get get object information.\n"
+	"  link\n"
+	"    Show produce/subscribe status.\n"
+	"  info\n"
+	"    Get server linker information.\n"
 	"PARAMETERS:\n"
 	"  TYPE    Type of object\n"
 	"    gw    Gateway\n"

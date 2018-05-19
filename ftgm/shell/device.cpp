@@ -11,8 +11,7 @@ bool	ShellCommandDeviceList(Shell* _shell);
 
 RetValue	ShellCommandDevice
 (
-	std::string*	_arguments,
-	uint32_t		_count,
+	const std::vector<std::string>&	_arguments,
 	Shell*			_shell
 )
 {
@@ -25,19 +24,19 @@ RetValue	ShellCommandDevice
 		{
 			std::cout << "Object manager not attached!" << std::endl;	
 		}
-		else if (_count < 2)
+		else if (_arguments.size() < 2)
 		{
 			ShellCommandDeviceList(_shell);
 		}
 		else if (_arguments[1] == "keep_alive")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
 
 
-			for(uint32_t i = 2 ; i < _count ; i++)
+			for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 			{
 				Device*	device = object_manager->GetDevice(_arguments[i]);
 				if (device == NULL)
@@ -54,14 +53,14 @@ RetValue	ShellCommandDevice
 		{
 			JSONNode	properties;
 
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
 
 			properties.push_back(JSONNode(TITLE_NAME_TYPE, _arguments[2]));
 
-			for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _count)  ; i+=2)
+			for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _arguments.size())  ; i+=2)
 			{
 				uint32_t	len = _arguments[i].size();
 				
@@ -88,12 +87,12 @@ RetValue	ShellCommandDevice
 		}
 		else if (_arguments[1] == "destroy")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
 
-			for(uint32_t i = 2 ; i < _count ; i++)
+			for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 			{
 				Device *device = object_manager->GetDevice(_arguments[i]);
 				if (device == NULL)
@@ -109,7 +108,7 @@ RetValue	ShellCommandDevice
 		}
 		else if (_arguments[1] == "start")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -128,7 +127,7 @@ RetValue	ShellCommandDevice
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Device *device = object_manager->GetDevice(_arguments[i]);
 					if (device == NULL)
@@ -145,7 +144,7 @@ RetValue	ShellCommandDevice
 		}
 		else if (_arguments[1] == "stop")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -164,7 +163,7 @@ RetValue	ShellCommandDevice
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Device *device = object_manager->GetDevice(_arguments[i]);
 					if (device == NULL)
@@ -181,7 +180,7 @@ RetValue	ShellCommandDevice
 		}
 		else if (_arguments[1] == "enable")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -200,7 +199,7 @@ RetValue	ShellCommandDevice
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Device *device = object_manager->GetDevice(_arguments[i]);
 					if (device == NULL)
@@ -217,7 +216,7 @@ RetValue	ShellCommandDevice
 		}
 		else if (_arguments[1] == "disable")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -236,7 +235,7 @@ RetValue	ShellCommandDevice
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Device *device = object_manager->GetDevice(_arguments[i]);
 					if (device == NULL)
@@ -255,7 +254,7 @@ RetValue	ShellCommandDevice
 		{
 			JSONNode	properties;
 
-			if (_count < 5)
+			if (_arguments.size() < 5)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -268,7 +267,7 @@ RetValue	ShellCommandDevice
 			}
 			else
 			{
-				for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _count)  ; i+=2)
+				for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _arguments.size())  ; i+=2)
 				{
 					if ((_arguments[i].size() <= 2) || (_arguments[i].substr(0,2) != "--"))
 					{

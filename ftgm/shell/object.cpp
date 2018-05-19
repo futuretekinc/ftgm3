@@ -10,8 +10,7 @@
 
 RetValue	ShellCommandObject
 (
-	std::string*	_arguments,
-	uint32_t		_count,
+	const std::vector<std::string>&	_arguments,
 	Shell*			_shell
 )
 {
@@ -25,7 +24,7 @@ RetValue	ShellCommandObject
 			_shell->Out() << "Node manager not attached!" << std::endl;	
 		}
 
-		if (_count < 2)
+		if (_arguments.size() < 2)
 		{
 			uint32_t	count = Object::GetCount();
 			uint32_t	name_len = 8;
@@ -70,7 +69,7 @@ RetValue	ShellCommandObject
 				}
 			}
 		}
-		else if (_count == 2)
+		else if (_arguments.size() == 2)
 		{
 			if (_arguments[1] == "list") 
 			{

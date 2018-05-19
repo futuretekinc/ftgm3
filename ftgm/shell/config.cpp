@@ -9,8 +9,7 @@
 
 RetValue	ShellCommandConfig
 (
-	std::string*	_arguments,
-	uint32_t		_count,
+	const std::vector<std::string>&	_arguments,
 	Shell*			_shell
 )
 {
@@ -22,13 +21,13 @@ RetValue	ShellCommandConfig
 		throw std::invalid_argument("The object is null!");
 	}
 
-	if (_count < 2)
+	if (_arguments.size() < 2)
 	{
 		JSONNode config = JSONNode(*manager);
 
 		std::cout << config.write_formatted() << std::endl;
 	}
-	else if (_count == 2)
+	else if (_arguments.size() == 2)
 	{
 	}
 	else

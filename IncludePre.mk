@@ -1,13 +1,13 @@
 # IncludePre.mk
 
-TARGET="FTM-50"
+TARGET=""
 
 ifeq ($(RELEASE), 1)
 OBJS_DIR = Release
 DBG_FLAGS = -O2 -DNDEBUG
 else
 OBJS_DIR = Debug
-DBG_FLAGS = -g -O0 -DDEBUG
+DBG_FLAGS = -g -O0 -DNDEBUG
 endif
 
 
@@ -44,9 +44,9 @@ LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)\
 			-L$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/local/lib
 LIBS += -lshellftgm -lftgm -lmosquitto -lmodbus -lhl++ ../../spear/KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
 else
-INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../KompexSQLiteWrapper-Source_1.11.14/inc -I$(PROJ_ROOT)/..
+INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../kompex-sqlite-wrapper/include -I$(PROJ_ROOT)/..
 LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)
-LIBS += -lshellftgm -lftgm -lmosquitto -lmodbus -lhl++ ../../KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
+LIBS += -L ../../kompex-sqlite-wrapper/lib -lshellftgm -lftgm -lmosquitto -lmodbus -lhl++ -lkompex-sqlite-wrapper -ljson -lnetsnmp -lpthread -ldl
 endif
 endif
 

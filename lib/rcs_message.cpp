@@ -311,6 +311,7 @@ bool	RCSMessage::Make()
 		}
 		else
 		{
+			TRACE_INFO("endpoint_list_" << endpoint_list_.size());
 			if (endpoint_list_.size() == 1)
 			{
 				JSONNode	node = endpoint_list_.front();

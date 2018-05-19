@@ -10,8 +10,7 @@
 
 RetValue	ShellCommandTrace
 (
-	std::string*	_arguments,
-	uint32_t		_count,
+	const std::vector<std::string>&	_arguments,
 	Shell*			_shell
 )
 {
@@ -23,11 +22,11 @@ RetValue	ShellCommandTrace
 		THROW_INVALID_ARGUMENT("The object is null!");
 	}
 
-	if (_count < 2)
+	if (_arguments.size() < 2)
 	{
 		_shell->Out() << JSONNode(trace).write_formatted() << std::endl;
 	}
-	else if (_count == 2)
+	else if (_arguments.size() == 2)
 	{
 		
 		if (_arguments[1] == "master")
@@ -51,7 +50,7 @@ RetValue	ShellCommandTrace
 	{
 		if (_arguments[1] == "mode")
 		{
-			if (_count < 4)
+			if (_arguments.size() < 4)
 			{
 				THROW_INVALID_ARGUMENT("too few arguments!");
 			}
@@ -78,13 +77,13 @@ RetValue	ShellCommandTrace
 
 			if (ret_value == RET_VALUE_OK)
 			{
-				if ((_count == 4) && (_arguments[3] == "all"))
+				if ((_arguments.size() == 4) && (_arguments[3] == "all"))
 				{
 					::trace.SetState(state);
 				}
 				else
 				{
-					for(uint32_t i = 4 ; i < _count ; i++)
+					for(uint32_t i = 4 ; i < _arguments.size() ; i++)
 					{
 						if (_arguments[i] == "master")
 						{

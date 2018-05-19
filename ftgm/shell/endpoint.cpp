@@ -11,8 +11,7 @@ bool	ShellCommandEndpointInfo(Shell* _shell, std::string const& _id);
 
 RetValue	ShellCommandEndpoint
 (
-	std::string*	_arguments,
-	uint32_t		_count,
+	const std::vector<std::string>&	_arguments,
 	Shell*			_shell
 )
 {
@@ -25,7 +24,7 @@ RetValue	ShellCommandEndpoint
 		{
 			_shell->Out() << "Object manager not attached!" << std::endl;
 		}
-		else	if (_count < 2)
+		else	if (_arguments.size() < 2)
 		{
 			_shell->Out() << "Endpoint count : " << object_manager->GetEndpointCount() << std::endl;
 
@@ -96,7 +95,7 @@ RetValue	ShellCommandEndpoint
 		{
 			JSONNode	properties;
 
-			if (_count < 4)
+			if (_arguments.size() < 4)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -109,7 +108,7 @@ RetValue	ShellCommandEndpoint
 
 			properties.push_back(JSONNode(TITLE_NAME_TYPE, _arguments[3]));
 
-			for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _count)  ; i+=2)
+			for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _arguments.size())  ; i+=2)
 			{
 				std::string	field = _arguments[i].substr(2, _arguments[i].length() - 2);
 
@@ -127,12 +126,12 @@ RetValue	ShellCommandEndpoint
 		}
 		else if (_arguments[1] == "destroy")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
 
-			for(uint32_t i = 2 ; i < _count ; i++)
+			for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 			{
 				Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
 				if (endpoint == NULL)
@@ -148,7 +147,7 @@ RetValue	ShellCommandEndpoint
 		}
 		else if (_arguments[1] == "start")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -167,7 +166,7 @@ RetValue	ShellCommandEndpoint
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 
 					Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
@@ -186,7 +185,7 @@ RetValue	ShellCommandEndpoint
 		}
 		else if (_arguments[1] == "stop")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -205,7 +204,7 @@ RetValue	ShellCommandEndpoint
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
 					if (endpoint == NULL)
@@ -222,7 +221,7 @@ RetValue	ShellCommandEndpoint
 		}
 		else if (_arguments[1] == "enable")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -241,7 +240,7 @@ RetValue	ShellCommandEndpoint
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
 					if (endpoint == NULL)
@@ -258,7 +257,7 @@ RetValue	ShellCommandEndpoint
 		}
 		else if (_arguments[1] == "disable")
 		{
-			if (_count < 3)
+			if (_arguments.size() < 3)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -277,7 +276,7 @@ RetValue	ShellCommandEndpoint
 			}
 			else
 			{
-				for(uint32_t i = 2 ; i < _count ; i++)
+				for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 				{
 					Endpoint *endpoint = object_manager->GetEndpoint(_arguments[i]);
 					if (endpoint == NULL)
@@ -296,7 +295,7 @@ RetValue	ShellCommandEndpoint
 		{
 			JSONNode	properties;
 
-			if (_count < 5)
+			if (_arguments.size() < 5)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -307,7 +306,7 @@ RetValue	ShellCommandEndpoint
 				throw ObjectNotFound(_arguments[2]);
 			}
 
-			for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _count)  ; i+=2)
+			for(uint32_t i = 3; (ret_value == RET_VALUE_OK) && (i + 1 < _arguments.size())  ; i+=2)
 			{
 				uint32_t	len = _arguments[i].size();
 
@@ -328,7 +327,7 @@ RetValue	ShellCommandEndpoint
 		{
 			JSONNode	properties;
 
-			if (_count < 4)
+			if (_arguments.size() < 4)
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
@@ -345,13 +344,13 @@ RetValue	ShellCommandEndpoint
 		{
 			JSONNode	properties;
 
-			if ((_count < 2) || (_count > 4))
+			if ((_arguments.size() < 2) || (_arguments.size() > 4))
 			{
 				throw InvalidArgument("The paramater is insufficient.");
 			}
 
 			uint32_t	count = 100;
-			if (_count == 4)
+			if (_arguments.size() == 4)
 			{
 				count = strtoul(_arguments[3].c_str(), 0, 10);	
 			}
@@ -376,7 +375,7 @@ RetValue	ShellCommandEndpoint
 		}
 		else
 		{
-			for(uint32_t i = 1 ; i < _count ; i++)
+			for(uint32_t i = 1 ; i < _arguments.size() ; i++)
 			{
 				ShellCommandEndpointInfo(_shell,_arguments[i]);
 			}

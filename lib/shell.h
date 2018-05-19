@@ -18,13 +18,13 @@ public:
 		std::string	name;
 		std::string	short_help;
 		std::string	help;	
-		RetValue	(*function)(std::string _arguments[], uint32_t _count, Shell* _shell);
+		RetValue	(*function)(const std::vector<std::string>& _arguments, Shell* _shell);
 
 		std::vector<Command*>	sub;
 
 		Command(const Command& _command);
-		Command(const std::string&  _name, const std::string&  _help, const std::string& _short_help, RetValue	(*_function)(std::string [], uint32_t, Shell*));
-		Command(const std::string&  _name, const std::string&  _help, const std::string& _short_help, RetValue	(*_function)(std::string [], uint32_t, Shell*), Command* _sub_command_list, uint32_t _sub_command_count);
+		Command(const std::string&  _name, const std::string&  _help, const std::string& _short_help, RetValue	(*_function)(const std::vector<std::string>&, Shell*));
+		Command(const std::string&  _name, const std::string&  _help, const std::string& _short_help, RetValue	(*_function)(const std::vector<std::string>&, Shell*), Command* _sub_command_list, uint32_t _sub_command_count);
 		~Command();
 	};
 
@@ -51,7 +51,7 @@ public:
 
 			bool	OnMessage(Message* _message);
 protected:
-	static int		Parser(const std::string& _command_line, std::string* _arguments, int _max_count);
+	static std::vector<std::string>		Parser(const std::string& _command_line);
 			void 	Process();
 			void	Postprocess();
 			

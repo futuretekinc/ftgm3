@@ -148,6 +148,7 @@ ServerLinker::ServerLinker(ObjectManager* _manager)
 	broker_retry_interval_(SERVER_LINKER_CONNECTION_RETRY_INTERVAL_SEC * TIME_SECOND),
 	auto_connection_(true),
 	keep_alive_enable_(true),
+	keep_alive_interval_(60),
 	report_late_arrive_message_(SERVER_LINKER_REPORT_LATE_ARRIVE_MESSAGE),
 	request_timeout_(SERVER_LINKER_REQUEST_TIMEOUT_SEC),
 	topic_version_(SERVER_LINKER_TOPIC_VERSION),

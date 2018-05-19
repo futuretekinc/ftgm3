@@ -11,19 +11,18 @@
 
 RetValue	ShellCommandLoad
 (
-	std::string*	_arguments,
-	uint32_t		_count,
+	const std::vector<std::string>&	_arguments,
 	Shell*			_shell
 )
 {
 	RetValue	ret_value = RET_VALUE_OK;
 	ObjectManager	*manager = dynamic_cast<ObjectManager*>(_shell->GetObject());
 
-	if (_count >= 3)
+	if (_arguments.size() >= 3)
 	{
 		if (_arguments[1] == "config")
 		{
-			for(uint32_t i = 2 ; i < _count ; i++)
+			for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 			{
 				try
 				{
@@ -41,7 +40,7 @@ RetValue	ShellCommandLoad
 		}
 		else if (_arguments[1] == "gateway")
 		{
-			for(uint32_t i = 2 ; i < _count ; i++)
+			for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 			{
 				try
 				{
@@ -54,7 +53,7 @@ RetValue	ShellCommandLoad
 					}
 					else
 					{
-						_shell->Out() << "Failed to create device!" << std::endl;	
+						_shell->Out() << "Failed to create gateway!" << std::endl;	
 					}
 				}
 				catch(InvalidArgument& e)
@@ -65,7 +64,7 @@ RetValue	ShellCommandLoad
 		}	
 		else if (_arguments[1] == "device")
 		{
-			for(uint32_t i = 2 ; i < _count ; i++)
+			for(uint32_t i = 2 ; i < _arguments.size() ; i++)
 			{
 				try
 				{

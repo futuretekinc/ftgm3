@@ -41,7 +41,7 @@ Shell::Command::Command
 	const std::string&  _name, 
 	const std::string&  _help, 
 	const std::string& 	_short_help, 
-	RetValue	(*_function)(std::string [], uint32_t, Shell*)
+	RetValue	(*_function)(const std::vector<std::string>&, Shell*)
 )
 {
 	name = _name;
@@ -55,7 +55,7 @@ Shell::Command::Command
 	const std::string&  _name, 
 	const std::string&  _help, 
 	const std::string& 	_short_help, 
-	RetValue	(*_function)(std::string [], uint32_t, Shell*),
+	RetValue	(*_function)(const std::vector<std::string>&, Shell*),
 	Command*	_sub_list,
 	uint32_t	_sub_count
 )
@@ -227,14 +227,13 @@ bool	Shell::ShowProperties(JSONNode const& _properties)
 //////////////////////////////////////////////////////////////////
 //	Protected function
 //////////////////////////////////////////////////////////////////
-int		Shell::Parser
+std::vector<std::string>	Shell::Parser
 (
-	const 	std::string& 	_command_line, 
- 			std::string* 	_arguments, 
- 			int 			_max_count
+	const 	std::string& 	_command_line
  )
 {
 	int	count = 0;
+	std::vector<std::string> 	arguments;
 
 	if (_command_line.length() != 0)
 	{
@@ -245,28 +244,27 @@ int		Shell::Parser
 		strcpy(buffer, _command_line.c_str());
 
 		word = strtok(buffer, seperators);
-		while((word != NULL) && (count < _max_count))
+		while(word != NULL)
 		{
-			_arguments[count++] = word;
+			arguments.push_back(word);
 			word = strtok(NULL, seperators);
 		}
 
 		delete [] buffer;
 	}
 
-	return	count;
+	return	arguments;
 }
 
 void 	Shell::Process()
 {
-	std::string	arguments[16];
-	int		count;
+	std::vector<std::string>	arguments;
 
 	std::cout << prompt_ << "> ";
 	std::getline(std::cin, command_line_);
 
-	count = Shell::Parser(command_line_, arguments, 16);
-	if (count != 0)
+	arguments = Shell::Parser(command_line_);
+	if (arguments.size() != 0)
 	{
 		typename std::map<const std::string, Command*>::iterator it = command_map_.find(arguments[0])	;
 		if (it != command_map_.end())
@@ -275,7 +273,7 @@ void 	Shell::Process()
 
 			try
 			{
-				ret_value = it->second->function(arguments, count, this);
+				ret_value = it->second->function(arguments, this);
 			}
 			catch(InvalidArgument& e)
 			{
@@ -295,9 +293,9 @@ void	Shell::Postprocess()
 	std::cout << name_ << " terminated." << std::endl;
 }
 
-RetValue	CommandHelp(std::string _argv[], uint32_t _argc, Shell* _shell)
+RetValue	CommandHelp(const std::vector<std::string>& _argv, Shell* _shell)
 {
-	if (_argc == 1)
+	if (_argv.size() == 1)
 	{
 		uint32_t	count = _shell->GetCommandCount();
 		for(uint32_t i = 0 ; i < count ; i++)
@@ -307,7 +305,7 @@ RetValue	CommandHelp(std::string _argv[], uint32_t _argc, Shell* _shell)
 			std::cout << setw(16) << std::left << command->name << " " << command->short_help << std::endl;
 		}
 	}
-	else if (_argc == 2)
+	else if (_argv.size() == 2)
 	{
 		uint32_t	i, count = _shell->GetCommandCount();
 		for(i = 0 ; i < count ; i++)
@@ -336,7 +334,7 @@ RetValue	CommandHelp(std::string _argv[], uint32_t _argc, Shell* _shell)
 Shell::Command	ShellCommandHelp = Shell::Command("help", "<command>", "Command help", CommandHelp);
 Shell::Command	ShellCommandHelp2 = Shell::Command("?", "<command>", "Command help", CommandHelp);
 
-RetValue	CommandQuit(std::string [], uint32_t, Shell* _shell)
+RetValue	CommandQuit(const std::vector<std::string>&, Shell* _shell)
 {
 	_shell->Stop();
 
