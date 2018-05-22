@@ -12,7 +12,8 @@
 RetValue	ShellCommandLoad
 (
 	const std::vector<std::string>&	_arguments,
-	Shell*			_shell
+	Shell*			_shell,
+	Shell::Command*	_this
 )
 {
 	RetValue	ret_value = RET_VALUE_OK;
@@ -77,6 +78,33 @@ RetValue	ShellCommandLoad
 					if (device != NULL)
 					{
 						_shell->Out() << "Device[" << device->GetTraceName() << "] created"  << std::endl;	
+					}
+					else
+					{
+						_shell->Out() << "Failed to create device!" << std::endl;	
+					}
+				}
+				catch(InvalidArgument& e)
+				{
+					_shell->Out() << e.what() << std::endl;
+				}
+			}
+		}	
+		else if (_arguments[1] == "rule")
+		{
+			for(uint32_t i = 2 ; i < _arguments.size() ; i++)
+			{
+				try
+				{
+					JSONNode	config = JSONNodeLoadFromFile(_arguments[i]);
+
+					_shell->Out() << "Rule Configuration" << std::endl;
+					_shell->Out() << config.write_formatted() << std::endl;
+
+					Rule *rule = manager->CreateRule(config);
+					if (rule != NULL)
+					{
+						_shell->Out() << "Rule[" << rule->GetTraceName() << "] created"  << std::endl;	
 					}
 					else
 					{

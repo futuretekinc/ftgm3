@@ -80,7 +80,7 @@ int	main(int argc, char *argv[])
 			// 	signal(SIGTERM, sigterm);
 
 			Shell	shell(shell_ftgm_commands, shell_ftgm_command_count, &object_manager);
-
+			shell.SetTrace(true);
 			shell.Run(1000);
 
 			object_manager.Stop(true);

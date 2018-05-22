@@ -19,7 +19,8 @@ bool	ShellCommandNode_nodeStart(Shell* _shell, std::string const& id, bool start
 RetValue	ShellCommandNode
 (
 	const std::vector<std::string>&	_arguments,
-	Shell*			_shell
+	Shell*			_shell,
+	Shell::Command*	_this
 )
 {
 	RetValue	ret_value = RET_VALUE_OK;

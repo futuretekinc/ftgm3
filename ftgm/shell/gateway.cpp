@@ -70,7 +70,8 @@ bool	ShellCommandGatewayList(Shell* _shell)
 RetValue	ShellCommandGateway
 (
 	const std::vector<std::string>&	_arguments,
-	Shell*			_shell
+	Shell*			_shell,
+	Shell::Command*	_this
 )
 {
 	RetValue	ret_value = RET_VALUE_OK;

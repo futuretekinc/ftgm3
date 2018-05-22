@@ -12,7 +12,8 @@ bool	ShellCommandEndpointInfo(Shell* _shell, std::string const& _id);
 RetValue	ShellCommandEndpoint
 (
 	const std::vector<std::string>&	_arguments,
-	Shell*			_shell
+	Shell*			_shell,
+	Shell::Command*	_this
 )
 {
 	RetValue	ret_value = RET_VALUE_OK;
