@@ -17,6 +17,21 @@ protected:
 	std::string	message_;
 };
 
+#define	SHOW_USAGE(x)	{	if (!(x)) { std::ostringstream oss; oss << #x; throw Asserted(oss.str());} }
+
+class	ShowUsage : public std::exception
+{
+public:
+	ShowUsage(std::string const& _argument) throw();
+	ShowUsage(std::string const& _name, std::string const& _value) throw();
+	~ShowUsage() throw();
+
+	virtual const char* 	what() const throw();
+
+protected:
+	std::string	message_;
+};
+
 #define	ASSERT(x)	{	if (!(x)) { std::ostringstream oss; oss << #x; throw Asserted(oss.str());} }
 
 class	InvalidArgument : public std::exception

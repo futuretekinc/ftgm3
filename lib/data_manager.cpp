@@ -10,6 +10,7 @@
 #include "KompexSQLiteStatement.h"
 #include "KompexSQLiteException.h"
 #include "endpoint.h"
+#include "rule.h"
 
 
 DataManager::Table::Table(DataManager* _manager, std::string const& _name)
@@ -733,6 +734,9 @@ bool	DataManager::SetDeviceProperties(std::string const& _id, JSONNode& _propert
 	return	device_table_->SetProperties(_id, _properties);
 }
 
+///////////////////////////////////////////////////////////////////////////
+// Endpoint
+///////////////////////////////////////////////////////////////////////////
 bool	DataManager::AddEndpoint(Endpoint *_endpoint)
 {
 	JSONNode	properties;
@@ -788,6 +792,57 @@ bool	DataManager::SetEndpointProperties(std::string const& _id, JSONNode& _prope
 	return	endpoint_table_->SetProperties(_id, _properties);
 }
 
+///////////////////////////////////////////////////////////////////////////
+// Rule
+///////////////////////////////////////////////////////////////////////////
+bool	DataManager::AddRule(Rule *_rule)
+{
+	JSONNode	properties;
+
+	_rule->GetProperties(properties);
+
+	if (!rule_table_->Add(properties))
+	{
+		TRACE_ERROR("Failed to add properties to table");
+		return	false;
+	}
+
+	return	true;
+}
+
+bool	DataManager::DeleteRule(std::string const& _id)
+{
+	return	rule_table_->Delete(_id);
+}
+
+bool	DataManager::IsRuleExist(std::string const& _id)
+{
+	return	rule_table_->IsExist(_id);
+}
+
+uint32_t	DataManager::GetRuleCount()
+{
+	return	rule_table_->GetCount();
+}
+
+bool	DataManager::GetRuleProperties(uint32_t _index, uint32_t _count, JSONNode& _array)
+{
+	return	rule_table_->GetProperties(_index, _count, _array);
+}
+
+bool	DataManager::GetRuleProperties(std::string const& _id, JSONNode& _properties)
+{
+	return	rule_table_->GetProperties(_id, _properties);
+}
+
+bool	DataManager::SetRuleProperties(std::string const& _id, JSONNode& _properties)
+{
+	return	rule_table_->SetProperties(_id, _properties);
+}
+
+//////////////////////////////////////////////////////////////////
+// Internal
+//////////////////////////////////////////////////////////////////
 void	DataManager::Preprocess()
 {
 	try 
@@ -807,6 +862,10 @@ void	DataManager::Preprocess()
 		std::list<std::string>	endpoint_field_list;
 		Endpoint::GetPropertyFieldList(endpoint_field_list);
 		endpoint_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_ENDPOINT, endpoint_field_list);	
+
+		std::list<std::string>	rule_field_list;
+		Rule::GetPropertyFieldList(rule_field_list);
+		rule_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_RULE, rule_field_list);	
 
 		
 		for(uint32_t i = 0 ; i < GetEndpointCount() ; i++)

@@ -20,6 +20,33 @@ const char* Asserted::what() const throw()
 	return	message_.c_str();
 }
 
+ShowUsage::ShowUsage(std::string const& _argument) throw()
+{
+	std::ostringstream	oss;
+
+	oss << "Usage : " << _argument;
+
+	message_ = oss.str();
+}
+
+ShowUsage::ShowUsage(std::string const& _name, std::string const& _value) throw()
+{
+	std::ostringstream	oss;
+
+	oss << "The value type of the " << _name << " is invalid.[" << _value << "]";
+
+	message_ = oss.str();
+}
+
+ShowUsage::~ShowUsage() throw()
+{
+}
+
+const char* ShowUsage::what() const throw()
+{
+	return	message_.c_str();
+}
+
 InvalidArgument::InvalidArgument(std::string const& _argument) throw()
 {
 	std::ostringstream	oss;

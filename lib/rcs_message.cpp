@@ -55,6 +55,12 @@ RCSMessage::RCSMessage(RCSMessage const& _message)
 	{
 		epdata_list_.push_back(it->duplicate());
 	}
+
+	for(std::list<JSONNode>::const_iterator it = _message.rule_list_.begin() ; it != _message.rule_list_.end() ; it ++)
+	{
+		rule_list_.push_back(it->duplicate());
+	}
+
 }
 
 RCSMessage::RCSMessage(std::string const& _msg_type)
@@ -168,6 +174,26 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
 				epdata_list_.push_back(*item);	
+			}
+		}
+		else
+		{
+			throw InvalidArgument("RCS message endpoint is invalid!");
+		}
+	}
+
+	it = _payload.find(TITLE_NAME_RULE);
+	if (it != _payload.end())
+	{
+		if (it->type() == JSON_NODE)
+		{
+			endpoint_list_.push_back(*it);
+		}
+		else if (it->type() == JSON_ARRAY)
+		{
+			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
+			{
+				endpoint_list_.push_back(*item);	
 			}
 		}
 		else
@@ -355,6 +381,27 @@ bool	RCSMessage::Make()
 
 			payload_.push_back(array);
 		}
+
+		if (rule_list_.size() == 1)
+		{
+			JSONNode	node = rule_list_.front();
+			node.set_name(TITLE_NAME_RULE);
+			payload_.push_back(node);
+		}
+		else if (rule_list_.size() > 1)
+		{
+			JSONNode	array(JSON_ARRAY);
+
+			for(std::list<JSONNode>::iterator it = rule_list_.begin(); it != rule_list_.end() ; it++)
+			{
+				array.push_back(*it);
+			}
+			TRACE_INFO("rule 2");
+
+			array.set_name(TITLE_NAME_DATA);
+
+			payload_.push_back(array);
+		}
 	}
 	return	true;
 }
@@ -422,6 +469,7 @@ bool	RCSMessage::AddDeviceFields(Fields _fields)
 
 	return	true;
 }
+
 bool	RCSMessage::AddEndpoint(JSONNode const& properties)
 {
 	endpoint_list_.push_back(properties);
@@ -530,6 +578,36 @@ uint32_t	RCSMessage::GetEPDataCount()
 JSONNode	RCSMessage::GetEPData(uint32_t index)
 {
 	for(std::list<JSONNode>::iterator it = epdata_list_.begin() ; it != epdata_list_.end() ; it++)
+	{
+		if (index == 0)
+		{
+			return	*it;	
+		}
+
+		index --;
+	}
+
+	return	JSONNode();
+}
+
+///////////////////////////////////////////////////////////
+// Rule
+//////////////////////////////////////////////////////////
+bool	RCSMessage::AddRule(JSONNode const& properties)
+{
+	rule_list_.push_back(properties);
+
+	return	true;
+}
+
+uint32_t	RCSMessage::GetRuleCount()
+{
+	return	rule_list_.size();
+}
+
+JSONNode	RCSMessage::GetRule(uint32_t index)
+{
+	for(std::list<JSONNode>::iterator it = rule_list_.begin() ; it != rule_list_.end() ; it++)
 	{
 		if (index == 0)
 		{

@@ -744,6 +744,44 @@ bool		ObjectManager::StopEndpoint(std::string const& _id)
 	return	true;
 }
 
+///////////////////////////////////////////////////////////////////////////
+// Rule opertions
+///////////////////////////////////////////////////////////////////////////
+
+Rule*	ObjectManager::CreateRule(JSONNode const& _properties, bool from_db)
+{
+	Rule*	rule = rule_manager_.CreateRule(_properties);		
+	if (rule != NULL)
+	{
+		if (!from_db)
+		{
+			data_manager_.AddRule(rule);
+
+			JSONNode	properties;
+
+			rule->GetProperties(properties);
+
+			TRACE_INFO("Rule : " << properties.write_formatted());
+		}
+	}
+	else
+	{
+		TRACE_ERROR("Failed to create rule");	
+	}
+
+	return	rule;
+}
+
+uint32_t	ObjectManager::GetRuleList(std::list<Rule*>& _list)
+{
+	return	rule_manager_.GetRuleList(_list);
+}
+
+Rule* ObjectManager::GetRule(std::string const& _id)
+{
+	return	rule_manager_.GetRule(_id);
+}
+
 bool	ObjectManager::IDChanged(Node* _node, std::string const& _old_id)
 {
 	if (dynamic_cast<Gateway*>(_node))
@@ -1000,6 +1038,31 @@ void	ObjectManager::Preprocess()
 							}
 						}
 
+					}
+				}
+			}
+		}
+
+		count = data_manager_.GetRuleCount();
+		TRACE_INFO("Rule Count : " << count);
+
+		for(uint32_t i = 0 ; i < count ; i++)
+		{
+			JSONNode	properties_array;
+
+			if (data_manager_.GetRuleProperties(i, 1, properties_array))
+			{
+				for(JSONNode::const_iterator it = properties_array.begin() ; it != properties_array.end() ; it++)
+				{
+					TRACE_INFO("Rule Create ");
+					Rule*	rule = CreateRule(*it, true);
+					if (rule == NULL)
+					{
+						TRACE_ERROR("Failed to create rule!");	
+					}
+					else
+					{
+						TRACE_INFO("The rule[" << rule->GetTraceName() << "] created");	
 					}
 				}
 			}

@@ -57,6 +57,9 @@ public:
 			uint32_t		GetEPDataCount();
 			JSONNode		GetEPData(uint32_t index);
 
+			bool			AddRule(JSONNode const& _rule);
+			uint32_t		GetRuleCount();
+			JSONNode		GetRule(uint32_t index);
 
 
 			bool			Make();
@@ -75,10 +78,12 @@ protected:
 	bool			gateway_is_null_;
 	bool			device_is_null_;
 	bool			endpoint_is_null_;
+
 	std::list<JSONNode>	gateway_list_;
 	std::list<JSONNode>	device_list_;
 	std::list<JSONNode>	endpoint_list_;
 	std::list<JSONNode>	epdata_list_;
+	std::list<JSONNode>	rule_list_;
 };
 
 

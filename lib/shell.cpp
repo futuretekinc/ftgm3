@@ -41,7 +41,7 @@ Shell::Command::Command
 	const std::string&  _name, 
 	const std::string&  _help, 
 	const std::string& 	_short_help, 
-	RetValue	(*_function)(const std::vector<std::string>&, Shell*)
+	RetValue	(*_function)(const std::vector<std::string>&, Shell*, Shell::Command*)
 )
 {
 	name = _name;
@@ -55,7 +55,7 @@ Shell::Command::Command
 	const std::string&  _name, 
 	const std::string&  _help, 
 	const std::string& 	_short_help, 
-	RetValue	(*_function)(const std::vector<std::string>&, Shell*),
+	RetValue	(*_function)(const std::vector<std::string>&, Shell*, Shell::Command*),
 	Command*	_sub_list,
 	uint32_t	_sub_count
 )
@@ -79,6 +79,26 @@ Shell::Command::~Command()
 		delete sub[i];	
 	}
 }
+
+
+RetValue	Shell::Command::Call(const std::vector<std::string>& _arguments, Shell* _shell)
+{
+	return	this->function(_arguments, _shell, this);
+}
+
+std::string	Shell::Command::Help()
+{
+	return	this->name + " " + this->help;
+}
+
+std::string	Shell::Command::Usage()
+{
+	return	"Usage : " + this->name + " " + this->help;
+}
+
+//////////////////////////////////////////////////////////////////
+//	Shell function
+//////////////////////////////////////////////////////////////////
 
 Shell::Shell
 (
@@ -271,14 +291,18 @@ void 	Shell::Process()
 		{
 			RetValue	ret_value;
 
+			this->current_ = it->second;
 			try
 			{
-				ret_value = it->second->function(arguments, this);
+				ret_value = it->second->Call(arguments, this);
+			}
+			catch(ShowUsage& e)
+			{
+				Out() << e.what() << std::endl;
 			}
 			catch(InvalidArgument& e)
 			{
 				Out() << e.what() << std::endl;
-				std::cout << it->second->help << std::endl;
 			}
 		}
 		else
@@ -293,7 +317,7 @@ void	Shell::Postprocess()
 	std::cout << name_ << " terminated." << std::endl;
 }
 
-RetValue	CommandHelp(const std::vector<std::string>& _argv, Shell* _shell)
+RetValue	CommandHelp(const std::vector<std::string>& _argv, Shell* _shell, Shell::Command* _this)
 {
 	if (_argv.size() == 1)
 	{
@@ -334,7 +358,7 @@ RetValue	CommandHelp(const std::vector<std::string>& _argv, Shell* _shell)
 Shell::Command	ShellCommandHelp = Shell::Command("help", "<command>", "Command help", CommandHelp);
 Shell::Command	ShellCommandHelp2 = Shell::Command("?", "<command>", "Command help", CommandHelp);
 
-RetValue	CommandQuit(const std::vector<std::string>&, Shell* _shell)
+RetValue	CommandQuit(const std::vector<std::string>&, Shell* _shell, Shell::Command* _this)
 {
 	_shell->Stop();
 

@@ -8,6 +8,7 @@
 #include "KompexSQLiteStatement.h"
 #include "gateway.h"
 #include "device.h"
+#include "rule.h"
 
 class	DataManager : public ProcessObject
 {
@@ -78,6 +79,14 @@ public:
 			ValueTable*	GetValueTable(std::string const& _endpoint_id);
 			bool		AddValue(std::string const& _endpoint_id, time_t _time, std::string const& _value);
 
+			bool		AddRule(Rule* _endpoint);
+			bool		DeleteRule(std::string const& _id);
+			bool		IsRuleExist(std::string const& _id);
+			uint32_t	GetRuleCount();
+			bool		GetRuleProperties(uint32_t _index, uint32_t _count, JSONNode& _array);
+			bool		GetRuleProperties(std::string const& _id, JSONNode& _properties);
+			bool		SetRuleProperties(std::string const& _id, JSONNode& _properties);
+		
 private:
 	Table*		CreateTable(std::string const& _table_name, std::list<std::string>& field_list);
 	ValueTable*	CreateValueTable(std::string const& _endpoint_id);
@@ -96,6 +105,7 @@ private:
 	Table*						gateway_table_;
 	Table*						device_table_;
 	Table*						endpoint_table_;
+	Table*						rule_table_;
 	std::map<std::string, ValueTable*>	value_table_map_;
 
 };

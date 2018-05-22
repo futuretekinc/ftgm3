@@ -27,10 +27,12 @@
 ServerLinkerMosq::UpLinkMosq::UpLinkMosq(ServerLinkerMosq* _linker, std::string const& _topic)
 : UpLink(_linker, _topic)
 {
+	trace.SetEnable(true);
 }
 
 bool	ServerLinkerMosq::UpLinkMosq::Send(std::string const& _message)
 {
+	TRACE_INFO(_message);
 	ServerLinkerMosq*	mosq_linker = dynamic_cast<ServerLinkerMosq*>(linker_);
 	if (mosq_linker == NULL)
 	{
@@ -40,6 +42,7 @@ bool	ServerLinkerMosq::UpLinkMosq::Send(std::string const& _message)
 
 	int	msg_id;
 
+	TRACE_INFO(_message);
 	int ret = mosquitto_publish(mosq_linker->mosquitto_, &msg_id, topic_.c_str(), _message.size(), _message.c_str(), qos_, 0);
 	if (ret != 0)
 	{

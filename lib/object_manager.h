@@ -8,6 +8,7 @@
 #include "gateway.h"
 #include "device.h"
 #include "data_manager.h"
+#include "rule_manager.h"
 #include "message.h"
 #include "rcs_server.h"
 #include "rcs_session.h"
@@ -76,6 +77,10 @@ public:
 			bool		StartEndpoint(std::string const& _id);
 			bool		StopEndpoint(std::string const& _id);
 
+			Rule*		CreateRule(JSONNode const& _properties, bool from_db = false);
+			Rule*		GetRule(std::string const& _id);
+			uint32_t	GetRuleList(std::list<Rule*>& _list);
+
 			// Data Manager
 			bool		Attach(DataManager* _data_manager);
 
@@ -92,6 +97,7 @@ public:
 			bool    	InfoProcess(Node* _object);
 			//
 			DataManager&	GetDataManager()	{	return	data_manager_;	};
+			RuleManager&	GetRuleManager()	{	return	rule_manager_;	};
 			ServerLinkerMosq&	GetServerLinker()	{	return	server_linker_;	};
 			RCSServer&		GetRCSServer()		{	return	rcs_server_;	};
 
@@ -124,6 +130,7 @@ protected:
 	Timer				endpoint_report_timer_;
 
 	DataManager							data_manager_;
+	RuleManager							rule_manager_;
 	ServerLinkerMosq					server_linker_;
 	RCSServer							rcs_server_;
 	std::map<std::string,RCSSession*>	rms_map_;

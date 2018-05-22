@@ -90,6 +90,8 @@ Fields	operator+(Fields& _fields1, Fields& _fields2);
 #define	PROPERTY_UPDATE_INTERVAL_FLAG		(((uint32_t)1) <<  23)
 #define	PROPERTY_TIME_OF_EXPIRE_FLAG		(((uint32_t)1) <<  24)
 #define	PROPERTY_VALUE_FLAG					(((uint32_t)1) <<  25)
+#define	PROPERTY_CONDITION_FLAG				(((uint32_t)1) <<  26)
+#define	PROPERTY_ACTION_FLAG				(((uint32_t)1) <<  27)
 
 #define	PROPERTY_STATIC_FLAG (PROPERTY_ID_FLAG	|\
 							PROPERTY_TYPE_FLAG	|\
@@ -111,7 +113,9 @@ Fields	operator+(Fields& _fields1, Fields& _fields2);
 							PROPERTY_SNMP_COMMUNITY_FLAG|\
 							PROPERTY_TIMEOUT_FLAG|\
 							PROPERTY_CORRECTION_INTERVAL_FLAG|\
-							PROPERTY_KEEP_ALIVE_INTERVAL_FLAG)
+							PROPERTY_KEEP_ALIVE_INTERVAL_FLAG| \
+							PROPERTY_CONDITION_FLAG | \
+							PROPERTY_ACTION_FLAG)
 
 #define	PROPERTY_ALL_FLAG ((uint32_t)0xFFFFFFFF)
 

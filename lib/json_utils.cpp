@@ -225,7 +225,7 @@ JSONNode	JSONNodeGetNode(JSONNode const& _node, std::string const& _name)
 		return	*field;
 	}
 
-	throw ObjectNotFound(TITLE_NAME_TRACE);
+	throw ObjectNotFound(TITLE_NAME_NAME);
 }
 
 JSONNode	JSONNodeGetTraceNode(JSONNode const& _node)
