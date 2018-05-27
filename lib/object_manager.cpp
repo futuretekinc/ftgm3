@@ -1290,9 +1290,21 @@ bool	ObjectManager::OnMessage(Message* _base_message)
 		{	
 			MessageEndpointUpdated* message = dynamic_cast<MessageEndpointUpdated*>(_base_message);
 
+#if 0
 			if (!data_manager_.AddValue(message->endpoint_id, message->time, message->value))
 			{
 				TRACE_ERROR("Failed to add value!");	
+			}
+#endif
+
+			Endpoint* endpoint = GetEndpoint(message->endpoint_id);
+			//if ((endpoint != NULL) && endpoint->IsParticipatedInRules())
+			if (endpoint != NULL)
+			{
+				if (!rule_manager_.Updated(message->endpoint_id, message->time, message->value))
+				{
+					TRACE_ERROR("Failed to add value!");	
+				}
 			}
 		}
 		break;

@@ -21,7 +21,7 @@ static const char*	class_name = "Object";
 static std::multimap<std::string, Object*>	object_map;
 
 Object::Object()
-: parent_id_(""), enable_(false), trace(this), lazy_store_(false)
+: parent_(NULL), parent_id_(""), enable_(false), trace(this), lazy_store_(false)
 {
 	try
 	{
@@ -47,7 +47,7 @@ Object::Object()
 }
 
 Object::Object(std::string const& _id)
-: parent_id_(""), id_(_id), enable_(false), trace(this)
+: parent_(NULL), parent_id_(""), id_(_id), enable_(false), trace(this)
 {
 	try
 	{
@@ -276,6 +276,18 @@ bool	Object::SetDate(std::string const& _date, bool _check)
 	}
 
 	return	ret_value;
+}
+
+Object*	Object::GetParent()
+{
+	return	parent_;
+}
+
+Object*	Object::SetParent(Object* _parent)
+{
+	parent_ = _parent;
+
+	return	parent_;
 }
 
 const std::string&	Object::GetParentID() const

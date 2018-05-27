@@ -1,8 +1,10 @@
 #include "rule_manager.h"
+#include "object_manager.h"
 #include "exception.h"
 
 RuleManager::RuleManager()
 {
+	object_manager_ = NULL;
 	name_ 	= "rule_manager";
 	enable_ = true;
 
@@ -18,6 +20,13 @@ RuleManager::~RuleManager()
 	}
 }
 
+bool	RuleManager::Attach(ObjectManager* _object_manager)
+{
+	object_manager_ = _object_manager;
+
+	return	true;
+}
+
 Rule*	RuleManager::CreateRule(JSONNode const& _properties)
 {
 	try
@@ -25,7 +34,7 @@ Rule*	RuleManager::CreateRule(JSONNode const& _properties)
 		Rule*	rule = new Rule(_properties);		
 		if (rule != NULL)
 		{
-			Attach(rule);
+			rules_.push_back(rule);
 		}
 
 		return	rule;
@@ -36,6 +45,24 @@ Rule*	RuleManager::CreateRule(JSONNode const& _properties)
 		TRACE_ERROR("What : " << e.what());
 		return	NULL;
 	}
+}
+
+bool	RuleManager::DestroyRule(std::string const& _id)
+{
+	for(std::vector<Rule*>::iterator it = rules_.begin() ; it != rules_.end() ; it++)
+	{
+		Rule*	rule = *it;
+
+		if (rule->GetID() == _id)
+		{
+			delete rule;
+			rules_.erase(it);
+
+			return	true;
+		}
+	}
+
+	return	false;
 }
 
 int		RuleManager::GetRuleCount()
@@ -73,9 +100,22 @@ int		RuleManager::GetRuleList(std::list<Rule*>& _list)
 	return	_list.size();
 }
 
-bool	RuleManager::Attach(Rule* _rule)
+
+bool	RuleManager::Updated(std::string const& _id, Date const& _time, std::string const& _value)
 {
-	rules_.push_back(_rule);
+	for(std::vector<Rule*>::iterator it = rules_.begin() ; it != rules_.end() ; it++)
+	{
+		Rule*	rule = *it;
+
+			TRACE_INFO("Rule[" << rule->GetID() << "] check!");
+		if (rule->IsIncludedInCondition(_id))
+		{
+			if (rule->Process(_id, _time, _value))
+			{
+				TRACE_INFO("Rule[" << rule->GetID() << "] applied!");
+			}
+		}
+	}
 
 	return	true;
 }

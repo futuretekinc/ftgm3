@@ -50,6 +50,9 @@ public:
 			bool		SetDate(Date const& _date);
 			bool		SetDate(std::string const& _Date, bool _check = false);
 
+			Object*		GetParent();
+			Object*		SetParent(Object* _parent);
+
 	const std::string&	GetParentID() const;
 			bool		SetParentID(std::string const& _parent, bool _check = false);
 
@@ -88,6 +91,7 @@ public:
 
 protected:
 
+	Object*		parent_;
 	std::string	parent_id_;
 	std::string	id_;
 	std::string	name_;	

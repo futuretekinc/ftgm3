@@ -5,7 +5,7 @@
 #include "exception.h"
 
 Condition::Condition(std::string const& _target_id)
-: target_id_(_target_id), activated_(false)
+: target_id_(_target_id), activated_(false), satisfied_(false)
 {
 }
 
@@ -78,6 +78,7 @@ Condition*	Condition::Create(JSONNode const& _properties)
 	return	condition;
 }
 
+			bool	Apply(Date const& _time, std::string const& _value);
 LinearSingleCondition::LinearSingleCondition(std::string const& _target_id, double _value)
 : Condition(_target_id), value_(_value)
 {
@@ -97,9 +98,13 @@ LinearOverCondition::LinearOverCondition(std::string const& _target_id, double _
 {
 }
 
-bool LinearOverCondition::IsSatisfied()
+bool LinearOverCondition::Apply(Date const& _time, std::string const& _value)
 {
-	return	false;
+	double value = atof(_value.c_str());
+
+	satisfied_ = (value_ < value);
+
+	return	true;
 }
 
 LinearUnderCondition::LinearUnderCondition(std::string const& _target_id, double _value)
@@ -107,20 +112,30 @@ LinearUnderCondition::LinearUnderCondition(std::string const& _target_id, double
 {
 }
 
-bool LinearUnderCondition::IsSatisfied()
+bool LinearUnderCondition::Apply(Date const& _time, std::string const& _value)
 {
-	return	false;
+	double value = atof(_value.c_str());
+
+	satisfied_ = (value_ > value);
+
+	return	true;
 }
+
 
 LinearMatchCondition::LinearMatchCondition(std::string const& _target_id, double _value)
 : LinearSingleCondition(_target_id, _value)
 {
 }
 
-bool LinearMatchCondition::IsSatisfied()
+bool LinearMatchCondition::Apply(Date const& _time, std::string const& _value)
 {
-	return	false;
+	double value = atof(_value.c_str());
+
+	satisfied_ = (value_ == value);
+
+	return	true;
 }
+
 
 LinearRangeCondition::LinearRangeCondition(std::string const& _target_id, double _lower_value, double _upper_value)
 : Condition(_target_id), lower_value_(_lower_value), upper_value_(_upper_value)
@@ -150,10 +165,15 @@ LinearRangeOutCondition::~LinearRangeOutCondition()
 {
 }
 
-bool LinearRangeOutCondition::IsSatisfied()
+bool LinearRangeOutCondition::Apply(Date const& _time, std::string const& _value)
 {
-	return	false;
+	double value = atof(_value.c_str());
+
+	satisfied_ = (lower_value_ > value) || (upper_value_ < value);
+
+	return	true;
 }
+
 
 LinearRangeInCondition::LinearRangeInCondition(std::string const& _target_id, double _lower_value, double _upper_value)
 : LinearRangeCondition(_target_id, _lower_value, _upper_value)
@@ -164,9 +184,13 @@ LinearRangeInCondition::~LinearRangeInCondition()
 {
 }
 
-bool LinearRangeInCondition::IsSatisfied()
+bool LinearRangeInCondition::Apply(Date const& _time, std::string const& _value)
 {
-	return	false;
+	double value = atof(_value.c_str());
+
+	satisfied_ = (lower_value_ < value) && (value < upper_value_);
+
+	return	true;
 }
 
 Action::Action(std::string const& _target_id)
@@ -245,7 +269,7 @@ Rule::Rule(JSONNode const& _rule_properties)
 {
 	try
 	{
-		JSONNode	condition_properties = JSONNodeGetNode(_rule_properties, "conditions");
+		JSONNode	condition_properties = JSONNodeGetNode(_rule_properties, TITLE_NAME_CONDITIONS);
 		if (condition_properties.type() != JSON_ARRAY)
 		{
 			if (condition_properties.type() == JSON_STRING) 
@@ -276,7 +300,7 @@ Rule::Rule(JSONNode const& _rule_properties)
 	}
 	catch(ObjectNotFound& e)
 	{
-		JSONNode	condition_properties = JSONNodeGetNode(_rule_properties, "condition");
+		JSONNode	condition_properties = JSONNodeGetNode(_rule_properties, TITLE_NAME_CONDITION);
 		Condition* condition = Condition::Create(condition_properties);
 		if (condition == NULL)
 		{
@@ -288,7 +312,7 @@ Rule::Rule(JSONNode const& _rule_properties)
 
 	try
 	{
-		JSONNode	action_properties = JSONNodeGetNode(_rule_properties, "actions");
+		JSONNode	action_properties = JSONNodeGetNode(_rule_properties, TITLE_NAME_ACTIONS);
 		if (action_properties.type() != JSON_ARRAY)
 		{	
 			if (action_properties.type() == JSON_STRING) 
@@ -318,7 +342,7 @@ Rule::Rule(JSONNode const& _rule_properties)
 	}
 	catch(ObjectNotFound& e)
 	{
-		JSONNode	action_properties = JSONNodeGetNode(_rule_properties, "action");
+		JSONNode	action_properties = JSONNodeGetNode(_rule_properties, TITLE_NAME_ACTION);
 		Action* action = Action::Create(action_properties);
 		if (action == NULL)
 		{
@@ -327,6 +351,8 @@ Rule::Rule(JSONNode const& _rule_properties)
 
 		actions_.push_back(action);		
 	}
+
+	Object::SetProperties(_rule_properties, false, true);
 }
 
 Rule::~Rule()
@@ -348,12 +374,15 @@ bool	Rule::GetPropertyFieldList(std::list<std::string>& _field_list)
 Rule::operator JSONNode()
 {
 	JSONNode	json;
+	uint32_t	fields;
 
-	json = Object::operator JSONNode() ;
+	fields = PROPERTY_STATIC_FLAG & ~( PROPERTY_CONDITION_FLAG | PROPERTY_ACTION_FLAG);
+
+	Object::GetProperties(json, fields);
 
 	JSONNode	conditions_json(JSON_ARRAY);
 
-	conditions_json.set_name("conditions");
+	conditions_json.set_name(TITLE_NAME_CONDITIONS);
 	for(std::vector<Condition*>::iterator it = conditions_.begin() ; it != conditions_.end() ; it++)
 	{
 		conditions_json.push_back(JSONNode(**it));
@@ -363,7 +392,7 @@ Rule::operator JSONNode()
 
 	JSONNode	actions_json(JSON_ARRAY);
 
-	actions_json.set_name("actions");
+	actions_json.set_name(TITLE_NAME_ACTIONS);
 	for(std::vector<Action*>::iterator it = actions_.begin() ; it != actions_.end() ; it++)
 	{
 		actions_json.push_back(JSONNode(**it));
@@ -418,3 +447,49 @@ bool	Rule::GetProperty(uint32_t _type, JSONNode& _property)
 	return	true;	
 }
 
+bool	Rule::IsIncludedInCondition(std::string const& _id)
+{
+	bool	ret_value = false;
+
+	for(std::vector<Condition*>::iterator it = conditions_.begin() ; it != conditions_.end() ; it++)
+	{
+		Condition* condition = *it;
+
+		if (condition->TargetID() == _id)
+		{
+			return	true;	
+		}
+	}
+
+	return	false;
+}
+
+bool	Rule::Process(std::string const& _endpoint_id, Date const& _time, std::string const& _value)
+{
+	bool	ret_value = false;
+	bool	changed = false;
+	bool	satisfied = true;
+
+	for(std::vector<Condition*>::iterator it = conditions_.begin() ; it != conditions_.end() ; it++)
+	{
+		Condition* condition = *it;
+
+		if (condition->TargetID() == _endpoint_id) 
+		{
+			bool	before_condition = condition->IsSatisfied();
+
+			condition->Apply(_time, _value);
+
+			changed |= (before_condition != condition->IsSatisfied());
+		}
+
+		satisfied &= condition->IsSatisfied();
+	}
+
+	if (changed && satisfied)
+	{
+		ret_value = true;
+	}
+
+	return	ret_value;
+}

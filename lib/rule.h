@@ -22,15 +22,19 @@ public:
 	~Condition();
 
 	virtual	Type	GetType() = 0;
-	virtual	bool	IsSatisfied() = 0;
+			bool	IsSatisfied()	{ return satisfied_;};
 	
 	virtual operator JSONNode();
 	virtual	JSONNode GetJSON();
 
-	static Condition*	Create(JSONNode const& _properties);
-private:
+	static 	Condition*	Create(JSONNode const& _properties);
+			std::string&	TargetID()	{	return	target_id_;	}
+
+	virtual	bool	Apply(Date const& _time, std::string const& _value) = 0;
+protected:
 	std::string target_id_;
 	bool		activated_;
+	bool		satisfied_;
 };
 
 class	LinearSingleCondition : public Condition
@@ -39,7 +43,7 @@ public:
 	LinearSingleCondition(std::string const& _target_id, double _value);
 
 	virtual	JSONNode GetJSON();
-private:
+protected:
 	double	value_;
 };
 
@@ -49,7 +53,7 @@ public:
 	LinearOverCondition(std::string const& _target_id, double _value);
 
 			Type	GetType() {	return	OVER;	};
-			bool	IsSatisfied();
+			bool	Apply(Date const& _time, std::string const& _value);
 private:
 };
 
@@ -59,7 +63,7 @@ public:
 	LinearUnderCondition(std::string const& _target_id, double _value);
 
 			Type	GetType() {	return	UNDER;	};
-			bool	IsSatisfied();
+			bool	Apply(Date const& _time, std::string const& _value);
 private:
 };
 
@@ -69,7 +73,7 @@ public:
 	LinearMatchCondition(std::string const& _target_id, double _value);
 
 			Type	GetType() {	return	MATCH;	};
-			bool	IsSatisfied();
+			bool	Apply(Date const& _time, std::string const& _value);
 private:
 };
 
@@ -80,7 +84,7 @@ public:
 	~LinearRangeCondition();
 
 	virtual	JSONNode	GetJSON();
-private:
+protected:
 	double	lower_value_;
 	double	upper_value_;
 };
@@ -92,7 +96,7 @@ public:
 	~LinearRangeOutCondition();
 
 			Type	GetType() { return RANGE_OUT; };
-			bool	IsSatisfied();
+			bool	Apply(Date const& _time, std::string const& _value);
 private:
 };
 
@@ -103,7 +107,7 @@ public:
 	~LinearRangeInCondition();
 
 			Type	GetType() { return RANGE_IN; };
-			bool	IsSatisfied();
+			bool	Apply(Date const& _time, std::string const& _value);
 private:
 };
 
@@ -156,8 +160,11 @@ public:
 	static	Rule*	Create(JSONNode const& _properties);
 	virtual operator JSONNode();
 
-	bool	GetProperty(uint32_t _type, JSONNode& _property);
+			bool	GetProperty(uint32_t _type, JSONNode& _property);
 	static	bool	GetPropertyFieldList(std::list<std::string>& _field_list);
+
+			bool	IsIncludedInCondition(std::string const& _id);
+			bool	Process(std::string const& _endpoint_id, Date const& _time, std::string const& _value);
 private:
 	std::vector<class Condition *>	conditions_;
 	std::vector<class Action *>	actions_;

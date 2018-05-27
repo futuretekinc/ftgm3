@@ -6,6 +6,8 @@
 #include "process_object.h"
 #include "rule.h"
 
+class	ObjectManager;
+
 class	RuleManager : public ProcessObject 
 {
 public:
@@ -13,15 +15,22 @@ public:
 	RuleManager();
 	~RuleManager();
 
+			bool	Attach(ObjectManager*	_object_manager);
+
 			Rule*	CreateRule(JSONNode const& _properties);
+			bool	DestroyRule(std::string const& _id);
 
 			int		GetRuleCount();
 			Rule*	GetRule(int _index);
 			Rule*	GetRule(std::string const& _id);
 
 			int		GetRuleList(std::list<Rule*>& _list);
-			bool	Attach(Rule* _rule);
+
+			bool	Updated(std::string const& _id, Date const& _time, std::string const& _value);
+
+
 private:
+	ObjectManager*		object_manager_;
 	std::vector<Rule*> 	rules_;
 };
 

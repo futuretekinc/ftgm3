@@ -90,6 +90,9 @@ public:
 
 	virtual	bool		IsRunning();
 
+			bool		IsParticipatedInRules()	{	return	participated_in_rule_ != 0;};
+			bool		participatedInRules()	{	return	(++participated_in_rule_) != 0;};
+			bool		excludedFromRules()		{	if (participated_in_rule_ > 0) --participated_in_rule_; return participated_in_rule_ != 0;};
 	static	const char*	Type();
 	static	bool		IsIncludeIn(Object *_object);
 
@@ -107,6 +110,7 @@ protected:
 	virtual	bool		Add(time_t time, bool _value);
 
 			bool		active_;
+			int			participated_in_rule_;
 			uint32_t	sensor_id_;
 			std::string	unit_;
 			float		scale_;

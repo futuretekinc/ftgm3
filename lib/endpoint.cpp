@@ -28,6 +28,7 @@
 Endpoint::Endpoint(ObjectManager& _manager, std::string const& _type)
 :	Node(_manager, _type),
 	active_(false), 
+	participated_in_rule_(0),
 	unit_(""), 
 	scale_(ENDPOINT_VALUE_SCALE), 
 	correction_interval_(ENDPOINT_UPDATE_INTERVAL),
@@ -510,12 +511,11 @@ bool	Endpoint::Add(time_t _time, std::string const& _value)
 	ret_value = value_map_.Add(_time, _value);
 	if (ret_value == true)
 	{
-#if 0
 		try
 		{
-			Message *message = new MessageEndpointUpdated(id_, id_, time, _value);
 
-			if (manager_.Post(message) == false)
+			MessageEndpointUpdated* message = new MessageEndpointUpdated(id_, id_, _time, _value);
+			if (!manager_.Post(message))
 			{
 				TRACE_ERROR("Failed to post message!");	
 				delete message;	
@@ -525,7 +525,6 @@ bool	Endpoint::Add(time_t _time, std::string const& _value)
 		{
 			TRACE_ERROR("Failed to create message!");	
 		}
-#endif
 	}
 
 	return	ret_value;
