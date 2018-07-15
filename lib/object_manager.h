@@ -78,6 +78,7 @@ public:
 			bool		StopEndpoint(std::string const& _id);
 
 			Rule*		CreateRule(JSONNode const& _properties, bool from_db = false);
+			bool		DestroyRule(std::string const& _id);
 			Rule*		GetRule(std::string const& _id);
 			uint32_t	GetRuleList(std::list<Rule*>& _list);
 

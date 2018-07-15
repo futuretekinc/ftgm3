@@ -512,6 +512,7 @@ void	ServerLinkerMosq::OnMessageCB(struct mosquitto *_mosq, void *_obj, const st
 		if (_message->payloadlen != 0)
 		{
 			std::string	payload = (char *)_message->payload;
+			TRACE_INFO2(linker, "Payload : " << payload);
 
 			size_t	close_brace_pos = payload.rfind('}');
 

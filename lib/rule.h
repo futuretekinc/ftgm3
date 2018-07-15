@@ -6,6 +6,10 @@
 #include <vector>
 #include "object.h"
 
+class	ObjectManager;
+class	RuleManager;
+
+
 class	Condition : public Object
 {
 public:
@@ -127,34 +131,38 @@ public:
 	virtual	JSONNode GetJSON();
 
 	static Action*	Create(JSONNode const& _properties);
-private:
+
+	virtual	bool	Process(ObjectManager* _object_manager) = 0;
+
+protected:
 	std::string	target_id_;
 };
 
 class	DiscreteSingleAction : public Action
 {
 public:
-	DiscreteSingleAction(std::string const& _target_id, double _value);
+	DiscreteSingleAction(std::string const& _target_id, std::string const& _value);
 	~DiscreteSingleAction();
 
 	virtual	JSONNode GetJSON();
-private:
-	double		value_;
+protected:
+	std::string	value_;
 };
 
 class	DiscreteSetAction: public DiscreteSingleAction
 {
 public:
-	DiscreteSetAction(std::string const& _target_id, double _value);
+	DiscreteSetAction(std::string const& _target_id, std::string const& _value);
 
 	virtual	Type	GetType() 	{	return	SET;	};
+	virtual	bool	Process(ObjectManager* _object_manager);
 };
 
 class	Rule : public Object
 {
 public:
-	Rule();
-	Rule(JSONNode const& _properties);
+	Rule(RuleManager& _manager);
+	Rule(RuleManager& _manager, JSONNode const& _properties);
 	~Rule();
 
 	static	Rule*	Create(JSONNode const& _properties);
@@ -166,6 +174,7 @@ public:
 			bool	IsIncludedInCondition(std::string const& _id);
 			bool	Process(std::string const& _endpoint_id, Date const& _time, std::string const& _value);
 private:
+	RuleManager&	manager_;
 	std::vector<class Condition *>	conditions_;
 	std::vector<class Action *>	actions_;
 };

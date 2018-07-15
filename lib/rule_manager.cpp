@@ -2,9 +2,9 @@
 #include "object_manager.h"
 #include "exception.h"
 
-RuleManager::RuleManager()
+RuleManager::RuleManager(ObjectManager* _object_manager)
+: object_manager_(_object_manager)
 {
-	object_manager_ = NULL;
 	name_ 	= "rule_manager";
 	enable_ = true;
 
@@ -27,11 +27,16 @@ bool	RuleManager::Attach(ObjectManager* _object_manager)
 	return	true;
 }
 
+ObjectManager*	RuleManager::GetObjectManager(void)
+{
+	return	object_manager_;
+}
+
 Rule*	RuleManager::CreateRule(JSONNode const& _properties)
 {
 	try
 	{
-		Rule*	rule = new Rule(_properties);		
+		Rule*	rule = new Rule(*this, _properties);		
 		if (rule != NULL)
 		{
 			rules_.push_back(rule);

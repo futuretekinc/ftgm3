@@ -103,6 +103,7 @@ RetValue	SubCommandReport
 				{
 					std::list<Gateway*>	gateway_list;
 
+				
 					object_manager->GetGatewayList(gateway_list);
 
 					for(std::list<Gateway*>::iterator it = gateway_list.begin(); it != gateway_list.end() ; it++)
@@ -271,6 +272,7 @@ RetValue	ShellCommandServerLinker
 	ObjectManager*	object_manager = (ObjectManager*)_shell->GetObject();
 	ServerLinkerMosq&	linker  = object_manager->GetServerLinker();
 
+	TRACE_INFO("Check point");
 	if (object_manager == NULL)
 	{
 		std::cout << "Object manager not attached!" << std::endl;	

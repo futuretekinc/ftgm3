@@ -12,10 +12,11 @@ class	RuleManager : public ProcessObject
 {
 public:
 
-	RuleManager();
+	RuleManager(ObjectManager* objectManager);
 	~RuleManager();
 
 			bool	Attach(ObjectManager*	_object_manager);
+			ObjectManager*	GetObjectManager(void);
 
 			Rule*	CreateRule(JSONNode const& _properties);
 			bool	DestroyRule(std::string const& _id);

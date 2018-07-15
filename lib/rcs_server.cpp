@@ -177,6 +177,22 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 
 			response.AddEndpoint(result);	
 		}
+		else if (it->name() == TITLE_NAME_RULE)
+		{
+			JSONNode	result(JSON_NODE);
+
+			Rule*	rule = manager_->CreateRule(*it);
+			if (rule == NULL)
+			{
+				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+			}
+			else
+			{
+				rule->GetProperties(result);
+			}
+
+			response.AddRule(result);	
+		}
 	}	
 
 	_response = response;
@@ -189,6 +205,8 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 	JSONNode	payload  = _request.GetPayload();
 
+	TRACE_ERROR("Request Del!");
+	
 	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
@@ -238,6 +256,23 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 			}
 
 			response.AddEndpoint(result);
+		}
+		else if (it->name() == TITLE_NAME_RULE)
+		{
+			JSONNode	result(JSON_NODE);
+			std::string id = JSONNodeGetID(*it);
+
+			TRACE_ERROR("Delete rule : " << id);
+			if (manager_->DestroyRule(id))
+			{
+				result.push_back(JSONNode(TITLE_NAME_ID, id));	
+			}
+			else
+			{
+				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+			}
+
+			response.AddRule(result);
 		}
 		else if (it->name() == TITLE_NAME_DATA)
 		{
@@ -291,6 +326,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 	JSONNode	payload  = _request.GetPayload();
 
+	TRACE_INFO("Msg ID : " << _request.GetMsgID());
 	response.SetReqID(_request.GetMsgID());
 
 	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
@@ -466,6 +502,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 
 				id = JSONNodeGetID(*it);
 
+				TRACE_INFO("Set Endpoint : " << id );
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 
 				Endpoint*	endpoint= manager_->GetEndpoint(id);
@@ -486,6 +523,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 
 							if (current_time > expire_time)
 							{
+									TRACE_INFO("Time expired!");
 								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_TIME_EXPIRED));
 							}
 							else
@@ -494,10 +532,12 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 
 								if (actuator == NULL)
 								{
+									TRACE_INFO("Actuator not found!");
 									result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
 								}
 								else
 								{
+									TRACE_INFO("Actuator->SetValue!");
 									if (actuator->SetValue(value))
 									{
 										result.push_back(JSONNode(TITLE_NAME_VALUE, actuator->GetValue()));
@@ -505,6 +545,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 									}
 									else
 									{
+										TRACE_INFO("Not actuator!");
 										result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
 									}
 								}
@@ -513,6 +554,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 						}
 						catch(ObjectNotFound& e)
 						{
+							TRACE_INFO("Occurred exception!");
 							if (!endpoint->SetProperties(*it, false, false))
 							{
 								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
@@ -525,6 +567,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 					}
 					else
 					{
+						TRACE_INFO("Value not found!");
 						if (endpoint->SetProperties(*it, true, false))
 						{
 							endpoint->SetProperties(*it, false, false);

@@ -148,9 +148,10 @@ Trace& Trace::Begin(TraceLevel _level, std::string const& _pretty_function, uint
 	ostringstream	os;
 
 	Date	date;
-	os << "[" << date << "." << std::setw(6) << std::setfill('0') << date.GetMicroSecond() % 1000000 << std::setfill(' ') << "]";
+//	os << "[" << date << "." << std::setw(6) << std::setfill('0') << date.GetMicroSecond() % 1000000 << std::setfill(' ') << "]";
 	os << "[" << setw(master_.GetFunctionNameSize()) << function.substr(0, master_.GetFunctionNameSize()) << "]";
 	os << "[" << setw(master_.GetFunctionLineSize()) <<_line << "]";
+#if 0
 	if (object_ != NULL)
 	{
 		std::string	name = object_->GetName();
@@ -174,6 +175,7 @@ Trace& Trace::Begin(TraceLevel _level, std::string const& _pretty_function, uint
 	{
 		os << "[" << setw(master_.GetObjectNameSize()) << "global" << "]";
 	}
+#endif
 	switch(level_)
 	{
 	case	INFO:	os << "[INFO]"; break;

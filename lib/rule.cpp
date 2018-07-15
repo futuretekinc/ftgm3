@@ -3,6 +3,7 @@
 #include "rule.h"
 #include "json_utils.h"
 #include "exception.h"
+#include "object_manager.h"
 
 Condition::Condition(std::string const& _target_id)
 : target_id_(_target_id), activated_(false), satisfied_(false)
@@ -78,7 +79,8 @@ Condition*	Condition::Create(JSONNode const& _properties)
 	return	condition;
 }
 
-			bool	Apply(Date const& _time, std::string const& _value);
+bool	Apply(Date const& _time, std::string const& _value);
+
 LinearSingleCondition::LinearSingleCondition(std::string const& _target_id, double _value)
 : Condition(_target_id), value_(_value)
 {
@@ -231,13 +233,13 @@ Action*	Action::Create(JSONNode const& _properties)
 	{
 		JSONNode value_node = JSONNodeGetNode(_properties, "value");
 
-		action = new DiscreteSetAction(target_node.as_string(), value_node.as_float());
+		action = new DiscreteSetAction(target_node.as_string(), value_node.as_string());
 	}
 
 	return	action;
 }
 
-DiscreteSingleAction::DiscreteSingleAction(std::string const& _target_id, double _value)
+DiscreteSingleAction::DiscreteSingleAction(std::string const& _target_id, std::string const& _value)
 : Action(_target_id), value_(_value)
 {
 }
@@ -255,17 +257,41 @@ JSONNode DiscreteSingleAction::GetJSON()
 	return	json;
 }
 
-DiscreteSetAction::DiscreteSetAction(std::string const& _target_id, double _value)
+DiscreteSetAction::DiscreteSetAction(std::string const& _target_id, std::string const& _value)
 : DiscreteSingleAction(_target_id, _value)
 {
 }
 
+bool	DiscreteSetAction::Process(ObjectManager* _object_manager)
+{
+	if (_object_manager != NULL) 
+	{
+		Endpoint*	ep = _object_manager->GetEndpoint(target_id_);
+		if (ep == NULL) 
+		{
+			TRACE_INFO2(this, "Can't find endpoint : " << target_id_);
+			return	false;
+		}
 
-Rule::Rule()
+		TRACE_INFO2(this, "ep->SetValue(" << value_ << "):");
+		return	ep->SetValue(value_);
+	}
+	else
+	{
+		TRACE_INFO2(this, "Object Manager not found!");
+	}
+
+	
+	return	false;
+}
+
+Rule::Rule(RuleManager& _manager)
+: manager_(_manager)
 {
 }
 
-Rule::Rule(JSONNode const& _rule_properties)
+Rule::Rule(RuleManager& _manager, JSONNode const& _rule_properties)
+: manager_(_manager)
 {
 	try
 	{
@@ -488,6 +514,12 @@ bool	Rule::Process(std::string const& _endpoint_id, Date const& _time, std::stri
 
 	if (changed && satisfied)
 	{
+		for(std::vector<Action*>::iterator it = actions_.begin() ; it != actions_.end() ; it++)
+		{
+			TRACE_INFO2(this, "Action #######################################");
+			(*it)->Process(manager_.GetObjectManager());
+		}
+
 		ret_value = true;
 	}
 

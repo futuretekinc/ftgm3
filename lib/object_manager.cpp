@@ -16,6 +16,7 @@ ObjectManager::ObjectManager()
 	server_linker_(this), 
 	rcs_server_(this),
 	data_manager_(DEFAULT_CONST_DB_FILE),
+	rule_manager_(this),
 	endpoint_report_interval_(ENDPOINT_REPORT_INTERVAL),
 	auto_start_(false)
 {
@@ -30,6 +31,7 @@ ObjectManager::ObjectManager(std::string const& _id)
 	server_linker_(this), 
 	rcs_server_(this),
 	data_manager_(DEFAULT_CONST_DB_FILE),
+	rule_manager_(this),
 	endpoint_report_interval_(ENDPOINT_REPORT_INTERVAL),
 	auto_start_(false)
 {
@@ -770,6 +772,11 @@ Rule*	ObjectManager::CreateRule(JSONNode const& _properties, bool from_db)
 	}
 
 	return	rule;
+}
+
+bool	ObjectManager::DestroyRule(std::string const& _id)
+{
+	return	rule_manager_.DestroyRule(_id);
 }
 
 uint32_t	ObjectManager::GetRuleList(std::list<Rule*>& _list)

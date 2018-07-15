@@ -187,13 +187,13 @@ RCSMessage::RCSMessage(JSONNode const& _payload)
 	{
 		if (it->type() == JSON_NODE)
 		{
-			endpoint_list_.push_back(*it);
+			rule_list_.push_back(*it);
 		}
 		else if (it->type() == JSON_ARRAY)
 		{
 			for(JSONNode::const_iterator item = it->begin() ; item != it->end() ; item++)
 			{
-				endpoint_list_.push_back(*item);	
+				rule_list_.push_back(*item);	
 			}
 		}
 		else
@@ -337,7 +337,7 @@ bool	RCSMessage::Make()
 		}
 		else
 		{
-			TRACE_INFO("endpoint_list_" << endpoint_list_.size());
+			TRACE_INFO("endpoint_list_ : " << endpoint_list_.size());
 			if (endpoint_list_.size() == 1)
 			{
 				JSONNode	node = endpoint_list_.front();
@@ -359,6 +359,7 @@ bool	RCSMessage::Make()
 				payload_.push_back(array);
 			}
 		}
+
 
 		if (epdata_list_.size() == 1)
 		{
