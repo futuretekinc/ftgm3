@@ -25,7 +25,7 @@ LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)\
 			-L$(PROJ_ROOT)/../cortina/target/usr/local/lib \
 			-L$(PROJ_ROOT)/../ftm/build/ftm-100s/_root/usr/lib \
 			-L$(PROJ_ROOT)/../ftm/build/ftm-100s/_root/usr/local/lib
-LIBS += -lshellftgm -lftgm -lmosquitto -lmodbus -lhl++ ../../cortina/KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
+LIBS += -lshellftgm -lftgm -lmosquitto -lssl -lcrypto -lmodbus -lhl++ ../../cortina/KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
 else
 ifeq ($(TARGET), "FTM-50")
 CROSS_COMPILE=armv5-linux-
@@ -42,7 +42,7 @@ LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)\
 			-L$(PROJ_ROOT)/../spear/target/usr/local/lib \
 			-L$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/lib \
 			-L$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/local/lib
-LIBS += -lshellftgm -lftgm -lmosquitto -lmodbus -lhl++ ../../spear/KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
+LIBS += -lshellftgm -lftgm -lmosquitto -lssl -lcrypto -lmodbus -lhl++ ../../spear/KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
 else
 INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../kompex-sqlite-wrapper/include -I$(PROJ_ROOT)/..
 LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)
