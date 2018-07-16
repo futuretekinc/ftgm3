@@ -245,6 +245,10 @@ bool	ServerLinker::SetProperty(JSONNode const& _config, bool _check)
 			return	false;	
 		}
 	}
+	else if (_config.name() == TITLE_NAME_CAFILE)
+	{
+		ret_value = SetCafile(_config.as_string(), _check);
+	}
 	else
 	{
 		ret_value = ProcessObject::SetProperty(_config, _check);	
@@ -263,7 +267,7 @@ ServerLinker::operator JSONNode() const
 	root.push_back(JSONNode(TITLE_NAME_PORT, port_));
 	root.push_back(JSONNode(TITLE_NAME_USERNAME, username_));
 	root.push_back(JSONNode(TITLE_NAME_PASSWORD, password_));
-
+	root.push_back(JSONNode(TITLE_NAME_CAFILE, cafile_));
 	JSONNode	topic;
 
 	topic.push_back(JSONNode(TITLE_NAME_VERSION, topic_version_));
@@ -480,6 +484,15 @@ bool    ServerLinker::SetKeepAliveInterval(std::string const& _keep_alive_interv
 	if(!_check)
 	{
 		keep_alive_interval_ =  atoi(_keep_alive_interval.c_str());
+	}
+	return true;
+}
+
+bool	ServerLinker::SetCafile(std::string const& _cafile, bool _check)
+{
+	if(!_check)
+	{
+		cafile_ = _cafile;
 	}
 	return true;
 }

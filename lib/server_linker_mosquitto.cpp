@@ -357,7 +357,24 @@ bool	ServerLinkerMosq::InternalConnect(uint32_t _delay_sec)
 				TRACE_INFO("MQTT USERNAME PASSWORD NOT SET");
 			}
 			//
+			// MQTT SSL SET
+			if(cafile_.length() != 0)
+			{
+				if(mosquitto_tls_set(mosquitto_, cafile_.c_str(), NULL, NULL, NULL, NULL) == MOSQ_ERR_INVAL)
+				{
+					TRACE_ERROR("CAfile is Error");
+				}
+				else
+				{
+					mosquitto_tls_opts_set(mosquitto_, 1, NULL, NULL);
+					TRACE_INFO("MQTT TLS SET SUCCESS");
+				}
 
+			}
+			else
+			{
+				TRACE_INFO("MQTT TLS NOT NET");
+			}
 			int	ret = mosquitto_connect(mosquitto_, broker_.c_str(), atoi(port_.c_str()), keep_alive_interval_);
 			if (ret > 0)
 			{

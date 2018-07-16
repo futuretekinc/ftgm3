@@ -148,6 +148,7 @@ const	std::string&	GetTopic()	{ return	topic_;	};
 			bool		SetPassword(std::string const& _password, bool _check = false);
 			bool		SetPort(std::string const& _port, bool _check = false);
 			bool		SetKeepAliveInterval(std::string const& _keep_alive_interval, bool _check = false);
+			bool		SetCafile(std::string	const& _cafile, bool _check = false);
 			//
 
 			bool		SetAutoConnection(bool _auto);
@@ -225,6 +226,7 @@ protected:
 	std::string			username_;
 	std::string			password_;
 	std::string			port_;
+	std::string			cafile_;
 	//
 
 	uint32_t			retransmission_count_max_;

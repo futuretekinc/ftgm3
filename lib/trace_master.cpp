@@ -150,7 +150,7 @@ void	TraceMaster::Write(std::string const& _headline, uint32_t _headline_len, st
 
 				system(oss.str().c_str());
 
-				ofs.open(file_name_.c_str(), ofstream::out | ofstream::app);
+				ofs.open(file_name_.c_str(), ofstream::out | ofstream::app | std::ofstream::ate);
 			}
 
 			while(!message.eof())
