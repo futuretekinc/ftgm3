@@ -127,6 +127,8 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 	JSONNode	payload  = _request.GetPayload();
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 
+	response.SetReqID(_request.GetMsgID());
+
 	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
@@ -212,7 +214,7 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 	JSONNode	payload  = _request.GetPayload();
 
-	TRACE_ERROR("Request Del!");
+	response.SetReqID(_request.GetMsgID());
 	
 	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
@@ -930,6 +932,8 @@ bool	RCSServer::CmdStart(RCSMessage& _request, RCSMessage& _response)
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 	JSONNode	payload  = _request.GetPayload();
 
+	response.SetReqID(_request.GetMsgID());
+
 	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
@@ -984,6 +988,8 @@ bool	RCSServer::CmdStop(RCSMessage& _request, RCSMessage& _response)
 {
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 	JSONNode	payload  = _request.GetPayload();
+
+	response.SetReqID(_request.GetMsgID());
 
 	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
