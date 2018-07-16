@@ -776,7 +776,13 @@ Rule*	ObjectManager::CreateRule(JSONNode const& _properties, bool from_db)
 
 bool	ObjectManager::DestroyRule(std::string const& _id)
 {
-	return	rule_manager_.DestroyRule(_id);
+	if(rule_manager_.DestroyRule(_id))
+	{
+		data_manager_.DeleteRule(_id);
+		TRACE_INFO("RULE REMOVE");	
+		return true;
+	}
+	return	false;
 }
 
 uint32_t	ObjectManager::GetRuleList(std::list<Rule*>& _list)
@@ -1455,4 +1461,16 @@ void            ObjectManager::SystemOperation(uint8_t _operation_type)
 	{
 		system("/etc/init.d/ftgm restart");
 	}
+}
+
+bool	ObjectManager::SendRuleEvent(std::string const& _id)
+{
+	RCSMessage message(MSG_TYPE_RCS_EVENT);
+	JSONNode	rule_info;
+	JSONNode	rule_event;
+	rule_info = JSONNode(TITLE_NAME_ID,_id);
+	rule_event.push_back(rule_info);
+	message.AddRule(rule_event);
+	
+	return server_linker_.Send(message);
 }

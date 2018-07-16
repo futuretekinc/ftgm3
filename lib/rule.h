@@ -133,7 +133,7 @@ public:
 	static Action*	Create(JSONNode const& _properties);
 
 	virtual	bool	Process(ObjectManager* _object_manager) = 0;
-
+	virtual bool    Process_after(ObjectManager* _object_manager) = 0;
 protected:
 	std::string	target_id_;
 };
@@ -156,6 +156,7 @@ public:
 
 	virtual	Type	GetType() 	{	return	SET;	};
 	virtual	bool	Process(ObjectManager* _object_manager);
+	virtual bool    Process_after(ObjectManager* _object_manager);
 };
 
 class	Rule : public Object

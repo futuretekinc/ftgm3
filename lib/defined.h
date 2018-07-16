@@ -340,6 +340,7 @@ MSG_TYPE_RCS(REBOOT, "reboot");
 
 //add SY.KANG
 MSG_TYPE_RCS(GW_INFO,	"gw_info");
+MSG_TYPE_RCS(EVENT, "event");
 //
 
 

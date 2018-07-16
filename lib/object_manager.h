@@ -105,6 +105,7 @@ public:
 			void		SystemOperation(uint8_t _operation_type);
 			void		SetSystemOperating(std::string const& _msg_type);
 			uint8_t		system_operation_;	
+			bool		SendRuleEvent(std::string const& _id);
 protected:
 	
 			bool		OnMessage(Message* _message);

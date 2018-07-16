@@ -105,10 +105,12 @@ bool	DataManager::Table::Add(JSONNode const& _properties)
 bool	DataManager::Table::Delete(std::string const& _id)
 {
 	std::ostringstream	query;
+	std::ostringstream	commit;
+	query << "DELETE FROM " << name_ << " WHERE _id=" << "'" << _id << "';";
+	commit << "COMMIT;";
 
-	query << "DELETE FROM " << name_ << " WHERE _id=" << _id << ";";
 	TRACE_INFO("Query : " << query.str());
-
+	TRACE_INFO("Commit : " << commit.str());
 	try 
 	{
 		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
@@ -118,10 +120,12 @@ bool	DataManager::Table::Delete(std::string const& _id)
 			return	false;	
 		}
 
-		statement->Sql(query.str());
-
+		statement->SqlStatement(query.str());
+		
+		statement->SqlStatement(commit.str());
 		if (statement->GetColumnCount() != 0)
 		{
+			TRACE_INFO("REMOVE SUCCESS");	
 			statement->FreeQuery();
 			return	true;
 		}

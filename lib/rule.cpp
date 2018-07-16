@@ -285,6 +285,30 @@ bool	DiscreteSetAction::Process(ObjectManager* _object_manager)
 	return	false;
 }
 
+bool	DiscreteSetAction::Process_after(ObjectManager* _object_manager)
+{
+	if(_object_manager != NULL)
+	{
+		Endpoint*	ep = _object_manager->GetEndpoint(target_id_);
+		if(ep == NULL)
+		{
+			TRACE_INFO2(this, "Can't find endpoint :" << target_id_);
+			return false;
+		}
+
+		if(ep->GetValue() != value_)
+		{
+			TRACE_INFO2(this, "ep->SetValue(" << value_ << "):");
+			return ep->SetValue(value_);
+		}
+		return false;
+	}
+	else
+	{
+		TRACE_INFO2(this, "Object Manager not found!");
+	}
+}
+
 Rule::Rule(RuleManager& _manager)
 : manager_(_manager)
 {
@@ -495,14 +519,14 @@ bool	Rule::Process(std::string const& _endpoint_id, Date const& _time, std::stri
 	bool	ret_value = false;
 	bool	changed = false;
 	bool	satisfied = true;
-
+	bool	before_condition = false;
 	for(std::vector<Condition*>::iterator it = conditions_.begin() ; it != conditions_.end() ; it++)
 	{
 		Condition* condition = *it;
 
 		if (condition->TargetID() == _endpoint_id) 
 		{
-			bool	before_condition = condition->IsSatisfied();
+			before_condition = condition->IsSatisfied();
 
 			condition->Apply(_time, _value);
 
@@ -522,6 +546,17 @@ bool	Rule::Process(std::string const& _endpoint_id, Date const& _time, std::stri
 
 		ret_value = true;
 	}
-
+	if ( (before_condition == 1) && (satisfied == 1))
+	{
+		for(std::vector<Action*>::iterator it = actions_.begin() ; it != actions_.end() ; it++)
+		{
+			TRACE_INFO2(this, "POST ACTION ##################################");
+			if((*it)->Process_after(manager_.GetObjectManager()))
+			{
+				ret_value = true;
+			}
+				
+		}
+	}
 	return	ret_value;
 }

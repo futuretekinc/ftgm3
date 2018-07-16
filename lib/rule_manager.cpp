@@ -117,6 +117,7 @@ bool	RuleManager::Updated(std::string const& _id, Date const& _time, std::string
 		{
 			if (rule->Process(_id, _time, _value))
 			{
+				object_manager_->SendRuleEvent(rule->GetID());
 				TRACE_INFO("Rule[" << rule->GetID() << "] applied!");
 			}
 		}

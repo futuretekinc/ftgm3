@@ -36,6 +36,11 @@ RetValue	ShellCommandRule
 				_shell->Out() << json.write_formatted() << std::endl;
 			}
 		}
+		else if(_arguments[1] == "del")
+		{
+			object_manager->DestroyRule(_arguments[2]);
+		}
+
 	}
 	catch(std::exception& e)
 	{

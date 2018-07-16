@@ -136,6 +136,7 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 			Gateway*	gateway = manager_->CreateGateway(*it);
 			if (gateway == NULL)
 			{
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}
 			else
@@ -152,6 +153,7 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 			Device*	device = manager_->CreateDevice(*it);
 			if (device == NULL)
 			{
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}
 			else
@@ -168,6 +170,8 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 			Endpoint*	endpoint = manager_->CreateEndpoint(*it);
 			if (endpoint == NULL)
 			{
+				
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}
 			else
@@ -184,11 +188,14 @@ bool	RCSServer::Add(RCSMessage& _request, RCSMessage& _response)
 			Rule*	rule = manager_->CreateRule(*it);
 			if (rule == NULL)
 			{
+				std::string id = JSONNodeGetID(*it);
+				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 			}
 			else
 			{
-				rule->GetProperties(result);
+				rule->GetProperties(result);	
 			}
 
 			response.AddRule(result);	
@@ -216,10 +223,12 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 			
 			if (manager_->DestroyGateway(id))
 			{
+				
 				result.push_back(JSONNode(TITLE_NAME_ID, id));	
 			}
 			else
 			{
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
 			}
 
@@ -237,6 +246,7 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 			else
 			{
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 			}
 
 			response.AddDevice(result);
@@ -253,6 +263,7 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 			else
 			{
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 			}
 
 			response.AddEndpoint(result);
@@ -269,7 +280,9 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
+				result.push_back(JSONNode(TITLE_NAME_ID, id));	
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 			}
 
 			response.AddRule(result);
@@ -290,6 +303,8 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 				Endpoint*	endpoint = manager_->GetEndpoint(id);
 				if (endpoint == NULL)
 				{
+				
+					response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 					throw ObjectNotFound(id);
 				}
 
@@ -301,12 +316,16 @@ bool	RCSServer::Del(RCSMessage& _request, RCSMessage& _response)
 			}
 			catch(ObjectNotFound& e)
 			{
+				
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				TRACE_ERROR("Object[" << id << "] not found!");
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
 			}
 			catch(InvalidArgument& e)
 			{
+				
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				TRACE_ERROR("Invalid message fromat!");
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
@@ -325,10 +344,11 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 {
 	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 	JSONNode	payload  = _request.GetPayload();
-
-	TRACE_INFO("Msg ID : " << _request.GetMsgID());
+	
 	response.SetReqID(_request.GetMsgID());
 
+	TRACE_INFO("Msg ID : " << _request.GetMsgID());
+	
 	for(JSONNode::iterator it = payload.begin(); it != payload.end() ; it++)
 	{
 		if (it->name() == TITLE_NAME_GATEWAY)
@@ -342,6 +362,8 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				Gateway*	gateway = manager_->GetGateway(id);
 				if (gateway == NULL)
 				{
+				
+					response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 					TRACE_ERROR("Object[" << id << "not found!");
 					result.push_back(JSONNode(TITLE_NAME_ID, id));
 					result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
@@ -350,6 +372,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				{
 					if (!gateway->SetProperties(*it, false, false))
 					{
+						response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 						result.push_back(JSONNode(TITLE_NAME_ID, id));
 						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 					}
@@ -368,7 +391,6 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
 					}
 				}
-
 				response.AddGateway(result);
 			}
 			else if (it->type() == JSON_ARRAY)
@@ -382,6 +404,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 					Gateway*	gateway = manager_->GetGateway(id);
 					if (gateway == NULL)
 					{
+						response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 						TRACE_ERROR("Object[" << id << "not found!");
 						result.push_back(JSONNode(TITLE_NAME_ID, id));
 						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
@@ -390,11 +413,13 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 					{		
 						if (!gateway->SetProperties(*it2, false, false))
 						{
+							response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 							result.push_back(JSONNode(TITLE_NAME_ID, id));
 							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 						}
 						else
 						{
+							
 							gateway->SetProperties(*it2, false, false);
 
 							Fields	fields;
@@ -408,7 +433,6 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
 						}
 					}
-
 					response.AddGateway(result);
 				}
 			}
@@ -424,6 +448,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				Device*	device = manager_->GetDevice(id);
 				if (device == NULL)
 				{
+					response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 					TRACE_ERROR("Object[" << id << "not found!");
 					result.push_back(JSONNode(TITLE_NAME_ID, id));
 					result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
@@ -432,6 +457,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				{
 					if (!device->SetProperties(*it, false, false))
 					{
+						response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 						result.push_back(JSONNode(TITLE_NAME_ID, id));
 						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 					}
@@ -449,7 +475,6 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 						device->GetProperties(result, fields);
 					}
 				}
-
 				response.AddDevice(result);
 			}
 			else if (it->type() == JSON_ARRAY)
@@ -463,6 +488,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 					Device*	device = manager_->GetDevice(id);
 					if (device == NULL)
 					{
+						response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 						TRACE_ERROR("Object[" << id << "not found!");
 						result.push_back(JSONNode(TITLE_NAME_ID, id));
 						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
@@ -471,6 +497,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 					{
 						if (!device->SetProperties(*it2, false, false))
 						{
+							response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 							result.push_back(JSONNode(TITLE_NAME_ID, id));
 							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 						}
@@ -488,7 +515,6 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 							device->GetProperties(result, fields);
 						}
 					}
-
 					response.AddDevice(result);
 				}
 			}
@@ -508,6 +534,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				Endpoint*	endpoint= manager_->GetEndpoint(id);
 				if (endpoint == NULL)
 				{
+					response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 					TRACE_ERROR("Object[" << id << "not found!");
 					result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
 				}
@@ -523,7 +550,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 
 							if (current_time > expire_time)
 							{
-									TRACE_INFO("Time expired!");
+								TRACE_INFO("Time expired!");
 								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_TIME_EXPIRED));
 							}
 							else
@@ -531,7 +558,8 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 								EndpointActuator*	actuator = dynamic_cast<EndpointActuator*>(endpoint);
 
 								if (actuator == NULL)
-								{
+								{	
+									response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 									TRACE_INFO("Actuator not found!");
 									result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
 								}
@@ -545,6 +573,8 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 									}
 									else
 									{
+										
+										response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 										TRACE_INFO("Not actuator!");
 										result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
 									}
@@ -555,6 +585,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 						catch(ObjectNotFound& e)
 						{
 							TRACE_INFO("Occurred exception!");
+							response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 							if (!endpoint->SetProperties(*it, false, false))
 							{
 								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
@@ -584,11 +615,11 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 						}
 						else
 						{
+							response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 						}
 					}
 				}
-
 				response.AddEndpoint(result);
 			}
 			else
@@ -605,6 +636,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 					Endpoint*	endpoint= manager_->GetEndpoint(id);
 					if (endpoint == NULL)
 					{
+						response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 						TRACE_ERROR("Object[" << id << "not found!");
 						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
 					}
@@ -628,6 +660,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 
 									if (actuator == NULL)
 									{
+										response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 										result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
 									}
 									else
@@ -639,6 +672,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 										}
 										else
 										{
+											response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 											result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_NOT_ACTUATOR));
 										}
 									}
@@ -649,6 +683,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 							{
 								if (!endpoint->SetProperties(*it2, false, false))
 								{
+									response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 									result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 								}
 								else
@@ -675,11 +710,11 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 							}
 							else
 							{
+								response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 								result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_INVALID_ARGUMENTS));
 							}
 						}
 					}
-
 					response.AddEndpoint(result);
 				}
 			}
@@ -701,6 +736,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 				Endpoint*	endpoint = manager_->GetEndpoint(id);
 				if (endpoint == NULL)
 				{
+					response.SetMsgType(MSG_TYPE_RCS_ERROR);
 					TRACE_ERROR("Object[" << id << "not found!");
 					result.push_back(JSONNode(TITLE_NAME_ID, id));
 					result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
@@ -711,6 +747,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 					EndpointActuator* actuator = dynamic_cast<EndpointActuator*>(endpoint);
 					if (actuator == NULL)
 					{
+						response.SetMsgType(MSG_TYPE_RCS_ERROR);
 						TRACE_ERROR("Endpoint[" << id << "] is not actuator!");
 						result.push_back(JSONNode(TITLE_NAME_ID, id));
 						result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_PERMISSION_DENY));
@@ -724,6 +761,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 						}
 						else
 						{
+							response.SetMsgType(MSG_TYPE_RCS_ERROR);
 							TRACE_ERROR("Failed to set value!");
 							result.push_back(JSONNode(TITLE_NAME_ID, id));
 							result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_FAILED));
@@ -733,6 +771,7 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 			}
 			catch(ObjectNotFound& e)
 			{
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				TRACE_ERROR("Property[" << e.what() << "] not found!");
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
@@ -741,7 +780,6 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 			response.AddEPData(result);
 		}
 	}
-
 	_response = response;
 
 	return	true;
@@ -766,12 +804,15 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			Gateway*	gateway = manager_->GetGateway(id);
 			if (gateway == NULL)
 			{
+				
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				TRACE_ERROR("The gateway[" << id << "] not found.");
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
 			}
 			else
 			{
+			
 				JSONNode	modem_info;
 				gateway->GetModemInfo(modem_info);	
 				gateway->GetProperties(result, gateway_fields);
@@ -788,12 +829,14 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			Device*	device = manager_->GetDevice(id);
 			if (device == NULL)
 			{
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				TRACE_ERROR("The device[" << id << "] not found.");
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
 			}
 			else
 			{
+				RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
 				device->GetProperties(result, device_fields);
 			}
 
@@ -807,6 +850,7 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			Endpoint*	endpoint= manager_->GetEndpoint(id);
 			if (endpoint == NULL)
 			{
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				TRACE_ERROR("The endpoint[" << id << "] not found.");
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
@@ -826,12 +870,14 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			Endpoint*	endpoint = manager_->GetEndpoint(id);
 			if (endpoint == NULL)
 			{
+				response.SetMsgType(MSG_TYPE_RCS_ERROR);	
 				TRACE_ERROR("The endpoint[" << id << "] not found.");
 				result.push_back(JSONNode(TITLE_NAME_ID, id));
 				result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OBJECT_NOT_FOUND));
 			}
 			else
 			{	
+				
 				uint32_t	count = JSONNodeGetCount(*it, 0);
 				time_t		start_time = JSONNodeGetStartTime(*it, 0);
 				time_t		end_time = JSONNodeGetEndTime(*it, time_t(Date::GetCurrent()));
