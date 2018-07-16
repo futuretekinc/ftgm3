@@ -87,6 +87,8 @@ public:
 	//Add SY.KANG
 	std::string GetIP();	
 	bool    GetWanIP(JSONNode& _property);
+	bool    GetModemInfoPreperty(JSONNode& modem_info_s, int command_num);
+ 	bool    GetModemInfo(JSONNode& modem_info);
 	friend std::ostream&	operator<<(std::ostream& os, Object & _object);
 
 protected:

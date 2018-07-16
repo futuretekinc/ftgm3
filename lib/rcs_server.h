@@ -39,6 +39,8 @@ public:
 	bool		Error(RCSMessage& _reply);
 	bool		Error(RCSMessage& _reply, std::string& _req_type);
 
+	bool		CommandRestart(RCSMessage& _request, RCSMessage& _response);
+	bool		CommandReboot(RCSMessage& _request, RCSMessage& _response);
 
 protected:
 	TCPSession*	CreateSession(int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout);

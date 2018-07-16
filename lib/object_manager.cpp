@@ -22,7 +22,7 @@ ObjectManager::ObjectManager()
 {
 	name_ 	= "object_manager";
 	enable_ = true;
-
+	system_operation_ = 0;
 	trace.SetClassName(GetClassName());
 }
 
@@ -37,7 +37,7 @@ ObjectManager::ObjectManager(std::string const& _id)
 {
 	name_ 	= "object_manager";
 	enable_ = true;
-
+	system_operation_ = 0;
 	trace.SetClassName(GetClassName());
 }
 
@@ -1119,7 +1119,7 @@ void	ObjectManager::Process()
 		endpoint_report_timer_.Add(endpoint_report_interval_);
 
 	}
-
+	SystemOperation(system_operation_);
 	ProcessObject::Process();
 }
 
@@ -1431,4 +1431,28 @@ std::string	ObjectManager::GetTopicNameEndpoint(std::string const& _id)
 	return	topic.str();
 }
 
-
+void            ObjectManager::SetSystemOperating(std::string const& _msg_type)
+{
+	if(_msg_type == MSG_TYPE_RCS_REBOOT)
+  	{
+		system_operation_ = 1;
+	 	//      system("reboot");
+	}
+	else if(_msg_type == MSG_TYPE_RCS_RESTART)
+	{
+		system_operation_ = 2;
+	 	//      system("/etc/init.d/ftgm restart");
+	}
+}
+ 
+void            ObjectManager::SystemOperation(uint8_t _operation_type)
+{
+	if(_operation_type == 1)
+	{
+		system("reboot");
+ 	}
+	else if(_operation_type == 2)
+	{
+		system("/etc/init.d/ftgm restart");
+	}
+}

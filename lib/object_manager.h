@@ -102,6 +102,9 @@ public:
 			ServerLinkerMosq&	GetServerLinker()	{	return	server_linker_;	};
 			RCSServer&		GetRCSServer()		{	return	rcs_server_;	};
 
+			void		SystemOperation(uint8_t _operation_type);
+			void		SetSystemOperating(std::string const& _msg_type);
+			uint8_t		system_operation_;	
 protected:
 	
 			bool		OnMessage(Message* _message);

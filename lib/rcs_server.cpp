@@ -772,7 +772,10 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			}
 			else
 			{
+				JSONNode	modem_info;
+				gateway->GetModemInfo(modem_info);	
 				gateway->GetProperties(result, gateway_fields);
+				result.push_back(modem_info);	
 			}
 
 			response.AddGateway(result);
@@ -1356,4 +1359,36 @@ bool	RCSServer::ConfirmData(JSONNode& _node, std::string& _req_type)
 	return	true;
 }
 
+bool    RCSServer::CommandRestart(RCSMessage& _request, RCSMessage& _response)
+{
+	RCSMessage      response(MSG_TYPE_RCS_CONFIRM);
+	JSONNode        payload  = _request.GetPayload();
+	JSONNode        result;
+	std::string     id;
 
+	response.SetReqID(_request.GetMsgID());
+	//Gateway*        gateway = manager_->GetGateway(id);   
+	//result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
+	//response.AddGateway(result);
+	_response = response;
+	TRACE_INFO("RESTART START");
+	//system("/etc/init.d/ftgm restart");
+	return true;
+}
+ 
+bool    RCSServer::CommandReboot(RCSMessage& _request, RCSMessage& _response)
+{
+	RCSMessage      response(MSG_TYPE_RCS_CONFIRM);
+	JSONNode        payload  = _request.GetPayload();
+	JSONNode        result;
+	std::string     id;
+	
+	response.SetReqID(_request.GetMsgID());
+	//Gateway*        gateway = manager_->GetGateway(id);   
+	//result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
+	//response.AddGateway(result);
+	_response = response;
+	TRACE_INFO("REBOOT START");
+	//system("reboot");
+	return true;
+	}

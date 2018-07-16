@@ -1377,6 +1377,20 @@ void	ServerLinker::OnConsume(Consume* _consume)
 			manager_->GetRCSServer().Error(message, req_type);	
 		}
 	}
+	else if (message.GetMsgType() == MSG_TYPE_RCS_REBOOT)
+	{
+		RCSMessage      reply;
+ 		manager_->GetRCSServer().CommandReboot(message, reply);
+		Send(reply);
+ 		manager_->SetSystemOperating(MSG_TYPE_RCS_REBOOT);
+	}
+	else if (message.GetMsgType() == MSG_TYPE_RCS_RESTART)
+	{
+		RCSMessage      reply;
+		manager_->GetRCSServer().CommandRestart(message, reply);
+		Send(reply);
+		manager_->SetSystemOperating(MSG_TYPE_RCS_RESTART);
+	}
 }
 
 bool	ServerLinker::OnProduce(Produce* _produce)

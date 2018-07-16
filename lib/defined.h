@@ -316,6 +316,7 @@ TITLE_NAME(USERNAME, "username");
 TITLE_NAME(PASSWORD, "password");
 //
 
+TITLE_NAME(MODEM, "modem");
 DEFAULT_CONST(MSG_VERSION, "v1");
 #define	DEFAULT_CONST_MSG_PARTITION	0
 //#define	DEFAULT_CONST_MSG_PARTITION RdKafka::Topic::PARTITION_UA
@@ -332,6 +333,9 @@ MSG_TYPE_RCS(LIST, 		"list");
 MSG_TYPE_RCS(INFO, 		"info");
 MSG_TYPE_RCS(CONFIRM,	"confirm");
 MSG_TYPE_RCS(ERROR, 	"error");
+
+MSG_TYPE_RCS(RESTART, "restart");
+MSG_TYPE_RCS(REBOOT, "reboot");
 
 //add SY.KANG
 MSG_TYPE_RCS(GW_INFO,	"gw_info");

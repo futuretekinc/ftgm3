@@ -714,3 +714,87 @@ bool	Object::GetWanIP(JSONNode& _property)
 	
 	return true;
 }
+
+const char      modem_command[6][256] = {
+       	"echo \"$(/usr/local/bin/wdlxcmd get apn_internet | awk '{ if ($1 ~ /^\"apn_internet\"/) print $3 }' | sed 's/\"//g' | sed 's/,//g')\"",
+	"echo \"$(/usr/local/bin/wdlxcmd get modem_mdn | awk '{ if ($1 ~ /^\"modem_mdn\"/) print $3 }' | sed 's/\"//g' | sed 's/,//g')\"",
+	"echo \"$(/usr/local/bin/wdlxcmd get net_ip | awk '{ if ($1 ~ /^\"net_ip\"/) print $3 }' | sed 's/\"//g' | sed 's/,//g')\"",
+	"echo \"$(/usr/local/bin/wdlxcmd get modem_rssi | awk '{ if ($1 ~ /^\"modem_rssi\"/) print $3 }' | sed 's/\"//g' | sed 's/,//g')\"",
+	"echo \"$(/usr/local/bin/wdlxcmd get modem_rsrp | awk '{ if ($1 ~ /^\"modem_rsrp\"/) print $3 }' | sed 's/\"//g' | sed 's/,//g')\"",
+	"echo \"$(/usr/local/bin/wdlxcmd get modem_rsrq | awk '{ if ($1 ~ /^\"modem_rsrq\"/) print $3 }' | sed 's/\"//g' | sed 's/,//g')\""
+};
+
+
+
+
+
+
+
+bool   Object::GetModemInfoPreperty(JSONNode& modem_info_s, int command_num)
+{
+	FILE* stream_out;
+	std::ostringstream output;
+	char buf[128];
+	int     bytesRead = 0;
+	JSONNode        property;
+	std::string     result;
+ 
+	//stream_out = popen("echo \"$(/usr/local/bin/wdlxcmd get apn_internet | awk '{ if ($1 ~ /^\"apn_internet\"/) print $3 }' | sed 's/\"//g' | sed 's/,//g')\"","r");
+	//stream_out = popen((const char*)modem_command[command_num].c_str,"r");
+	stream_out = popen(modem_command[command_num],"r");
+	memset(buf, 0x00, 128);
+	while( !feof(stream_out) && !ferror(stream_out))
+	{
+		bytesRead = fread( buf, 1, 128, stream_out );
+		output.write( buf, bytesRead-1 );
+	}
+	result = output.str();
+	pclose(stream_out);
+
+	switch(command_num)
+	{
+		case 0 :
+			{
+				property = JSONNode("apn",result);
+				break;
+			}
+		case 1 :
+			{
+				property = JSONNode("mdn",result);
+				break;
+			}
+		case 2 :
+			{
+				property = JSONNode("wanip",result);
+				break;
+			}
+		case 3 :
+			{
+				property = JSONNode("rssi",result);
+				break;
+			}
+		case 4 :
+			{
+				property = JSONNode("rsrp",result);
+				break;
+			}
+		case 5 :
+			{
+				property = JSONNode("rsrq",result);
+				break;
+			}
+	}
+	modem_info_s.push_back(property);
+	return true;
+}
+
+
+bool   Object::GetModemInfo(JSONNode& modem_info)
+{
+	for(int i = 0 ; i < 6 ; i ++)
+	{
+		GetModemInfoPreperty(modem_info, i);
+	} 
+	modem_info.set_name(TITLE_NAME_MODEM);
+	return true;
+}
