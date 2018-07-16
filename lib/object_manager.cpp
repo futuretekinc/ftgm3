@@ -1463,14 +1463,12 @@ void            ObjectManager::SystemOperation(uint8_t _operation_type)
 	}
 }
 
-bool	ObjectManager::SendRuleEvent(std::string const& _id)
+bool	ObjectManager::SendRuleEvent(JSONNode const& rule_info)
 {
 	RCSMessage message(MSG_TYPE_RCS_EVENT);
-	JSONNode	rule_info;
 	JSONNode	rule_event;
-	rule_info = JSONNode(TITLE_NAME_ID,_id);
-	rule_event.push_back(rule_info);
-	message.AddRule(rule_event);
+//	rule_event.push_back(rule_info);
+	message.AddRule(rule_info);
 	
 	return server_linker_.Send(message);
 }

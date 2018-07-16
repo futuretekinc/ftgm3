@@ -65,18 +65,25 @@ bool	EndpointActuatorDiscrete::SetValue(std::string const& _value, bool _check)
 				TRACE_ERROR("Device not found!");
 				return	false;
 			}
-
-			if (!device->WriteValue(id_, value))
+			for(uint8_t retry = 0 ; retry < 3; retry++)
 			{
-				TRACE_ERROR("Failed to write value to device!");
-				return	false;
+				if (!device->WriteValue(id_, value))
+				{
+					TRACE_ERROR("Failed to write value to device!");
+					return	false;
+				}
+				time_t time;
+				device->ReadValue(id_, time, value_);
+				if(value_ == value)
+				{
+					Add(time,value_);
+				}
+				else
+				{
+					continue;
+				}
 			}
 
-			time_t	time;
-
-			device->ReadValue(id_, time, value_);
-
-			Add(time, value_);
 		}
 	}
 	return	true;

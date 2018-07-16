@@ -128,7 +128,7 @@ void	TraceMaster::Write(std::string const& _headline, uint32_t _headline_len, st
 			istringstream	message(_log);
 			bool		first = true;
 
-			ofs.open(file_name_.c_str(), std::ofstream::out | std::ofstream::app);
+			ofs.open(file_name_.c_str(), std::ofstream::out | std::ofstream::app | std::ofstream::ate );
 			uint32_t	size = ofs.tellp();
 			
 			if (size + _headline_len + _log.length() > file_size_)
@@ -150,7 +150,7 @@ void	TraceMaster::Write(std::string const& _headline, uint32_t _headline_len, st
 
 				system(oss.str().c_str());
 
-				ofs.open(file_name_.c_str(), ofstream::out | ofstream::app | std::ofstream::ate);
+				ofs.open(file_name_.c_str(), ofstream::out | ofstream::app);
 			}
 
 			while(!message.eof())

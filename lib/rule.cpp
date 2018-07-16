@@ -295,7 +295,6 @@ bool	DiscreteSetAction::Process_after(ObjectManager* _object_manager)
 			TRACE_INFO2(this, "Can't find endpoint :" << target_id_);
 			return false;
 		}
-
 		if(ep->GetValue() != value_)
 		{
 			TRACE_INFO2(this, "ep->SetValue(" << value_ << "):");
@@ -514,7 +513,7 @@ bool	Rule::IsIncludedInCondition(std::string const& _id)
 	return	false;
 }
 
-bool	Rule::Process(std::string const& _endpoint_id, Date const& _time, std::string const& _value)
+bool	Rule::Process(std::string const& _endpoint_id, Date const& _time, std::string const& _value, std::string const& _rule_id)
 {
 	bool	ret_value = false;
 	bool	changed = false;
@@ -541,7 +540,10 @@ bool	Rule::Process(std::string const& _endpoint_id, Date const& _time, std::stri
 		for(std::vector<Action*>::iterator it = actions_.begin() ; it != actions_.end() ; it++)
 		{
 			TRACE_INFO2(this, "Action #######################################");
-			(*it)->Process(manager_.GetObjectManager());
+			if((*it)->Process(manager_.GetObjectManager()))
+			{
+				SendEvent(_rule_id, _value, (*it)->GetTargetID());
+			}
 		}
 
 		ret_value = true;
@@ -553,10 +555,20 @@ bool	Rule::Process(std::string const& _endpoint_id, Date const& _time, std::stri
 			TRACE_INFO2(this, "POST ACTION ##################################");
 			if((*it)->Process_after(manager_.GetObjectManager()))
 			{
+				SendEvent(_rule_id, _value, (*it)->GetTargetID());
 				ret_value = true;
 			}
 				
 		}
 	}
 	return	ret_value;
+}
+bool	Rule::SendEvent(std::string const& _rule_id, std::string const& _value, std::string const& _action_target_id)
+{
+	JSONNode rule_event_info;
+	rule_event_info.push_back(JSONNode(TITLE_NAME_ID, _rule_id));
+	rule_event_info.push_back(JSONNode(TITLE_NAME_VALUE, _value));
+	rule_event_info.push_back(JSONNode(TITLE_NAME_EP_ID, _action_target_id));
+
+	manager_.GetObjectManager()->SendRuleEvent(rule_event_info);	
 }

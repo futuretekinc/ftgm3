@@ -134,6 +134,7 @@ public:
 
 	virtual	bool	Process(ObjectManager* _object_manager) = 0;
 	virtual bool    Process_after(ObjectManager* _object_manager) = 0;
+	std::string	GetTargetID(){ return target_id_;};
 protected:
 	std::string	target_id_;
 };
@@ -173,7 +174,8 @@ public:
 	static	bool	GetPropertyFieldList(std::list<std::string>& _field_list);
 
 			bool	IsIncludedInCondition(std::string const& _id);
-			bool	Process(std::string const& _endpoint_id, Date const& _time, std::string const& _value);
+			bool	Process(std::string const& _endpoint_id, Date const& _time, std::string const& _value, std::string const& _rule_id);
+			bool    SendEvent(std::string const& _rule_id, std::string const& _value, std::string const& _action_target_id);
 private:
 	RuleManager&	manager_;
 	std::vector<class Condition *>	conditions_;
