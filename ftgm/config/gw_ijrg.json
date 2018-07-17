@@ -2,6 +2,7 @@
 	"type" : "gw_gen",
 	"id" : "FTM20170601012345678901234567894",
 	"name" : "gw-ijrg",
+	"correction_interval" : "30",
 	"device" : 
 	[
 		{
