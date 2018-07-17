@@ -119,7 +119,6 @@ bool LinearUnderCondition::Apply(Date const& _time, std::string const& _value)
 	double value = atof(_value.c_str());
 
 	satisfied_ = (value_ > value);
-
 	return	true;
 }
 
@@ -534,7 +533,6 @@ bool	Rule::Process(std::string const& _endpoint_id, Date const& _time, std::stri
 
 		satisfied &= condition->IsSatisfied();
 	}
-
 	if (changed && satisfied)
 	{
 		for(std::vector<Action*>::iterator it = actions_.begin() ; it != actions_.end() ; it++)

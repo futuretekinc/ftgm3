@@ -1358,7 +1358,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 	else if (message.GetMsgType() == MSG_TYPE_RCS_SET)
 	{
 		RCSMessage	reply;
-
+		TRACE_INFO("SERVER_LINK_SET");
 		manager_->GetRCSServer().Set(message, reply);	
 
 		Send(reply);

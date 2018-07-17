@@ -30,7 +30,10 @@ public:
 	const 	std::string&	GetDeviceAt(int index);
 			bool		GetDeviceList(std::list<std::string>& _list);
 			bool		GetDeviceMap(std::map<std::string, Device*>& _map);
-
+	
+	bool    SetCorrectionInterval(std::string const& _interval, bool _check = false);
+	bool    SetCorrectionInterval(uint32_t _interval);
+ 	bool    GetProperty(uint32_t _type, JSONNode& _property);
 	// Utility
 	virtual				operator JSONNode();
 
@@ -55,6 +58,7 @@ protected:
 			bool		Detach(std::string const& _device_id);
 			bool		Detach();
 	std::list<std::string>	device_id_list_;
+	uint32_t	correction_interval_;
 };
 
 #include "gateway_gen.h"

@@ -13,12 +13,38 @@
 #include "exception.h"
 
 Gateway::Gateway(ObjectManager& _manager, std::string const& _type)
-:	Node(_manager, _type)
+:	Node(_manager, _type),correction_interval_(ENDPOINT_REPORT_INTERVAL)
 {
 }
 
 Gateway::~Gateway()
 {
+}
+
+ bool    Gateway::SetCorrectionInterval(uint32_t _interval)
+{
+	correction_interval_ = _interval;
+	JSONNodeUpdate(updated_properties_, TITLE_NAME_CORRECTION_INTERVAL, correction_interval_);
+	if (!lazy_store_)
+	{
+		ApplyChanges();
+	}
+	return  true;
+}
+
+ bool    Gateway::SetCorrectionInterval(std::string const& _interval, bool _check)
+{
+	if (!_check)
+	{
+		correction_interval_ = strtoul(_interval.c_str(), NULL, 10);
+		manager_.SetEndpointReportInterval(correction_interval_);
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_CORRECTION_INTERVAL, correction_interval_);
+		if (!lazy_store_)
+   		{
+ 			ApplyChanges();
+ 		}
+	}
+	return  true;
 }
 
 bool	Gateway::SetProperty(JSONNode const& _property, bool _check)
@@ -27,6 +53,10 @@ bool	Gateway::SetProperty(JSONNode const& _property, bool _check)
 
 	if (_property.name() == TITLE_NAME_DEVICE)
 	{
+	}
+	else if(_property.name() == TITLE_NAME_CORRECTION_INTERVAL)
+	{
+		ret_value = SetCorrectionInterval(_property.as_string(), _check);
 	}
 	else
 	{
@@ -37,6 +67,20 @@ bool	Gateway::SetProperty(JSONNode const& _property, bool _check)
 }
 
 
+bool    Gateway::GetProperty(uint32_t _type, JSONNode& _property)
+{
+	switch(_type)
+  	{
+ 		case    PROPERTY_CORRECTION_INTERVAL_FLAG:      _property = JSONNode(TITLE_NAME_CORRECTION_INTERVAL, correction_interval_);     break;
+ 		default:
+			{
+      				return  Node::GetProperty(_type, _property);
+   			}
+       			break;
+ 	}
+ 
+       return  true;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Endpoint operation
@@ -225,7 +269,8 @@ bool	Gateway::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
 	if (Node::GetPropertyFieldList(_field_list))
 	{
-		_field_list.push_back(TITLE_NAME_IP);
+	//	_field_list.push_back(TITLE_NAME_IP);
+		_field_list.push_back(TITLE_NAME_CORRECTION_INTERVAL);	
 	}
 
 	return	true;
