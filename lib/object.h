@@ -89,6 +89,10 @@ public:
 	bool    GetWanIP(JSONNode& _property);
 	bool    GetModemInfoPreperty(JSONNode& modem_info_s, int command_num);
  	bool    GetModemInfo(JSONNode& modem_info);
+	bool    GetSystemInfoFieldList(std::list<std::string>& _field_list);
+	
+	const   std::string&            GetDevID() const;
+	bool            SetDevID(std::string const& _dev_id, bool _check = false);
 	friend std::ostream&	operator<<(std::ostream& os, Object & _object);
 
 protected:
@@ -100,11 +104,11 @@ protected:
 	Date		date_;
 	bool		enable_;
 	bool		lazy_store_;
-
 	JSONNode	updated_properties_;
 	Trace		trace;
 	//Add SY.KANG
 	std::string	wan_ip_; 
+	std::string     dev_id_;
 };
 
 std::string	ToString(Object::Stat _stat);

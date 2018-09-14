@@ -26,7 +26,8 @@ public:
 			bool		GetProperties(uint32_t _index, uint32_t _count, JSONNode& _array);
 			bool		GetProperties(std::string const& _id, JSONNode& _properties);
 			bool		SetProperties(std::string const& _id, JSONNode& _properties);
-
+			bool    	GetVersion(std::string const& _id, std::string& _version);
+			bool    	SetVersion(std::string const& _id, std::string const& _version);
 		protected:
 			DataManager*	manager_;
 	};
@@ -87,6 +88,9 @@ public:
 			bool		GetRuleProperties(std::string const& _id, JSONNode& _properties);
 			bool		SetRuleProperties(std::string const& _id, JSONNode& _properties);
 		
+			bool    	AddSystemInfo(JSONNode& properties);
+			bool	    	UpdateSystemInfo(std::string const& _id, std::string const& _version);
+			bool    	IsSysteminfoExist(std::string const& _id);
 private:
 	Table*		CreateTable(std::string const& _table_name, std::list<std::string>& field_list);
 	ValueTable*	CreateValueTable(std::string const& _endpoint_id);
@@ -106,7 +110,8 @@ private:
 	Table*						device_table_;
 	Table*						endpoint_table_;
 	Table*						rule_table_;
-	std::map<std::string, ValueTable*>	value_table_map_;
+	Table*						system_info_table_;
+	std::map<std::string, ValueTable*>		value_table_map_;
 
 };
 

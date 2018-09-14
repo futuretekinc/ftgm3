@@ -21,6 +21,44 @@ bool	DeviceModbus::ReadValue(std::string const& _id, time_t& _time, bool& _value
 	return	false;
 }
 
+bool    DeviceModbus::RequestAndResponse(uint8_t* _request, uint32_t _request_len, uint8_t* _response, uint32_t _max_response_len, uint32_t& _response_len, uint32_t _timeout)
+{
+	Timer           response_timeout;
+	uint8_t         c_receive_byte;
+	if (!serial_.Write(_request, _request_len))
+	{
+		TRACE_ERROR("Failed to send frame!");
+		return  false;
+	}
+	TRACE_INFO("WRITE SUCCESS");
+	response_timeout.Add(_timeout);
+	_response_len = 0;
+	while(response_timeout.RemainTime() > 0)
+	{
+   		uint32_t        read_len = 0;
+		if (serial_.Read(&_response[_response_len], _max_response_len - _response_len, 20, read_len))
+		{
+			_response_len += read_len;
+			if (_response_len >= _max_response_len)
+			{
+    				TRACE_INFO(" resp len : " << _response_len);
+ 				TRACE_INFO(" max respo len : " << _max_response_len);
+				break;
+			}
+		}
+	} 
+	TRACE_INFO("Read");
+	TRACE_INFO_DUMP((char *)_response, _response_len);
+	if (_response_len < _max_response_len)
+	{
+		TRACE_ERROR("Failed to receive frame!");
+ 		//return        false;  
+	}
+	return  true;
+}
+
+
+
 bool	DeviceModbus::RequestAndWait(uint8_t* _request, uint32_t _request_len, uint8_t* _response, uint32_t _max_response_len, uint32_t& _response_len, uint32_t _timeout)
 {
 	Timer		response_timeout;
@@ -96,6 +134,40 @@ bool	DeviceModbus::ReadHoldingRegisters(uint16_t address, int16_t *values, uint1
 	}
 
 	return	true;
+}
+
+bool    DeviceModbus::ReadHoldingRegisters(uint16_t slave_id, uint16_t address, int16_t *values, uint16_t count)
+{
+ 	RequestFrame    request(slave_id, READ_HOLDING_REGISTERS, address, count);
+	uint8_t                 buffer[MODBUS_FRAME_SIZE];
+	uint32_t                response_len = 0;
+ 
+	if (!RequestAndWait(request.Raw(), request.Size(), buffer, request.DesiredResponseSize(), response_len, timeout_))
+  	{
+  		TRACE_ERROR("Failed to read holding registers!");
+ 		return  false;
+  	}
+	try
+  	{
+ 		ResponseFrame   response(slave_id, READ_HOLDING_REGISTERS, buffer, response_len);
+ 		if (!response.IsValid())
+  		{
+ 			TRACE_ERROR("Failed to read holding registers!");
+  			return  false;
+  		}
+
+		if (!response.ReadHoldingRegisters(values, count))
+   		{
+ 			TRACE_ERROR("Failed to read holding registers!");
+  			return  false;
+  		}
+ 	}
+	catch(std::exception& e)
+ 	{
+ 		TRACE_ERROR("Invalid response : " << e.what());
+		return  false;
+ 	} 
+ 	return  true;
 }
 
 bool	DeviceModbus::WriteRegister(uint16_t address, uint16_t value)

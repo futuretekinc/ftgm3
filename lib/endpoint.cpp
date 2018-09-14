@@ -23,6 +23,7 @@
 #include "endpoint_actuator_do.h"
 #include "endpoint_actuator_fx3dtempctr.h"
 #include "endpoint_sensor_ygc_fs.h"
+#include "endpoint_sensor_power.h"
 #include "utils.h"
 
 Endpoint::Endpoint(ObjectManager& _manager, std::string const& _type)
@@ -628,6 +629,11 @@ Endpoint*	Endpoint::Create(ObjectManager& _manager, JSONNode const& _properties)
 			{
 				endpoint = new EndpointSensorWave(_manager, _properties);
 				TRACE_INFO2(NULL, "The Wave endpoint[" << endpoint->GetID() <<"] created");
+			}
+			else if (type == OBJECT_TYPE_EP_S_POWER)
+			{
+				endpoint = new EndpointSensorPower(_manager, _properties);
+				TRACE_INFO2(NULL, "The Power endpoint[" << endpoint->GetID() <<"] created");
 			}
 			else
 			{

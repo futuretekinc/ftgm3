@@ -39,5 +39,5 @@ bool		JSONNodeUpdate(JSONNode& _node, std::string const& _name, std::string cons
 bool		JSONNodeUpdate(JSONNode& _node, std::string const& _name, uint32_t _value);
 
 JSONNode	JSONNodeLoadFromFile(std::string const& _file_name);
-
+std::string     JSONNodeGetAnyValue(JSONNode const& _node, std::string const& _any);
 #endif

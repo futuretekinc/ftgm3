@@ -26,7 +26,9 @@ static RetValue	CmdGatewayStop(std::vector<std::string> const& _arguments, Shell
 static RetValue	CmdGatewayEnable(std::vector<std::string> const& _arguments, Shell* _shell);
 static RetValue	CmdGatewayDisable(std::vector<std::string> const& _arguments, Shell* _shell);
 static RetValue	CmdGatewayList(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdGateway (std::string* _arguments, uint32_t _count, Shell* _shell);
+static RetValue	CmdGateway(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this);
+//static RetValue	CmdGateway (std::string* _arguments, uint32_t _count, Shell* _shell);
+//static RetValue	CmdGateway (std::string* _arguments, Shell* _shell);
 
 Shell::Command	object_manager_command_gateway
 (
@@ -54,11 +56,14 @@ Shell::Command	object_manager_command_gateway
 	CmdGateway
  );
 
-RetValue	CmdGateway ( std::string * _arguments, uint32_t _count, Shell* _shell)
+//RetValue	CmdGateway ( std::string * _arguments, uint32_t _count, Shell* _shell)
+//RetValue	CmdGateway ( std::string * _arguments, Shell* _shell)
+RetValue	CmdGateway(std::vector<std::string> const& _arguments, Shell* _shell,Shell::Command* _this)
 {
 	RetValue ret_value = RET_VALUE_OK;	
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	std::vector<std::string> arguments;
+	uint32_t _count = _arguments.size();	
 
 	for(uint32_t i = 1 ; i < _count ; i++)
 	{

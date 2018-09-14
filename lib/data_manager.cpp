@@ -357,7 +357,7 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, JSONNod
 				{
 					std::string	value = statement->GetColumnString(name);
 
-					TRACE_INFO(name.substr(1, name.size()) << " : " << value);
+					//TRACE_INFO(name.substr(1, name.size()) << " : " << value);
 
 					properties.push_back(JSONNode(name.substr(1, name.size() - 1), value));
 				}
@@ -380,6 +380,57 @@ bool	DataManager::Table::GetProperties(uint32_t _index, uint32_t _count, JSONNod
 	_array = array;
 
 	return	true;
+}
+
+bool	DataManager::Table::SetVersion(std::string const& _id, std::string const& _version)
+{
+	std::ostringstream query;
+
+	query << "UPDATE " << name_ <<" SET _version = '" << _version << "' where _id = '" << _id <<"';";
+	TRACE_INFO("Query : " << query.str());
+	try
+	{
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
+		if(statement == NULL)
+		{
+			TRACE_ERROR("Failed to create SQLite statement!");
+		}
+		statement->Sql(query.str());
+		
+		statement->ExecuteAndFree();
+		delete statement;
+	}
+	catch(Kompex::SQLiteException &exception)
+	{
+		TRACE_ERROR("Failed to get object properties");
+	}
+	return true;
+}
+
+bool 	DataManager::Table::GetVersion(std::string const& _id, std::string& _version)
+{
+	std::ostringstream query;
+
+	query << "SELECT _version FROM _id = " << _id <<";";
+	TRACE_INFO("Query : " << query.str());
+	try
+	{
+		Kompex::SQLiteStatement*	statement = manager_->CreateStatement();
+		if(statement == NULL)
+		{
+			TRACE_ERROR("Failed to create SQLite statement!");
+			return false;
+		}
+
+		statement->Sql(query.str());
+		_version = statement->GetColumnString(_version);	
+	}
+	catch(Kompex::SQLiteException &exception)
+	{
+		TRACE_ERROR("Failed to get object properties");
+	}
+	return true;
+	
 }
 
 DataManager::ValueTable::ValueTable(DataManager* _manager, std::string const& _name)
@@ -844,6 +895,32 @@ bool	DataManager::SetRuleProperties(std::string const& _id, JSONNode& _propertie
 	return	rule_table_->SetProperties(_id, _properties);
 }
 
+////////////////////////////////////////////////
+
+bool	DataManager::AddSystemInfo(JSONNode& properties)
+{
+	if(!system_info_table_->Add(properties))
+	{
+		TRACE_ERROR("Failed to add properties to table");
+		return false;
+	}
+	return true;
+}
+
+bool	DataManager::UpdateSystemInfo(std::string const& _id, std::string const& _version)
+{
+	return system_info_table_->SetVersion(_id, _version);	
+}
+bool	DataManager::IsSysteminfoExist(std::string const& _id)
+{
+	return  system_info_table_->IsExist(_id);
+}
+
+///////////////////////////////////////////////
+
+
+
+
 //////////////////////////////////////////////////////////////////
 // Internal
 //////////////////////////////////////////////////////////////////
@@ -870,7 +947,11 @@ void	DataManager::Preprocess()
 		std::list<std::string>	rule_field_list;
 		Rule::GetPropertyFieldList(rule_field_list);
 		rule_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_RULE, rule_field_list);	
-
+		
+		std::list<std::string>	system_info_list;
+		//Get sytstem_info_field
+		Object::GetSystemInfoFieldList(system_info_list);
+		system_info_table_ = CreateTable(DEFAULT_CONST_DB_TABLE_NAME_SYS_INFO, system_info_list);
 		
 		for(uint32_t i = 0 ; i < GetEndpointCount() ; i++)
 		{

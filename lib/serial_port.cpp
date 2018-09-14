@@ -50,7 +50,7 @@ bool	SerialPort::GetOptions(JSONNode& _options)
 bool	SerialPort::SetOptions(JSONNode const& _options, bool _check)
 {
 	bool ret_value = true;
-
+	
 	for(JSONNode::const_iterator it = _options.begin() ; it != _options.end() ; it++)
 	{
 		ret_value = SetOption(*it, _check);
@@ -66,7 +66,7 @@ bool	SerialPort::SetOptions(JSONNode const& _options, bool _check)
 bool	SerialPort::SetOption(JSONNode const& _option, bool _check)
 {
 	bool ret_value = true;
-
+	
 	if (_option.name() == TITLE_NAME_NAME)
 	{
 		ret_value = SetPort(_option.as_string(), _check);	
@@ -91,9 +91,44 @@ bool	SerialPort::SetOption(JSONNode const& _option, bool _check)
 	{
 		ret_value = SetDataBit(_option.as_int(), _check);	
 	}
-
-
+	else if(_option.name() == TITLE_NAME_IP)
+	{
+		TRACE_INFO("IP SAVE : " << _option.as_string());
+		ret_value = SetDevIP(_option.as_string(), _check);
+	}
+	else if(_option.name() == TITLE_NAME_PORT)
+	{
+		TRACE_INFO("PORT SAVE : " << _option.as_string());	
+		ret_value = SetDevPort(_option.as_string(), _check);
+	}
 	return	ret_value;
+}
+
+bool	SerialPort::SetDevIP(std::string const& _dev_ip,  bool _check)
+{
+	if(!_check)
+	{
+		dev_ip_ = _dev_ip;
+	}
+	return true;
+}
+
+const std::string&	SerialPort::GetDevIP()
+{
+	return dev_ip_;
+}
+
+bool	SerialPort::SetDevPort(std::string const& _dev_port, bool _check)
+{
+	if(!_check)
+	{
+		dev_port_ = _dev_port;
+	}
+	return true;
+}
+const std::string&	SerialPort::GetDevPort()
+{
+	return dev_port_;
 }
 
 const std::string&	SerialPort::GetPort()
@@ -207,6 +242,7 @@ bool	SerialPort::Open()
 		TRACE_ERROR("Failed to open dev[" << port_ << "]");
 		return	false;
 	}
+	TRACE_INFO("BEFORE SERIAL OPEN");
 
 	fd_ = open(port_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if (fd_ <= 0)
@@ -336,7 +372,7 @@ void	SerialPort::SetDirectionOut(bool _out)
 		}
 		else
 		{
-			TRACE_ERROR("The dev is not open!");
+		//	TRACE_ERROR("The dev is not open!");
 		}
 	}
 }

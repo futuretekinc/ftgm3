@@ -44,6 +44,7 @@ public:
 	static	bool		GetPropertyFieldList(std::list<std::string>& _field_list);
 	//add SY.KANG
 	 	void    	InfoProcess();
+		bool   		GetFTGMVersion(JSONNode& _properties);
 	//
 
 protected:

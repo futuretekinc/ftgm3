@@ -1,5 +1,7 @@
 #include <fstream>
 #include <unistd.h>
+#include <sstream>
+#include <iostream>
 #include "defined.h"
 #include "exception.h"
 #include "trace.h"
@@ -10,6 +12,8 @@
 #include "property.h"
 #include "utils.h"
 #include "json.h"
+
+using namespace std;
 
 ObjectManager::ObjectManager()
 : 	ProcessObject(), 
@@ -667,12 +671,11 @@ bool		ObjectManager::DestroyEndpoint(std::string const& _endpoint_id)
 			device->Detach(_endpoint_id);	
 		}
 		
-		std::map<std::string, Endpoint*>::iterator it = endpoint_map_.find(endpoint->GetID());
+	/*	std::map<std::string, Endpoint*>::iterator it = endpoint_map_.find(endpoint->GetID());
 		if (it != endpoint_map_.end())
 		{
 			endpoint_map_.erase(it);
-		}
-
+		}*/
 		Detach(endpoint);
 
 		delete endpoint;
@@ -953,6 +956,20 @@ void	ObjectManager::Preprocess()
 
 	uint32_t count = data_manager_.GetGatewayCount();
 	TRACE_INFO("Gateway Count : " << count);
+
+	JSONNode	system_info_node;
+	system_info_node.push_back(JSONNode(TITLE_NAME_ID, FTGM_SYSTEM_INFO_ID));
+	system_info_node.push_back(JSONNode(TITLE_NAME_VERSION, FTGM_VERSION));
+
+	if(!data_manager_.IsSysteminfoExist(FTGM_SYSTEM_INFO_ID))
+	{
+		data_manager_.AddSystemInfo(system_info_node);
+	}
+	else
+	{
+		data_manager_.UpdateSystemInfo(FTGM_SYSTEM_INFO_ID, FTGM_VERSION);
+	}
+
 #if 0
 	if (count == 0)
 	{
@@ -1105,6 +1122,21 @@ void	ObjectManager::Preprocess()
 		}
 	}
 
+	TRACE_INFO("VERSION INFO SEND");
+	count = data_manager_.GetGatewayCount();
+	if(count != 0)
+	{
+		std::list<Gateway*> list;
+		GetGatewayList(list);
+
+		time_t send_time = Date::GetCurrent();
+		for(std::list<Gateway*>::iterator gateway = list.begin(); gateway != list.end(); gateway++)
+		{
+			JSONNode	result;
+			std::string gw_id = (*gateway)->GetID();
+			SendVersionInfo(gw_id, send_time);
+		}
+	}
 	Date date = Date::GetCurrent() + Time(endpoint_report_interval_ * TIME_SECOND);
 	endpoint_report_timer_.Set(date);
 }
@@ -1126,6 +1158,7 @@ void	ObjectManager::Process()
 
 	}
 	SystemOperation(system_operation_);
+	DB_Monitoring();	
 	ProcessObject::Process();
 }
 
@@ -1259,7 +1292,7 @@ bool	ObjectManager::Detach(Endpoint* _endpoint)
 	}
 
 	server_linker_.DelDownLink(GetTopicNameEndpoint(_endpoint->GetID()));
-
+	data_manager_.DeleteEndpoint(_endpoint->GetID());
 	endpoint_map_.erase(it);
 
 	return	true;
@@ -1449,6 +1482,10 @@ void            ObjectManager::SetSystemOperating(std::string const& _msg_type)
 		system_operation_ = 2;
 	 	//      system("/etc/init.d/ftgm restart");
 	}
+	else if(_msg_type == MSG_TYPE_RCS_UPDATE)
+	{
+		system_operation_ = 3;
+	}
 }
  
 void            ObjectManager::SystemOperation(uint8_t _operation_type)
@@ -1456,10 +1493,18 @@ void            ObjectManager::SystemOperation(uint8_t _operation_type)
 	if(_operation_type == 1)
 	{
 		system("reboot");
+		system_operation_ = 0;
  	}
 	else if(_operation_type == 2)
 	{
 		system("/etc/init.d/ftgm restart");
+		system_operation_ = 0;
+	}
+	else if(_operation_type == 3)
+	{
+		TRACE_INFO("FTGM UPDATE COMPLETE");
+		system_operation_ = 0;
+		system("/ftgm/shell/ftgm_upgrade.sh remote");
 	}
 }
 
@@ -1471,4 +1516,74 @@ bool	ObjectManager::SendRuleEvent(JSONNode const& rule_info)
 	message.AddRule(rule_info);
 	
 	return server_linker_.Send(message);
+}
+
+const std::string&  ObjectManager::GetMqttInfo(uint8_t type)
+{
+	if(type == 0)
+	{
+		return server_linker_.GetBroker();
+	}
+	else if(type == 1)
+	{
+		return server_linker_.GetPort();
+	}
+	else if(type == 2)
+	{
+		return server_linker_.GetGlobalUpTopic();
+	}
+}
+
+bool	ObjectManager::SendVersionInfo(std::string const& gw_id, time_t const& send_time)
+{
+	RCSMessage	message(MSG_TYPE_RCS_SET);
+	JSONNode	version_info;
+	version_info.push_back(JSONNode(TITLE_NAME_ID, gw_id));
+	version_info.push_back(JSONNode(TITLE_NAME_VERSION, FTGM_VERSION));
+	version_info.push_back(JSONNode(TITLE_NAME_TIME, ToString(send_time)));
+	message.AddGateway(version_info);
+
+	return server_linker_.Send(message);
+}
+
+void ObjectManager::DB_Monitoring()
+{
+	/*uint32_t count;
+	FILE* stream = popen("ls /ftgm/epdel/", "r");
+	ostringstream	output;
+
+	while( !feof(stream) && !ferror(stream))
+	{
+		char buf[128];
+		int byteRead = fread( buf, 1, 128,  stream);
+		output.write( buf, byteRead);
+	//	TRACE_INFO("ls result : " << output.str());
+	}*/
+	
+	/*count = data_manager_.GetEndpointCount();
+		
+	if(count != 0)
+	{		
+		for(uint32_t i = 0 ; i < count ; i ++)
+		{
+			JSONNode properties_list;
+			if (data_manager_.GetEndpointProperties(i, 1, properties_list))
+			{
+					
+				for(JSONNode::const_iterator it = properties_list.begin(); it!= properties_list.end() ; it++)
+				{
+						std::string _db_remove_tag = JSONNodeGetAnyValue(*it, TITLE_NAME_DB_REMOVE);
+						TRACE_INFO(" DB_TAG : " << _db_remove_tag);	
+						if(_db_remove_tag == "true")
+						{
+							std::string _id = JSONNodeGetID(*it);
+							TRACE_INFO(" DESTROY ID : " << _id);
+							DestroyEndpoint(_id);
+						}
+				
+				}
+			
+			}
+		}
+	}*/
 }

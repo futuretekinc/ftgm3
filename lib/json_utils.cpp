@@ -84,6 +84,11 @@ std::string	JSONNodeGetName(JSONNode const& _node)
 	return	JSONNodeGetString(_node, TITLE_NAME_NAME);
 }
 
+std::string	JSONNodeGetAnyValue(JSONNode const& _node, std::string const& _any)
+{
+	return	JSONNodeGetString(_node, _any);
+}
+
 std::string	JSONNodeGetName(JSONNode const& _node, std::string const& _default)
 {
 	return	JSONNodeGetString(_node, TITLE_NAME_NAME, _default);

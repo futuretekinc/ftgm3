@@ -567,10 +567,11 @@ bool	RCSServer::Set(RCSMessage& _request, RCSMessage& _response)
 								}
 								else
 								{
-									TRACE_INFO("Actuator->SetValue!");
+									TRACE_INFO("Actuator->SetValue! : " << value );
 									if (actuator->SetValue(value))
 									{
-										result.push_back(JSONNode(TITLE_NAME_VALUE, actuator->GetValue()));
+										//result.push_back(JSONNode(TITLE_NAME_VALUE, actuator->GetValue()));
+										result.push_back(JSONNode(TITLE_NAME_VALUE,value));
 										result.push_back(JSONNode(TITLE_NAME_RESULT, RET_CONST_OK));
 									}
 									else
@@ -816,9 +817,12 @@ bool	RCSServer::Get(RCSMessage& _request, RCSMessage& _response)
 			{
 			
 				JSONNode	modem_info;
+				JSONNode	gateway_version = JSONNode(TITLE_NAME_VERSION, FTGM_VERSION);;
 				gateway->GetModemInfo(modem_info);	
 				gateway->GetProperties(result, gateway_fields);
-				result.push_back(modem_info);	
+				result.push_back(modem_info);
+				result.push_back(gateway_version);
+					
 			}
 
 			response.AddGateway(result);
@@ -1138,12 +1142,18 @@ bool	RCSServer::Confirm(RCSMessage& _reply, std::string& _req_type)
 			}
 			else if (it->name() == TITLE_NAME_ENDPOINT)
 			{
+				TRACE_INFO("IN ADD ENDPOINT CONFIRM");	
 				ConfirmEndpoint(*it, _req_type);
 			}
 			else if (it->name() == TITLE_NAME_DATA)
 			{
 				ConfirmData(*it, _req_type);
 			}
+			else
+			{
+				//TRACE_INFO("NAME : " << it->name());
+			}
+
 		}	
 	}
 	catch(ObjectNotFound& e)
@@ -1354,7 +1364,7 @@ bool	RCSServer::ConfirmEndpoint(JSONNode& _node, std::string& _req_type)
 				TRACE_ERROR("Object[" << id << "] not found!");
 				return	false;
 			}
-
+			TRACE_INFO( id << " CHANGE REGISTED STATUS");
 			endpoint->SetRegistered(true);
 //			endpoint->SetProperties(_node, false, false);
 			TRACE_INFO("The endpoint[" << id << "] registeration confirmed.");
@@ -1443,4 +1453,16 @@ bool    RCSServer::CommandReboot(RCSMessage& _request, RCSMessage& _response)
 	TRACE_INFO("REBOOT START");
 	//system("reboot");
 	return true;
-	}
+}
+
+bool	RCSServer::CommandUpdate(RCSMessage& _request, RCSMessage& _response)
+{
+	RCSMessage	response(MSG_TYPE_RCS_CONFIRM);
+	JSONNode	payload = _request.GetPayload();
+	JSONNode	result;
+
+	response.SetReqID(_request.GetMsgID());
+	_response = response;
+	TRACE_INFO("UPDATE START");
+	return true;
+}

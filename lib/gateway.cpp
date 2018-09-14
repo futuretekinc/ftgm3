@@ -72,7 +72,7 @@ bool    Gateway::GetProperty(uint32_t _type, JSONNode& _property)
 	switch(_type)
   	{
  		case    PROPERTY_CORRECTION_INTERVAL_FLAG:      _property = JSONNode(TITLE_NAME_CORRECTION_INTERVAL, correction_interval_);     break;
- 		default:
+		default:
 			{
       				return  Node::GetProperty(_type, _property);
    			}
@@ -269,7 +269,6 @@ bool	Gateway::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
 	if (Node::GetPropertyFieldList(_field_list))
 	{
-	//	_field_list.push_back(TITLE_NAME_IP);
 		_field_list.push_back(TITLE_NAME_CORRECTION_INTERVAL);	
 	}
 
@@ -282,6 +281,10 @@ bool	Gateway::IsIncludeIn(Object *_object)
 	return	dynamic_cast<Gateway*>(_object) != NULL;
 }
 
+bool	Gateway::GetFTGMVersion(JSONNode& _properties)
+{
+	_properties.push_back(JSONNode(TITLE_NAME_VERSION, FTGM_VERSION));
+}
 ////////////////////////////////////////////////////////////////////////////////
 //	Define static members
 ////////////////////////////////////////////////////////////////////////////////

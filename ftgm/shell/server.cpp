@@ -359,7 +359,7 @@ RetValue	ShellCommandServerLinker
 								JSONNode	properties;
 
 								(*it)->GetProperties(properties, fields);
-
+								(*it)->GetFTGMVersion(properties);		
 								payload.AddGateway(properties);
 							}
 						}
@@ -381,7 +381,7 @@ RetValue	ShellCommandServerLinker
 							JSONNode	properties;
 
 							gateway->GetProperties(properties, fields);
-
+							gateway->GetFTGMVersion(properties);
 							payload.AddGateway(properties);
 						}
 					}
@@ -583,6 +583,8 @@ Shell::Command	shell_ftgm_command_slc
  "COMMANDS:\n"
  "  add <TYPE> <ID>\n"
  "    Registration gateway\n"
+ "  del <TYPE> <ID>\n"
+ "     destroy gatyway\n" 
  "  get <TYPE> <ID>\n"
  "    Get get object information.\n"
  "  link\n"

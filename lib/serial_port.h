@@ -34,6 +34,10 @@ public:
 			bool		GetMode();
 			bool		SetMode(bool _mode, bool _check = false);
 
+			const std::string& GetDevPort();
+			const std::string& GetDevIP();
+			bool	SetDevIP(std::string const& dev_ip_, bool _check = false);
+			bool	SetDevPort(std::string const& dev_port_, bool _cehck = false);
 	virtual	bool		Open();
 	virtual	bool		Close();
 
@@ -57,6 +61,8 @@ protected:
 	int				fd_;
 	int				ctrl_;
 	struct termios 	old_term_ios_;
+	std::string	dev_ip_;
+	std::string	dev_port_;
 };
 
 #endif

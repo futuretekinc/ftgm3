@@ -21,23 +21,25 @@ extern char* program_invocation_short_name;
 
 std::string	config_file_name(std::string("/etc/") + std::string(program_invocation_short_name) + ".conf");
 bool		debug_mode = false;
+bool		version_print_mode = false;
 
 void	SetOptions( int	argc, char* argv[])
 {
 	char opt;
 
-    while ((opt = getopt(argc, argv, "c:d")) != (char)(-1))
+    while ((opt = getopt(argc, argv, "c:dv")) != (char)(-1))
     {
         switch (opt)
         {
 		case 'c':
 			config_file_name = optarg;
 			break;
-
+		case 'v':
+			version_print_mode = true;
+			break;
 		case 'd':
 			debug_mode = true;
 			break;
-
 		default:
 			std::cerr << "Failed to get option[" << opt << "]!" << std::endl;
 			return;
@@ -52,6 +54,12 @@ int	main(int argc, char *argv[])
 
 	try
 	{
+		if(version_print_mode == true)
+		{
+			std::cout << FTGM_VERSION << std::endl;
+			return 0;
+		}
+
 		JSONNode	config = JSONNodeLoadFromFile(config_file_name);
 
 		JSONNode	trace_config = JSONNodeGetNode(config, TITLE_NAME_TRACE);

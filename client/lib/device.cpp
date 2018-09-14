@@ -26,8 +26,8 @@ static RetValue	CmdDeviceStop(std::vector<std::string> const& _arguments, Shell*
 static RetValue	CmdDeviceEnable(std::vector<std::string> const& _arguments, Shell* _shell);
 static RetValue	CmdDeviceDisable(std::vector<std::string> const& _arguments, Shell* _shell);
 static RetValue	CmdDeviceList(std::vector<std::string> const& _arguments, Shell* _shell);
-static RetValue	CmdDevice (std::string* _arguments, uint32_t _count, Shell* _shell);
-
+//static RetValue	CmdDevice (std::string* _arguments, uint32_t _count, Shell* _shell);
+static RetValue	CmdDevice (std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this);
 Shell::Command	object_manager_command_device
 (
 	"device", 
@@ -54,12 +54,13 @@ Shell::Command	object_manager_command_device
 	CmdDevice
  );
 
-RetValue	CmdDevice ( std::string * _arguments, uint32_t _count, Shell* _shell)
+//RetValue	CmdDevice ( std::string * _arguments, uint32_t _count, Shell* _shell)
+RetValue	CmdDevice(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this)
 {
 	RetValue ret_value = RET_VALUE_OK;	
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	std::vector<std::string> arguments;
-
+	uint32_t	_count = _arguments.size();
 	for(uint32_t i = 1 ; i < _count ; i++)
 	{
 		arguments.push_back(_arguments[i]);

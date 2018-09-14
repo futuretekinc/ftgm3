@@ -122,6 +122,43 @@ bool	Object::SetID(std::string const& _id, bool _check)
 	return	ret_value;
 }
 
+const   std::string&    Object::GetDevID() const
+{
+	return  dev_id_;
+}
+	 
+bool    Object::SetDevID(std::string const& _dev_id, bool _check)
+{
+ 	bool    ret_value = true;
+		
+	try
+   	{
+  		if(_dev_id.size() == 0)
+    		{
+  			THROW_INVALID_ARGUMENT("The Dev ID length is 0.");
+  		}
+
+		if(!_check)
+ 		{
+ 			if(dev_id_ != _dev_id)
+			{
+				dev_id_ = _dev_id;
+  				JSONNodeUpdate(updated_properties_, TITLE_NAME_DEV_ID, dev_id_);
+  				if(!lazy_store_)
+ 				{
+   					ApplyChanges();
+  				}
+			}
+   		}
+	}
+	catch(InvalidArgument& e)
+ 	{
+		TRACE_ERROR(e.what());
+		ret_value = false;
+  	}
+	return ret_value;
+}
+
 const std::string&	Object::GetName() const
 {
 	return	name_;
@@ -289,6 +326,7 @@ Object*	Object::SetParent(Object* _parent)
 
 	return	parent_;
 }
+
 
 const std::string&	Object::GetParentID() const
 {
@@ -489,6 +527,10 @@ bool	Object::SetProperty(JSONNode const& _property, bool _check)
 		{
 			ret_value = SetEnable(_property.as_string(), _check);
 		}
+		else if (_property.name() == TITLE_NAME_DEV_ID)
+		{
+			ret_value = SetDevID(_property.as_string(), _check);
+ 		}
 		else
 		{
 			THROW_INVALID_ARGUMENT("The " << _property.name() << " configuration is not supported!");
@@ -609,7 +651,7 @@ bool	Object::GetPropertyFieldList(std::list<std::string>& _field_list)
 	_field_list.push_back(TITLE_NAME_SCALE);
 	_field_list.push_back(TITLE_NAME_UPDATE_INTERVAL);
 	_field_list.push_back(TITLE_NAME_SENSOR_ID);
-
+	_field_list.push_back(TITLE_NAME_DB_REMOVE);
 	return	true;
 }
 
@@ -798,3 +840,10 @@ bool   Object::GetModemInfo(JSONNode& modem_info)
 	modem_info.set_name(TITLE_NAME_MODEM);
 	return true;
 }
+
+bool	Object::GetSystemInfoFieldList(std::list<std::string>& _field_list)
+{
+	_field_list.push_back(TITLE_NAME_VERSION);
+	return true;
+}
+

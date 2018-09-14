@@ -7,12 +7,14 @@
 
 using namespace std;
 
-RetValue	ShellCommandQuit
+/*RetValue	ShellCommandQuit
 (
 	std::string* _arguments, 
 	uint32_t	_count,
 	Shell* _shell
-)
+)*/
+RetValue	ShellCommandQuit
+(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this)
 {
 	_shell->Stop();
 

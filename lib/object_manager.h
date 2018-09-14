@@ -106,6 +106,9 @@ public:
 			void		SetSystemOperating(std::string const& _msg_type);
 			uint8_t		system_operation_;	
 			bool		SendRuleEvent(JSONNode const& rule_info);
+			void		DB_Monitoring();
+			const 		std::string& GetMqttInfo(uint8_t type);
+			bool    	SendVersionInfo(std::string const& gw_id, time_t const& send_time);	
 protected:
 	
 			bool		OnMessage(Message* _message);

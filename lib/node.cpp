@@ -11,8 +11,10 @@ Node::Node(ObjectManager& _manager, std::string const& _type)
 	manager_(_manager), 
 	type_(_type), 
 	keep_alive_interval_(OBJECT_KEEP_ALIVE_INTERVAL_SEC),
+	model_("general"),
 	location_(""), 
 	registered_(false),
+	db_remove_(false),
 	locker_()
 {
 }
@@ -34,10 +36,34 @@ bool	Node::SetType(std::string const& _type, bool _check)
 }
 #endif
 
+/*
 std::string	Node::GetModel()
 {	
 	return	"general";
 }
+*/
+
+std::string	Node::GetModel()
+{
+	return	model_;
+}
+
+bool    Node::SetModel(std::string const& _model, bool _check)
+{
+	if (!_check)
+  	{
+  		model_ = _model;
+		JSONNodeUpdate(updated_properties_, TITLE_NAME_MODEL, model_);
+  
+		if (!lazy_store_)
+  		{
+			ApplyChanges();
+ 		}
+ 	}
+	 
+	return  true;
+}
+
 
 bool	Node::IsIncludedIn(std::string const& _type)
 {
@@ -135,6 +161,26 @@ std::string	Node::GetLocation()
 	return	location_;
 }
 
+bool    Node::SetDevID(std::string const& _dev_id, bool _check)
+{
+  	if (!_check)
+   	{
+   		dev_id_ = _dev_id;
+ 		JSONNodeUpdate(updated_properties_, TITLE_NAME_DEV_ID, dev_id_);
+  		if (!lazy_store_)
+   		{
+   			ApplyChanges();
+   		}
+  	}
+	return  true;
+}
+
+
+std::string     Node::GetDevID()
+{
+	return  dev_id_;
+}
+
 bool	Node::SetRegistered(std::string const& _registered, bool _check)
 {
 	bool	ret_value = true;
@@ -181,11 +227,57 @@ bool	Node::SetRegistered(bool _registered)
 
 	return	true;
 }
-
-
 bool	Node::GetRegistered()
 {
-	return	registered_;
+	return registered_;
+}
+
+bool    Node::SetDBRemove(std::string const& _db_remove, bool _check)
+{
+	bool    ret_value = true;
+	bool    db_remove;
+	
+	try
+	{
+		db_remove = IsTrue(_db_remove);
+ 		if (!_check)
+    		{
+    			if (db_remove != db_remove_)
+   			{
+   				db_remove_ = db_remove;
+   				JSONNodeUpdate(updated_properties_, TITLE_NAME_DB_REMOVE, (db_remove_)?"true":"false");
+      
+				if (!lazy_store_)
+   				{
+ 					ApplyChanges();
+ 				}
+ 			}
+		}
+	}
+	catch(InvalidArgument& e)
+	{
+		TRACE_ERROR(e.what());
+		ret_value = false;
+   	}
+	return  ret_value;
+}
+	 
+bool    Node::SetDBRemove(bool _db_remove)
+{
+	db_remove_ = _db_remove;
+
+	JSONNodeUpdate(updated_properties_, TITLE_NAME_DB_REMOVE, (db_remove_)?"true":"false");
+	
+	if (!lazy_store_)
+	{
+		ApplyChanges();
+	}
+	return  true;
+}
+
+bool	Node::GetDBRemove()
+{
+	return	db_remove_;
 }
 
 bool	Node::GetProperty(uint32_t _type, JSONNode& _property)
@@ -197,7 +289,9 @@ bool	Node::GetProperty(uint32_t _type, JSONNode& _property)
 	case	PROPERTY_LOCATION_FLAG:		_property = JSONNode(TITLE_NAME_LOCATION, location_); break;
 	case	PROPERTY_KEEP_ALIVE_INTERVAL_FLAG: _property = JSONNode(TITLE_NAME_KEEP_ALIVE_INTERVAL, keep_alive_interval_); break;
 	case	PROPERTY_REGISTERED_FLAG: 	_property = JSONNode(TITLE_NAME_REGISTERED, registered_); break;
+	case 	PROPERTY_DB_REMOVE_FLAG:	_property = JSONNode(TITLE_NAME_DB_REMOVE, db_remove_); break;
 	case	PROPERTY_TIME_OF_EXPIRE_FLAG:_property = JSONNode(TITLE_NAME_TIME_OF_EXPIRE, TimeOfExpire()); break;
+	case    PROPERTY_DEV_ID_FLAG:                   _property = JSONNode(TITLE_NAME_DEV_ID, GetDevID()); break;	
 	case	PROPERTY_OPTIONS_FLAG:
 		{
 			JSONNode	options;
@@ -280,6 +374,8 @@ bool	Node::SetProperty(JSONNode const& _property, bool _check)
 		else if (_property.name() == TITLE_NAME_MODEL)
 		{
 			// Readonly
+			TRACE_INFO("SET MODEL");
+			ret_value = SetModel(_property.as_string(), _check);
 		}
 		else if (_property.name() == TITLE_NAME_LOCATION)
 		{
@@ -317,6 +413,14 @@ bool	Node::SetProperty(JSONNode const& _property, bool _check)
 				}
 			}
 		}
+		else if (_property.name() == TITLE_NAME_DB_REMOVE)
+		{
+			ret_value = SetDBRemove(_property.as_string(), _check);
+		}	
+		else if (_property.name() == TITLE_NAME_DEV_ID)
+		{
+			ret_value = SetDevID(_property.as_string(), _check);
+  		}
 		else
 		{
 			ret_value = ActiveObject::SetProperty(_property, _check);
@@ -435,7 +539,8 @@ bool	Node::GetPropertyFieldList(std::list<std::string>& _field_list)
 	_field_list.push_back(TITLE_NAME_LOCATION);
 	_field_list.push_back(TITLE_NAME_REGISTERED);
 	_field_list.push_back(TITLE_NAME_OPTIONS);
-
+	_field_list.push_back(TITLE_NAME_DB_REMOVE);
+	_field_list.push_back(TITLE_NAME_DEV_ID);
 	return	true;
 }
 

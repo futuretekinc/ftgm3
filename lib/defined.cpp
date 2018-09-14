@@ -2,6 +2,9 @@
 
 #include "defined.h"
 
+
+const char*	FTGM_VERSION				= "V0.0";
+const char*	FTGM_SYSTEM_INFO_ID			= "system_info_id";
 uint64_t	TIME_MILLISECOND				=	((uint64_t)1000UL);
 uint64_t	TIME_SECOND						=	((uint64_t)1000000UL);
 uint32_t	TIME_MINUTE						=	(60 * TIME_SECOND);
@@ -30,6 +33,16 @@ const char*	OBJECT_TYPE_DEV_MB7092			=	"dev_mb7092";
 const char*	OBJECT_TYPE_DEV_MODBUS_TCP		=	"dev_modbus_tcp";
 const char*	OBJECT_TYPE_DEV_ADAM_6051		=	"dev_adam_6051";
 const char*	OBJECT_TYPE_DEV_TURBOMAX		=	"dev_turbomax";
+const char*	OBJECT_TYPE_DEV_NB_IOT_M		=	"dev_nbiot_m";
+const char*	OBJECT_TYPE_DEV_A3300		=	"dev_a3300";
+const char*	OBJECT_TYPE_DEV_FTM80_BASE		=	"dev_ftm80_base";
+const char*     OBJECT_TYPE_DEV_DF868                   =       "dev_df868";
+const char*     OBJECT_TYPE_DEV_DF868_01                        =       "dev_df868_01";
+const char*     OBJECT_TYPE_DEV_AT868                   =       "dev_at868";
+const char*     OBJECT_TYPE_DEV_DF868MB                 =       "dev_df868mb";
+const char*     OBJECT_TYPE_DEV_SONIC205                =       "dev_sonic205";
+const char*     OBJECT_TYPE_DEV_SONIC205MB              =       "dev_sonic205mb";
+
 
 const char* OBJECT_TYPE_ENDPOINT			=	"endpoint";
 const char* OBJECT_TYPE_ENDPOINT_SENSOR		=	"en_sensor";
@@ -48,7 +61,7 @@ const char*	OBJECT_TYPE_EP_S_RAINFALL		=	"ep_s_rainfall";
 const char*	OBJECT_TYPE_EP_S_GAS			=	"ep_s_gas";
 const char*	OBJECT_TYPE_EP_S_MB_DATA		=	"ep_s_mb_data";
 const char* OBJECT_TYPE_EP_S_SOIL_ACIDITY	=	"ep_s_soil_acidity";
-
+const char*	OBJECT_TYPE_EP_S_POWER		=	"ep_s_power";
 const char* OBJECT_TYPE_ENDPOINT_ACUTATOR	=	"ep_actuator";
 const char*	OBJECT_TYPE_EP_A_TEMPCONTROL		=	"ep_a_tempcontrol";
 const char*	OBJECT_TYPE_EP_A_DISCRETE			=	"ep_a_discrete";
@@ -73,16 +86,20 @@ double		ENDPOINT_SENSOR_HUMIDITY_MAX	= 	(100);
 double		ENDPOINT_SENSOR_HUMIDITY_MIN	= 	(0);
 const char*	ENDPOINT_SENSOR_HUMIDITY_UNIT	= 	"%RH";
 
-double		ENDPOINT_SENSOR_VOLTAGE_MAX		= 	(380);
-double		ENDPOINT_SENSOR_VOLTAGE_MIN		= 	(0);
+double		ENDPOINT_SENSOR_VOLTAGE_MAX		= 	(9999);
+double		ENDPOINT_SENSOR_VOLTAGE_MIN		= 	(-9999);
 const char*	ENDPOINT_SENSOR_VOLTAGE_UNIT	= 	"V";
+
+double		ENDPOINT_SENSOR_POWER_MAX		= 	(999999999);
+double		ENDPOINT_SENSOR_POWER_MIN		= 	(-999999999);
+const char*	ENDPOINT_SENSOR_POWER_UNIT	= 	"kW";
 
 double		ENDPOINT_SENSOR_WAVE_MAX		= 	(800);
 double		ENDPOINT_SENSOR_WAVE_MIN		= 	(0);
 const char*	ENDPOINT_SENSOR_WAVE_UNIT	= 	"cm";
 
-double		ENDPOINT_SENSOR_CURRENT_MAX		= 	(100);
-double		ENDPOINT_SENSOR_CURRENT_MIN		= 	(0);
+double		ENDPOINT_SENSOR_CURRENT_MAX		= 	(9999);
+double		ENDPOINT_SENSOR_CURRENT_MIN		= 	(-9999);
 const char*	ENDPOINT_SENSOR_CURRENT_UNIT	= 	"A";
 
 double		ENDPOINT_SENSOR_WIND_SPEED_MAX	=	10000;

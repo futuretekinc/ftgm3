@@ -459,7 +459,10 @@ bool	ServerLinker::SetPort(std::string const& _port, bool _check)
 	return	true;
 
 }
-
+const std::string&	ServerLinker::GetPort()
+{
+	return port_;
+}
 bool	ServerLinker::SetUsername(std::string const& _username, bool _check)
 {
 	if(!_check)
@@ -1239,7 +1242,28 @@ bool	ServerLinker::ConfirmRequest(RCSMessage const& _reply, std::string& _req_ty
 				try
 				{
 					_req_type = JSONNodeGetMsgType(message.GetPayload());
-
+					/*if(_req_type == MSG_TYPE_RCS_ADD)
+					{
+						JSONNode  add_message = message.GetPayload();
+						JSONNode::const_iterator field = add_message.find(TITLE_NAME_GATEWAY);
+						if(field != add_message.end())
+						{
+							*field->set_name(TITLE_NAME_GATEWAY);
+							_reply.GetPayload().push_back(*field);
+						}
+						field = add_message.find(TITLE_NAME_DEVICE);
+						if(field != add_message.end())
+						{
+							*field->set_name(TITLE_NAME_DEVICE);
+							_reply.GetPayload().push_back(*field);
+						}
+						field = add_message.find(TITLE_NAME_ENDPOINT);
+						if(field != add_message.end())
+						{
+							*field->set_name(TITLE_NAME_ENDPOINT);
+							_reply.GetPayload().push_back(*field);
+						}
+					}*/	
 					delete produce;
 
 					request_map_.erase(it);
@@ -1374,6 +1398,7 @@ void	ServerLinker::OnConsume(Consume* _consume)
 		}
 		else
 		{
+			TRACE_INFO("RECEIVE CONFIRM FROM SERVER");	
 			manager_->GetRCSServer().Confirm(message, req_type);	
 		}
 	}
@@ -1403,6 +1428,13 @@ void	ServerLinker::OnConsume(Consume* _consume)
 		manager_->GetRCSServer().CommandRestart(message, reply);
 		Send(reply);
 		manager_->SetSystemOperating(MSG_TYPE_RCS_RESTART);
+	}
+	else if(message.GetMsgType() == MSG_TYPE_RCS_UPDATE)
+	{
+		RCSMessage	reply;
+		manager_->GetRCSServer().CommandUpdate(message, reply);
+		Send(reply);
+		manager_->SetSystemOperating(MSG_TYPE_RCS_UPDATE);
 	}
 }
 

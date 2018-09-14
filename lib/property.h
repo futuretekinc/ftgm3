@@ -54,6 +54,8 @@ struct	Fields
 	bool	value:1;
 	bool	stat:1;
 	bool	model:1;
+	bool	db_remove:1;
+	bool	dev_id:1;
 };
 
 std::ostream& operator <<(std::ostream& os, Fields const& _fields);
@@ -92,6 +94,8 @@ Fields	operator+(Fields& _fields1, Fields& _fields2);
 #define	PROPERTY_VALUE_FLAG					(((uint32_t)1) <<  25)
 #define	PROPERTY_CONDITION_FLAG				(((uint32_t)1) <<  26)
 #define	PROPERTY_ACTION_FLAG				(((uint32_t)1) <<  27)
+#define PROPERTY_DB_REMOVE_FLAG				(((uint32_t)1) << 28)
+#define PROPERTY_DEV_ID_FLAG				(((uint32_t)1) << 29)
 
 #define	PROPERTY_STATIC_FLAG (PROPERTY_ID_FLAG	|\
 							PROPERTY_TYPE_FLAG	|\
@@ -115,7 +119,9 @@ Fields	operator+(Fields& _fields1, Fields& _fields2);
 							PROPERTY_CORRECTION_INTERVAL_FLAG|\
 							PROPERTY_KEEP_ALIVE_INTERVAL_FLAG| \
 							PROPERTY_CONDITION_FLAG | \
-							PROPERTY_ACTION_FLAG)
+							PROPERTY_ACTION_FLAG | \
+							PROPERTY_DB_REMOVE_FLAG | \
+							PROPERTY_DEV_ID_FLAG )
 
 #define	PROPERTY_ALL_FLAG ((uint32_t)0xFFFFFFFF)
 
@@ -146,6 +152,8 @@ extern Fields	PROPERTY_TIME_OF_EXPIRE;
 extern Fields	PROPERTY_VALUE;
 extern Fields	PROPERTY_STATE;
 extern Fields	PROPERTY_MODEL;
+extern Fields	PROPERTY_DB_REMOVE;
+extern Fields	PROPERTY_DEV_ID;
 
 extern Fields	PROPERTY_CLEAR;
 //extern const Fields	PROPERTY_ALL;

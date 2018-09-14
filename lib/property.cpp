@@ -17,6 +17,8 @@ Fields	PROPERTY_STAT				(PROPERTY_STAT_FLAG);
 Fields	PROPERTY_LOCATION			(PROPERTY_LOCATION_FLAG);
 Fields	PROPERTY_REGISTERED			(PROPERTY_REGISTERED_FLAG);
 Fields	PROPERTY_PARENT_ID			(PROPERTY_PARENT_ID_FLAG);
+Fields	PROPERTY_DB_REMOVE			(PROPERTY_DB_REMOVE_FLAG);
+Fields	PROPERTY_DEV_ID				(PROPERTY_DEV_ID_FLAG);
 
 Fields	PROPERTY_IP					(PROPERTY_IP_FLAG);
 Fields	PROPERTY_SENSOR_ID			(PROPERTY_SENSOR_ID_FLAG);
@@ -61,7 +63,8 @@ Fields	PROPERTY_BASIC	= PROPERTY_ID
 						+ PROPERTY_TIMEOUT
 						+ PROPERTY_KEEP_ALIVE_INTERVAL
 						+ PROPERTY_CORRECTION_INTERVAL
-						+ PROPERTY_LOOP_INTERVAL;
+						+ PROPERTY_LOOP_INTERVAL
+						+ PROPERTY_DEV_ID;
 
 
 //const Fields	PROPERTY_ALL	= PROPERTY_BASIC;
@@ -94,6 +97,8 @@ Fields::Fields()
 	update_interval = false;
 	time_of_expire = false;
 	value = false;
+	db_remove = false;
+	dev_id = false;
 }
 
 Fields::Fields(uint32_t _flags)
@@ -124,7 +129,8 @@ Fields::Fields(uint32_t _flags)
 	update_interval = false;
 	time_of_expire = false;
 	value = false;
-
+	db_remove = false;
+	dev_id = false;
 	Set(_flags);
 }
 
@@ -303,6 +309,16 @@ bool	Fields::Set(uint32_t _value)
 		value = true;
 	}
 
+	//#define	PROPERTY_DB_REMOVE_FLAG
+	if(_value & PROPERTY_DB_REMOVE_FLAG)
+	{
+		db_remove = true;
+	}
+	
+	if(_value & PROPERTY_DEV_ID_FLAG)
+	{
+		dev_id = true;
+	}
 	return	true;
 }
 
@@ -412,7 +428,14 @@ bool	Fields::Reset(uint32_t _value)
 	{
 		model = false;
 	}
-
+	if(_value & PROPERTY_DB_REMOVE_FLAG)
+	{
+		db_remove = false;
+	}
+	if(_value & PROPERTY_DEV_ID_FLAG)
+	{
+		dev_id = false;
+	}
 	return	true;
 }
 
@@ -785,6 +808,14 @@ Fields::operator uint32_t() const
 		flags |= PROPERTY_VALUE_FLAG;
 	}
 
+	if(db_remove)
+	{
+		flags |= PROPERTY_DB_REMOVE_FLAG;
+	}
+	if(dev_id)
+	{
+		flags |= PROPERTY_DEV_ID_FLAG;
+	}
 	return	flags;
 }
 
@@ -920,7 +951,14 @@ bool	Fields::Names(std::multimap<uint32_t, std::string>& _names)
 	{
 		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_MODEL_FLAG, TITLE_NAME_MODEL));
 	}
-
+	if (db_remove)
+	{
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_DB_REMOVE_FLAG, TITLE_NAME_DB_REMOVE));
+	}
+	if (dev_id)
+	{
+		_names.insert(_names.end(), std::pair<uint32_t, std::string>(PROPERTY_DEV_ID_FLAG, TITLE_NAME_DEV_ID));
+	}
 	return	true;
 
 }

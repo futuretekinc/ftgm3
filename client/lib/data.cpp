@@ -12,15 +12,17 @@
 
 using namespace std;
 
-RetValue	ShellCommandData
+/*RetValue	ShellCommandData
 (
 	std::string* _arguments, 
 	uint32_t	_count,
 	Shell* _shell
-)
+
+)*/
+RetValue	ShellCommandData(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
-
+	uint32_t	_count = _arguments.size();
 	try
 	{
 		if (_count == 1)
@@ -63,7 +65,7 @@ RetValue	ShellCommandData
 			}
 			else if (_count == 4)
 			{
-				client->SetEPData(_arguments[2], time_t(Date::GetCurrent()) + 10, _arguments[3]);
+				//client->SetEPData(_arguments[2], time_t(Date::GetCurrent()) + 10, _arguments[3]);
 			}
 		}
 	}

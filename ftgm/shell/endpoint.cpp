@@ -4,7 +4,7 @@
 #include "shell_ftgm.h"
 #include "endpoint.h"
 #include "object_manager.h"
-
+#include "utils.h"
 
 bool	ShellCommandEndpointList(Shell* _shell);
 bool	ShellCommandEndpointInfo(Shell* _shell, std::string const& _id);
@@ -37,7 +37,9 @@ RetValue	ShellCommandEndpoint
 				uint32_t	type_len = 16;
 				uint32_t	stat_len = 16;
 				uint32_t	value_len = 8;
-
+				uint32_t	remove_len = 16;
+				uint32_t	registered_len = 16;
+				
 				for(std::list<Endpoint*>::iterator it = ep_list.begin() ; it != ep_list.end() ; it++)
 				{
 					uint32_t	len;
@@ -67,6 +69,16 @@ RetValue	ShellCommandEndpoint
 					{
 						stat_len  = len;
 					}
+					len = ToString(endpoint->GetDBRemove()).size();
+					if(remove_len < len)
+					{
+						remove_len = len;
+					}
+					len = ToString(endpoint->GetRegistered()).size();
+					if(registered_len < len)
+					{
+						registered_len = len;
+					}
 				}
 
 				_shell->Out() << "* SNMP Endpoint" << std::endl;
@@ -76,6 +88,7 @@ RetValue	ShellCommandEndpoint
 				_shell->Out() << " " << std::setw(stat_len+1) << "Stat";
 				_shell->Out() << " " << std::setw(id_len) << "Device ID";
 				_shell->Out() << " " << std::setw(value_len) << "Value";
+				_shell->Out() << " " << std::setw(registered_len) << "Registered";
 				_shell->Out() << std::endl;
 
 				for(std::list<Endpoint*>::iterator it = ep_list.begin() ; it != ep_list.end() ; it++)
@@ -88,6 +101,7 @@ RetValue	ShellCommandEndpoint
 					_shell->Out() << " " << std::setw(stat_len+1) << ToString(endpoint->GetStat());
 					_shell->Out() << " " << std::setw(id_len) << endpoint->GetParentID();
 					_shell->Out() << " " << std::setw(value_len) << endpoint->GetValue();
+					_shell->Out() << " " << std::setw(registered_len) <<ToString(endpoint->GetRegistered());	
 					_shell->Out() << std::endl;	
 				}
 			}
@@ -141,7 +155,9 @@ RetValue	ShellCommandEndpoint
 				}
 				else
 				{
-					delete endpoint;
+					//object_manager->DestroyEndpoint(_arguments[i]);	
+					endpoint->SetDBRemove("true", false);
+					//delete endpoint;
 					_shell->Out() << "The endpoint[" << _arguments[i] << "] has been deleted!" << std::endl;
 				}
 			}

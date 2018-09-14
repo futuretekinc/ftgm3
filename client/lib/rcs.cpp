@@ -12,15 +12,17 @@
 
 using namespace std;
 
-RetValue	ShellCommandRCS
+/*RetValue	ShellCommandRCS
 (
 	std::string* _arguments, 
 	uint32_t	_count,
 	Shell* _shell
-)
+)*/
+RetValue	ShellCommandRCS
+(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
-
+	uint32_t	_count = _arguments.size();
 	if (_count == 1)
 	{
 		THROW_INVALID_ARGUMENT("Too few arguments!");

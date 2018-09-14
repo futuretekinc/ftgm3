@@ -41,6 +41,7 @@ public:
 
 	bool		CommandRestart(RCSMessage& _request, RCSMessage& _response);
 	bool		CommandReboot(RCSMessage& _request, RCSMessage& _response);
+	bool		CommandUpdate(RCSMessage& _request, RCSMessage& _response);
 
 protected:
 	TCPSession*	CreateSession(int	_socket, struct sockaddr_in *_addr_info, uint32_t _timeout);

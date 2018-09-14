@@ -23,7 +23,7 @@ public:
 	//virtual	bool		SetType(std::string const& _type, bool _check = false);
 
 	virtual	std::string	GetModel();
-
+	virtual	bool		SetModel(std::string const& _model, bool _check = false);
 	virtual	bool		IsIncludedIn(std::string const& _type);
 
 	virtual	bool		SetID(std::string const& _id, bool _check = false);
@@ -36,7 +36,13 @@ public:
 			bool		SetRegistered(bool _registered);
 			bool		SetRegistered(std::string const& _registered, bool _check = false);
 			bool		GetRegistered();
+			
+			bool		SetDBRemove(bool _db_remove);
+			bool		SetDBRemove(std::string const& _db_remove, bool _check = false);
+			bool		GetDBRemove();
 
+			bool            SetDevID(std::string const& _dev_id, bool _check = false);
+			std::string     GetDevID();
 			bool		SetLocation(std::string const& _location, bool _check = false);
 			std::string	GetLocation();
 
@@ -71,8 +77,10 @@ protected:
 	Timer			keep_alive_timer_;
 	
 	bool			registered_;
+	bool			db_remove_;	
 	Locker			locker_;
 	Timer			gw_info_timer_;
+	std::string		model_;
 };
 
 #endif

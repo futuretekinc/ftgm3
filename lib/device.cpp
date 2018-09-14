@@ -16,11 +16,21 @@
 #include "device_gtc_520a.h"
 #include "device_hs_1000m.h"
 #include "device_mb7092.h"
+#include "device_nbiotm.h"
+#include "device_a3300.h"
+#include "device_ftm80_base.h"
+#include "device_sonic_205.h"
+#include "device_sonic_205mb.h"
+#include "device_df868.h"
+#include "device_df868_01.h"
+#include "device_at868.h"
+#include "device_df868mb.h"
+
 #include "endpoint.h"
 #include "endpoint_sensor.h"
 
 Device::Device(ObjectManager& _manager, std::string const& _type)
-:	Node(_manager, _type)
+:	Node(_manager, _type),correction_interval_(1)
 {
 }
 
@@ -42,14 +52,64 @@ Endpoint*	Device::CreateEndpoint(JSONNode const& _properties)
 
 bool	Device::GetProperty(uint32_t _type, JSONNode& _property) 
 {
-	return	Node::GetProperty(_type, _property);
+	switch(_type)
+	{
+       		case    PROPERTY_CORRECTION_INTERVAL_FLAG:      _property = JSONNode(TITLE_NAME_CORRECTION_INTERVAL, correction_interval_);     break;
+	        default:
+		{
+			return  Node::GetProperty(_type, _property);
+  		}
+		break;
+ 	}
+	return  true;
 }
 
 
 bool	Device::SetProperty(JSONNode const& _property, bool _check)
 {
-	return	Node::SetProperty(_property, _check);
+	bool ret_value = false;
+
+	if ((_property.name() == TITLE_NAME_CORRECTION_INTERVAL) || (_property.name() == TITLE_NAME_UPDATE_INTERVAL))
+	{
+   		ret_value = SetCorrectionInterval(_property.as_string(), _check);
+     	}
+	else
+	{
+		ret_value = Node::SetProperty(_property, _check);
+	}
+	return ret_value;
 }
+
+ bool    Device::SetCorrectionInterval(uint32_t _interval)
+{
+  	correction_interval_ = _interval;
+	JSONNodeUpdate(updated_properties_, TITLE_NAME_CORRECTION_INTERVAL, correction_interval_);
+	if (!lazy_store_)
+  	{
+    		ApplyChanges();
+   	}
+	return  true;
+}
+	
+bool    Device::SetCorrectionInterval(std::string const& _interval, bool _check)
+{
+ 	if (!_check)
+   	{
+ 		correction_interval_ = strtoul(_interval.c_str(), NULL, 10);
+ 		JSONNodeUpdate(updated_properties_, TITLE_NAME_CORRECTION_INTERVAL, correction_interval_);
+		if (!lazy_store_)
+ 		{
+  			ApplyChanges();
+   		}
+ 	}
+	return  true;
+}
+		
+uint32_t        Device::GetCorrectionInterval()
+{
+	return  correction_interval_;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Endpoint operation
@@ -306,6 +366,42 @@ Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
 		{
 			device = new DeviceMB7092(_manager, _properties);
 		}
+		else if(type == std::string(DeviceNBIOTM::Type()))
+		{
+			device = new DeviceNBIOTM(_manager, _properties);
+		}	
+		else if(type == std::string(DeviceA3300::Type()))
+		{
+			device = new DeviceA3300(_manager, _properties);
+		}	
+		else if(type == std::string(Device_ftm80_base::Type()))
+		{
+			device = new Device_ftm80_base(_manager, _properties);
+		}
+		else if(type == std::string(DeviceSONIC205::Type()))
+		{
+			device = new DeviceSONIC205(_manager, _properties);
+		}
+		else if(type == std::string(DeviceSONIC205MB::Type()))
+		{
+			device = new DeviceSONIC205MB(_manager, _properties);
+    		}
+ 		else if(type == std::string(DeviceDF868::Type()))
+		{
+			device = new DeviceDF868(_manager, _properties);
+		}
+		else if(type == std::string(DeviceDF868MB::Type()))
+		{
+			device = new DeviceDF868MB(_manager, _properties);
+		}
+		else if(type == std::string(DeviceAT868::Type()))
+		{
+			device = new DeviceAT868(_manager, _properties);
+		}
+		else if(type == std::string(DeviceDF868_01::Type()))
+		{
+			device = new DeviceDF868_01(_manager, _properties);
+		}
 		else
 		{
 			TRACE_ERROR2(NULL, "Failed to create device. Device type[" << type << "] is not supported!");
@@ -328,6 +424,7 @@ bool	Device::GetPropertyFieldList(std::list<std::string>& _field_list)
 {
 	if (Node::GetPropertyFieldList(_field_list))
 	{
+		_field_list.push_back(TITLE_NAME_CORRECTION_INTERVAL);
 	}
 
 	return	true;

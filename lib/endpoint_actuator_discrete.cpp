@@ -52,7 +52,6 @@ bool	EndpointActuatorDiscrete::SetValue(std::string const& _value, bool _check)
 		TRACE_ERROR("Invalid value[" << _value << "]");
 		return	false;	
 	}
-
 	if (!_check)
 	{
 		bool	value = IsTrue(_value);
@@ -76,7 +75,7 @@ bool	EndpointActuatorDiscrete::SetValue(std::string const& _value, bool _check)
 				device->ReadValue(id_, time, value_);
 				if(value_ == value)
 				{
-					Add(time,value_);
+					Add(time,ToString(value_));
 				}
 				else
 				{
@@ -121,6 +120,16 @@ bool	EndpointActuatorDiscrete::SetValueMax(std::string const& _value, bool _chec
 	return	true;
 }
 
+bool	EndpointActuatorDiscrete::Add(time_t time, std::string const& _value)
+{
+	if(time_ != time)
+	{
+		time_ = time;
+		value_ = IsTrue(_value);
+		return Endpoint::Add(time, _value);
+	}
+	return true;
+}
 ////////////////////////////////////////////////////////////////////////////////
 //	Define static members
 ////////////////////////////////////////////////////////////////////////////////

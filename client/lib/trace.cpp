@@ -7,12 +7,14 @@
 
 using namespace std;
 
+/*
 RetValue	ShellCommandTrace
 (
 	std::string* _arguments, 
 	uint32_t	_count,
 	Shell* _shell
-)
+)*/
+RetValue	ShellCommandTrace(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this)
 {
 	RetValue	ret_value;
 	size_t		title_width = 16;

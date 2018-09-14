@@ -14,7 +14,9 @@
 
 using namespace std;
 
-static RetValue	CmdLoad(std::string* _arguments, uint32_t _count, Shell* _shell);
+//static RetValue	CmdLoad(std::string* _arguments, uint32_t _count, Shell* _shell);
+
+static RetValue	CmdLoad(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this);
 static RetValue	CmdLoadGateway(Shell* _shell, JSONNode const& node);
 static RetValue	CmdLoadDevice(Shell* _shell, JSONNode const& node);
 static RetValue	CmdLoadDevice(Shell* _shell, std::string const& _parent_id, JSONNode const& node);
@@ -47,11 +49,11 @@ Shell::Command	object_manager_command_load
 	CmdLoad
  );
 
-RetValue	CmdLoad ( std::string * _arguments, uint32_t _count, Shell* _shell)
+RetValue	CmdLoad(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this)
 {
 	RetValue ret_value = RET_VALUE_OK;	
 	std::vector<std::string> arguments;
-
+	uint32_t	_count = _arguments.size();
 	if (_count == 2)
 	{
 		try

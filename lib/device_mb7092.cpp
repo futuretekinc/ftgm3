@@ -50,12 +50,14 @@ bool	DeviceMB7092::ReadValue(std::string const& _epid, time_t& _time, std::strin
 		if ((type != 3) || (index > 1))
 		{
 			TRACE_ERROR("Invalid sensro id!");
+			delete endpoint;	
 			return	false;
 		}
 		
 		_time = time_;
 		std::string _data(reinterpret_cast<char *>(data_));
 		_value = _data;
+		delete endpoint;	
 		return	true;
 	}
 	catch(ObjectNotFound& e)

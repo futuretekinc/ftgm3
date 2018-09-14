@@ -55,7 +55,9 @@ public:
 	virtual	bool		WriteValue(std::string const& _epid, std::string const& _value);
 	virtual	bool		WriteValue(std::string const& _epid, uint32_t _value);
 	virtual	bool		WriteValue(std::string const& _epid, bool _value);
-
+	bool    	SetCorrectionInterval(uint32_t _interval);
+	bool   	SetCorrectionInterval(std::string const& _interval, bool _check);
+	uint32_t   GetCorrectionInterval();
 protected:
 
 			void		Preprocess();
@@ -75,6 +77,7 @@ protected:
 	
 	Locker							endpoint_schedule_list_lock_;
 	std::multimap<time_t, std::string>	endpoint_schedule_list_;
+	uint32_t	correction_interval_;
 };
 
 #endif

@@ -1,6 +1,6 @@
 # IncludePre.mk
 
-TARGET="FTM-100"
+TARGET="FTM-50"
 
 ifeq ($(RELEASE), 1)
 OBJS_DIR = Release
@@ -35,7 +35,7 @@ INC_DIRS =  -I$(PROJ_ROOT)/Include \
 			-I$(PROJ_ROOT)/../spear/target/usr/local/include\
 			-I$(PROJ_ROOT)/../spear/KompexSQLiteWrapper-Source_1.11.14/inc\
 			-I$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/include\
-			-I$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/local/include
+			-I$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/local/include 
 
 LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)\
 			-L$(PROJ_ROOT)/../spear/target/usr/lib \
@@ -44,12 +44,30 @@ LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)\
 			-L$(PROJ_ROOT)/../ftm/build/ftm-50s/_root/usr/local/lib
 LIBS += -lshellftgm -lftgm -lmosquitto -lssl -lcrypto -lmodbus -lhl++ ../../spear/KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl
 else
+ifeq ($(TARGET), "FTM-80")
+CORSS_COMPILE=
+INC_DIR = -I$(PROJ_ROOT)/Include \
+	  -I/usr/local/include \
+	  -I$(PROJ_ROOT)/.. \
+	  -I$(PROJ_ROOT)/../SQLite_lib/target/usr/local/include \
+	  -I$(PROJ_ROOT)/../SQLite_lib/KompexSQLiteWrapper-Source_1.11.14/inc \
+	  -I$(PROJ_ROOT)/../lib/ftm-80/usr/include \
+	  -I$(PROJ_ROOT)/../lib/ftm-80/usr/local/include 
+
+LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJES_DIR)\
+	   -L/usr/local/lib \
+	   -L$(PROJ_ROOT)/../SQLite_lib/target/usr/lib \
+	   -L$(PROJ_ROOT)/../SQLite_lib/target/usr/local/lib \
+	   -L$(PROJ_ROOT)/../lib/ftm-80/usr/lib \
+	   -L$(PROJ_ROOT)/../lib/ftm-80/usr/local/lib
+LIBS += -lshellftgm -lcrypto -lssl -lftgm -lmosquitto -lmodbus -lhl++ ../../SQLite_lib/KompexSQLiteWrapper-Source_1.11.14/lib/debug/KompexSQLiteWrapper_Static_d.a -ljson -lnetsnmp -lpthread -ldl -lslabhidtouart -lslabhiddevice -lusb-1.0
+else
 INC_DIRS = -I$(PROJ_ROOT)/Include -I$(PROJ_ROOT)/lib -I$(PROJ_ROOT)/../kompex-sqlite-wrapper/include -I$(PROJ_ROOT)/..
 LIB_DIRS = -L$(ROOT_LIB_DIR)/$(OBJS_DIR)
 LIBS += -L ../../kompex-sqlite-wrapper/lib -lshellftgm -lftgm -lmosquitto -lmodbus -lhl++ -lkompex-sqlite-wrapper -ljson -lnetsnmp -lpthread -ldl
 endif
 endif
-
+endif
 CC = $(CROSS_COMPILE)g++
 AR = $(CROSS_COMPILE)ar
 RANLIB = $(CROSS_COMPILE)ranlib

@@ -33,6 +33,7 @@
 #define	CMD_TYPE_SHELL(name, value)			extern 	const char* 	CMD_TYPE_SHELL_##name
 #endif
 
+
 #define	ID_LENGTH_MAX		32
 #define	NAME_LENGTH_MAX		64
 #define	CLASS_LENGTH_MAX	32
@@ -66,6 +67,15 @@ extern	const char*	OBJECT_TYPE_DEV_MB7092;
 extern	const char*	OBJECT_TYPE_DEV_MODBUS_TCP;
 extern	const char*	OBJECT_TYPE_DEV_ADAM_6051;
 extern	const char*	OBJECT_TYPE_DEV_TURBOMAX;
+extern  const char*     OBJECT_TYPE_DEV_NB_IOT_M;
+extern  const char*     OBJECT_TYPE_DEV_A3300;
+extern  const char*     OBJECT_TYPE_DEV_FTM80_BASE;
+extern  const char*     OBJECT_TYPE_DEV_DF868;
+extern  const char*     OBJECT_TYPE_DEV_DF868_01;
+extern  const char*     OBJECT_TYPE_DEV_AT868;
+extern  const char*     OBJECT_TYPE_DEV_DF868MB;
+extern  const char*     OBJECT_TYPE_DEV_SONIC205;
+extern  const char*     OBJECT_TYPE_DEV_SONIC205MB;
 
 extern	const char* OBJECT_TYPE_ENDPOINT;
 extern	const char*	OBJECT_TYPE_EP_S_DISCRETE;
@@ -82,7 +92,8 @@ extern	const char*	OBJECT_TYPE_EP_S_SOIL_MOISTURE;
 extern	const char*	OBJECT_TYPE_EP_S_RAINFALL;
 extern	const char*	OBJECT_TYPE_EP_S_GAS;
 extern	const char*	OBJECT_TYPE_EP_S_MB_DATA;
-extern	const char* OBJECT_TYPE_EP_S_SOIL_ACIDITY;
+extern	const char* 	OBJECT_TYPE_EP_S_SOIL_ACIDITY;
+extern  const char*	OBJECT_TYPE_EP_S_POWER;
 
 extern	const char*	OBJECT_TYPE_EP_A_TEMPCONTROL;
 extern	const char*	OBJECT_TYPE_EP_A_DISCRETE;
@@ -108,6 +119,10 @@ extern	const char*	ENDPOINT_SENSOR_HUMIDITY_UNIT;
 extern	double		ENDPOINT_SENSOR_VOLTAGE_MAX;
 extern 	double		ENDPOINT_SENSOR_VOLTAGE_MIN;
 extern 	const char*	ENDPOINT_SENSOR_VOLTAGE_UNIT;
+
+extern	double		ENDPOINT_SENSOR_POWER_MAX;
+extern 	double		ENDPOINT_SENSOR_POWER_MIN;
+extern 	const char*	ENDPOINT_SENSOR_POWER_UNIT;
 
 extern	double		ENDPOINT_SENSOR_WAVE_MAX;
 extern 	double		ENDPOINT_SENSOR_WAVE_MIN;
@@ -163,6 +178,8 @@ extern	uint32_t	SERVER_LINKER_REQUEST_TIMEOUT_SEC;
 extern	bool		SERVER_LINKER_REPORT_LATE_ARRIVE_MESSAGE;
 extern	uint32_t	SERVER_LINKER_RETRANSMISSION_COUNT_MAX;
 
+extern	const char*	FTGM_VERSION;
+extern	const char*	FTGM_SYSTEM_INFO_ID;
 //add SY.KANG
 extern uint32_t 	GATEWAY_INFO_INTERVAL_SEC;
 
@@ -197,6 +214,7 @@ DEFAULT_CONST(DB_TABLE_NAME_GATEWAY, "gateways");
 DEFAULT_CONST(DB_TABLE_NAME_DEVICE, "devices");
 DEFAULT_CONST(DB_TABLE_NAME_ENDPOINT, "endpoints");
 DEFAULT_CONST(DB_TABLE_NAME_RULE, "rules");
+DEFAULT_CONST(DB_TABLE_NAME_SYS_INFO, "system_info");
 DEFAULT_CONST(GLOBAL_UP_TOPIC, "v1_server_1");
 DEFAULT_CONST(GLOBAL_DOWN_TOPIC, "v1_client_1");
 DEFAULT_CONST(SERVER_LINKER_HASH, "sha1");
@@ -314,6 +332,7 @@ TITLE_NAME(WITH_ENDPOINT, "width_endpoint");
 //add SY.KANG
 TITLE_NAME(USERNAME, "username");
 TITLE_NAME(PASSWORD, "password");
+TITLE_NAME(DB_REMOVE, "db_remove");
 //
 
 TITLE_NAME(MODEM, "modem");
@@ -337,6 +356,8 @@ MSG_TYPE_RCS(ERROR, 	"error");
 
 MSG_TYPE_RCS(RESTART, "restart");
 MSG_TYPE_RCS(REBOOT, "reboot");
+MSG_TYPE_RCS(UPDATE, "update");
+
 
 //add SY.KANG
 MSG_TYPE_RCS(GW_INFO,	"gw_info");

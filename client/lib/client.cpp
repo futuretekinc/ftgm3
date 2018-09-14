@@ -8,19 +8,20 @@
 #include "rcs_client.h"
 
 using namespace std;
-
+/*
 RetValue	ShellCommandConnect
 (
 	std::string* _arguments, 
 	uint32_t	_count,
 	Shell* 		_shell
-)
+)*/
+RetValue	ShellCommandConnect(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this)
 {
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
 	RetValue	ret_value = RET_VALUE_OK;
 	string		server_ip = client->GetServerIP();
 	uint16_t	port = client->GetServerPort();
-
+	uint32_t	_count = _arguments.size();
 	if (_count == 2)	
 	{
 		port = strtoul(_arguments[1].c_str(), 0, 10);
@@ -53,12 +54,13 @@ finished:
 	return	ret_value;
 }
 
-RetValue	ShellCommandDisconnect
+/*RetValue	ShellCommandDisconnect
 (
 	std::string* _arguments, 
 	uint32_t	_count,
 	Shell* _shell
-)
+)*/
+RetValue	ShellCommandDisconnect(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this)
 {
 	RetValue	ret_value = RET_VALUE_OK;
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
@@ -68,16 +70,17 @@ RetValue	ShellCommandDisconnect
 	return	ret_value;
 }
 
-RetValue	ShellCommandSend
+/*RetValue	ShellCommandSend
 (
 	std::string* _arguments, 
 	uint32_t	_count,
 	Shell* _shell
-)
+)*/
+RetValue	ShellCommandSend(std::vector<std::string> const& _arguments, Shell* _shell, Shell::Command* _this)
 {
 	RetValue	ret_value = RET_VALUE_OK;
 	RCSClient*	client = dynamic_cast<RCSClient*>(_shell->GetObject());
-
+	uint32_t	_count = _arguments.size();
 	if (_count == 2)
 	{
 		//client->Send(_arguments[1].c_str(), _arguments[1].length());	

@@ -141,6 +141,7 @@ const	std::string&	GetTopic()	{ return	topic_;	};
 			bool		SetSecretKey(std::string const& _secret_key, bool _check = false);
 
 	const std::string&	GetBroker();
+	const std::string&	GetPort();
 			bool		SetBroker(std::string const& _broker, bool _check = false);
 			
 			//Add SY.KANG
