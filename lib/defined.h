@@ -76,6 +76,7 @@ extern  const char*     OBJECT_TYPE_DEV_AT868;
 extern  const char*     OBJECT_TYPE_DEV_DF868MB;
 extern  const char*     OBJECT_TYPE_DEV_SONIC205;
 extern  const char*     OBJECT_TYPE_DEV_SONIC205MB;
+extern  const char*     OBJECT_TYPE_DEV_TEST;
 
 extern	const char* OBJECT_TYPE_ENDPOINT;
 extern	const char*	OBJECT_TYPE_EP_S_DISCRETE;

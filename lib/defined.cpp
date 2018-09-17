@@ -34,7 +34,7 @@ const char*	OBJECT_TYPE_DEV_MODBUS_TCP		=	"dev_modbus_tcp";
 const char*	OBJECT_TYPE_DEV_ADAM_6051		=	"dev_adam_6051";
 const char*	OBJECT_TYPE_DEV_TURBOMAX		=	"dev_turbomax";
 const char*	OBJECT_TYPE_DEV_NB_IOT_M		=	"dev_nbiot_m";
-const char*	OBJECT_TYPE_DEV_A3300		=	"dev_a3300";
+const char*	OBJECT_TYPE_DEV_A3300			=	"dev_a3300";
 const char*	OBJECT_TYPE_DEV_FTM80_BASE		=	"dev_ftm80_base";
 const char*     OBJECT_TYPE_DEV_DF868                   =       "dev_df868";
 const char*     OBJECT_TYPE_DEV_DF868_01                        =       "dev_df868_01";
@@ -42,6 +42,7 @@ const char*     OBJECT_TYPE_DEV_AT868                   =       "dev_at868";
 const char*     OBJECT_TYPE_DEV_DF868MB                 =       "dev_df868mb";
 const char*     OBJECT_TYPE_DEV_SONIC205                =       "dev_sonic205";
 const char*     OBJECT_TYPE_DEV_SONIC205MB              =       "dev_sonic205mb";
+const char*     OBJECT_TYPE_DEV_TEST              	=       "dev_test";
 
 
 const char* OBJECT_TYPE_ENDPOINT			=	"endpoint";

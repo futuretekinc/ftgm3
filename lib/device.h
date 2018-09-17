@@ -9,6 +9,9 @@
 #include "property.h"
 #include "KompexSQLiteStatement.h"
 
+
+#define FTM80 0 
+
 class	Endpoint;
 class	ObjectManager;
 

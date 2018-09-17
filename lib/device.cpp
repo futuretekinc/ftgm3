@@ -25,6 +25,7 @@
 #include "device_df868_01.h"
 #include "device_at868.h"
 #include "device_df868mb.h"
+#include "device_test.h"
 
 #include "endpoint.h"
 #include "endpoint_sensor.h"
@@ -373,11 +374,13 @@ Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
 		else if(type == std::string(DeviceA3300::Type()))
 		{
 			device = new DeviceA3300(_manager, _properties);
-		}	
+		}
+#if (FTM80 == 1)	
 		else if(type == std::string(Device_ftm80_base::Type()))
 		{
 			device = new Device_ftm80_base(_manager, _properties);
 		}
+#endif
 		else if(type == std::string(DeviceSONIC205::Type()))
 		{
 			device = new DeviceSONIC205(_manager, _properties);
@@ -401,6 +404,10 @@ Device*	Device::Create(ObjectManager& _manager, JSONNode const& _properties)
 		else if(type == std::string(DeviceDF868_01::Type()))
 		{
 			device = new DeviceDF868_01(_manager, _properties);
+		}
+		else if(type == std::string(DeviceTEST::Type()))
+		{
+			device = new DeviceTEST(_manager, _properties);
 		}
 		else
 		{
